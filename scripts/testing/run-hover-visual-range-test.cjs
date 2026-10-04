@@ -18,6 +18,11 @@ const profileCPU = process.argv.includes('--cpu-profile');
 const gestureLifecycle = process.argv.includes('--gesture-lifecycle');
 const gestureOnly = process.argv.includes('--gesture-only');
 if(gestureOnly && !gestureLifecycle)throw new Error('--gesture-only requires --gesture-lifecycle');
+const nestedViewport = process.argv.includes('--nested-viewport');
+const nestedOnly = process.argv.includes('--nested-only');
+if(nestedOnly && !nestedViewport)throw new Error('--nested-only requires --nested-viewport');
+const nestedCycles = Number(arg('nested-cycles','5'));
+assert.ok(Number.isInteger(nestedCycles) && nestedCycles>0 && nestedCycles<=20,'Nested cycles must be an integer from 1 to 20');
 const cpuSessions = new WeakMap();
 const {chromium} = require(path.join(arg('playwright-root', path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules')), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(arg('focus-safe-helper', path.join(os.homedir(), '.codex/skills/fluentread-extension-ui-test/scripts/focus-safe-browser.cjs')));
@@ -30,7 +35,7 @@ const cases = [
 ];
 const html = '<!doctype html><meta charset="utf-8"><title>Hover range fixture</title><style>body{font:16px/1.7 system-ui;margin:40px}#target{max-width:740px;overflow-wrap:anywhere}#probe{position:fixed;right:20px;top:20px;z-index:100000}</style><button id="probe" translate="no">Host click</button><main><div id="target"></div></main><script>window.probeClicks=0;document.querySelector("#probe").onclick=()=>window.probeClicks++;</script>';
 const server = http.createServer((_request, response) => {response.writeHead(200, {'content-type':'text/html;charset=utf-8'}); response.end(html);});
-const report = {baseline, profileCPU, gestureLifecycle, evidence:'Production extension; local deterministic transport, temporary background-visible Edge',
+const report = {baseline, profileCPU, gestureLifecycle, nestedViewport, evidence:'Production extension; local deterministic transport, temporary background-visible Edge',
   buildSha256:sha256(path.join(extensionDir,'content-scripts/content.js')),
   cachePolicy:'Microsoft hover disables persistent cache; continuous hover reuses its active request',
   cases:[], consoleErrors:[]};
@@ -110,10 +115,98 @@ async function patchFixtureConfig(setup, patch, sequence) {
   },{patch,sequence});
 }
 
+async function runNestedViewport(context, setup, provider, port) {
+  await patchFixtureConfig(setup,{hotkey:'Control',floatingBallHotkey:'Alt+T',fullPageTranslationMode:'all',
+    mouseHoverTranslationDelay:0,useCache:true,quickTranslationProfiles:[]},6);
+  const page=await newPageWithoutForeground(context);
+  page.on('pageerror',error=>report.consoleErrors.push(error.message));
+  await page.goto(`http://127.0.0.1:${port}/nested-viewport`,{waitUntil:'domcontentloaded'});
+  await page.locator('#fluent-read-page-styles').waitFor({state:'attached'});
+  const value='This paragraph above the reading position gains a bilingual translation while its scroll container keeps the reader steady. '.repeat(8);
+  await page.evaluate(value=>{
+    const target=document.getElementById('target');
+    target.innerHTML='<div id="scroller" style="height:650px;overflow-y:auto;overflow-anchor:none;border:3px solid #555">'+
+      '<p id="above"></p><div id="reading-gap" translate="no" style="height:500px"></div>'+
+      '<p id="reading" translate="no" style="height:100px;margin:0">Stable reading anchor</p>'+
+      '<p id="visible">This visible paragraph translates without compensating content below the reading anchor.</p>'+
+      '<div translate="no" style="height:700px"></div></div>';
+    document.getElementById('above').textContent=value;
+    const scroller=document.getElementById('scroller'),reading=document.getElementById('reading');
+    scroller.scrollTop=reading.getBoundingClientRect().top-420;
+    window.scrollTo(0,0);
+  },value);
+  await activateExtensionTabWithoutForeground(context,page);await page.waitForTimeout(500);
+  const result={cycles:nestedCycles,phases:[]};report.nestedViewportChecks=result;
+  const requestStart=provider.requestCount();
+  const before=await page.evaluate(()=>({top:document.getElementById('reading').getBoundingClientRect().top,
+    scrollTop:document.getElementById('scroller').scrollTop,windowY:scrollY,
+    aboveBottom:document.getElementById('above').getBoundingClientRect().bottom,
+    viewportTop:document.getElementById('scroller').getBoundingClientRect().top+document.getElementById('scroller').clientTop}));
+  result.initialScrollTop=before.scrollTop;
+  assert.ok(before.scrollTop>0 && before.aboveBottom<before.viewportTop,'Fixture change must be entirely above the nested viewport');
+  const phases=Array.from({length:nestedCycles},(_unused,index)=>
+    index===0?['translate','restore']:['retranslate-'+index,'restore-'+index]).flat();
+  for(const name of phases) {
+    const translate=name==='translate'||name.startsWith('retranslate-');
+    const readBefore=await page.evaluate(()=>{
+      const scroller=document.getElementById('scroller'),top=scroller.getBoundingClientRect().top+scroller.clientTop;
+      return {scrollTop:scroller.scrollTop,readingRelativeTop:document.getElementById('reading').getBoundingClientRect().top-top,
+        gapRelativeTop:document.getElementById('reading-gap').getBoundingClientRect().top-top,
+        sourceHeight:document.getElementById('above').getBoundingClientRect().height};
+    });
+    await page.evaluate(top=>{
+      window.__readingSamples=[];window.__readingActive=true;window.__readingReference=top;
+      const sample=()=>{if(!window.__readingActive)return;
+        window.__readingSamples.push({shift:document.getElementById('reading').getBoundingClientRect().top-top,windowY:scrollY});
+        window.__readingFrame=requestAnimationFrame(sample);};window.__readingFrame=requestAnimationFrame(sample);
+    },before.top);
+    await startPhase(page);await page.keyboard.press('Alt+t');
+    await page.waitForFunction(translate=>{
+      const count=document.querySelectorAll('#target .fluent-read-bilingual-content').length;
+      return translate?count===2:count===0;
+    },translate,{timeout:15000});
+    await page.waitForTimeout(500);
+    const reading=await page.evaluate(()=>{
+      window.__readingActive=false;cancelAnimationFrame(window.__readingFrame);
+      return {maxReadingShiftPx:Math.max(0,...window.__readingSamples.map(s=>Math.abs(s.shift))),
+        maxDocumentScrollPx:Math.max(0,...window.__readingSamples.map(s=>Math.abs(s.windowY))),
+        samples:window.__readingSamples.length,scrollTop:document.getElementById('scroller').scrollTop,
+        readingRelativeTop:document.getElementById('reading').getBoundingClientRect().top-
+          document.getElementById('scroller').getBoundingClientRect().top-document.getElementById('scroller').clientTop,
+        gapRelativeTop:document.getElementById('reading-gap').getBoundingClientRect().top-
+          document.getElementById('scroller').getBoundingClientRect().top-document.getElementById('scroller').clientTop,
+        sourceHeight:document.getElementById('above').getBoundingClientRect().height};
+    });
+    const phase={...(await finishPhase(page,name)),readBefore,...reading};
+    result.phases.push(phase);
+    await page.screenshot({path:path.join(artifactsDir,'nested-viewport-'+name+'.png')});
+    assert.ok(reading.samples>0,'Reading-position sampling ran');
+    assert.ok(reading.maxReadingShiftPx<=0.5,`Nested reading anchor moved during ${name}`);
+    assert.equal(reading.maxDocumentScrollPx,0,'Nested compensation must not scroll the document');
+    assert.equal(await page.locator('#target .fluent-read-bilingual-content .fluent-read-bilingual-content').count(),0);
+    const original=await page.evaluate(()=>{
+      const node=document.getElementById('above'),walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);
+      let source='',text;while((text=walker.nextNode()))if(!text.parentElement.closest('.fluent-read-bilingual-content,[data-fr-translation-owned="true"]'))source+=text.data;
+      return source;
+    });
+    assert.equal(original,value,'Above-viewport source remains exact');
+    if(translate)assert.ok(Math.abs(reading.scrollTop-before.scrollTop)>1,'Nested scroll offset actually compensates added translation height');
+    else assert.ok(Math.abs(reading.scrollTop-before.scrollTop)<=0.5,'Restore returns the original nested offset');
+    if(name==='translate')result.initialRequests=provider.requestCount()-requestStart;
+  }
+  result.requests=provider.requestCount()-requestStart;
+  assert.equal(result.requests,result.initialRequests,'Full-page retranslation reuses settled results');
+  result.originalPreserved=true;result.readingPositionPreserved=true;result.restoreAndRetranslate=true;
+  await page.close();
+}
+
 (async()=>{
   let launched,provider;
   try {
-    await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+    await new Promise((resolve,reject)=>{
+      server.once('error',reject);
+      server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});
+    });
     provider=await startTranslationFixtureServer([],5);
     launched=await launchFocusSafePersistentContext({chromium,profileDir,
       browserPath:arg('browser-path','/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'),
@@ -129,7 +222,7 @@ async function patchFixtureConfig(setup, patch, sequence) {
     await patchFixtureConfig(setup,{on:true,hotkey:'Control',customHotkey:'',mouseHoverTranslationDelay:0,
       service:'microsoft',from:'auto',to:'zh-Hans',display:1,translationScope:'content',longParagraphLineBreak:false,
       uiLanguageSetupCompleted:true,uiLanguage:'zh-CN'},1);
-    for(const fixture of gestureOnly ? [] : cases) {
+    for(const fixture of gestureOnly || nestedOnly ? [] : cases) {
       const page=await newPageWithoutForeground(context);
       page.on('pageerror',error=>report.consoleErrors.push(error.message));
       await page.goto(`http://127.0.0.1:${server.address().port}/${fixture.id}`,{waitUntil:'domcontentloaded'});
@@ -257,6 +350,7 @@ async function patchFixtureConfig(setup, patch, sequence) {
       result.reenabledGestureWorks=true;result.originalPreserved=true;
       await page.close();
     }
+    if(nestedViewport)await runNestedViewport(context,setup,provider,server.address().port);
     await setup.close();
     assert.deepEqual(report.consoleErrors,[]);report.ok=true;
     assert.equal(report.buildSha256,sha256(path.join(extensionDir,'content-scripts/content.js')),'Build changed during browser evidence');

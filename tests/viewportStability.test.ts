@@ -3,7 +3,10 @@ import {parseHTML} from 'linkedom';
 import {
     createFullPageScrollController,
     withFullPageViewportAnchor,
+    withFullPageRestorationAnchors,
 } from '@/src/features/full-page-translation/content/viewportStability';
+import {beginTranslation, markTranslationComplete, restoreAllTranslations, setBilingualContent}
+    from '@/src/features/full-page-translation/content/state';
 
 const replacedGlobals = new Map<PropertyKey, PropertyDescriptor | undefined>();
 
@@ -28,6 +31,7 @@ describe('全文翻译视口稳定性', () => {
     });
 
     afterEach(() => {
+        restoreAllTranslations();
         vi.clearAllTimers();
         vi.useRealTimers();
         for (const [name, descriptor] of replacedGlobals) {
@@ -392,6 +396,311 @@ describe('全文翻译视口稳定性', () => {
         Object.defineProperty(outside, 'getBoundingClientRect', {value: () => ({width: 0, height: 0, bottom: -10})});
         scroller.append(outside);
         expect(mutate([outside])).toBe(100);
+    });
+
+    it('500 个变化节点与三个候选只测量一次共享滚动祖先，不跨滚动面补偿', () => {
+        const changedScroller = document.createElement('div');
+        const anchorScroller = document.createElement('div');
+        const anchor = document.createElement('p');
+        anchorScroller.append(anchor);
+        document.body.append(changedScroller, anchorScroller);
+        const changed = Array.from({length: 500}, () => {
+            const node = document.createElement('p');
+            node.getBoundingClientRect = vi.fn(() => ({width: 200, height: 40, bottom: 60} as DOMRect));
+            changedScroller.append(node);
+            return node;
+        });
+        for (const scroller of [changedScroller, anchorScroller]) {
+            Object.defineProperties(scroller, {
+                scrollHeight: {get: vi.fn(() => 1000)}, clientHeight: {get: vi.fn(() => 200)},
+                clientTop: {value: 2}, getBoundingClientRect: {value: vi.fn(() => ({top: 100}))},
+            });
+            scroller.scrollTop = 100;
+        }
+        const styles = vi.fn(() => ({overflowY: 'auto'}));
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true, value: styles});
+        const hitTest = vi.fn(() => anchor);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: hitTest});
+        anchor.getBoundingClientRect = vi.fn(() => ({width: 200, height: 40, top: 150} as DOMRect));
+        const scrollBy = vi.fn();
+        Object.defineProperty(window, 'scrollBy', {configurable: true, value: scrollBy});
+        withFullPageViewportAnchor(() => 'written', changed);
+        expect(hitTest).toHaveBeenCalledTimes(3);
+        expect(styles.mock.calls.length).toBeLessThanOrEqual(2);
+        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(1);
+        expect(changedScroller.scrollTop).toBe(100);
+        expect(anchorScroller.scrollTop).toBe(100);
+        expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    it('捕获中共享来源与滚动面几何，写入和下次捕获仍读取最新布局', () => {
+        const scroller = document.createElement('div');
+        const changed = document.createElement('p');
+        const anchor = document.createElement('p');
+        scroller.append(changed, anchor);
+        document.body.append(scroller);
+        const readScrollHeight = vi.fn(() => 1000);
+        const readClientHeight = vi.fn(() => 200);
+        const readScrollerRect = vi.fn(() => ({top: 100}));
+        Object.defineProperties(scroller, {
+            scrollHeight: {get: readScrollHeight}, clientHeight: {get: readClientHeight},
+            clientTop: {value: 2}, getBoundingClientRect: {value: readScrollerRect},
+        });
+        scroller.scrollTop = 100;
+        let overflowY = 'auto';
+        const styles = vi.fn(() => ({overflowY}));
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true, value: styles});
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: 250});
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => anchor});
+        const changedRect = vi.fn(() => ({width: 200, height: 40, bottom: 60} as DOMRect));
+        changed.getBoundingClientRect = changedRect;
+        let after = false;
+        anchor.getBoundingClientRect = vi.fn(() => ({width: 200, height: 40, top: after ? 195 : 150} as DOMRect));
+        withFullPageViewportAnchor(() => {after = true;}, [changed]);
+        expect(scroller.scrollTop).toBe(145);
+        expect(styles).toHaveBeenCalledTimes(1);
+        expect(readScrollHeight).toHaveBeenCalledTimes(1);
+        expect(readClientHeight).toHaveBeenCalledTimes(1);
+        expect(readScrollerRect).toHaveBeenCalledTimes(1);
+        expect(changedRect).toHaveBeenCalledTimes(1);
+        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(2);
+
+        // 下轮宿主解除内层滚动，按文档滚动面重新判断，不能沿用上一轮祖先缓存。
+        overflowY = 'visible';
+        changedRect.mockReturnValue({width: 200, height: 40, bottom: -10} as DOMRect);
+        after = false;
+        const scrollBy = vi.fn();
+        Object.defineProperty(window, 'scrollBy', {configurable: true, value: scrollBy});
+        withFullPageViewportAnchor(() => {after = true;}, [changed]);
+        expect(scrollBy).toHaveBeenCalledWith(0, 45);
+        expect(scroller.scrollTop).toBe(145);
+        expect(styles).toHaveBeenCalledTimes(2);
+        expect(changedRect).toHaveBeenCalledTimes(2);
+        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(4);
+    });
+
+    it.each([
+        {documentY: 100, secondTop: 200}, {documentY: 0, secondTop: 200},
+        {documentY: 100, secondTop: 0}, {documentY: 0, secondTop: 0},
+    ])('全量恢复分别保护文档与两个内层滚动面，页首保持原位：%j', ({documentY, secondTop}) => {
+        const rootOwner = document.createElement('p');
+        const rootAnchor = document.createElement('p');
+        const scrollers = [document.createElement('div'), document.createElement('div')];
+        const owners = [rootOwner, ...scrollers.map(() => document.createElement('p'))];
+        const anchors = scrollers.map(() => document.createElement('p'));
+        document.body.append(rootOwner, rootAnchor, ...scrollers);
+        scrollers.forEach((scroller, index) => scroller.append(owners[index + 1], anchors[index]));
+        const wrappers = owners.map(owner => {
+            owner.textContent = 'Source above the reading position.';
+            const attempt = beginTranslation(owner, 'bilingual')!;
+            markTranslationComplete(owner, attempt.state, attempt.generation);
+            const wrapper = document.createElement('span');
+            wrapper.className = 'fluent-read-bilingual-content';
+            wrapper.setAttribute('data-fr-translation-owned', 'true');
+            wrapper.textContent = '译文';
+            owner.append(wrapper);setBilingualContent(owner, wrapper);
+            return wrapper;
+        });
+        let windowY = documentY;
+        Object.defineProperty(window, 'scrollY', {configurable: true, get: () => windowY});
+        const scrollBy = vi.fn((_x: number, offset: number) => {windowY += offset;});
+        Object.defineProperty(window, 'scrollBy', {configurable: true, value: scrollBy});
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true,
+            value: (element: HTMLElement) => ({overflowY: scrollers.some(scroller => scroller === element) ? 'auto' : 'visible'})});
+        const documentShift = () => (wrappers[0].isConnected ? 0 : -20) - (windowY - documentY);
+        rootAnchor.getBoundingClientRect = () => ({width: 200, height: 40, top: 5 + documentShift()} as DOMRect);
+        scrollers.forEach((scroller, index) => {
+            scroller.scrollTop = index === 0 ? 200 : secondTop;
+            const initial = scroller.scrollTop;
+            Object.defineProperties(scroller, {scrollHeight: {value: 1000}, clientHeight: {value: 200}, clientTop: {value: 2}});
+            scroller.getBoundingClientRect = () => {
+                const top = (index === 0 ? 100 : 450) + documentShift();
+                return {left: 0, right: 1000, width: 1000, height: 200, top, bottom: top + 200} as DOMRect;
+            };
+            anchors[index].getBoundingClientRect = () => ({width: 200, height: 40,
+                top: scroller.getBoundingClientRect().top + 12 - (wrappers[index + 1].isConnected ? 0 : 40 + index * 20)
+                    - (scroller.scrollTop - initial)} as DOMRect);
+        });
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: (_x: number, y: number) =>
+            y >= 450 ? anchors[1] : y >= 100 ? anchors[0] : rootAnchor});
+        restoreAllTranslations();
+        expect(windowY).toBe(documentY === 0 ? 0 : 80);
+        expect(scrollers[0].scrollTop).toBe(160);
+        expect(scrollers[1].scrollTop).toBe(secondTop === 0 ? 0 : 140);
+        expect(owners.map(owner => owner.textContent)).toEqual(Array(3).fill('Source above the reading position.'));
+        expect(rootAnchor.getBoundingClientRect().top).toBe(documentY === 0 ? -15 : 5);
+        expect(anchors[0].getBoundingClientRect().top - scrollers[0].getBoundingClientRect().top).toBe(12);
+    });
+
+    it('恢复穿过开放 ShadowRoot 保护真实滚动面，且不为嵌套恢复重复取锚点', () => {
+        const scroller = document.createElement('div');
+        const host = document.createElement('div');
+        const shadow = host.attachShadow({mode: 'open'});
+        const changed = document.createElement('p');
+        const anchor = document.createElement('p');
+        shadow.append(changed, anchor);scroller.append(host);document.body.append(scroller);
+        Object.defineProperties(scroller, {
+            scrollHeight: {value: 1000}, clientHeight: {value: 200}, clientTop: {value: 2},
+            getBoundingClientRect: {value: () => ({width: 700, height: 200, left: 0, right: 700, top: 100, bottom: 300})},
+        });
+        scroller.scrollTop = 100;
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: 0});
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true,
+            value: (element: HTMLElement) => ({overflowY: element === scroller ? 'auto' : 'visible'})});
+        const hit = vi.fn(() => host);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: hit});
+        Object.defineProperty(shadow, 'elementFromPoint', {configurable: true, value: () => anchor});
+        let after = false;
+        anchor.getBoundingClientRect = () => ({width: 200, height: 40, top: (after ? 70 : 110) - (scroller.scrollTop - 100)} as DOMRect);
+        const result = withFullPageRestorationAnchors(() =>
+            withFullPageRestorationAnchors(() => {after = true;return 'restored';}, [changed]), [changed]);
+        expect(result).toBe('restored');
+        expect(scroller.scrollTop).toBe(60);
+        expect(hit).toHaveBeenCalledOnce();
+    });
+
+    it('全量恢复的命中或几何不可读、面在屏外、变化脱离页面时仍执行清理并释放深度', () => {
+        const owner = document.createElement('p');
+        const scroller = document.createElement('div');
+        scroller.append(owner);document.body.append(scroller);
+        scroller.scrollTop = 100;
+        Object.defineProperties(scroller, {
+            scrollHeight: {value: 1000}, clientHeight: {value: 200}, clientTop: {value: 0},
+        });
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true, value: () => ({overflowY: 'auto'})});
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: 0});
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => {throw new Error('unreadable hit');}});
+        scroller.getBoundingClientRect = () => ({left: 0, right: 700, top: 100, bottom: 300} as DOMRect);
+        expect(withFullPageRestorationAnchors(() => 'hit failed', [owner])).toBe('hit failed');
+        scroller.getBoundingClientRect = () => ({left: 2000, right: 2300, top: 100, bottom: 300} as DOMRect);
+        expect(withFullPageRestorationAnchors(() => 'offscreen', [owner])).toBe('offscreen');
+        scroller.getBoundingClientRect = () => ({left: 0, right: 700, top: 1000, bottom: 1300} as DOMRect);
+        expect(withFullPageRestorationAnchors(() => 'below', [owner])).toBe('below');
+        const hit = vi.fn(() => null);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: hit});
+        scroller.getBoundingClientRect = () => ({left: 0, right: 700, top: 100, bottom: 300} as DOMRect);
+        expect(withFullPageRestorationAnchors(() => 'no anchor', [owner])).toBe('no anchor');
+        expect(hit).toHaveBeenCalledTimes(3);
+        owner.remove();
+        expect(withFullPageRestorationAnchors(() => 'detached', [owner])).toBe('detached');
+        expect(() => withFullPageRestorationAnchors(() => {throw new Error('cleanup failure');}, [owner])).toThrow('cleanup failure');
+    });
+
+    it('全量恢复锚点落到其它滚动面或被宿主重挂后不补偿旧滚动面', () => {
+        const scroller = document.createElement('div');
+        const owner = document.createElement('p');
+        const anchor = document.createElement('p');
+        const foreign = document.createElement('p');
+        scroller.append(owner, anchor);document.body.append(scroller, foreign);
+        scroller.scrollTop = 100;
+        Object.defineProperties(scroller, {
+            scrollHeight: {value: 1000}, clientHeight: {value: 200}, clientTop: {value: 0},
+            getBoundingClientRect: {value: () => ({left: 0, right: 700, top: 100, bottom: 300})},
+        });
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true,
+            value: (element: HTMLElement) => ({overflowY: element === scroller ? 'auto' : 'visible'})});
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: 0});
+        foreign.getBoundingClientRect = () => ({width: 200, height: 40, top: 110} as DOMRect);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => foreign});
+        expect(withFullPageRestorationAnchors(() => 'foreign', [owner])).toBe('foreign');
+        anchor.getBoundingClientRect = () => ({width: 0, height: 0, top: 110} as DOMRect);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => anchor});
+        expect(withFullPageRestorationAnchors(() => 'zero geometry', [owner])).toBe('zero geometry');
+        anchor.getBoundingClientRect = () => ({width: 200, height: 40, top: 110} as DOMRect);
+        withFullPageRestorationAnchors(() => document.body.append(anchor), [owner]);
+        expect(scroller.scrollTop).toBe(100);
+    });
+
+    it('超过祖先预算时不把未知内层滚动面当作文档，局部捕获与全量恢复均安全放弃补偿', () => {
+        let parent = document.body;
+        for (let depth = 0; depth < 514; depth++) {
+            const child = document.createElement('div');parent.append(child);parent = child;
+        }
+        const owners = [document.createElement('p'), document.createElement('p')];
+        parent.append(...owners);
+        owners[0].getBoundingClientRect = () => ({width: 200, height: 40, top: -100, bottom: -60} as DOMRect);
+        const styles = vi.fn(() => ({overflowY: 'visible'}));
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true, value: styles});
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: 250});
+        const hit = vi.fn(() => owners[0]);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: hit});
+        const scrollBy = vi.fn();
+        Object.defineProperty(window, 'scrollBy', {configurable: true, value: scrollBy});
+        expect(withFullPageViewportAnchor(() => 'local', owners)).toBe('local');
+        expect(styles).toHaveBeenCalledTimes(512);
+        expect(hit).not.toHaveBeenCalled();
+        styles.mockClear();
+        expect(withFullPageViewportAnchor(() => 'global')).toBe('global');
+        expect(styles).toHaveBeenCalledTimes(512);
+        expect(scrollBy).not.toHaveBeenCalled();
+        styles.mockClear();hit.mockClear();
+        expect(withFullPageRestorationAnchors(() => 'restore', owners)).toBe('restore');
+        expect(styles).toHaveBeenCalledTimes(512);
+        expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    it.each(['no-inner-hit', 'self-hit', 'translation-hit'])(
+        '恢复锚点处理 %s，不循环穿透 ShadowRoot 或跟随译文工件', kind => {
+            const scroller = document.createElement('div');
+            const owner = document.createElement('p');
+            const host = document.createElement('div');
+            const anchor = document.createElement('p');
+            const artifact = document.createElement('span');
+            artifact.className = 'fluent-read-bilingual-content';anchor.append(artifact);
+            scroller.append(owner, host, anchor);document.body.append(scroller);
+            const shadow = host.attachShadow({mode: 'open'});
+            Object.defineProperty(shadow, 'elementFromPoint', {value: () => kind === 'self-hit' ? host : null});
+            host.getBoundingClientRect = () => ({width: 0, height: 0} as DOMRect);
+            scroller.scrollTop = 100;
+            Object.defineProperties(scroller, {
+                scrollHeight: {value: 1000}, clientHeight: {value: 200}, clientTop: {value: 0},
+                getBoundingClientRect: {value: () => ({left: 0, right: 700, top: 100, bottom: 300})},
+            });
+            Object.defineProperty(window, 'getComputedStyle', {configurable: true,
+                value: (element: HTMLElement) => ({overflowY: element === scroller ? 'auto' : 'visible'})});
+            Object.defineProperty(window, 'scrollY', {configurable: true, value: 0});
+            Object.defineProperty(document, 'elementFromPoint', {configurable: true,
+                value: () => kind === 'translation-hit' ? artifact : host});
+            let after = false;
+            anchor.getBoundingClientRect = () => ({width: 200, height: 40, top: after ? 70 : 110} as DOMRect);
+            withFullPageRestorationAnchors(() => {after = true;}, [owner]);
+            expect(scroller.scrollTop).toBe(kind === 'translation-hit' ? 60 : 100);
+        },
+    );
+
+    it.each([
+        {surface: 'document', rounding: 'floor'}, {surface: 'nested', rounding: 'floor'},
+        {surface: 'document', rounding: 'nearest'}, {surface: 'nested', rounding: 'nearest'},
+    ])('十轮翻译与恢复不累计浏览器小数滚动取整误差：%j', ({surface, rounding}) => {
+        const scroller = document.createElement('div');
+        const changed = document.createElement('p');
+        const anchor = document.createElement('p');
+        if (surface === 'nested') {scroller.append(changed, anchor);document.body.append(scroller);}
+        else document.body.append(changed, anchor);
+        let scrollPosition = 426.5;
+        const round = (value: number) => (rounding === 'floor' ? Math.floor(value * 2) : Math.round(value * 2)) / 2;
+        Object.defineProperty(window, 'scrollY', {configurable: true, get: () => surface === 'document' ? scrollPosition : 0});
+        Object.defineProperty(window, 'scrollBy', {configurable: true, value: (_x: number, delta: number) => {
+            scrollPosition = round(scrollPosition + delta);
+        }});
+        Object.defineProperties(scroller, {
+            scrollTop: {get: () => scrollPosition, set: value => {scrollPosition = round(value);}},
+            scrollHeight: {value: 2000}, clientHeight: {value: 650}, clientTop: {value: 0},
+            getBoundingClientRect: {value: () => ({left: 0, right: 700, top: 100, bottom: 750})},
+        });
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true,
+            value: (element: HTMLElement) => ({overflowY: element === scroller ? 'auto' : 'visible'})});
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => anchor});
+        let height = 0;
+        anchor.getBoundingClientRect = () => ({width: 200, height: 40, top: 150 + height - (scrollPosition - 426.5)} as DOMRect);
+        changed.getBoundingClientRect = () => ({width: 200, height: 40, bottom: -400 + height} as DOMRect);
+        for (let roundIndex = 0; roundIndex < 10; roundIndex++) {
+            withFullPageViewportAnchor(() => {height = rounding === 'floor' ? 307.1484375 : 307.3;}, [changed]);
+            expect(Math.abs(anchor.getBoundingClientRect().top - 150)).toBeLessThanOrEqual(0.25);
+            withFullPageRestorationAnchors(() => {height = 0;}, [changed]);
+            expect(scrollPosition).toBe(426.5);
+            expect(anchor.getBoundingClientRect().top).toBe(150);
+        }
     });
 
     it('滚动控制器只在活动会话中延迟目标，并在空闲时释放', async () => {

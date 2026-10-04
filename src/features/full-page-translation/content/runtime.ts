@@ -2095,7 +2095,7 @@ export function restoreOriginalContent(): void {
     stopFullPageSession(); resetHoverTranslationRequestSession(createAbortError());
     hoverBilingualRemountCapitulations = createBilingualRemountCapitulationRegistry();
     resetAllBilingualArtifactHostWriteBudgets();
-    withFullPageViewportAnchor(() => restoreAllTranslations());
+    restoreAllTranslations();
 
     // 兼容升级前遗留的 wrapper/属性；新状态机不会依赖这些标记，但旧页面
     // 不应在扩展热更新后留下半截译文。

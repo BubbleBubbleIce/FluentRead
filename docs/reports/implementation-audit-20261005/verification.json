@@ -3566,6 +3566,788 @@
       "openPerformanceIssue": "500-owner synchronous whole-root remounts still have 122-153ms long tasks. The normal giant-owner hover run has no observed >50ms long task but a 75.9ms maximum heartbeat gap. Continue measuring synchronous layout, reading-anchor and checkpoint work; no whole-chain constant-time or all-page latency claim.",
       "docsBuild": "passed",
       "docsCheck": "passed"
+    },
+    {
+      "name": "Reuse synchronous viewport measurements; restore every known scroll surface and bound subpixel rounding drift",
+      "baseCommit": "76cd648f45b5e762d5971d89ead26d38d4cb7385",
+      "scope": "Complete loadingIndicator/modalSession/modalPriority/liveTextRender source review, re-review changed viewport/state/runtime/public boundary. Affected suites and deterministic native hover/nested/full-page fixtures; 726 files remain pending and goal stays active.",
+      "strictCoverage": {
+        "testFiles": 12,
+        "testCases": 498,
+        "tests": [
+          "tests/viewportStability.test.ts",
+          "tests/fullPageVisibilityScheduling.test.ts",
+          "tests/pageTranslationAdvanced.test.ts",
+          "tests/bilingualRemount.test.ts",
+          "tests/syntheticRemount.test.ts",
+          "tests/translationLayoutMeasurements.test.ts",
+          "tests/liveTextRender.test.ts",
+          "tests/fullPageTranslationIndicators.test.ts",
+          "tests/fullPageModalPriority.test.ts",
+          "tests/hoverTranslationContentFeature.test.ts",
+          "tests/quickTranslationRuntime.test.ts",
+          "tests/contentRuntimeLifecycle.test.ts"
+        ],
+        "modules": {
+          "src/features/full-page-translation/content/viewportStability.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdsUnchanged": true,
+        "newExecutedCoreCases": 17,
+        "stateVerificationOwnership": "full-page-state-functional; unchanged"
+      },
+      "typeCheck": "passed",
+      "chromeBuild": {
+        "status": "passed",
+        "sha256": {
+          "manifest.json": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844",
+          "content-scripts/content.js": "3cebf43b9ad988535bac9a8972bd278cb2b10922d6f854e0f0acf08f8b4862fc"
+        }
+      },
+      "firefoxBuild": "passed",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "passed",
+        "registeredFiles": 466,
+        "registeredCases": 6073
+      },
+      "affectedArchitecture": {
+        "status": "passed",
+        "testFiles": 3,
+        "testCases": 815,
+        "wholeRepositoryGatePassed": false
+      },
+      "regressionEvidence": {
+        "previousSharedAncestorStyleReads": 1504,
+        "currentSharedAncestorStyleReadUpperBound": 2,
+        "changedNodes": 500,
+        "anchorCandidates": 3,
+        "composedAncestorDepthBudget": 512,
+        "unknownDepthIsNotDocumentSurface": true,
+        "sourceGeometryRereadAfterWrites": true,
+        "roundingCases": {
+          "surfaces": [
+            "document",
+            "inner-container"
+          ],
+          "roundingModes": [
+            "floor",
+            "nearest"
+          ],
+          "cyclesPerCase": 10
+        },
+        "nativeOriginalReadingShiftLimitPx": 0.5,
+        "thresholdRelaxed": false,
+        "realFirefoxValidated": false,
+        "liveProviderValidated": false
+      },
+      "controlledBaseline": {
+        "buildSha256": "303ac7ea6aa4007fcdb0deeb7f298ad21aee33237fdcf94101fba6b951783344",
+        "evidence": "Production extension; local deterministic transport, temporary background-visible Edge",
+        "functionalPassed": false,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "visible": true,
+          "hidden": false,
+          "windowState": "normal",
+          "displayTarget": "secondary",
+          "browserFrontmost": false
+        },
+        "consoleErrors": [],
+        "cleanupVerified": true,
+        "expectedRegressionReproduced": true,
+        "boundary": "Unmodified ninth production extension before tenth changes, identified by content hash; runner baseline flag is not a build identity. Same deterministic nested scroll fixture with document at top. Not a whole-page performance comparison.",
+        "nestedViewportChecks": {
+          "initialRequests": 3,
+          "phases": [
+            {
+              "name": "translate",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.700000286102295,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 36
+            },
+            {
+              "name": "restore",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.699999809265137,
+              "maxReadingShiftPx": 307,
+              "maxDocumentScrollPx": 0,
+              "samples": 30
+            }
+          ]
+        },
+        "failure": "Nested reading anchor moved during restore"
+      },
+      "nonpassingIntermediateDiagnostics": [
+        {
+          "buildSha256": "7aa7bb61d589420bfbe9e7ad38dd3b74021174f8f57e019278cef7683d49b76b",
+          "functionalPassed": false,
+          "failure": "Nested reading anchor moved during retranslate",
+          "nestedViewportChecks": {
+            "initialRequests": 3,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.800000190734863,
+                "maxReadingShiftPx": 0.1484375,
+                "maxDocumentScrollPx": 0,
+                "samples": 36
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.699999809265137,
+                "maxReadingShiftPx": 0.5,
+                "maxDocumentScrollPx": 0,
+                "samples": 32
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.800000190734863,
+                "maxReadingShiftPx": 0.6484375,
+                "maxDocumentScrollPx": 0,
+                "samples": 34
+              }
+            ]
+          },
+          "boundary": "Intermediate scroll-surface fix, before rounding correction. Nonpassing diagnostic, not a final result or speed comparison."
+        },
+        {
+          "buildSha256": "7aa7bb61d589420bfbe9e7ad38dd3b74021174f8f57e019278cef7683d49b76b",
+          "functionalPassed": false,
+          "failure": "Nested reading anchor moved during retranslate",
+          "nestedViewportChecks": {
+            "initialRequests": 3,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.700000286102295,
+                "maxReadingShiftPx": 0.1484375,
+                "maxDocumentScrollPx": 0,
+                "samples": 37
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.5,
+                "maxReadingShiftPx": 0.5,
+                "maxDocumentScrollPx": 0,
+                "samples": 31
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.90000009536743,
+                "maxReadingShiftPx": 0.6484375,
+                "maxDocumentScrollPx": 0,
+                "samples": 34
+              }
+            ]
+          },
+          "boundary": "Intermediate scroll-surface fix, before rounding correction. Nonpassing diagnostic, not a final result or speed comparison."
+        }
+      ],
+      "controlledBrowser": {
+        "buildSha256": "3cebf43b9ad988535bac9a8972bd278cb2b10922d6f854e0f0acf08f8b4862fc",
+        "evidence": "Production extension; local deterministic transport, temporary background-visible Edge",
+        "functionalPassed": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "visible": true,
+          "hidden": false,
+          "windowState": "normal",
+          "displayTarget": "secondary",
+          "browserFrontmost": false
+        },
+        "consoleErrors": [],
+        "cleanupVerified": true,
+        "profileCPU": false,
+        "cases": [
+          {
+            "id": "giant-tail",
+            "originalCharacters": 135120,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [
+                  57
+                ],
+                "maxHeartbeatGapMs": 80.59999990463257
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.100000381469727
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 40
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 37.59999990463257
+              }
+            ],
+            "sourceChunkCharacters": 1550,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "empty-nodes",
+            "originalCharacters": 6240,
+            "emptyNodes": 20000,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 58.60000038146973
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.700000286102295
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.699999809265137
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 27.40000009536743
+              }
+            ],
+            "sourceChunkCharacters": 1560,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "long-token",
+            "originalCharacters": 9100,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 55
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.100000381469727
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.90000009536743
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.09999990463257
+              }
+            ],
+            "sourceChunkCharacters": 1600,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          }
+        ],
+        "gestureChecks": {
+          "phases": [
+            {
+              "name": "long-press-arbitration",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 28.59999990463257
+            },
+            {
+              "name": "delayed-hover-abort",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.600000381469727
+            }
+          ],
+          "arbitrationDispatchMs": 34,
+          "wrappersAfterLongPressDeadline": 1,
+          "arbitrationRequests": 1,
+          "disableDispatchMs": 35,
+          "requestsWhileDisabled": 0,
+          "reenabledGestureWorks": true,
+          "originalPreserved": true
+        },
+        "nestedViewportChecks": {
+          "cycles": 5,
+          "initialRequests": 3,
+          "requests": 3,
+          "originalPreserved": true,
+          "readingPositionPreserved": true,
+          "restoreAndRetranslate": true,
+          "phases": [
+            {
+              "name": "translate",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 21.700000286102295,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 37
+            },
+            {
+              "name": "restore",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 21.40000009536743,
+              "maxReadingShiftPx": 0,
+              "maxDocumentScrollPx": 0,
+              "samples": 31
+            },
+            {
+              "name": "retranslate-1",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 35
+            },
+            {
+              "name": "restore-1",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.199999809265137,
+              "maxReadingShiftPx": 0,
+              "maxDocumentScrollPx": 0,
+              "samples": 31
+            },
+            {
+              "name": "retranslate-2",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.90000009536743,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 35
+            },
+            {
+              "name": "restore-2",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 21.299999713897705,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 31
+            },
+            {
+              "name": "retranslate-3",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.5,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 35
+            },
+            {
+              "name": "restore-3",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 21.699999809265137,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 31
+            },
+            {
+              "name": "retranslate-4",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.700000286102295,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 35
+            },
+            {
+              "name": "restore-4",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.299999713897705,
+              "maxReadingShiftPx": 0.1484375,
+              "maxDocumentScrollPx": 0,
+              "samples": 31
+            }
+          ]
+        },
+        "cachePolicy": {
+          "hover": "Microsoft hover disables persistent cache; continuous hover reuses its active request",
+          "nestedFullPage": "Persistent full-page cache enabled; three initial requests, no new requests across five translate/restore cycles"
+        },
+        "representativeScreenshotsInspected": 7
+      },
+      "controlledFullPage": [
+        {
+          "buildSha256": "3cebf43b9ad988535bac9a8972bd278cb2b10922d6f854e0f0acf08f8b4862fc",
+          "artifactHashVerifiedAfterRuns": true,
+          "functionalPassed": true,
+          "evidence": "Production extension and real browser; local deterministic Microsoft transport, no live provider claims",
+          "paragraphs": 500,
+          "repeatedSource": false,
+          "translationBefore": true,
+          "remountRoot": true,
+          "remountMiddle": true,
+          "profileCPU": true,
+          "boundary": "Existing runner samples CPU during translation/remount/restore; runs were sequential after build/test completion. No paired baseline speed comparison in this batch.",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "visible": true,
+            "hidden": false,
+            "windowState": "normal",
+            "displayTarget": "secondary",
+            "browserFrontmost": false
+          },
+          "phases": [
+            {
+              "name": "translate",
+              "elapsedMs": 1955.6000003814697,
+              "maxHeartbeatGapMs": 35.40000009536743,
+              "p95HeartbeatGapMs": 27.5,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 8,
+              "longTasksMs": []
+            },
+            {
+              "name": "remount-1",
+              "elapsedMs": 427,
+              "maxHeartbeatGapMs": 175.7000002861023,
+              "p95HeartbeatGapMs": 175.7000002861023,
+              "totalBlockingMs": 107,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": [
+                157
+              ]
+            },
+            {
+              "name": "remount-2",
+              "elapsedMs": 409.09999990463257,
+              "maxHeartbeatGapMs": 156.40000009536743,
+              "p95HeartbeatGapMs": 156.40000009536743,
+              "totalBlockingMs": 89,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": [
+                139
+              ]
+            },
+            {
+              "name": "remount-3",
+              "elapsedMs": 398.90000009536743,
+              "maxHeartbeatGapMs": 144,
+              "p95HeartbeatGapMs": 144,
+              "totalBlockingMs": 79,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": [
+                129
+              ]
+            },
+            {
+              "name": "scroll-translated",
+              "elapsedMs": 1410.4000000953674,
+              "maxHeartbeatGapMs": 24.59999990463257,
+              "p95HeartbeatGapMs": 22,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 12,
+              "longTasksMs": []
+            },
+            {
+              "name": "restore",
+              "elapsedMs": 193.5,
+              "maxHeartbeatGapMs": 33.59999990463257,
+              "p95HeartbeatGapMs": 33.59999990463257,
+              "totalBlockingMs": 0,
+              "wrappers": 0,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": []
+            },
+            {
+              "name": "retranslate-cached",
+              "elapsedMs": 7784.599999904633,
+              "maxHeartbeatGapMs": 35.19999980926514,
+              "p95HeartbeatGapMs": 24.09999990463257,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 46,
+              "longTasksMs": []
+            }
+          ],
+          "remountChecks": [
+            {
+              "hostWriteMs": 5.099999904632568,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 160,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.14088899999999993,
+                "LayoutDuration": 0.03341000000000002,
+                "RecalcStyleDuration": 0.0034059999999999993,
+                "TaskDuration": 0.219978,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 5.800000190734863,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 142.5,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.12761599999999995,
+                "LayoutDuration": 0.029253,
+                "RecalcStyleDuration": 0.0030069999999999993,
+                "TaskDuration": 0.18727400000000038,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 3.3999996185302734,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 131.2999997138977,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.1175790000000001,
+                "LayoutDuration": 0.03015699999999999,
+                "RecalcStyleDuration": 0.0024980000000000002,
+                "TaskDuration": 0.17327100000000017,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            }
+          ],
+          "requests": 501,
+          "items": 501,
+          "submittedChineseCount": 0,
+          "consoleErrors": [],
+          "cleanupVerified": true,
+          "representativeScreenshotsInspected": 1
+        },
+        {
+          "buildSha256": "3cebf43b9ad988535bac9a8972bd278cb2b10922d6f854e0f0acf08f8b4862fc",
+          "artifactHashVerifiedAfterRuns": true,
+          "functionalPassed": true,
+          "evidence": "Production extension and real browser; local deterministic Microsoft transport, no live provider claims",
+          "paragraphs": 500,
+          "repeatedSource": true,
+          "translationBefore": false,
+          "remountRoot": true,
+          "remountMiddle": true,
+          "profileCPU": true,
+          "boundary": "Existing runner samples CPU during translation/remount/restore; runs were sequential after build/test completion. No paired baseline speed comparison in this batch.",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "visible": true,
+            "hidden": false,
+            "windowState": "normal",
+            "displayTarget": "secondary",
+            "browserFrontmost": false
+          },
+          "phases": [
+            {
+              "name": "translate",
+              "elapsedMs": 1231.8000001907349,
+              "maxHeartbeatGapMs": 34.19999980926514,
+              "p95HeartbeatGapMs": 24.90000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 5,
+              "longTasksMs": []
+            },
+            {
+              "name": "remount-1",
+              "elapsedMs": 415.19999980926514,
+              "maxHeartbeatGapMs": 154.5,
+              "p95HeartbeatGapMs": 154.5,
+              "totalBlockingMs": 89,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": [
+                139
+              ]
+            },
+            {
+              "name": "remount-2",
+              "elapsedMs": 411.59999990463257,
+              "maxHeartbeatGapMs": 158.5,
+              "p95HeartbeatGapMs": 158.5,
+              "totalBlockingMs": 92,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": [
+                142
+              ]
+            },
+            {
+              "name": "remount-3",
+              "elapsedMs": 408.3999996185303,
+              "maxHeartbeatGapMs": 150.5,
+              "p95HeartbeatGapMs": 150.5,
+              "totalBlockingMs": 84,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": [
+                134
+              ]
+            },
+            {
+              "name": "scroll-translated",
+              "elapsedMs": 1375.1000003814697,
+              "maxHeartbeatGapMs": 42.5,
+              "p95HeartbeatGapMs": 22.40000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 12,
+              "longTasksMs": []
+            },
+            {
+              "name": "restore",
+              "elapsedMs": 194.7999997138977,
+              "maxHeartbeatGapMs": 32.39999961853027,
+              "p95HeartbeatGapMs": 32.39999961853027,
+              "totalBlockingMs": 0,
+              "wrappers": 0,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTasksMs": []
+            },
+            {
+              "name": "retranslate-cached",
+              "elapsedMs": 8150.599999904633,
+              "maxHeartbeatGapMs": 43.09999990463257,
+              "p95HeartbeatGapMs": 28.5,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 48,
+              "longTasksMs": []
+            }
+          ],
+          "remountChecks": [
+            {
+              "hostWriteMs": 5.799999713897705,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 140.90000009536743,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.127427,
+                "LayoutDuration": 0.029148000000000007,
+                "RecalcStyleDuration": 0.0023760000000000014,
+                "TaskDuration": 0.18598799999999993,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 5.699999809265137,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 144.59999990463257,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.13136399999999998,
+                "LayoutDuration": 0.027966999999999992,
+                "RecalcStyleDuration": 0.002746,
+                "TaskDuration": 0.18812200000000012,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 5.399999618530273,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 137,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.12268100000000004,
+                "LayoutDuration": 0.02795700000000001,
+                "RecalcStyleDuration": 0.0032289999999999975,
+                "TaskDuration": 0.19430000000000014,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            }
+          ],
+          "requests": 2,
+          "items": 2,
+          "submittedChineseCount": 0,
+          "consoleErrors": [],
+          "cleanupVerified": true,
+          "representativeScreenshotsInspected": 1
+        }
+      ],
+      "comparison": "Work-count regression plus native reading-position baseline. Final nested fixture preserves five cycles; no whole-chain or aggregate speed claim. Intermediate drift failures retained rather than weakening the original assertion.",
+      "openPerformanceIssue": "500-owner synchronous whole-root remounts still have 129-157ms long tasks. Unprofiled giant hover first translation records 57ms and an 80.6ms maximum heartbeat gap. Continue bounded checkpoint work and scaled/within-text anchor investigation; overall performance and complete-file audit remain unfinished.",
+      "docsBuild": "passed",
+      "docsCheck": "passed"
     }
   ]
 }

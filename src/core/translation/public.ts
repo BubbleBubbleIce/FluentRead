@@ -29,6 +29,7 @@ export {
     evaluateHardGuard,
     getElementTagName,
     getComposedParent,
+    maxComposedAncestorDepth,
     getOpenShadowRoots,
     getTranslatableControlValueAttribute,
     isProtectedDescendantElement,
