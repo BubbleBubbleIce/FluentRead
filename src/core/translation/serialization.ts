@@ -2,7 +2,7 @@
  * @file src/core/translation/serialization.ts
  *
  * 文件职责：把候选 DOM 安全序列化为可翻译文本槽，并在异步请求后依据源快照恢复到仍然匹配的真实节点。
- * 主要内容：定义 TranslationTextSlot、TranslationSourceSnapshot 与样式覆盖规则，负责槽位编码解析、活节点收集（排除候选内的独立 tooltip）、译文写入克隆、可无损拍平骨架的整段原文重建与整块译文纯文本降级、隐藏/编辑/宿主 metadata 省略、可见公式骨架保全、译文产物过滤，以及支持同批样式/几何读数复用，识别 line-clamp 与溢出截断并提供临时解除截断的样式覆盖规则。 可核对的公开符号包括 TranslationTextSlot、TranslationSourceSnapshot、SerializedTranslationSlots、TranslationStyleOverride、translationTruncationStyleOverrides、serializeTranslationSlots、parseTranslationSlots、createTranslationSourceSnapshot、buildWholeBlockTranslationSource。
+ * 主要内容：定义 TranslationTextSlot、TranslationSourceSnapshot 与样式覆盖规则，重导出独立的纯文本槽协议，负责活节点收集（排除候选内的独立 tooltip）、译文写入克隆、可无损拍平骨架的整段原文重建与整块译文纯文本降级、隐藏/编辑/宿主 metadata 省略、可见公式骨架保全、译文产物过滤，以及支持同批样式/几何读数复用，识别 line-clamp 与溢出截断并提供临时解除截断的样式覆盖规则。 可核对的公开符号包括 TranslationTextSlot、TranslationSourceSnapshot、SerializedTranslationSlots、TranslationStyleOverride、translationTruncationStyleOverrides、serializeTranslationSlots、parseTranslationSlots、createTranslationSourceSnapshot、buildWholeBlockTranslationSource。
  * 模块边界：本文件属于可独立测试的 core 候选领域；可以读取传入 DOM 以计算结果，但不访问配置存储、不调用 provider、不注册页面监听器，也不负责译文渲染或 feature 生命周期。
  */
 
@@ -43,11 +43,7 @@ export interface TranslationSourceSnapshot {
     slots: TranslationTextSlot[];
 }
 
-export interface SerializedTranslationSlots {
-    payload: string;
-    starts: readonly string[];
-    ends: readonly string[];
-}
+export {serializeTranslationSlots, parseTranslationSlots, type SerializedTranslationSlots} from './slotProtocol';
 
 export interface TranslationStyleOverride {
     property: string;
@@ -132,82 +128,6 @@ export function hasTranslationHeightOverflow(element: HTMLElement, branch: HTMLE
         // 某些测试/宿主 DOM 没有完整 layout API，继续使用几何检查。
     }
     return hasGeometryOverflow(element, branch, measurements);
-}
-
-function hashSlotSources(sources: readonly string[]): string {
-    let hash = 2166136261;
-    for (const source of sources) {
-        for (let index = 0; index < source.length; index += 1) {
-            hash ^= source.charCodeAt(index);
-            hash = Math.imul(hash, 16777619);
-        }
-        hash ^= 0xff;
-        hash = Math.imul(hash, 16777619);
-    }
-    return (hash >>> 0).toString(36);
-}
-
-/**
- * 将多个纯文本槽编码为一次服务请求。确定性 nonce 使整段缓存 key 保持稳定；
- * 若源文本已包含完全相同的哨兵标记，则追加冲突后缀。
- */
-export function serializeTranslationSlots(
-    sources: readonly string[],
-    requestedNonce = hashSlotSources(sources),
-): SerializedTranslationSlots {
-    let nonce = requestedNonce.replace(/[^a-z0-9_-]/giu, '') || 'slots';
-    let collision = 0;
-    const hasCollision = (candidate: string) => sources.some((source, index) =>
-        source.includes(`___FLUENTREAD_${candidate}_${index}_BEGIN___`) ||
-        source.includes(`___FLUENTREAD_${candidate}_${index}_END___`));
-    while (hasCollision(nonce)) {
-        collision += 1;
-        nonce = `${requestedNonce}_${collision}`.replace(/[^a-z0-9_-]/giu, '');
-    }
-
-    const starts = sources.map((_, index) => `___FLUENTREAD_${nonce}_${index}_BEGIN___`);
-    const ends = sources.map((_, index) => `___FLUENTREAD_${nonce}_${index}_END___`);
-    const payload = sources.map((source, index) => `${starts[index]}${source}${ends[index]}`).join('\n');
-    return {payload, starts, ends};
-}
-
-/** 严格按顺序为每个槽接受一个结果；标记外出现正文或代码围栏时整包拒绝。 */
-export function parseTranslationSlots(
-    packet: SerializedTranslationSlots,
-    translated: string,
-): string[] | null {
-    const starts = Array.from(packet.starts);
-    const ends = Array.from(packet.ends);
-    if (starts.length !== ends.length) return null;
-    const countMarker = (marker: string): number => {
-        let count = 0;
-        let offset = 0;
-        while (offset <= translated.length - marker.length) {
-            const next = translated.indexOf(marker, offset);
-            if (next < 0) break;
-            count += 1;
-            offset = next + marker.length;
-        }
-        return count;
-    };
-    if ([...starts, ...ends].some((marker) => !marker || countMarker(marker) !== 1)) {
-        return null;
-    }
-    const results: string[] = [];
-    let cursor = 0;
-    for (let index = 0; index < starts.length; index += 1) {
-        // 上方已验证快照稠密且每个非空标记只出现一次，无需再次全包查找重复起始标记。
-        const start = starts[index]!;
-        const end = ends[index]!;
-        const startIndex = translated.indexOf(start, cursor);
-        if (startIndex < 0 || translated.slice(cursor, startIndex).trim()) return null;
-        const valueStart = startIndex + start.length;
-        const endIndex = translated.indexOf(end, valueStart);
-        if (endIndex < 0) return null;
-        results.push(translated.slice(valueStart, endIndex));
-        cursor = endIndex + end.length;
-    }
-    return translated.slice(cursor).trim() ? null : results;
 }
 
 type TranslationTextSlotParts = Omit<TranslationTextSlot, 'node'>;

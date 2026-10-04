@@ -13,6 +13,90 @@ import {isForeignTranslationBoundary} from '@/src/core/translation/dom';
 import {isTranslationTextNodeProtected} from '@/src/core/translation/text';
 
 describe('translation snapshot mapping performance', () => {
+    it.each(['BEGIN', 'END'])('原文包含另一槽的 %s 完整标记时避让 nonce，自己生成的包仍可完整往返', (kind) => {
+        const sources = [`A literal ___FLUENTREAD_cross_slot_1_${kind}___ appears here.`, 'Second source.'];
+        const packet = serializeTranslationSlots(sources, 'cross_slot');
+        expect(packet.starts[0]).toBe('___FLUENTREAD_cross_slot_1_0_BEGIN___');
+        expect(parseTranslationSlots(packet, packet.payload)).toEqual(sources);
+    });
+
+    it('500 个文本槽的有效协议不会为每个标记重新搜索整包文本', () => {
+        const sources = Array.from({length: 500}, (_, index) => `Paragraph ${index}: ${'Readable prose. '.repeat(40)}`);
+        const packet = serializeTranslationSlots(sources, 'large_packet');
+        const originalIndexOf = String.prototype.indexOf;
+        let fullPacketSearchSpan = 0;
+        const search = vi.spyOn(String.prototype, 'indexOf').mockImplementation(function (this: string, marker, offset = 0) {
+            if (String(this) === packet.payload) fullPacketSearchSpan += packet.payload.length - offset;
+            return originalIndexOf.call(this, marker, offset);
+        });
+        let results: ReturnType<typeof parseTranslationSlots>;
+        try {
+            results = parseTranslationSlots(packet, packet.payload);
+        } finally {
+            search.mockRestore();
+        }
+        expect(results).toEqual(sources);
+        expect(fullPacketSearchSpan).toBeLessThanOrEqual(packet.payload.length * 4);
+    });
+
+    it('超范围或非标准数字标记作为字面内容保留，标记尾部共享下划线时仍拒绝包外正文', () => {
+        const source = 'Literal ___FLUENTREAD_overlap_5_BEGIN___ and ___FLUENTREAD_overlap_01_END___.';
+        const packet = serializeTranslationSlots([source], 'overlap');
+        expect(parseTranslationSlots(packet, packet.payload)).toEqual([source]);
+        const duplicate = `${packet.payload}FLUENTREAD_overlap_0_END___`;
+        expect(parseTranslationSlots(packet, duplicate)).toBeNull();
+        const crossOverlap = '___FLUENTREAD_overlap_5_BEGIN___FLUENTREAD_overlap_1_END___';
+        const avoided = serializeTranslationSlots([crossOverlap, 'Second.'], 'overlap');
+        expect(avoided.starts[0]).toBe('___FLUENTREAD_overlap_1_0_BEGIN___');
+        expect(parseTranslationSlots(avoided, avoided.payload)).toEqual([crossOverlap, 'Second.']);
+    });
+
+    it('公开的非标准字面标记继续严格拒绝缺项、重复、交错、前后正文与空标记', () => {
+        const packet = {payload: '', starts: ['<a>', '<b>'], ends: ['</a>', '</b>']};
+        const valid = '<a>First</a>\n<b>Second</b>';
+        expect(parseTranslationSlots(packet, valid)).toEqual(['First', 'Second']);
+        for (const invalid of [
+            '<a>First</a>', '<a>First<a></a><b>Second</b>',
+            '<a>First<b></a>Second</b>', '<a>First</b></a><b>Second', '</a><a>First<b>Second</b>',
+            `Note ${valid}`, `${valid} Note`, '',
+        ]) expect(parseTranslationSlots(packet, invalid)).toBeNull();
+        expect(parseTranslationSlots({...packet, starts: ['', '<b>']}, valid)).toBeNull();
+        const mixed = {payload: '', starts: ['___FLUENTREAD_mix_0_BEGIN___'], ends: ['</a>']};
+        expect(parseTranslationSlots(mixed, `${mixed.starts[0]}Mixed</a>`)).toEqual(['Mixed']);
+        const empty = serializeTranslationSlots([]);
+        expect(parseTranslationSlots(empty, ' \n ')).toEqual([]);
+        expect(parseTranslationSlots(empty, 'Note')).toBeNull();
+    });
+
+    it('标准标记在译文各位置的插入、删除和重叠符合严格字面协议', () => {
+        const packet = serializeTranslationSlots(['First', 'Second'], 'compatibility');
+        const markers = [packet.starts[0]!, packet.ends[0]!, packet.starts[1]!, packet.ends[1]!];
+        const literalProtocol = (text: string): string[] | null => {
+            if (markers.some(marker => text.split(marker).length !== 2)) return null;
+            let cursor = 0;
+            const result: string[] = [];
+            for (let index = 0; index < 2; index += 1) {
+                const start = text.indexOf(packet.starts[index]!, cursor);
+                if (start < 0 || text.slice(cursor, start).trim()) return null;
+                const valueStart = start + packet.starts[index]!.length;
+                const end = text.indexOf(packet.ends[index]!, valueStart);
+                if (end < 0) return null;
+                result.push(text.slice(valueStart, end));
+                cursor = end + packet.ends[index]!.length;
+            }
+            return text.slice(cursor).trim() ? null : result;
+        };
+        const variants = [packet.payload, '', `Note ${packet.payload}`, `${packet.payload} Note`];
+        for (const marker of markers) {
+            variants.push(packet.payload.replace(marker, ''));
+            for (let at = 0; at <= packet.payload.length; at += 1) {
+                variants.push(packet.payload.slice(0, at) + marker + packet.payload.slice(at));
+            }
+        }
+        variants.push(`${packet.starts[0]}FLUENTREAD_compatibility_0_END___${packet.ends[0]}\n${packet.starts[1]}Second${packet.ends[1]}`);
+        for (const text of variants) expect(parseTranslationSlots(packet, text), text).toEqual(literalProtocol(text));
+    });
+
     it('标记各出现一次但第二槽结束标记落在第一槽内部时拒绝交错协议', () => {
         const packet = serializeTranslationSlots(['First', 'Second']);
         const crossed = `${packet.starts[0]}First${packet.ends[1]}${packet.ends[0]}${packet.starts[1]}Second`;

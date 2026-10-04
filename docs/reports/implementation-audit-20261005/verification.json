@@ -1022,6 +1022,115 @@
       "docsCheck": "passed",
       "testAudit": "passed",
       "cleanupVerified": true
+    },
+    {
+      "name": "Text-slot protocol collision avoidance and forward parsing",
+      "baseCommit": "7b17a7bd9b9766dc4d2c451e72532a23f0d47c87",
+      "strictCoverage": {
+        "testFiles": 44,
+        "cases": 1327,
+        "testPaths": [
+          "tests/fullPageVisibilityScheduling.test.ts",
+          "tests/translationSourceStability.test.ts",
+          "tests/bilingualRemount.test.ts",
+          "tests/syntheticRemount.test.ts",
+          "tests/bilingualReplay.test.ts",
+          "tests/cloudVendorCatalog.test.ts",
+          "tests/translationVisionPayload.test.ts",
+          "tests/translationVisionProviders.test.ts",
+          "tests/aiSdkOpenAICompatible.test.ts",
+          "tests/free-translation.test.ts",
+          "tests/translationCachePolicyBinding.test.ts",
+          "tests/imageGlossaryContext.test.ts",
+          "tests/http.test.ts",
+          "tests/httpError.test.ts",
+          "tests/commonUtilities.test.ts",
+          "tests/requestConfigSnapshot.test.ts",
+          "tests/translationAvailability.test.ts",
+          "tests/translationBroker.test.ts",
+          "tests/translationVisionBroker.test.ts",
+          "tests/translationBrokerStats.test.ts",
+          "tests/translationGlossaryIntegration.test.ts",
+          "tests/apiKeyPool.test.ts",
+          "tests/apiKeyRotation.test.ts",
+          "tests/areaTranslationCore.test.ts",
+          "tests/paragraphCopyRuntime.test.ts",
+          "tests/sectionTranslationRuntime.test.ts",
+          "tests/documentTranslationPresentation.test.ts",
+          "tests/serviceCatalog.test.ts",
+          "tests/visionProbe.test.ts",
+          "tests/backgroundVisionProbe.test.ts",
+          "tests/areaVisionRecognition.test.ts",
+          "tests/translationLayoutMeasurements.test.ts",
+          "tests/translationState.test.ts",
+          "tests/translationCore.test.ts",
+          "tests/serializationPerformance.test.ts",
+          "tests/translationTruncation.test.ts",
+          "tests/liveTextTranslation.test.ts",
+          "tests/sameTargetLanguageSlots.test.ts",
+          "tests/translationSnapshotProtection.test.ts",
+          "tests/syntheticCandidateFreshness.test.ts",
+          "tests/freeWebProviders.test.ts",
+          "tests/freeExtraWebProviders.test.ts",
+          "tests/freeChineseWebProviders.test.ts",
+          "tests/myMemoryProvider.test.ts"
+        ],
+        "modules": {
+          "src/core/translation/serialization.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "src/core/translation/slotProtocol.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdsUnchanged": true
+      },
+      "typeCheck": "passed",
+      "chromeBuild": {
+        "status": "passed",
+        "sha256": {
+          "manifest.json": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844",
+          "content-scripts/content.js": "f26cecfb0d64e0fe4a4171457955469c7d55e2f94d8203d9e59c5d85939aac07"
+        }
+      },
+      "firefoxBuild": "passed",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": "passed",
+      "affectedArchitecture": {
+        "testFiles": 2,
+        "testCases": 19,
+        "status": "passed"
+      },
+      "microbenchmark": {
+        "runtime": "v20.11.1",
+        "paragraphs": 500,
+        "payloadCharacters": 365669,
+        "scope": "Same-process Node.js microbenchmark of standard protocol parsing, alternating versions; includes result validation, no browser or live-provider claim.",
+        "summary": {
+          "previous": {
+            "samples": 20,
+            "minMs": 87.73221659999982,
+            "medianMs": 91.38533339999995,
+            "p95Ms": 120.30671679999978
+          },
+          "current": {
+            "samples": 20,
+            "minMs": 2.1150749999999787,
+            "medianMs": 2.280966600000011,
+            "p95Ms": 2.973425000000134
+          }
+        }
+      },
+      "scope": "Pure protocol tests and production builds. No new real-browser or live-provider evidence; mass remount blocking remains open.",
+      "docsBuild": "passed",
+      "docsCheck": "passed"
     }
   ]
 }

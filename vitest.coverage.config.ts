@@ -800,6 +800,7 @@ export default defineConfig({
                 'src/core/translation/public.ts',
                 'src/core/translation/registry.ts',
                 'src/core/translation/serialization.ts',
+                'src/core/translation/slotProtocol.ts',
                 'src/core/translation/layoutMeasurements.ts',
                 'src/core/translation/text.ts',
                 'src/core/translation/liveData.ts',

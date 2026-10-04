@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 815,
-    "functions": 14572,
+    "files": 816,
+    "functions": 14576,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -132,9 +132,9 @@
         "lines": 164
       },
       "src/core/translation": {
-        "files": 23,
-        "functions": 313,
-        "lines": 4622
+        "files": 24,
+        "functions": 317,
+        "lines": 4673
       },
       "src/features/area-translation": {
         "files": 14,
@@ -622,9 +622,15 @@
     },
     {
       "file": "src/core/translation/serialization.ts",
-      "sha256": "defbf5cadd149be1cfad31151be0125ccea5f33bdb72485664c6a9fc001c3b28",
-      "functionBodies": 36,
+      "sha256": "5cda43b62e4f8cad64278c5c8b73c9249307dac50045e1625749359ce37c4239",
+      "functionBodies": 26,
       "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/slotProtocol.ts",
+      "status": "source-read-and-traced",
+      "sha256": "189dfb2b439470e14ae2068ba234dca59898f97ef295560624195d3002c6593b",
+      "functionBodies": 14
     },
     {
       "file": "src/core/translation/text.ts",
@@ -711,6 +717,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/translationRequest.ts",
+      "status": "source-read-and-traced",
+      "sha256": "02f2633580c42755b85d5ac0c56d1636c504384202de4895edebbdacef645148",
+      "functionBodies": 90
+    },
+    {
       "file": "src/features/full-page-translation/content/translationStability.ts",
       "sha256": "97e07fc506b4b3d4ffb21b8c2620219b73362a15dab54938c0eb8c77f485f7d3",
       "functionBodies": 48,
@@ -718,9 +730,9 @@
     },
     {
       "file": "src/features/full-page-translation/content/viewportStability.ts",
+      "status": "source-read-and-traced",
       "sha256": "f48e3e06ea2bdd526c8316a52e17ae2938d12a7da7beef79ca8aca10952fc453",
-      "functionBodies": 21,
-      "status": "source-read-and-traced"
+      "functionBodies": 21
     },
     {
       "file": "src/platform/http/errors.ts",
@@ -1186,7 +1198,6 @@
     "src/features/full-page-translation/content/sentenceHighlight.ts",
     "src/features/full-page-translation/content/stateNotification.ts",
     "src/features/full-page-translation/content/syntheticRemount.ts",
-    "src/features/full-page-translation/content/translationRequest.ts",
     "src/features/full-page-translation/core/errorMessage.ts",
     "src/features/full-page-translation/core/hostMarkers.ts",
     "src/features/full-page-translation/embeddedFrames.ts",
@@ -1659,7 +1670,7 @@
   ],
   "priorities": [
     "Full-page state/render/request pipeline including mass framework remounts",
-    "Bound synchronous mass-remount work after indexed matching and grouped layout; protocol counting still scans once per marker and lease validation still needs pressure cases.",
+    "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Selection/hover/input translation lifecycle",
     "Image/area/document/video pipelines",
     "Config persistence, synchronization and providers",
@@ -1669,9 +1680,16 @@
     "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
   ],
   "progress": {
-    "sourceReadFiles": 75,
-    "sourceReadFunctionBodies": 1492,
-    "pendingFiles": 740,
+    "sourceReadFiles": 77,
+    "sourceReadFunctionBodies": 1586,
+    "pendingFiles": 739,
     "goalComplete": false
-  }
+  },
+  "observations": [
+    {
+      "file": "src/features/full-page-translation/content/translationRequest.ts",
+      "status": "pending-reproduction",
+      "issue": "AI microtask tasks retain the caller origins array and config snapshot; filtered-slot restoration also reads the original array after asynchronous work. Add delayed-mutation evidence before deciding the boundary fix."
+    }
+  ]
 }
