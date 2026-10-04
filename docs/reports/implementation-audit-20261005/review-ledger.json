@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 816,
-    "functions": 14576,
+    "files": 817,
+    "functions": 14577,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -152,9 +152,9 @@
         "lines": 1106
       },
       "src/features/full-page-translation": {
-        "files": 49,
-        "functions": 910,
-        "lines": 11112
+        "files": 50,
+        "functions": 911,
+        "lines": 11135
       },
       "src/features/glossary": {
         "files": 3,
@@ -681,6 +681,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/liveTextTranslation.ts",
+      "status": "source-read-and-traced",
+      "sha256": "25b5da9386c8cd3f97229a45a9305861ffdcc5b8eba004fdd92dad485967e8d5",
+      "functionBodies": 12
+    },
+    {
       "file": "src/features/full-page-translation/content/mutationObservation.ts",
       "sha256": "ec0b7f7207cfc38af3c596131ac6bf5e7088f98260c33ad74d9f4599bc2bf84d",
       "functionBodies": 7,
@@ -717,9 +723,15 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/translationConfigSnapshot.ts",
+      "status": "source-read-and-traced",
+      "sha256": "ed23e5ce01ab67c80b848564cd913f76ba73ea422bafea3156b870e527090681",
+      "functionBodies": 1
+    },
+    {
       "file": "src/features/full-page-translation/content/translationRequest.ts",
       "status": "source-read-and-traced",
-      "sha256": "02f2633580c42755b85d5ac0c56d1636c504384202de4895edebbdacef645148",
+      "sha256": "f99b8d5f42b4040e1c3621b044691cd83074b74687cea488728f12eb398c6caa",
       "functionBodies": 90
     },
     {
@@ -1186,7 +1198,6 @@
     "src/features/full-page-translation/content/excerpt.ts",
     "src/features/full-page-translation/content/frameSession.ts",
     "src/features/full-page-translation/content/liveTextRender.ts",
-    "src/features/full-page-translation/content/liveTextTranslation.ts",
     "src/features/full-page-translation/content/loadingIndicator.ts",
     "src/features/full-page-translation/content/modalPriority.ts",
     "src/features/full-page-translation/content/modalSession.ts",
@@ -1680,16 +1691,16 @@
     "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
   ],
   "progress": {
-    "sourceReadFiles": 77,
-    "sourceReadFunctionBodies": 1586,
-    "pendingFiles": 739,
+    "sourceReadFiles": 79,
+    "sourceReadFunctionBodies": 1599,
+    "pendingFiles": 738,
     "goalComplete": false
   },
   "observations": [
     {
       "file": "src/features/full-page-translation/content/translationRequest.ts",
-      "status": "pending-reproduction",
-      "issue": "AI microtask tasks retain the caller origins array and config snapshot; filtered-slot restoration also reads the original array after asynchronous work. Add delayed-mutation evidence before deciding the boundary fix."
+      "status": "fixed-and-verified",
+      "issue": "Copied input text and configuration arrays before AI microtask batching, filtering, cache identity and asynchronous restoration; captured configuration across whole-block-to-slot fallback. Added delayed-mutation regressions and reused the local auto language sample once per request."
     }
   ]
 }

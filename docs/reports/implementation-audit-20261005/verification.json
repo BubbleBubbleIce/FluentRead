@@ -1131,6 +1131,231 @@
       "scope": "Pure protocol tests and production builds. No new real-browser or live-provider evidence; mass remount blocking remains open.",
       "docsBuild": "passed",
       "docsCheck": "passed"
+    },
+    {
+      "name": "Freeze full-page inputs and fallback configuration, reuse local auto sample",
+      "baseCommit": "89c43d59",
+      "strictCoverage": {
+        "testFiles": 44,
+        "cases": 1331,
+        "testPaths": [
+          "tests/fullPageVisibilityScheduling.test.ts",
+          "tests/translationSourceStability.test.ts",
+          "tests/bilingualRemount.test.ts",
+          "tests/syntheticRemount.test.ts",
+          "tests/bilingualReplay.test.ts",
+          "tests/cloudVendorCatalog.test.ts",
+          "tests/translationVisionPayload.test.ts",
+          "tests/translationVisionProviders.test.ts",
+          "tests/aiSdkOpenAICompatible.test.ts",
+          "tests/free-translation.test.ts",
+          "tests/translationCachePolicyBinding.test.ts",
+          "tests/imageGlossaryContext.test.ts",
+          "tests/http.test.ts",
+          "tests/httpError.test.ts",
+          "tests/commonUtilities.test.ts",
+          "tests/requestConfigSnapshot.test.ts",
+          "tests/translationAvailability.test.ts",
+          "tests/translationBroker.test.ts",
+          "tests/translationVisionBroker.test.ts",
+          "tests/translationBrokerStats.test.ts",
+          "tests/translationGlossaryIntegration.test.ts",
+          "tests/apiKeyPool.test.ts",
+          "tests/apiKeyRotation.test.ts",
+          "tests/areaTranslationCore.test.ts",
+          "tests/paragraphCopyRuntime.test.ts",
+          "tests/sectionTranslationRuntime.test.ts",
+          "tests/documentTranslationPresentation.test.ts",
+          "tests/serviceCatalog.test.ts",
+          "tests/visionProbe.test.ts",
+          "tests/backgroundVisionProbe.test.ts",
+          "tests/areaVisionRecognition.test.ts",
+          "tests/translationLayoutMeasurements.test.ts",
+          "tests/translationState.test.ts",
+          "tests/translationCore.test.ts",
+          "tests/serializationPerformance.test.ts",
+          "tests/translationTruncation.test.ts",
+          "tests/liveTextTranslation.test.ts",
+          "tests/sameTargetLanguageSlots.test.ts",
+          "tests/translationSnapshotProtection.test.ts",
+          "tests/syntheticCandidateFreshness.test.ts",
+          "tests/freeWebProviders.test.ts",
+          "tests/freeExtraWebProviders.test.ts",
+          "tests/freeChineseWebProviders.test.ts",
+          "tests/myMemoryProvider.test.ts"
+        ],
+        "modules": {
+          "src/features/full-page-translation/content/liveTextTranslation.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "src/features/full-page-translation/content/translationConfigSnapshot.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "src/features/full-page-translation/content/translationRequest.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdsUnchanged": true
+      },
+      "typeCheck": "passed",
+      "chromeBuild": {
+        "status": "passed",
+        "sha256": {
+          "manifest.json": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844",
+          "content-scripts/content.js": "4760c42aeb561ca726b4bc4cf71c8bdd720dce1ec95887b71fb9f4abb38105e8"
+        }
+      },
+      "firefoxBuild": "passed",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": "passed",
+      "affectedArchitecture": {
+        "testFiles": 2,
+        "testCases": 19,
+        "status": "passed"
+      },
+      "controlledBrowser": {
+        "paragraphs": 500,
+        "functionalPassed": true,
+        "performanceTargetAchieved": false,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "visible": true,
+          "hidden": false,
+          "windowState": "normal",
+          "displayTarget": "secondary",
+          "browserFrontmost": false
+        },
+        "remountChecks": [
+          {
+            "hostWriteMs": 4.5,
+            "firstFrameMs": 190.69999980926514,
+            "wrappers": 500,
+            "nested": 0,
+            "exactOutputs": true
+          },
+          {
+            "hostWriteMs": 3.9000000953674316,
+            "firstFrameMs": 177.69999980926514,
+            "wrappers": 500,
+            "nested": 0,
+            "exactOutputs": true
+          },
+          {
+            "hostWriteMs": 4.5,
+            "firstFrameMs": 187.5,
+            "wrappers": 500,
+            "nested": 0,
+            "exactOutputs": true
+          }
+        ],
+        "phases": [
+          {
+            "name": "translate",
+            "elapsedMs": 2244.7000002861023,
+            "maxHeartbeatGapMs": 34.30000019073486,
+            "p95HeartbeatGapMs": 30.09999990463257,
+            "totalBlockingMs": 0,
+            "wrappers": 500,
+            "chineseWrappers": 0,
+            "hostClicks": 9,
+            "longTaskCount": 0,
+            "maxLongTaskMs": 0
+          },
+          {
+            "name": "remount-1",
+            "elapsedMs": 465.5,
+            "maxHeartbeatGapMs": 206.69999980926514,
+            "p95HeartbeatGapMs": 206.69999980926514,
+            "totalBlockingMs": 137,
+            "wrappers": 500,
+            "chineseWrappers": 0,
+            "hostClicks": 1,
+            "longTaskCount": 1,
+            "maxLongTaskMs": 187
+          },
+          {
+            "name": "remount-2",
+            "elapsedMs": 450.09999990463257,
+            "maxHeartbeatGapMs": 194.40000009536743,
+            "p95HeartbeatGapMs": 194.40000009536743,
+            "totalBlockingMs": 124,
+            "wrappers": 500,
+            "chineseWrappers": 0,
+            "hostClicks": 1,
+            "longTaskCount": 1,
+            "maxLongTaskMs": 174
+          },
+          {
+            "name": "remount-3",
+            "elapsedMs": 473.80000019073486,
+            "maxHeartbeatGapMs": 203.30000019073486,
+            "p95HeartbeatGapMs": 203.30000019073486,
+            "totalBlockingMs": 134,
+            "wrappers": 500,
+            "chineseWrappers": 0,
+            "hostClicks": 1,
+            "longTaskCount": 1,
+            "maxLongTaskMs": 184
+          },
+          {
+            "name": "scroll-translated",
+            "elapsedMs": 1345.6999998092651,
+            "maxHeartbeatGapMs": 23,
+            "p95HeartbeatGapMs": 21.90000009536743,
+            "totalBlockingMs": 0,
+            "wrappers": 500,
+            "chineseWrappers": 0,
+            "hostClicks": 12,
+            "longTaskCount": 0,
+            "maxLongTaskMs": 0
+          },
+          {
+            "name": "restore",
+            "elapsedMs": 211.5,
+            "maxHeartbeatGapMs": 36.40000009536743,
+            "p95HeartbeatGapMs": 36.40000009536743,
+            "totalBlockingMs": 0,
+            "wrappers": 0,
+            "chineseWrappers": 0,
+            "hostClicks": 1,
+            "longTaskCount": 0,
+            "maxLongTaskMs": 0
+          },
+          {
+            "name": "retranslate-cached",
+            "elapsedMs": 3229.4000000953674,
+            "maxHeartbeatGapMs": 35.69999980926514,
+            "p95HeartbeatGapMs": 24.5,
+            "totalBlockingMs": 0,
+            "wrappers": 500,
+            "chineseWrappers": 0,
+            "hostClicks": 17,
+            "longTaskCount": 0,
+            "maxLongTaskMs": 0
+          }
+        ],
+        "requests": 501,
+        "items": 501,
+        "submittedChinese": [],
+        "consoleErrors": [],
+        "cleanupVerified": true,
+        "screenshotInspected": true
+      },
+      "openPerformanceIssue": "500-paragraph remounts still synchronously block the observer checkpoint. Functional success is not performance-target completion.",
+      "docsBuild": "passed",
+      "docsCheck": "passed"
     }
   ]
 }

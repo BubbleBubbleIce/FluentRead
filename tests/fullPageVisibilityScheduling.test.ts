@@ -312,6 +312,7 @@ import {
     getTranslationInvocationIdentity,
     translateTextSlots,
     type FullPageTranslationConfigSnapshot,
+    type FullPageTranslationSessionCache,
 } from '@/src/features/full-page-translation/content/translationRequest';
 import {
     createFullPageRequestSessionState,
@@ -2290,6 +2291,68 @@ describe("全文翻译可见性锚点", () => {
         expect(runtime.requests).toHaveBeenCalledTimes(2);
     });
 
+    it('AI 微任务合批使用调用时的原文与配置，外部修改不污染旧请求或会话缓存', async () => {
+        const requestController = new AbortController();
+        const session: FullPageTranslationSessionCache = {active: true, translationSlotCache: new Map(), translationRequestCache: new Map(),
+            requestSignal: requestController.signal, requestControllers: new Set<AbortController>(), requestQueueSessions: new Set()};
+        const ids = ['library-a'];
+        const excluded = ['de'];
+        const firstSnapshot = translationSnapshot({service: 'ai', model: 'ai-model', enableAIMultiSegment: true,
+            glossaryIds: ids, excludedLanguages: excluded});
+        const originalSnapshot = {...firstSnapshot, glossaryIds: ['library-a'], excludedLanguages: ['de']};
+        const origins = ['First paragraph'];
+        const first = translateTextSlots(origins, firstSnapshot, undefined, undefined, session);
+        origins[0] = 'Edited paragraph';
+        origins.push('Injected paragraph');
+        firstSnapshot.targetLanguage = 'ja';
+        firstSnapshot.model = 'edited-model';
+        ids.push('library-b');
+        excluded.push('fr');
+        const second = translateTextSlots(['Neighbor paragraph'], originalSnapshot, undefined, undefined, session);
+        await expect(Promise.all([first, second])).resolves.toEqual([['译:First paragraph'], ['译:Neighbor paragraph']]);
+        expect(runtime.requests).toHaveBeenCalledTimes(1);
+        expect(runtime.requests).toHaveBeenCalledWith(['First paragraph', 'Neighbor paragraph']);
+        expect(runtime.requestOptions[0]).toMatchObject({modelOverride: 'ai-model', targetLanguage: 'zh', glossaryIds: ['library-a']});
+        await expect(translateTextSlots(['First paragraph'], originalSnapshot, undefined, undefined, session))
+            .resolves.toEqual(['译:First paragraph']);
+        expect(runtime.requests).toHaveBeenCalledTimes(1);
+        clearFullPageTranslationRequestCache(session);
+    });
+
+    it('逐槽语言过滤等待 provider 期间，修改外部数组不替换跳过槽或注入额外返回值', async () => {
+        runtime.clearlyTargetLanguage.mockImplementation((value) => value === '中文原文');
+        const response = deferred<string[]>();
+        runtime.requests.mockReturnValueOnce(response.promise);
+        const origins = ['中文原文', 'Foreign source'];
+        const request = translateTextSlots(origins, translationSnapshot());
+        origins[0] = 'Edited skipped source';
+        origins.push('Injected source');
+        response.resolve(['外语译文']);
+        await expect(request).resolves.toEqual(['中文原文', '外语译文']);
+        expect(runtime.requests).toHaveBeenCalledWith(['Foreign source']);
+    });
+
+    it('本地 auto 逐槽翻译只构造一次整段语言检测样本，所有工作者使用相同来源', async () => {
+        const origins = Array.from({length: 200}, (_, index) => `Local batch source ${index}.`);
+        const sample = origins.join('\n');
+        const originalJoin = Array.prototype.join;
+        let sampleBuilds = 0;
+        const join = vi.spyOn(Array.prototype, 'join').mockImplementation(function (this: string[], separator) {
+            if (this.length === origins.length && this[0] === origins[0]) sampleBuilds += 1;
+            return originalJoin.call(this, separator);
+        });
+        let translations: string[];
+        try {
+            translations = await translateTextSlots(origins, translationSnapshot({service: 'localTranslation', sourceLanguage: 'auto'}));
+        } finally {
+            join.mockRestore();
+        }
+        expect(translations).toEqual(origins.map(origin => `译:${origin}`));
+        expect(runtime.requestOptions).toHaveLength(200);
+        expect(runtime.requestOptions.every(option => option.sourceLanguageDetectionText === sample)).toBe(true);
+        expect(sampleBuilds).toBe(1);
+    });
+
     it('AI 多段按完整请求快照分批，并以四个文本槽为硬上限', async () => {
         const session = {active: true, translationSlotCache: new Map()};
         const firstModel = translationSnapshot({
@@ -2492,7 +2555,7 @@ describe("全文翻译可见性锚点", () => {
         await expect(result).rejects.toMatchObject({name: 'AbortError'});
     });
 
-    it('AI 多段单候选执行读取调用方提交时的可变槽列表', async () => {
+    it('AI 单候选排队后清空调用者数组仍使用原快照，取消由 AbortSignal 表达', async () => {
         const session = {active: true, translationSlotCache: new Map()};
         const enabled = translationSnapshot({
             service: 'ai',
@@ -2503,8 +2566,8 @@ describe("全文翻译可见性锚点", () => {
         const result = translateTextSlots(origins, enabled, undefined, undefined, session);
 
         origins.length = 0;
-        await expect(result).resolves.toEqual([]);
-        expect(runtime.requests).not.toHaveBeenCalled();
+        await expect(result).resolves.toEqual(['译:Removed before execution']);
+        expect(runtime.requests).toHaveBeenCalledWith(['Removed before execution']);
     });
 
     it('AI 多段共享请求在全部候选取消后终止底层批次', async () => {

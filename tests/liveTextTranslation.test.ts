@@ -185,6 +185,33 @@ describe('双语正文整块翻译', () => {
         }
     });
 
+    it('整块请求等待后回退逐槽仍沿用入口配置，外部修改不切换语言、模型或术语', async () => {
+        const target = paragraph();
+        const ids = ['library-a'];
+        const excluded = ['de'];
+        const mutable = {...bilingual, model: 'original-model', glossaryIds: ids, excludedLanguages: excluded};
+        const options: unknown[] = [];
+        runtime.translateTextSlots
+            .mockImplementationOnce(async (_origins, requestSnapshot) => {
+                options.push({...requestSnapshot, glossaryIds: [...requestSnapshot.glossaryIds], excludedLanguages: [...requestSnapshot.excludedLanguages]});
+                mutable.targetLanguage = 'ja';
+                mutable.model = 'edited-model';
+                ids.push('library-b');
+                excluded.push('fr');
+                await Promise.resolve();
+                return [];
+            })
+            .mockImplementationOnce(async (_origins, requestSnapshot) => {
+                options.push(requestSnapshot);
+                return ['译:Read', '译:the guide', '译:.'];
+            });
+        const result = await createTranslationRequest(target, 'content', 'bilingual', mutable);
+        expect(result).toMatchObject({translations: ['译:Read', '译:the guide', '译:.']});
+        expect(options).toHaveLength(2);
+        for (const option of options) expect(option).toMatchObject({targetLanguage: 'zh', model: 'original-model',
+            glossaryIds: ['library-a'], excludedLanguages: ['de']});
+    });
+
     it('整块译文与原文一致时按未变化上报，不再逐槽请求', async () => {
         const target = paragraph();
         runtime.translateTextSlots.mockImplementation(async () => ['Read the guide.']);

@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/liveTextTranslation.ts
  * 文件职责：按候选类型、展示模式和识别范围选择文本槽请求，保留异步提交所需的来源与译文快照。
- * 主要内容：相同译文保留原文且不重复展示；为正文双语构造文本快照，对可无损拍平的多槽候选重建整段原文并整块请求、整段译文回填首个槽位，为交互控件和仅译文模式构造带前后缀的实时 Text 槽结果，为按钮型 input 构造属性替换结果，统一传递取消、重试、范围与会话参数。
+ * 主要内容：相同译文保留原文且不重复展示；冻结整个请求与回退链路的配置，为正文双语构造文本快照，对可无损拍平的多槽候选重建整段原文并整块请求、整段译文回填首个槽位，为交互控件和仅译文模式构造带前后缀的实时 Text 槽结果，为按钮型 input 构造属性替换结果，统一传递取消、重试、范围与会话参数。
  * 模块边界：本文件不管理 DOM 状态、不决定候选、不监听 mutation；runtime 负责 generation 校验和最终渲染。
  */
 import {
@@ -15,6 +15,7 @@ import {
 import type {TranslationScope, TranslationTextProtectionOptions} from '@/src/core/translation/public';
 import {hasDistinctTranslation} from '@/src/core/translation/result';
 import type {TranslationQueueSession} from '@/src/services/translation/queue';
+import {copyFullPageTranslationConfigSnapshot} from './translationConfigSnapshot';
 import {
     translateTextSlots,
     type FullPageTranslationConfigSnapshot,
@@ -189,6 +190,7 @@ export async function createTranslationRequest(
     forceFailedRequest = false,
     scope?: TranslationScope,
 ): Promise<TranslationResult> {
+    snapshot = copyFullPageTranslationConfigSnapshot(snapshot);
     const controlValueAttribute = getTranslatableControlValueAttribute(node);
     if (controlValueAttribute) {
         return translateControlValue(node, controlValueAttribute, snapshot, signal,

@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/translationRequest.ts
  * 文件职责：为单次全文翻译会话冻结请求配置，并执行文本槽的批量、AI 跨候选合并、分包、回退与会话级结果复用。
- * 主要内容：捕获服务/模型/语言/排除列表/缓存/展示快照，先过滤排除语言的文本槽再合批，在本地保留尚未排版的三美元公式源码，构造显式 client 参数，按服务选择批译策略，为 Chrome auto 富文本包保留无哨兵检测样本，并严格隔离 AI 批次快照与维护有界的会话槽缓存。
+ * 主要内容：在调用入口复制原文与服务/模型/语言/术语/排除列表快照，先过滤排除语言的文本槽再合批，在本地保留尚未排版的三美元公式源码，构造显式 client 参数，按服务选择批译策略，为本地模型只构造一次整段语言样本，为 Chrome auto 富文本包保留无哨兵检测样本，严格隔离 AI 批次并维护有界会话缓存。
  * 模块边界：本文件不发现候选、不持有 DOM 翻译状态也不渲染译文；runtime 提供会话缓存和取消作用域，client 负责后台协议与队列执行。
  */
 import {resolveConfiguredModel, services, servicesType} from '@/src/core/config/catalog';
@@ -23,39 +23,15 @@ import {
     type TranslationQueueSession,
 } from '@/src/services/translation/queue';
 
+import {copyFullPageTranslationConfigSnapshot, type FullPageTranslationConfigSnapshot, type PageTranslationConfigOverrides} from './translationConfigSnapshot';
+
 const FULL_PAGE_TRANSLATION_CACHE_LIMIT = 512;
 const FULL_PAGE_TRANSLATION_REQUEST_CACHE_LIMIT = 512;
 const FULL_PAGE_TRANSLATION_REMOUNT_GRACE_MS = 250;
 const AI_MULTI_SEGMENT_MAX_TEXT_SLOTS = 4;
 const AI_MULTI_SEGMENT_MAX_CHARACTERS = 2_000;
 
-export interface FullPageTranslationConfigSnapshot {
-    glossaryRevision?: string;
-    glossaryIds?: readonly string[] | null;
-    service: string;
-    model: string;
-    thinking: boolean;
-    sourceLanguage: string;
-    targetLanguage: string;
-    excludedLanguages?: readonly string[];
-    useCache: boolean;
-    enableAIContext: boolean;
-    enableAIMultiSegment: boolean;
-    displayMode: 'bilingual' | 'single';
-    style: number;
-    profileId?: string;
-    requestOverridesApplied?: true;
-}
-
-/** 单次快捷翻译可覆盖的公开请求维度；未提供的字段继续跟随全局网页设置。 */
-export interface PageTranslationConfigOverrides {
-    glossaryIds?: readonly string[] | null;
-    service?: string;
-    model?: string;
-    targetLanguage?: string;
-    displayMode?: 'bilingual' | 'single';
-    profileId?: string;
-}
+export type {FullPageTranslationConfigSnapshot, PageTranslationConfigOverrides} from './translationConfigSnapshot';
 
 export function getTranslationInvocationIdentity(snapshot: FullPageTranslationConfigSnapshot): string {
     return JSON.stringify([
@@ -222,6 +198,8 @@ async function translateSlotsIndividually(
         normalizeMaxConcurrentTranslations(config.maxConcurrentTranslations),
         origins.length,
     );
+    const sourceLanguageDetectionText = snapshot.service === services.localTranslation && snapshot.sourceLanguage === 'auto'
+        ? origins.join('\n') : undefined;
     let failed = false;
     let firstError: unknown;
     let hasFirstError = false;
@@ -240,8 +218,8 @@ async function translateSlotsIndividually(
                     createSnapshotTranslateOptions(snapshot, {
                         signal: siblingController.signal,
                         queueSession,
-                        ...(snapshot.service === services.localTranslation && snapshot.sourceLanguage === 'auto'
-                            ? {sourceLanguageDetectionText: origins.join('\n')}
+                        ...(sourceLanguageDetectionText !== undefined
+                            ? {sourceLanguageDetectionText}
                             : {}),
                     }));
             } catch (error) {
@@ -672,7 +650,6 @@ async function translateTextSlotsDirectly(
     queueSession?: TranslationQueueSession,
     fullPageSession?: FullPageTranslationSessionCache,
 ): Promise<string[]> {
-    if (origins.length === 0) return [];
     throwIfAborted(signal);
     // 小模型直接翻译各槽，不要求模型复述结构标记；短链接借用段落正文检测语言。
     if (snapshot.service === services.localTranslation) {
@@ -761,6 +738,9 @@ export async function translateTextSlots(
 ): Promise<string[]> {
     if (origins.length === 0) return [];
     throwIfAborted(signal);
+    // 缓存身份、微任务合批、协议回退与跳过槽回填都必须使用同一次调用的值。
+    origins = Array.from(origins);
+    snapshot = copyFullPageTranslationConfigSnapshot(snapshot);
     // Codeforces 在 MathJax 排版前使用 $$$...$$$。公式源码留在本地，
     // 只把两侧正文交给现有槽请求；回填不依赖模型保留占位符，也不改宿主 DOM。
     // 仅处理完整的三美元定界符，不把普通价格或未闭合片段猜成公式。
@@ -795,8 +775,7 @@ export async function translateTextSlots(
         .map((origin, index) => shouldKeepOriginalSlot(origin ?? '', snapshot) ? -1 : index)
         .filter((index) => index >= 0);
     if (translatedIndexes.length === 0) return [...origins];
-    // 保留全量数组的原引用，使 AI 微任务合批仍读取调用方提交时的槽列表；
-    // 只有确实跳过目标语言/非文字槽时才创建需要回填的新数组。
+    // 全量路径复用入口自己的快照；只有跳过语言槽时才创建回填所需的子集。
     const requestOrigins = translatedIndexes.length === origins.length
         ? origins
         : translatedIndexes.map((index) => origins[index] ?? '');

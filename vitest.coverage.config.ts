@@ -715,6 +715,7 @@ export default defineConfig({
                 'src/features/full-page-translation/content/requestSession.ts',
                 'src/features/full-page-translation/content/translationStability.ts',
                 'src/features/full-page-translation/content/translationRequest.ts',
+                'src/features/full-page-translation/content/translationConfigSnapshot.ts',
                 'src/features/full-page-translation/content/viewportStability.ts',
                 'src/features/full-page-translation/progress.ts',
                 'src/features/full-page-translation/ui/progressPanelVisibility.ts',
