@@ -1,0 +1,184 @@
+#!/usr/bin/env node
+'use strict';
+
+// 隔离后台 Edge 中用真实 Control 手势验证悬浮局部窗口、连续触发、原文恢复和重新翻译。
+// 使用本地确定性 Microsoft transport；不连接日常 profile，不验证实时服务质量。
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const http = require('node:http');
+const crypto = require('node:crypto');
+const assert = require('node:assert/strict');
+const {startTranslationFixtureServer, installTranslationFixtureOnWorker} = require('../run-full-page-translation-test.cjs');
+const arg = (name, fallback) => {const index = process.argv.indexOf(`--${name}`); return index < 0 ? fallback : process.argv[index + 1];};
+const extensionDir = path.resolve(arg('extension-dir', '.output/chrome-mv3'));
+const artifactsDir = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-hover-window'));
+const baseline = process.argv.includes('--baseline');
+const {chromium} = require(path.join(arg('playwright-root', path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules')), 'playwright'));
+const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(arg('focus-safe-helper', path.join(os.homedir(), '.codex/skills/fluentread-extension-ui-test/scripts/focus-safe-browser.cjs')));
+const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-hover-window-'));
+const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const cases = [
+  {id:'giant-tail', value:'Earlier sentence supplies ordinary readable context. '.repeat(2400) + 'Tailmarker keeps the hovered reading position and nearby context. '.repeat(120), marker:'Tailmarker'},
+  {id:'empty-nodes', value:'Readable sentence keeps the nearby reading context. '.repeat(120), offset:2000, emptyNodes:20000},
+  {id:'long-token', value:'a'.repeat(2500) + ' Nearby context preserves the hovered word and source. '.repeat(120), offset:500},
+];
+const html = '<!doctype html><meta charset="utf-8"><title>Hover range fixture</title><style>body{font:16px/1.7 system-ui;margin:40px}#target{max-width:740px;overflow-wrap:anywhere}#probe{position:fixed;right:20px;top:20px;z-index:100000}</style><button id="probe" translate="no">Host click</button><main><div id="target"></div></main><script>window.probeClicks=0;document.querySelector("#probe").onclick=()=>window.probeClicks++;</script>';
+const server = http.createServer((_request, response) => {response.writeHead(200, {'content-type':'text/html;charset=utf-8'}); response.end(html);});
+const report = {baseline, evidence:'Production extension; local deterministic transport, temporary background-visible Edge',
+  buildSha256:sha256(path.join(extensionDir,'content-scripts/content.js')),
+  cachePolicy:'Microsoft hover disables persistent cache; continuous hover reuses its active request',
+  cases:[], consoleErrors:[]};
+fs.mkdirSync(artifactsDir,{recursive:true});
+
+async function startPhase(page) {
+  await page.evaluate(() => {
+    window.__hoverTasks=[]; window.__hoverTicks=[];
+    window.__hoverObserver=new PerformanceObserver(list=>window.__hoverTasks.push(...list.getEntries().map(entry=>entry.duration)));
+    window.__hoverObserver.observe({type:'longtask',buffered:false});
+    let previous=performance.now();
+    window.__hoverTimer=setInterval(()=>{const now=performance.now();window.__hoverTicks.push(now-previous);previous=now;},20);
+  });
+}
+
+async function finishPhase(page, name) {
+  return page.evaluate(name=>{
+    window.__hoverObserver.disconnect(); clearInterval(window.__hoverTimer);
+    return {name, longTasksMs:window.__hoverTasks, maxHeartbeatGapMs:Math.max(0,...window.__hoverTicks)};
+  },name);
+}
+
+async function sourcePoint(page, offset) {
+  return page.evaluate(offset=>{
+    const owner=document.getElementById('target');
+    const walker=document.createTreeWalker(owner,4);
+    let node, remaining=offset;
+    while ((node=walker.nextNode())) {
+      if(node.parentElement.closest('[data-fr-translation-owned="true"]'))continue;
+      if(remaining>=node.length){remaining-=node.length;continue;}
+      const range=document.createRange();range.setStart(node,remaining);range.setEnd(node,remaining+1);
+      let rect=range.getBoundingClientRect();window.scrollBy(0,rect.top-innerHeight*0.45);
+      rect=range.getBoundingClientRect();return {x:rect.left+Math.min(3,rect.width/2),y:rect.top+Math.min(8,rect.height/2),top:rect.top};
+    }
+    throw new Error('Source offset unavailable');
+  },offset);
+}
+
+async function gesture(page, offset) {
+  const point=await sourcePoint(page,offset);
+  await page.mouse.move(0,0); await page.mouse.move(point.x,point.y,{steps:4});
+  await page.waitForTimeout(50);
+  await page.keyboard.down('Control'); await page.keyboard.up('Control');
+}
+
+async function originalSource(page) {
+  return page.evaluate(()=>{
+    const clone=document.getElementById('target').cloneNode(true);
+    clone.querySelectorAll('[data-fr-translation-owned="true"]').forEach(node=>node.remove());
+    return clone.textContent;
+  });
+}
+
+(async()=>{
+  let launched,provider;
+  try {
+    await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+    provider=await startTranslationFixtureServer([],5);
+    launched=await launchFocusSafePersistentContext({chromium,profileDir,
+      browserPath:arg('browser-path','/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'),
+      headless:false,background:true,viewport:{width:1280,height:900},
+      browserArgs:[`--disable-extensions-except=${extensionDir}`,`--load-extension=${extensionDir}`,'--no-first-run','--no-default-browser-check']});
+    const {context}=launched;
+    report.launchMode=launched.launchMode;report.focusPolicy=launched.focusPolicy;
+    report.windowPlacement=Object.fromEntries(['mode','visible','hidden','windowState','displayTarget','browserFrontmost'].map(key=>[key,launched.windowPlacement?.[key]]));
+    const worker=context.serviceWorkers().find(worker=>worker.url().startsWith('chrome-extension://')) || await context.waitForEvent('serviceworker');
+    await installTranslationFixtureOnWorker(worker,{translationUrl:provider.translationUrl,blockedUrl:provider.blockedUrl});
+    const setup=await newPageWithoutForeground(context);
+    await setup.goto(`chrome-extension://${new URL(worker.url()).host}/icon/128.png`);
+    await setup.evaluate(async()=>{
+      const current=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});
+      const patch={on:true,hotkey:'Control',customHotkey:'',mouseHoverTranslationDelay:0,service:'microsoft',from:'auto',to:'zh-Hans',display:1,translationScope:'content',longParagraphLineBreak:false,uiLanguageSetupCompleted:true,uiLanguage:'zh-CN'};
+      const saved=await chrome.runtime.sendMessage({type:'persistConfig',mode:'patch',config:patch,
+        expected:Object.fromEntries(Object.keys(patch).map(key=>[key,current.value[key]])),clientId:'hover-window-fixture',sequence:1,baseRevision:current.value.__fluentConfigRevision||0});
+      if(!saved?.success)throw new Error('Fixture configuration failed');
+    });
+    await setup.close();
+    for(const fixture of cases) {
+      const page=await newPageWithoutForeground(context);
+      page.on('pageerror',error=>report.consoleErrors.push(error.message));
+      await page.goto(`http://127.0.0.1:${server.address().port}/${fixture.id}`,{waitUntil:'domcontentloaded'});
+      await page.locator('#fluent-read-page-styles').waitFor({state:'attached'});
+      await page.evaluate(fixture=>{
+        const owner=document.getElementById('target');owner.textContent=fixture.value;
+        for(let index=0;index<(fixture.emptyNodes||0);index++)owner.append(document.createTextNode(''));
+      },fixture);
+      await activateExtensionTabWithoutForeground(context,page); await page.waitForTimeout(500);
+      const offset=fixture.offset ?? fixture.value.indexOf(fixture.marker)+8;
+      const requestsBefore=provider.requestCount();
+      const result={id:fixture.id,originalCharacters:fixture.value.length,emptyNodes:fixture.emptyNodes||0,phases:[]};
+      report.cases.push(result);
+      await sourcePoint(page,offset); await page.waitForTimeout(150);
+      await startPhase(page); await gesture(page,offset);
+      await page.waitForFunction(()=>document.querySelector('#target .fluent-read-bilingual-content'),undefined,{timeout:15000});
+      await page.waitForTimeout(300); await page.locator('#probe').click();
+      result.phases.push(await finishPhase(page,'translate'));
+      const sourceChunk=await page.evaluate(({offset,marker})=>{
+        const chunk=document.querySelector('#target [data-fr-translation-manual="true"]');
+        const owner=document.getElementById('target');
+        const clone=(chunk||owner).cloneNode(true);
+        clone.querySelectorAll('[data-fr-translation-owned="true"]').forEach(node=>node.remove());
+        const walker=document.createTreeWalker(owner,4);
+        let node,remaining=offset,hitInSourceChunk=false;
+        while((node=walker.nextNode())){
+          if(node.parentElement.closest('[data-fr-translation-owned="true"]'))continue;
+          if(remaining>=node.length){remaining-=node.length;continue;}
+          hitInSourceChunk=!chunk||chunk.contains(node);break;
+        }
+        return {characters:clone.textContent.length,hitInSourceChunk,markerPreserved:!marker||clone.textContent.includes(marker)};
+      },{offset,marker:fixture.marker});
+      result.sourceChunkCharacters=sourceChunk.characters;
+      result.hitInSourceChunk=sourceChunk.hitInSourceChunk;
+      result.markerPreserved=sourceChunk.markerPreserved;
+      assert.ok(result.hitInSourceChunk && result.markerPreserved,fixture.id+': hovered source preserved');
+      if(!baseline)assert.ok(result.sourceChunkCharacters>0 && result.sourceChunkCharacters<=1600,fixture.id+': bounded source');
+      assert.equal(await originalSource(page),fixture.value,fixture.id+': original text');
+      const translatedRequests=provider.requestCount();
+      assert.equal(translatedRequests,requestsBefore+1,fixture.id+': one initial upstream request');
+      const point=await sourcePoint(page,offset);
+      await startPhase(page); await page.keyboard.down('Control');
+      try {for(let index=0;index<12;index++){await page.mouse.move(point.x+(index%2),point.y);await page.waitForTimeout(30);}}
+      finally {await page.keyboard.up('Control');}
+      await page.waitForTimeout(150); result.phases.push(await finishPhase(page,'continuous-hover'));
+      assert.equal(provider.requestCount(),translatedRequests,fixture.id+': no repeated upstream work');
+      assert.equal(await page.locator('#target .fluent-read-bilingual-content').count(),1);
+      assert.equal(await page.locator('#target .fluent-read-bilingual-content .fluent-read-bilingual-content').count(),0);
+      await page.screenshot({path:path.join(artifactsDir,fixture.id+'.png')});
+      await startPhase(page); await gesture(page,offset);
+      await page.waitForFunction(()=>!document.querySelector('#target .fluent-read-bilingual-content'));
+      await page.waitForTimeout(150); result.phases.push(await finishPhase(page,'restore'));
+      assert.equal(await originalSource(page),fixture.value,fixture.id+': restored text');
+      await startPhase(page); await gesture(page,offset);
+      await page.waitForFunction(()=>document.querySelector('#target .fluent-read-bilingual-content'));
+      await page.waitForTimeout(150); result.phases.push(await finishPhase(page,'retranslate'));
+      assert.equal(provider.requestCount(),translatedRequests+1,fixture.id+': one request after explicit restore');
+      assert.deepEqual(provider.requestPayloads()[translatedRequests],provider.requestPayloads()[requestsBefore],
+        fixture.id+': same source after restore');
+      await gesture(page,offset); await page.waitForFunction(()=>!document.querySelector('#target .fluent-read-bilingual-content'));
+      await page.waitForTimeout(150);
+      assert.equal(await originalSource(page),fixture.value);
+      result.requests=provider.requestCount()-requestsBefore;result.hostClicks=await page.evaluate(()=>window.probeClicks);
+      result.originalPreserved=true; result.restoreAndRetranslate=true; result.continuousHoverNoRepeatedRequests=true;
+      await page.close();
+    }
+    assert.deepEqual(report.consoleErrors,[]);report.ok=true;
+    assert.equal(report.buildSha256,sha256(path.join(extensionDir,'content-scripts/content.js')),'Build changed during browser evidence');
+    console.log(JSON.stringify(report,null,2));
+  } catch(error) {report.ok=false;report.failure=error.stack;console.error(error);process.exitCode=1;}
+  finally {
+    report.requestPayloads=provider?.requestPayloads().map(payload=>payload.map(value=>({
+      characters:value.length,sha256:crypto.createHash('sha256').update(value).digest('hex'),
+    })));
+    fs.writeFileSync(path.join(artifactsDir,'report.json'),JSON.stringify(report,null,2));
+    await launched?.close();await provider?.close();server.close();fs.rmSync(profileDir,{recursive:true,force:true});
+  }
+})();

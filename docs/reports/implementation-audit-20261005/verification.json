@@ -2773,6 +2773,547 @@
       "openPerformanceIssue": "500-owner synchronous whole-root remounts still produce 122-153ms long tasks. Bound checkpoint work and validate viewport stability, cancellation, exact outputs and restore. Hover visual-range traversal also needs a real work budget.",
       "docsBuild": "passed",
       "docsCheck": "passed"
+    },
+    {
+      "name": "Bound hover visual discovery and long-token chunks around the real caret",
+      "baseCommit": "63999867",
+      "scope": "visual.ts and its hover/source/render callers; affected suites and three controlled production-build hover cases. Not whole-repository completion.",
+      "strictCoverage": {
+        "testFiles": 25,
+        "testCases": 920,
+        "tests": [
+          "tests/translationCore.test.ts",
+          "tests/allNodesTranslationCore.test.ts",
+          "tests/siteAdaptationSession.test.ts",
+          "tests/fullPageVisibilityScheduling.test.ts",
+          "tests/bilingualRemount.test.ts",
+          "tests/translationStability.test.ts",
+          "tests/translationState.test.ts",
+          "tests/syntheticRemount.test.ts",
+          "tests/bilingualReplay.test.ts",
+          "tests/pageTranslationAdvanced.test.ts",
+          "tests/serializationPerformance.test.ts",
+          "tests/translationLayoutMeasurements.test.ts",
+          "tests/fullPagePriority.test.ts",
+          "tests/fullPageHostClassPreservation.test.ts",
+          "tests/sectionTranslationRuntime.test.ts",
+          "tests/sectionTranslationRegion.test.ts",
+          "tests/sectionTranslationCore.test.ts",
+          "tests/areaTranslationCore.test.ts",
+          "tests/translationSnapshotProtection.test.ts",
+          "tests/sameTargetLanguageSlots.test.ts",
+          "tests/translationSourceStability.test.ts",
+          "tests/hoverTranslationContentFeature.test.ts",
+          "tests/paragraphCopyRuntime.test.ts",
+          "tests/translationTruncation.test.ts",
+          "tests/syntheticCandidateFreshness.test.ts"
+        ],
+        "modules": {
+          "src/core/translation/visual.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdsUnchanged": true,
+        "newExecutedCoreCases": 19
+      },
+      "typeCheck": "passed",
+      "chromeBuild": {
+        "status": "passed",
+        "sha256": {
+          "manifest.json": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844",
+          "content-scripts/content.js": "9f9fdc54b7df14c2388779458d720e6bddc3429bc1ebc0c22e206f64c2ad6bcd"
+        }
+      },
+      "firefoxBuild": "passed",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "passed",
+        "registeredFiles": 466,
+        "registeredCases": 6058
+      },
+      "affectedArchitecture": {
+        "status": "passed",
+        "testFiles": 3,
+        "testCases": 815,
+        "wholeRepositoryGatePassed": false
+      },
+      "regressionEvidence": {
+        "redFirstWindowCases": 8,
+        "redUnicodeTerminalCases": 2,
+        "previousEmptyNodeDataReads": 40000,
+        "currentEmptyNodeDataReadUpperBound": 8192,
+        "localCapturedCharacterLimit": 16384,
+        "traversalHopsPerDirection": 1024,
+        "requestRangeCharacterLimit": 1600,
+        "sameOriginalTextNodesAndOffsets": true,
+        "unicodeTerminalAndCrossNodeBoundaries": true
+      },
+      "controlledBaseline": {
+        "buildSha256": "8442ec2634c0d7c7e84b2ad0f58668d29f96d760719377a0a5d57c5a10de462c",
+        "functionalPassed": true,
+        "cases": [
+          {
+            "id": "giant-tail",
+            "originalCharacters": 135120,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [
+                  1107,
+                  402
+                ],
+                "maxHeartbeatGapMs": 1145
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 23.09999990463257
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 32.40000009536743
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [
+                  1064,
+                  400
+                ],
+                "maxHeartbeatGapMs": 1087
+              }
+            ],
+            "sourceChunkCharacters": 135120,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "empty-nodes",
+            "originalCharacters": 6240,
+            "emptyNodes": 20000,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 54.40000009536743
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.40000009536743
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.699999809265137
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 37.40000009536743
+              }
+            ],
+            "sourceChunkCharacters": 1560,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "long-token",
+            "originalCharacters": 9100,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 55.19999980926514
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.199999809265137
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.200000286102295
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.09999990463257
+              }
+            ],
+            "sourceChunkCharacters": 2500,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          }
+        ],
+        "boundary": "Unmodified seventh production build, one quiet deterministic transport run. Microsoft hover deliberately disables persistent cache; explicit restore starts one new request. Continuous hover starts none. Not a live-provider or general speedup benchmark."
+      },
+      "controlledBrowser": [
+        {
+          "buildSha256": "9f9fdc54b7df14c2388779458d720e6bddc3429bc1ebc0c22e206f64c2ad6bcd",
+          "functionalPassed": true,
+          "evidence": "Production extension; local deterministic transport, temporary background-visible Edge",
+          "cachePolicy": "Microsoft hover disables persistent cache; continuous hover reuses its active request",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "visible": true,
+            "hidden": false,
+            "windowState": "normal",
+            "displayTarget": "secondary",
+            "browserFrontmost": false
+          },
+          "cases": [
+            {
+              "id": "giant-tail",
+              "originalCharacters": 135120,
+              "emptyNodes": 0,
+              "phases": [
+                {
+                  "name": "translate",
+                  "longTasksMs": [
+                    51
+                  ],
+                  "maxHeartbeatGapMs": 62.40000009536743
+                },
+                {
+                  "name": "continuous-hover",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 21.699999809265137
+                },
+                {
+                  "name": "restore",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 21.59999990463257
+                },
+                {
+                  "name": "retranslate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 33.5
+                }
+              ],
+              "sourceChunkCharacters": 1550,
+              "requests": 2,
+              "hostClicks": 1,
+              "originalPreserved": true,
+              "restoreAndRetranslate": true,
+              "continuousHoverNoRepeatedRequests": true
+            },
+            {
+              "id": "empty-nodes",
+              "originalCharacters": 6240,
+              "emptyNodes": 20000,
+              "phases": [
+                {
+                  "name": "translate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 44.30000019073486
+                },
+                {
+                  "name": "continuous-hover",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.199999809265137
+                },
+                {
+                  "name": "restore",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.09999990463257
+                },
+                {
+                  "name": "retranslate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.199999809265137
+                }
+              ],
+              "sourceChunkCharacters": 1560,
+              "requests": 2,
+              "hostClicks": 1,
+              "originalPreserved": true,
+              "restoreAndRetranslate": true,
+              "continuousHoverNoRepeatedRequests": true
+            },
+            {
+              "id": "long-token",
+              "originalCharacters": 9100,
+              "emptyNodes": 0,
+              "phases": [
+                {
+                  "name": "translate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 51.89999961853027
+                },
+                {
+                  "name": "continuous-hover",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.5
+                },
+                {
+                  "name": "restore",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 21.899999618530273
+                },
+                {
+                  "name": "retranslate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 27.300000190734863
+                }
+              ],
+              "sourceChunkCharacters": 1600,
+              "requests": 2,
+              "hostClicks": 1,
+              "originalPreserved": true,
+              "restoreAndRetranslate": true,
+              "continuousHoverNoRepeatedRequests": true
+            }
+          ],
+          "requestPayloads": [
+            [
+              {
+                "characters": 1549,
+                "sha256": "47b6136fa3c478e3c21158099c8bb8f77730f32f906d0fdedd6d6f77f2710105"
+              }
+            ],
+            [
+              {
+                "characters": 1549,
+                "sha256": "47b6136fa3c478e3c21158099c8bb8f77730f32f906d0fdedd6d6f77f2710105"
+              }
+            ],
+            [
+              {
+                "characters": 1559,
+                "sha256": "798b9e2df9df6a96ed79b565f49138533acf65ddc64fdf52f198e5ab0f6cd204"
+              }
+            ],
+            [
+              {
+                "characters": 1559,
+                "sha256": "798b9e2df9df6a96ed79b565f49138533acf65ddc64fdf52f198e5ab0f6cd204"
+              }
+            ],
+            [
+              {
+                "characters": 1600,
+                "sha256": "02bd176809d7b8345bc400174bf2003f5d9826b979d46359d7e873226f3e7038"
+              }
+            ],
+            [
+              {
+                "characters": 1600,
+                "sha256": "02bd176809d7b8345bc400174bf2003f5d9826b979d46359d7e873226f3e7038"
+              }
+            ]
+          ],
+          "consoleErrors": [],
+          "cleanupVerified": true,
+          "screenshotsInspected": true
+        },
+        {
+          "buildSha256": "9f9fdc54b7df14c2388779458d720e6bddc3429bc1ebc0c22e206f64c2ad6bcd",
+          "functionalPassed": true,
+          "evidence": "Production extension; local deterministic transport, temporary background-visible Edge",
+          "cachePolicy": "Microsoft hover disables persistent cache; continuous hover reuses its active request",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "visible": true,
+            "hidden": false,
+            "windowState": "normal",
+            "displayTarget": "secondary",
+            "browserFrontmost": false
+          },
+          "cases": [
+            {
+              "id": "giant-tail",
+              "originalCharacters": 135120,
+              "emptyNodes": 0,
+              "phases": [
+                {
+                  "name": "translate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 70
+                },
+                {
+                  "name": "continuous-hover",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.300000190734863
+                },
+                {
+                  "name": "restore",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 29.699999809265137
+                },
+                {
+                  "name": "retranslate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 49.5
+                }
+              ],
+              "sourceChunkCharacters": 1550,
+              "hitInSourceChunk": true,
+              "markerPreserved": true,
+              "requests": 2,
+              "hostClicks": 1,
+              "originalPreserved": true,
+              "restoreAndRetranslate": true,
+              "continuousHoverNoRepeatedRequests": true
+            },
+            {
+              "id": "empty-nodes",
+              "originalCharacters": 6240,
+              "emptyNodes": 20000,
+              "phases": [
+                {
+                  "name": "translate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 53.30000019073486
+                },
+                {
+                  "name": "continuous-hover",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 25.40000009536743
+                },
+                {
+                  "name": "restore",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.300000190734863
+                },
+                {
+                  "name": "retranslate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.200000286102295
+                }
+              ],
+              "sourceChunkCharacters": 1560,
+              "hitInSourceChunk": true,
+              "markerPreserved": true,
+              "requests": 2,
+              "hostClicks": 1,
+              "originalPreserved": true,
+              "restoreAndRetranslate": true,
+              "continuousHoverNoRepeatedRequests": true
+            },
+            {
+              "id": "long-token",
+              "originalCharacters": 9100,
+              "emptyNodes": 0,
+              "phases": [
+                {
+                  "name": "translate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 52.299999713897705
+                },
+                {
+                  "name": "continuous-hover",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.90000009536743
+                },
+                {
+                  "name": "restore",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.600000381469727
+                },
+                {
+                  "name": "retranslate",
+                  "longTasksMs": [],
+                  "maxHeartbeatGapMs": 22.799999713897705
+                }
+              ],
+              "sourceChunkCharacters": 1600,
+              "hitInSourceChunk": true,
+              "markerPreserved": true,
+              "requests": 2,
+              "hostClicks": 1,
+              "originalPreserved": true,
+              "restoreAndRetranslate": true,
+              "continuousHoverNoRepeatedRequests": true
+            }
+          ],
+          "requestPayloads": [
+            [
+              {
+                "characters": 1549,
+                "sha256": "47b6136fa3c478e3c21158099c8bb8f77730f32f906d0fdedd6d6f77f2710105"
+              }
+            ],
+            [
+              {
+                "characters": 1549,
+                "sha256": "47b6136fa3c478e3c21158099c8bb8f77730f32f906d0fdedd6d6f77f2710105"
+              }
+            ],
+            [
+              {
+                "characters": 1559,
+                "sha256": "798b9e2df9df6a96ed79b565f49138533acf65ddc64fdf52f198e5ab0f6cd204"
+              }
+            ],
+            [
+              {
+                "characters": 1559,
+                "sha256": "798b9e2df9df6a96ed79b565f49138533acf65ddc64fdf52f198e5ab0f6cd204"
+              }
+            ],
+            [
+              {
+                "characters": 1600,
+                "sha256": "02bd176809d7b8345bc400174bf2003f5d9826b979d46359d7e873226f3e7038"
+              }
+            ],
+            [
+              {
+                "characters": 1600,
+                "sha256": "02bd176809d7b8345bc400174bf2003f5d9826b979d46359d7e873226f3e7038"
+              }
+            ]
+          ],
+          "consoleErrors": [],
+          "cleanupVerified": true,
+          "screenshotsInspected": true
+        }
+      ],
+      "comparison": {
+        "giantOwnerCharacters": 135120,
+        "previousRangeCharacters": 135120,
+        "currentRangeCharacters": 1550,
+        "previousFirstTranslationLongTasksMs": [
+          1107,
+          402
+        ],
+        "previousRetranslationLongTasksMs": [
+          1064,
+          400
+        ],
+        "currentFirstRunLongTasksMs": [
+          51
+        ],
+        "currentSecondRunLongTasksMs": [],
+        "currentSecondRunMaxHeartbeatGapMs": 70,
+        "previousLongTokenCharacters": 2500,
+        "currentLongTokenCharacters": 1600,
+        "boundary": "Same fixture; completed valid baseline and two final runs. Initial cached-request assertion and a later current-build diagnostic launched with the baseline flag are excluded from the comparison. No aggregate speedup or all-page latency claim."
+      },
+      "openPerformanceIssue": "500-owner synchronous whole-root remounts still have 122-153ms long tasks. Hover giant-owner work is substantially reduced, but native runs still show one 51ms task or a 70ms heartbeat gap. Bound caller inspection, leaf protection and checkpoint work while preserving ownership, reading position, cancellation and restore.",
+      "docsBuild": "passed",
+      "docsCheck": "passed"
     }
   ]
 }

@@ -2,7 +2,7 @@
  * @file src/core/translation/visual.ts
  *
  * 文件职责：为缺少语义段落边界的大型网页容器选择有界的悬浮翻译文本范围。
- * 主要内容：保留光标命中的文本偏移，按句子和视觉间距组合有限文本块，过滤受保护文本，并输出可由渲染层物化的 range。
+ * 主要内容：从光标命中的 Text 向前后按节点跳数和字符预算收集局部窗口，保留原始文本偏移，按句子、词边界和视觉间距组合至多 1600 字符的文本块，硬边界不拆开代理对；过滤受保护文本并输出可由渲染层物化的 range。
  * 模块边界：本文件只读取页面 DOM 和布局信息，不改写宿主节点、不读取配置、不调用 provider；临时 wrapper 的创建与恢复由渲染和状态模块负责。
  */
 
@@ -17,6 +17,7 @@ import type {TranslationCandidate, TranslationTextRange} from './types';
 const HOVER_REFINEMENT_THRESHOLD = 4096;
 const HOVER_CHUNK_LIMIT = 1600;
 const HOVER_DISCOVERY_CHARACTER_LIMIT = 16_384;
+const HOVER_DISCOVERY_SIDE_STEPS = 1024;
 const HOVER_SENTENCE_LIMIT = 256;
 
 const semanticBoundaryTags = new Set([
@@ -28,6 +29,8 @@ const semanticBoundaryTags = new Set([
 
 interface TextEntry {
     node: Text;
+    nodeOffset: number;
+    value: string;
     start: number;
     end: number;
 }
@@ -48,30 +51,90 @@ export interface VisualTranslationRangeResult {
     sourceText: string;
 }
 
+// UTF-16 偏移对应 DOM Range；只在硬边界落到代理对中间时向外或向内对齐。
+const surrogatePair = /[\uD800-\uDBFF][\uDC00-\uDFFF]/;
+function alignTextOffset(value: string, offset: number, roundUp: boolean): number {
+    return surrogatePair.test(value.slice(offset - 1, offset + 1)) ? offset + (roundUp ? 1 : -1) : offset;
+}
+
+/** 每次父子或兄弟跳转都消耗预算，空元素和深层回溯同样受限；不枚举整个子树。 */
+function* neighbouringNodes(anchor: Node, owner: HTMLElement, backwards: boolean): Generator<Node, boolean> {
+    let current = anchor;
+    let remaining = HOVER_DISCOVERY_SIDE_STEPS;
+    while (remaining-- > 0) {
+        if (backwards) {
+            if (current.previousSibling) {
+                current = current.previousSibling;
+                while (current.lastChild && --remaining > 0) current = current.lastChild;
+            } else current = current.parentNode!;
+            if (current === owner) return true;
+        } else if (current.firstChild) current = current.firstChild;
+        else {
+            while (current !== owner && !current.nextSibling && --remaining > 0) current = current.parentNode!;
+            if (current === owner) return true;
+            if (remaining <= 0) return false;
+            current = current.nextSibling!;
+        }
+        yield current;
+    }
+    return false;
+}
+
 function collectTextEntries(
     owner: HTMLElement,
+    anchor: Text,
+    pointOffset: number,
     shouldStayOriginal?: (element: Element) => boolean,
-): TextEntry[] {
-    const document = owner.ownerDocument;
-    if (!document?.createTreeWalker) return [];
-    const entries: TextEntry[] = [];
-    const walker = document.createTreeWalker(owner, 4);
+): {entries: TextEntry[]; caret: number; anchorRange: SentenceRange; cropped: boolean} | null {
     const protectionCache = createTranslationTextProtectionCache();
-    let offset = 0;
-    let current = walker.nextNode();
-    while (current) {
-        const node = current as Text;
-        if (!isTextInNestedTranslationTooltip(node, owner) &&
-            !isTranslationTextNodeProtected(node, shouldStayOriginal, undefined, undefined, protectionCache)) {
-            const value = node.data;
-            if (value) {
-                entries.push({node, start: offset, end: offset + value.length});
-                offset += value.length;
-            }
+    const readable = (node: Text) => !isTextInNestedTranslationTooltip(node, owner) &&
+        !isTranslationTextNodeProtected(node, shouldStayOriginal, undefined, undefined, protectionCache);
+    if (!readable(anchor)) return null;
+    const anchorText = anchor.data;
+    if (!anchorText) return null;
+    const caretInNode = Math.max(0, Math.min(pointOffset, anchorText.length));
+    const nodeOffset = anchorText.length <= HOVER_DISCOVERY_CHARACTER_LIMIT ? 0 : alignTextOffset(
+        anchorText, Math.max(0, Math.min(caretInNode - HOVER_DISCOVERY_CHARACTER_LIMIT / 2,
+            anchorText.length - HOVER_DISCOVERY_CHARACTER_LIMIT)), true,
+    );
+    const anchorEnd = alignTextOffset(anchorText, Math.min(anchorText.length,
+        nodeOffset + HOVER_DISCOVERY_CHARACTER_LIMIT), false);
+    const anchorEntry = {node: anchor, nodeOffset, value: anchorText.slice(nodeOffset, anchorEnd)};
+    let characters = anchorEntry.value.length;
+    let cropped = characters < anchorText.length;
+    const sideEntries = (backwards: boolean, limit: number) => {
+        const result: Array<Omit<TextEntry, 'start' | 'end'>> = [];
+        const cursor = neighbouringNodes(anchor, owner, backwards);
+        let step = cursor.next();
+        for (; !step.done; step = cursor.next()) {
+            if (limit <= 0) break;
+            const node = step.value;
+            if (node.nodeType !== 3 || !readable(node as Text)) continue;
+            const text = node as Text;
+            const value = text.data;
+            const start = backwards ? alignTextOffset(value, Math.max(0, value.length - limit), true) : 0;
+            const end = backwards ? value.length : alignTextOffset(value, Math.min(value.length, limit), false);
+            const selected = value.slice(start, end);
+            if (!selected) continue;
+            if (selected.length < value.length) cropped = true;
+            result.push({node: text, nodeOffset: start, value: selected});
+            limit -= selected.length; characters += selected.length;
         }
-        current = walker.nextNode();
+        if (!step.done || !step.value) cropped = true;
+        return backwards ? result.reverse() : result;
+    };
+    const before = sideEntries(true, Math.min(HOVER_DISCOVERY_CHARACTER_LIMIT / 2,
+        HOVER_DISCOVERY_CHARACTER_LIMIT - characters));
+    const beforeLength = characters - anchorEntry.value.length;
+    const after = sideEntries(false, HOVER_DISCOVERY_CHARACTER_LIMIT - characters);
+    const entries: TextEntry[] = [];
+    let offset = 0;
+    for (const entry of [...before, anchorEntry, ...after]) {
+        entries.push({...entry, start: offset, end: offset + entry.value.length});
+        offset += entry.value.length;
     }
-    return entries;
+    return {entries, caret: beforeLength + caretInNode - nodeOffset, cropped,
+        anchorRange: {start: beforeLength, end: beforeLength + anchorEntry.value.length}};
 }
 
 function segmentSentences(text: string): SentenceRange[] {
@@ -108,10 +171,16 @@ function segmentSentences(text: string): SentenceRange[] {
     return ranges.length > 0 ? ranges : [{start: 0, end: text.length}];
 }
 
-function splitLongSentence(text: string, sentence: SentenceRange, caret: number): SentenceRange {
+function splitLongSentence(text: string, sentence: SentenceRange, caret: number, anchorRange: SentenceRange): SentenceRange {
     if (sentence.end - sentence.start <= HOVER_CHUNK_LIMIT) return sentence;
+    // 长句优先在足够长的命中 Text 内构造上下文；短行内格式节点仍可拼成完整语义片段。
+    const anchorStart = Math.max(sentence.start, anchorRange.start);
+    const anchorEnd = Math.min(sentence.end, anchorRange.end);
+    if (anchorRange.end - anchorRange.start >= HOVER_CHUNK_LIMIT && anchorStart < anchorEnd) {
+        sentence = {start: anchorStart, end: anchorEnd};
+    }
     const value = text.slice(sentence.start, sentence.end);
-    const boundaries: number[] = [0];
+    const wordBoundaries: number[] = [0];
     try {
         const Segmenter = (Intl as typeof Intl & {
             Segmenter?: new (locales?: string | string[], options?: {granularity?: string}) => {
@@ -122,23 +191,29 @@ function splitLongSentence(text: string, sentence: SentenceRange, caret: number)
             const wordSegmenter = new Segmenter(undefined, {granularity: 'word'});
             for (const item of wordSegmenter.segment(value)) {
                 const end = item.index + item.segment.length;
-                if (end > boundaries.at(-1)! && end < value.length) boundaries.push(end);
+                if (end > wordBoundaries.at(-1)! && end < value.length) wordBoundaries.push(end);
             }
         }
     } catch {
         // Character boundaries below remain deterministic and safe.
     }
-    for (let offset = HOVER_CHUNK_LIMIT; offset < value.length; offset += HOVER_CHUNK_LIMIT) {
-        if (boundaries.at(-1)! < offset) boundaries.push(offset);
+    wordBoundaries.push(value.length);
+    const boundaries = [0];
+    let wordIndex = 1;
+    while (boundaries.at(-1)! < value.length) {
+        const start = boundaries.at(-1)!;
+        const limit = alignTextOffset(value, Math.min(value.length, start + HOVER_CHUNK_LIMIT), false);
+        while (wordIndex < wordBoundaries.length && wordBoundaries[wordIndex]! <= limit) wordIndex++;
+        const wordEnd = wordBoundaries[wordIndex - 1]!;
+        boundaries.push(wordEnd > start ? wordEnd : limit);
     }
-    if (boundaries.at(-1)! !== value.length) boundaries.push(value.length);
 
     const absoluteCaret = Math.max(sentence.start, Math.min(caret, sentence.end));
     const caretInValue = absoluteCaret - sentence.start;
     let selectedStart = 0;
     let selectedEnd = value.length;
     for (let index = 0; index + 1 < boundaries.length; index += 1) {
-        if (caretInValue >= boundaries[index]! && caretInValue <= boundaries[index + 1]!) {
+        if (caretInValue < boundaries[index + 1]! || index + 2 === boundaries.length) {
             selectedStart = boundaries[index]!;
             selectedEnd = boundaries[index + 1]!;
             break;
@@ -151,15 +226,16 @@ function splitLongSentence(text: string, sentence: SentenceRange, caret: number)
 function offsetToBoundary(
     entries: readonly TextEntry[],
     offset: number,
+    following: boolean,
 ): {node: Text; offset: number} {
     const clamped = Math.max(0, Math.min(offset, entries.at(-1)!.end));
     let selected = entries.at(-1)!;
     for (const entry of entries) {
-        if (clamped > entry.end) continue;
+        if (clamped > entry.end || (following && clamped === entry.end)) continue;
         selected = entry;
         break;
     }
-    return {node: selected.node, offset: Math.max(0, Math.min(clamped - selected.start, selected.node.data.length))};
+    return {node: selected.node, offset: selected.nodeOffset + Math.max(0, Math.min(clamped - selected.start, selected.value.length))};
 }
 
 /** 句子与选区都是非空区间；这里只处理 Range 能力缺失或边界被宿主拒绝的情况。 */
@@ -169,8 +245,8 @@ function createRange(
     start: number,
     end: number,
 ): Range | null {
-    const startBoundary = offsetToBoundary(entries, start);
-    const endBoundary = offsetToBoundary(entries, end);
+    const startBoundary = offsetToBoundary(entries, start, true);
+    const endBoundary = offsetToBoundary(entries, end, false);
     try {
         const range = owner.ownerDocument.createRange();
         if (typeof range.setStart !== 'function' || typeof range.setEnd !== 'function') return null;
@@ -187,7 +263,7 @@ function sourceTextForRange(entries: readonly TextEntry[], start: number, end: n
         const overlapStart = Math.max(start, entry.start);
         const overlapEnd = Math.min(end, entry.end);
         return overlapStart < overlapEnd
-            ? entry.node.data.slice(overlapStart - entry.start, overlapEnd - entry.start)
+            ? entry.value.slice(overlapStart - entry.start, overlapEnd - entry.start)
             : '';
     }).join(''));
 }
@@ -218,7 +294,7 @@ function hasVisualBreak(
 }
 
 function sentenceIndexAt(ranges: readonly SentenceRange[], offset: number): number {
-    const containing = ranges.findIndex((range) => offset >= range.start && offset <= range.end);
+    const containing = ranges.findIndex((range) => offset >= range.start && offset < range.end);
     if (containing >= 0) return containing;
     const following = ranges.findIndex((range) => range.start > offset);
     return following >= 0 ? following : Math.max(0, ranges.length - 1);
@@ -239,15 +315,13 @@ export function resolveVisualTranslationRange(
 ): VisualTranslationRangeResult | null {
     if (!isRefinableCandidate(candidate)) return null;
     const owner = candidate.element;
-    const entries = collectTextEntries(owner, shouldStayOriginal);
-    const text = entries.map((entry) => entry.node.data).join('');
-    if (text.length <= HOVER_REFINEMENT_THRESHOLD || text.length > HOVER_DISCOVERY_CHARACTER_LIMIT) return null;
-
     const point = findTextPointAtPoint(root, x, y);
-    // 条目只包含可译 Text；命中元素或受保护文本时自然找不到对应条目。
-    const pointedEntry = point ? entries.find((entry) => entry.node === point.node) : undefined;
-    if (!point || !pointedEntry) return null;
-    const caret = pointedEntry.start + Math.max(0, Math.min(point.offset, pointedEntry.node.length));
+    if (!point || point.node.nodeType !== 3 || !owner.contains(point.node)) return null;
+    const collected = collectTextEntries(owner, point.node as Text, point.offset, shouldStayOriginal);
+    if (!collected) return null;
+    const {entries, caret, anchorRange, cropped} = collected;
+    const text = entries.map((entry) => entry.value).join('');
+    if (text.length <= HOVER_REFINEMENT_THRESHOLD && !cropped) return null;
     const allSentences = segmentSentences(text);
     const allSelectedIndex = sentenceIndexAt(allSentences, caret);
     const windowStart = Math.max(0, Math.min(
@@ -257,7 +331,7 @@ export function resolveVisualTranslationRange(
     const sentences = allSentences.slice(windowStart, windowStart + HOVER_SENTENCE_LIMIT);
 
     const selectedIndex = allSelectedIndex - windowStart;
-    let selected = splitLongSentence(text, sentences[selectedIndex]!, caret);
+    let selected = splitLongSentence(text, sentences[selectedIndex]!, caret, anchorRange);
     const metrics = new Map<number, RectMetrics[]>();
     const getMetrics = (index: number): RectMetrics[] => {
         const cached = metrics.get(index);

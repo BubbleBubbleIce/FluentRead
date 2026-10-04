@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14577,
+    "functions": 14580,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -133,8 +133,8 @@
       },
       "src/core/translation": {
         "files": 24,
-        "functions": 322,
-        "lines": 4722
+        "functions": 325,
+        "lines": 4796
       },
       "src/features/area-translation": {
         "files": 14,
@@ -646,8 +646,8 @@
     },
     {
       "file": "src/core/translation/visual.ts",
-      "sha256": "17634179bd8ddbbd18909919f390cd0524697d9af6987cc9ac644a24c3f50c77",
-      "functionBodies": 21,
+      "sha256": "c533cc19e4c389dacf96ee0cf2b4572f845d2dabda4b08f6604cf459ce32b7dc",
+      "functionBodies": 24,
       "status": "source-read-and-traced"
     },
     {
@@ -1717,7 +1717,7 @@
   ],
   "progress": {
     "sourceReadFiles": 84,
-    "sourceReadFunctionBodies": 1668,
+    "sourceReadFunctionBodies": 1671,
     "pendingFiles": 733,
     "goalComplete": false
   },
@@ -1759,8 +1759,8 @@
     },
     {
       "file": "src/core/translation/visual.ts",
-      "status": "needs-reproduction-and-bounded-work",
-      "issue": "Complete source, engine caller and visual-range tests reviewed. collectTextEntries walks the whole owner and resolveVisualTranslationRange joins all entries before checking the 16384-character ceiling. Wide/deep hover work needs a regression and an actual traversal budget. Word-boundary chunking also needs a long-token test. No fix or latency guarantee claimed."
+      "status": "bounded-local-window-verified; wider-hover-latency-still-open",
+      "issue": "Reproduced whole-owner traversal, 40000 empty-node data reads, whole giant-owner requests and >1600-character tokens. Caret-first local collection limits both directions to 1024 DOM hops and total captured text to 16384 UTF-16 units; chunks are at most 1600 units. Native hit, unchanged source, no nested/repeated continuous work, restore and identical retranslation source verified. UTF-16 boundaries and terminal hits covered. Protection and caller inspection may still inspect full individual leaf text; no universal constant-time latency claim. One final native run has a 51ms long task; another has a 70ms heartbeat gap. Overall performance remains open."
     }
   ]
 }

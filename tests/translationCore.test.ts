@@ -1041,6 +1041,182 @@ describe('translation candidate core', () => {
         }
     });
 
+    it('超大容器尾部的悬浮范围保留命中附近的正文而不是退回整块', () => {
+        const {document} = page('<main><div id="wide-hover"></div></main>');
+        const owner = document.querySelector<HTMLElement>('#wide-hover')!;
+        for (let index = 0; index < 5000; index++) {
+            const span = document.createElement('span');
+            span.textContent = `Earlier paragraph ${index}. `; owner.append(span);
+        }
+        const value = Array.from({length: 120}, (_, index) => `Target sentence ${index} keeps its local reading context. `).join('');
+        const text = document.createTextNode(value); owner.append(text);
+        const caret = value.indexOf('Target sentence 60');
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: caret})});
+        const restoreRange = installRangeStub(document, text);
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result).not.toBeNull();
+            expect(result?.sourceText).toContain('Target sentence 60');
+            expect(result?.sourceText.length).toBeLessThanOrEqual(1600);
+            expect(result?.range.startContainer).toBe(text);
+            expect(result?.range.endContainer).toBe(text);
+            expect(result?.range.startOffset).toBeLessThanOrEqual(caret);
+            expect(result?.range.endOffset).toBeGreaterThan(caret);
+        } finally { restoreRange(); }
+    });
+
+    it.each([1, 150])('悬浮范围的节点预算覆盖空文本而不是扫描全部稠密空节点（命中长度 %s）', repetitions => {
+        const {document} = page('<main><div id="empty-hover"></div></main>');
+        const owner = document.querySelector<HTMLElement>('#empty-hover')!;
+        const text = document.createTextNode('Readable sentence with nearby context. '.repeat(repetitions)); owner.append(text);
+        let reads = 0;
+        for (let index = 0; index < 20000; index++) {
+            const empty = document.createTextNode('');
+            Object.defineProperty(empty, 'data', {configurable: true, get: () => {reads++; return '';}});
+            owner.append(empty);
+        }
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: Math.min(text.length - 1, 2000)})});
+        const restoreRange = installRangeStub(document, text);
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result?.sourceText).toContain('Readable sentence');
+            expect(reads).toBeLessThanOrEqual(8192);
+        } finally { restoreRange(); }
+    });
+
+    it('真实分词遇到超长单词时仍将悬浮范围限制在 1600 字符', () => {
+        const value = 'a'.repeat(2500) + ' ' + 'Nearby context '.repeat(400);
+        const {document} = page(`<main><div id="long-token">${value}</div></main>`);
+        const owner = document.querySelector<HTMLElement>('#long-token')!;
+        const text = owner.firstChild as Text;
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: 500})});
+        const restoreRange = installRangeStub(document, text);
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result).not.toBeNull();
+            expect(result!.sourceText.length).toBeLessThanOrEqual(1600);
+            expect(result!.range.startOffset).toBeLessThanOrEqual(500);
+            expect(result!.range.endOffset).toBeGreaterThan(500);
+        } finally { restoreRange(); }
+    });
+
+    it.each([100, 25000, 44000])('超大单一文本节点的局部范围映射回原始偏移（命中 %s）', caret => {
+        const value = 'First local sentence for the hovered reader. '.repeat(1000);
+        const {document} = page(`<main><div id="giant-text">${value}<em>Adjacent inside source.</em></div><span>Outside source.</span></main>`);
+        const owner = document.querySelector<HTMLElement>('#giant-text')!;
+        const text = owner.firstChild as Text;
+        const original = owner.textContent;
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: caret})});
+        const restoreRange = installRangeStub(document, text);
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result).not.toBeNull();
+            expect(result!.sourceText.length).toBeLessThanOrEqual(1600);
+            expect(result!.range.startContainer).toBe(text);
+            expect(result!.range.endContainer).toBe(text);
+            expect(result!.range.startOffset).toBeLessThanOrEqual(caret);
+            expect(result!.range.endOffset).toBeGreaterThanOrEqual(caret);
+            expect(value.slice(result!.range.startOffset, result!.range.endOffset).trim()).toBe(result!.sourceText);
+            expect(owner.textContent).toBe(original);
+        } finally { restoreRange(); }
+    });
+
+    it.each([0, 1])('超大 Unicode 文本尾部的窗口起点对齐后仍包含末尾命中（距末尾 %s）', distance => {
+        const value = 'a'.repeat(10000) + '🙂' + 'b'.repeat(16383);
+        const {document} = page(`<main><div id="unicode-tail">${value}</div></main>`);
+        const owner = document.querySelector<HTMLElement>('#unicode-tail')!;
+        const text = owner.firstChild as Text;
+        const caret = value.length - distance;
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: caret})});
+        const restoreRange = installRangeStub(document, text);
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result).not.toBeNull();
+            expect(result!.range.endOffset).toBe(value.length);
+            expect(result!.range.startOffset).toBeLessThanOrEqual(caret);
+            expect(result!.sourceText.length).toBeLessThanOrEqual(1600);
+            expect(result!.sourceText).not.toMatch(/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/u);
+        } finally { restoreRange(); }
+    });
+
+    it('邻接的巨大文本只加入预算内的片段，前后跨层遍历与代理对保持一致', () => {
+        const {document} = page('<main><div id="neighbor-window"><span id="prefix"></span><em id="anchor"></em><span><b id="suffix"></b></span></div></main>');
+        const owner = document.querySelector<HTMLElement>('#neighbor-window')!;
+        document.querySelector('#prefix')!.textContent = 'p'.repeat(8193) + '🙂' + 'x'.repeat(8191);
+        const value = 'Target paragraph keeps readable context. '.repeat(120);
+        document.querySelector('#anchor')!.textContent = value;
+        document.querySelector('#suffix')!.textContent = 'Later paragraph continues the context. '.repeat(1000);
+        const text = document.querySelector('#anchor')!.firstChild as Text;
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: 1200})});
+        const restoreRange = installRangeStub(document, text);
+        const before = owner.innerHTML;
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result?.sourceText).toContain('Target paragraph');
+            expect(result?.range.startContainer).toBe(text);
+            expect(result?.range.endContainer).toBe(text);
+            expect(result?.sourceText).not.toMatch(/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/u);
+            expect(owner.innerHTML).toBe(before);
+        } finally { restoreRange(); }
+    });
+
+    it.each(['', 'Small readable paragraph.'])('有效光标命中空或小范围正文时不创建视觉分块（%s）', value => {
+        const {document} = page('<main><div id="small-range"></div></main>');
+        const owner = document.querySelector<HTMLElement>('#small-range')!;
+        const text = document.createTextNode(value); owner.append(text);
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: 0})});
+        expect(resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20)).toBeNull();
+    });
+
+    it('命中前一个文本末尾时仍可选择后续长句，短行内节点可以保留上下文', () => {
+        const {document} = page('<main><div id="adjacent-sentences"></div></main>');
+        const owner = document.querySelector<HTMLElement>('#adjacent-sentences')!;
+        const first = document.createTextNode('Previous sentence. '.repeat(250));
+        const second = document.createTextNode('Following contextual words '.repeat(250));
+        owner.append(first, second);
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: first, offset: first.length})});
+        const restoreRange = installRangeStub(document, second);
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result?.sourceText).toContain('Following contextual words');
+            expect(result?.sourceText.length).toBeLessThanOrEqual(1600);
+            expect(result?.range.startContainer).toBe(second);
+        } finally { restoreRange(); }
+    });
+
+    it.each([0, 1599, 1600, 1601, 3200, 6000])('无分词支持时悬浮硬边界不拆开代理对（命中 %s）', caret => {
+        const value = 'a'.repeat(1599) + '🙂' + 'b'.repeat(1598) + '🙃' + 'c'.repeat(4000);
+        const {document} = page(`<main><div id="unicode-chunk">${value}</div></main>`);
+        const owner = document.querySelector<HTMLElement>('#unicode-chunk')!;
+        const text = owner.firstChild as Text;
+        Object.defineProperty(document, 'caretPositionFromPoint', {configurable: true,
+            value: () => ({offsetNode: text, offset: caret})});
+        const previous = Object.getOwnPropertyDescriptor(Intl, 'Segmenter');
+        Object.defineProperty(Intl, 'Segmenter', {configurable: true, value: undefined});
+        const restoreRange = installRangeStub(document, text);
+        try {
+            const result = resolveVisualTranslationRange({element: owner, kind: 'content', reason: 'generic-readable-block'}, document, 10, 20);
+            expect(result).not.toBeNull();
+            const selected = value.slice(result!.range.startOffset, result!.range.endOffset);
+            expect(selected.length).toBeLessThanOrEqual(1600);
+            expect(selected).not.toMatch(/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/u);
+            expect(result!.range.startOffset).toBeLessThanOrEqual(caret);
+            expect(result!.range.endOffset).toBeGreaterThan(caret);
+        } finally {
+            restoreRange();
+            if (previous) Object.defineProperty(Intl, 'Segmenter', previous);
+            else Reflect.deleteProperty(Intl, 'Segmenter');
+        }
+    });
+
     it('falls back when sentence segmentation is unavailable and splits a long sentence safely', () => {
         const source = `Intro sentence. ${Array.from({length: 900}, (_, index) => `word${index}`).join(' ')}`;
         const {document, core} = page(`<main><div id="long-sentence">${source}</div></main>`);
