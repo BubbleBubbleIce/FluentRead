@@ -2527,6 +2527,35 @@ describe('translation candidate core', () => {
         expect(isMeaningfulTranslationText('#1234')).toBe(false);
         expect(isMeaningfulTranslationText('translationCore.ts')).toBe(false);
         expect(isMeaningfulTranslationText('Readable article summary')).toBe(true);
+        for (let turn = 0; turn < 3; turn++) {
+            expect(isMeaningfulTranslationText('你好')).toBe(true);
+            expect(isMeaningfulTranslationText('𝒜🙂𝒞')).toBe(true);
+            expect(isMeaningfulTranslationText('e\u0301!')).toBe(false);
+            expect(isMeaningfulTranslationText('e\u0301!é')).toBe(true);
+            expect(isMeaningfulTranslationText('🙂🙃')).toBe(false);
+            expect(isMeaningfulTranslationText('!!!a!!!')).toBe(false);
+            expect(isMeaningfulTranslationText(' !!!a\n\tβ!!! ')).toBe(true);
+        }
+    });
+
+    it('长正文的可读性判断不收集与正文长度相同的字母结果数组', () => {
+        const match = String.prototype.match;
+        let largestLetterArray = 0;
+        const probe = vi.spyOn(String.prototype, 'match').mockImplementation(function (this: string, pattern) {
+            const result = match.call(this, pattern);
+            if (pattern instanceof RegExp && pattern.source === '\\p{L}') {
+                largestLetterArray = Math.max(largestLetterArray, result?.length ?? 0);
+            }
+            return result;
+        });
+        try {
+            expect(isMeaningfulTranslationText('Readable long text with words. '.repeat(10000))).toBe(true);
+            expect(isMeaningfulTranslationText('a' + '!'.repeat(100000))).toBe(false);
+            expect(isMeaningfulTranslationText('a' + '!'.repeat(100000) + 'β')).toBe(true);
+            expect(largestLetterArray).toBeLessThanOrEqual(2);
+        } finally {
+            probe.mockRestore();
+        }
     });
 
     it('exercises URL-scoped current core wrappers without leaking cache across pages', () => {

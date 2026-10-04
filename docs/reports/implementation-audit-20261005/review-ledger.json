@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14576,
+    "functions": 14577,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -133,8 +133,8 @@
       },
       "src/core/translation": {
         "files": 24,
-        "functions": 321,
-        "lines": 4716
+        "functions": 322,
+        "lines": 4722
       },
       "src/features/area-translation": {
         "files": 14,
@@ -154,7 +154,7 @@
       "src/features/full-page-translation": {
         "files": 50,
         "functions": 906,
-        "lines": 11198
+        "lines": 11214
       },
       "src/features/glossary": {
         "files": 3,
@@ -640,8 +640,14 @@
     },
     {
       "file": "src/core/translation/text.ts",
-      "sha256": "fafffb17b7cd1a3691a9c23d8b881c747c0e64aa5bb44cd7d612b5a19465f688",
-      "functionBodies": 13,
+      "sha256": "a2ae6662ff5078e9d9000f4a4a01135a243d0bd9fb09b0dbf4f52ca4c02650ba",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/visual.ts",
+      "sha256": "17634179bd8ddbbd18909919f390cd0524697d9af6987cc9ac644a24c3f50c77",
+      "functionBodies": 21,
       "status": "source-read-and-traced"
     },
     {
@@ -658,13 +664,13 @@
     },
     {
       "file": "src/features/full-page-translation/content/bilingualRemount.ts",
-      "sha256": "f2c2f1328e555ac3c1c73e23b00e10a09f91b9aea5219c1a9e251a7b02a43f65",
+      "sha256": "7820c1edaafd9a1a2244784b8b3614d7aed8fd792efaa5c092afa4985780bbd1",
       "functionBodies": 37,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/features/full-page-translation/content/bilingualRemountMatching.ts",
-      "sha256": "0b228b770e47cf366006338927025d853d426abb3fa3ff8853c791cc389b1661",
+      "sha256": "f8323ab7c291cc638f24cac77bf8e5a1be9f1b4aeb3527729604d4f3bd33262c",
       "functionBodies": 9,
       "status": "source-read-and-traced"
     },
@@ -736,7 +742,7 @@
     },
     {
       "file": "src/features/full-page-translation/content/state.ts",
-      "sha256": "29efb216c202e8e85b02917662b792898563c74211e8d20ad45402b1337ae8d8",
+      "sha256": "1779b54cb4d4661209aa4f1ecf2d91d2ae89dfa835db5d425d7bedf9b0534789",
       "functionBodies": 171,
       "status": "source-read-and-traced"
     },
@@ -1185,7 +1191,6 @@
     "src/core/translation/sentenceAlignment.ts",
     "src/core/translation/types.ts",
     "src/core/translation/visionProbeImage.ts",
-    "src/core/translation/visual.ts",
     "src/features/area-translation/background/handlers.ts",
     "src/features/area-translation/background/index.ts",
     "src/features/area-translation/background/offscreenAdapter.ts",
@@ -1711,9 +1716,9 @@
     "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
   ],
   "progress": {
-    "sourceReadFiles": 83,
-    "sourceReadFunctionBodies": 1646,
-    "pendingFiles": 734,
+    "sourceReadFiles": 84,
+    "sourceReadFunctionBodies": 1668,
+    "pendingFiles": 733,
     "goalComplete": false
   },
   "observations": [
@@ -1741,6 +1746,21 @@
       "file": "src/core/translation/lineBreak.ts",
       "status": "fixed-and-verified",
       "issue": "Reproduced call-stack exhaustion at 16384 nested inline elements. Collect Text nodes with TreeWalker before writing sentence breaks. This does not bound native layout or the total size of arbitrary host input."
+    },
+    {
+      "file": "src/features/full-page-translation/content/bilingualRemountMatching.ts",
+      "status": "fixed-and-verified",
+      "issue": "Whole-root replacement used repeated sibling-list copies for every detached owner. Cache parent-to-child positions only within one synchronous read phase, and build paths by push/reverse. Matching and layout mapping use separate caches; removed-subtree traversal reads each child list once. Four 500-owner distinct/repeated and layout/no-layout fixtures keep exact outputs, release old leases and bound the shared root child-list reads to three."
+    },
+    {
+      "file": "src/core/translation/text.ts",
+      "status": "fixed-and-verified",
+      "issue": "Readability previously allocated 250000 matched letters for a long-prose fixture, although the predicate needs only two. Use a non-global Unicode predicate and share identifier pattern checks without repeating whitespace normalization. Unicode, combining-mark and distant-letter cases retain their existing meaning."
+    },
+    {
+      "file": "src/core/translation/visual.ts",
+      "status": "needs-reproduction-and-bounded-work",
+      "issue": "Complete source, engine caller and visual-range tests reviewed. collectTextEntries walks the whole owner and resolveVisualTranslationRange joins all entries before checking the 16384-character ceiling. Wide/deep hover work needs a regression and an actual traversal budget. Word-boundary chunking also needs a long-token test. No fix or latency guarantee claimed."
     }
   ]
 }

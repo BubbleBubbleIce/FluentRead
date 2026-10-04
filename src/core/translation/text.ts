@@ -2,7 +2,7 @@
  * @file src/core/translation/text.ts
  *
  * 文件职责：提取和校验候选中的可读文本，拒绝标识符、独立时间与数值、空白、扩展译文及脚本、表单或敏感区域的节点。
- * 主要内容：提供文本规范化、meaningful/identifier 判定、元素与文本节点保护检查、嵌套 tooltip 来源隔离、WeakMap 状态缓存和受预算约束的深度扫描，避免在大型 DOM 上无限遍历。 可核对的公开符号包括 normalizeTranslationText、isIdentifierLikeText、isMeaningfulTranslationText、setMinimumTranslationTextLength、isTranslationTextNodeProtected、TranslationTextProtectionCache、createTranslationTextProtectionCache、isTranslationTextElementProtected、hasMeaningfulTranslationTextInNodes。
+ * 主要内容：提供文本规范化、仅确认至少两个 Unicode 字母的 meaningful 判定与共享的 identifier 模式判定、元素与文本节点保护检查、嵌套 tooltip 来源隔离、WeakMap 状态缓存和受预算约束的深度扫描，避免在大型 DOM 上无限遍历。 可核对的公开符号包括 normalizeTranslationText、isIdentifierLikeText、isMeaningfulTranslationText、setMinimumTranslationTextLength、isTranslationTextNodeProtected、TranslationTextProtectionCache、createTranslationTextProtectionCache、isTranslationTextElementProtected、hasMeaningfulTranslationTextInNodes。
  * 模块边界：本文件属于可独立测试的 core 候选领域；可以读取传入 DOM 以计算结果，但不访问配置存储、不调用 provider、不注册页面监听器，也不负责译文渲染或 feature 生命周期；文本语言与同目标跳过统一由 src/core/language 判断。
  */
 
@@ -36,10 +36,17 @@ export function normalizeTranslationText(value: string): string {
     return value.replace(/[\s\u3000]+/gu, ' ').trim();
 }
 
+function matchesIdentifierPatterns(text: string): boolean {
+    return identifierPatterns.some((pattern) => pattern.test(text));
+}
+
 export function isIdentifierLikeText(value: string): boolean {
     const text = normalizeTranslationText(value);
-    return Boolean(text && identifierPatterns.some((pattern) => pattern.test(text)));
+    return Boolean(text && matchesIdentifierPatterns(text));
 }
+
+// 非全局匹配确认第二个字母后即可结束，不为长正文分配全部字母的结果数组。
+const meaningfulLetters = /\p{L}.*?\p{L}/u;
 
 // 阈值由应用层在读取配置后注入；core 自身不访问存储，默认与历史行为一致。
 let minimumTranslationTextLength = DEFAULT_MIN_TRANSLATION_TEXT_LENGTH;
@@ -52,11 +59,10 @@ export function setMinimumTranslationTextLength(value: unknown): number {
 
 export function isMeaningfulTranslationText(value: string): boolean {
     const text = normalizeTranslationText(value);
-    if (!text || isIdentifierLikeText(text) || isNonTranslatableLiveData(text)) return false;
+    if (!text || matchesIdentifierPatterns(text) || isNonTranslatableLiveData(text)) return false;
     // 字符长度按用户设定过滤短碎片；字母数仍保留原有的纯符号与编号防护。
     if (text.length < minimumTranslationTextLength) return false;
-    const letters = text.match(/\p{L}/gu)?.length ?? 0;
-    return letters >= 2;
+    return meaningfulLetters.test(text);
 }
 
 export function isTranslationTextNodeProtected(

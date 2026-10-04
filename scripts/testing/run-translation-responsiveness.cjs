@@ -16,6 +16,7 @@ const github = process.argv.includes('--github');
 const compare = process.argv.includes('--compare');
 const remount = process.argv.includes('--remount');
 const remountMiddle = process.argv.includes('--remount-middle');
+const remountRoot = process.argv.includes('--remount-root');
 const translationBefore = process.argv.includes('--translation-before');
 const repeated = process.argv.includes('--repeated-source');
 const allowChineseBaseline = process.argv.includes('--allow-chinese-baseline');
@@ -25,12 +26,13 @@ const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExten
 assert.ok(Number.isInteger(paragraphs) && paragraphs>0, '--paragraphs must be a positive integer');
 assert.ok(Number.isFinite(cpuRate) && cpuRate>=1, '--cpu-rate must be at least 1');
 assert.ok(!remountMiddle || remount, '--remount-middle requires --remount');
+assert.ok(!remountRoot || remount, '--remount-root requires --remount');
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-responsiveness-'));
 fs.mkdirSync(artifactsDir, {recursive: true});
 const chinese = 'FluentRead 支持在原网页中对照阅读原文与译文，并提供划词翻译、AI 阅读辅助、图片翻译、文档翻译和视频双语字幕。翻译卡片接入了 <strong>DeepSeek Harness 会话内核的浏览器适配</strong>，支持结合上下文解释选中文字并连续追问。';
 const html = '<!doctype html><html lang="en"><meta charset="utf-8"><title>Responsiveness fixture</title><style>body{font:16px/1.7 system-ui;margin:40px}main{max-width:900px}#probe{position:fixed;right:24px;top:24px;z-index:100000}p{margin:20px 0}</style><button id="probe" translate="no">Host click</button><main><p id="chinese">' + chinese + '</p>' + Array.from({length: paragraphs}, (_, i) => `<section><p id="p${i}">The browser should remain responsive while this paragraph number ${repeated ? 0 : i} is translated. Readers can click the controls and scroll through the document without waiting for every translation to finish.</p></section>`).join('') + '</main><script>window.probeClicks=0;document.querySelector("#probe").onclick=()=>window.probeClicks++;</script></html>';
 const server = http.createServer((_req, res) => {res.writeHead(200, {'content-type': 'text/html; charset=utf-8'});res.end(html);});
-const report = {extensionDir, paragraphs, remount, remountMiddle, translationBefore, repeated, evidence: 'Production extension and real browser; local deterministic Microsoft transport, no live provider claims', consoleErrors: [], phases: []};
+const report = {extensionDir, paragraphs, remount, remountMiddle, remountRoot, translationBefore, repeated, evidence: 'Production extension and real browser; local deterministic Microsoft transport, no live provider claims', consoleErrors: [], phases: []};
 
 async function startPhase(page, name) {
   await page.evaluate(name => {
@@ -89,11 +91,13 @@ async function remountTranslatedParagraphs(page, provider, cdp) {
   for (let round = 0; round < 3; round++) {
     const before = Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m => [m.name, m.value]));
     await startPhase(page, `remount-${round + 1}`);
-    const check = await page.evaluate(() => new Promise(resolve => {
+    const check = await page.evaluate(replaceRoot => new Promise(resolve => {
       const anchorBefore = document.getElementById(window.__remountAnchorId).getBoundingClientRect().top;
       const scrollBefore = window.scrollY;
       const started = performance.now();
-      document.querySelector('main').innerHTML = window.__remountSourceHTML;
+      const main = document.querySelector('main');
+      if (replaceRoot) main.outerHTML = '<main>' + window.__remountSourceHTML + '</main>';
+      else main.innerHTML = window.__remountSourceHTML;
       const hostWriteMs = performance.now() - started;
       requestAnimationFrame(() => resolve({hostWriteMs,
         anchorShiftPx: document.getElementById(window.__remountAnchorId).getBoundingClientRect().top - anchorBefore,
@@ -108,7 +112,7 @@ async function remountTranslatedParagraphs(page, provider, cdp) {
           return (owner.querySelector('.fluent-read-bilingual-content') === owner.firstChild) === beforeSource;
         }),
       }));
-    }));
+    }), remountRoot);
     assert.equal(check.wrappers, paragraphs, '下一帧前必须接管全部已提交段落');
     assert.equal(check.nested, 0, '重挂不得嵌套双语译文');
     assert.equal(check.exactOutputs, true, '重挂必须保留已提交的精确译文');

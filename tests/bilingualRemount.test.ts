@@ -162,6 +162,55 @@ describe('双语 owner 同源重挂交接', () => {
         }
     });
 
+    it.each([
+        ['distinct', false], ['repeated', false], ['distinct', true], ['repeated', true],
+    ] as const)('整个根替换时 500 个 %s owner（布局覆盖 %s）共用兄弟位置索引并保留译文', (kind, withLayout) => {
+        const count = 500;
+        const {document} = parseHTML('<html><body><main></main></body></html>');
+        const previousRoot = document.querySelector<HTMLElement>('main')!;
+        for (let index = 0; index < count; index++) {
+            const section = document.createElement('section');
+            const owner = document.createElement('p');
+            owner.textContent = kind === 'distinct' ? `Source paragraph ${index}.` : 'Repeated source paragraph.';
+            section.appendChild(owner); previousRoot.appendChild(section);
+        }
+        const sourceHTML = previousRoot.innerHTML;
+        const previousOwners = [...previousRoot.querySelectorAll<HTMLElement>('p')];
+        previousOwners.forEach((owner, index) => {
+            const attempt = beginTranslation(owner, 'bilingual', 'content', false, owner.textContent!, [])!;
+            expect(markTranslationComplete(owner, attempt.state, attempt.generation)).toBe(true);
+            const wrapper = document.createElement('span');
+            wrapper.className = 'fluent-read-bilingual-content';
+            wrapper.setAttribute('data-fr-translation-owned', 'true');
+            wrapper.textContent = kind === 'distinct' ? `段落 ${index}` : '重复段落';
+            owner.appendChild(wrapper); setBilingualContent(owner, wrapper);
+            if (withLayout) expect(acquireTranslationLayoutOverride(
+                owner, owner.parentElement!, translationTruncationStyleOverrides,
+            )).toBe(true);
+        });
+        const replacementRoot = document.createElement('main');
+        replacementRoot.innerHTML = sourceHTML;
+        previousRoot.replaceWith(replacementRoot);
+        const siblings = previousRoot.childNodes;
+        let siblingListReads = 0;
+        Object.defineProperty(previousRoot, 'childNodes', {configurable: true, get() {
+            siblingListReads++; return siblings;
+        }});
+        const result = transferEquivalentBilingualOwners(
+            childListRecord(document.body, [replacementRoot], [previousRoot]), () => preparation(),
+        );
+        expect(result.transfers).toHaveLength(count);
+        expect(result.capitulations).toEqual([]);
+        [...replacementRoot.querySelectorAll('p')].forEach((owner, index) => {
+            expect(owner.querySelectorAll(BILINGUAL_SELECTOR)).toHaveLength(1);
+            expect(owner.querySelector(BILINGUAL_SELECTOR)?.textContent)
+                .toBe(kind === 'distinct' ? `段落 ${index}` : '重复段落');
+            expect(owner.parentElement!.getAttribute('style')).toBeNull();
+        });
+        expect(previousOwners.every(owner => !hasTranslationLayoutOverride(owner.parentElement!))).toBe(true);
+        expect(siblingListReads).toBeLessThanOrEqual(3);
+    });
+
     it.each(['distinct', 'repeated'] as const)('500 个 %s 段落整批换代只线性验证可信译文模板', (kind) => {
         const count = 500;
         const {document} = parseHTML('<html><body></body></html>');

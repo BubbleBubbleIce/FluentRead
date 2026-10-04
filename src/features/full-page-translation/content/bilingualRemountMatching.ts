@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/bilingualRemountMatching.ts
  * 文件职责：为同一宿主 mutation 边界的双语 owner 换代建立结构索引，避免旧/新段落两两验证。
- * 主要内容：缓存可信旧状态，按相对路径、语义范围和结构签名索引新节点，以共享候选组汇总歧义与译文差异；同批普通 owner 在相同识别范围下共享祖先保护读数，显式外壳例外仍按 owner 单独判断，保留严格位置配对和溢出身份校验。
+ * 主要内容：缓存可信旧状态，按相对路径、语义范围和结构签名索引新节点，以共享候选组汇总歧义与译文差异；同批普通 owner 在相同识别范围下共享祖先保护读数，显式外壳例外仍按 owner 单独判断，同一只读阶段按父节点建立兄弟位置索引，保留严格位置配对和溢出身份校验。
  * 模块边界：只计算交接配对，不改写 DOM、不提交翻译状态、不发起请求；交接与布局恢复由 bilingualRemount 执行。
  */
 import {
@@ -24,18 +24,31 @@ export interface BilingualRemountPair {
     replacementRoot: Node;
 }
 
-export function nodePathWithin(root: Node, target: Node): number[] | null {
+/** indexes 仅在同一同步只读阶段复用，DOM 写入后必须重建。 */
+export function nodePathWithin(
+    root: Node, target: Node, indexes?: WeakMap<Node, Map<Node, number>>,
+): number[] | null {
     if (root === target) return [];
     const path: number[] = [];
     let current: Node | null = target;
     while (current && current !== root) {
         const parent: Node | null = current.parentNode;
         if (!parent) return null;
-        const index = Array.from(parent.childNodes).indexOf(current as ChildNode);
-        path.unshift(index);
+        let index: number;
+        if (indexes) {
+            let positions = indexes.get(parent);
+            if (!positions) {
+                positions = new Map<Node, number>();
+                const siblings = parent.childNodes;
+                for (let position = 0; position < siblings.length; position++) positions.set(siblings[position]!, position);
+                indexes.set(parent, positions);
+            }
+            index = positions.get(current)!;
+        } else index = Array.from(parent.childNodes).indexOf(current as ChildNode);
+        path.push(index);
         current = parent;
     }
-    return path;
+    return path.reverse();
 }
 
 export function nodeAtPath(root: Node, path: readonly number[]): Node | null {
@@ -119,6 +132,7 @@ export function matchBilingualRemountOwners(
         for (const node of Array.from(mutation.addedNodes)) added.push(node);
         addedByBoundary.set(mutation.target, added);
     }
+    const pathIndexes = new WeakMap<Node, Map<Node, number>>();
     const signatureCache = new WeakMap<HTMLElement, Map<string, string>>();
     const protectionCaches = new Map<TranslationScope, TranslationTextProtectionCache>();
     const states = new Map<HTMLElement, TranslationState | null>();
@@ -134,7 +148,7 @@ export function matchBilingualRemountOwners(
     for (const mutation of mutations) {
         Array.from(mutation.removedNodes).forEach((removedRoot, index) => {
             for (const previousOwner of resolveRemovedOwners(removedRoot)) {
-                const path = nodePathWithin(removedRoot, previousOwner);
+                const path = nodePathWithin(removedRoot, previousOwner, pathIndexes);
                 if (!path) continue;
                 counts.set(previousOwner, (counts.get(previousOwner) ?? 0) + 1);
                 if (!states.has(previousOwner)) states.set(previousOwner, transferableState(previousOwner));
