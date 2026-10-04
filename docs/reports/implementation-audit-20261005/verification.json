@@ -3314,6 +3314,258 @@
       "openPerformanceIssue": "500-owner synchronous whole-root remounts still have 122-153ms long tasks. Hover giant-owner work is substantially reduced, but native runs still show one 51ms task or a 70ms heartbeat gap. Bound caller inspection, leaf protection and checkpoint work while preserving ownership, reading position, cancellation and restore.",
       "docsBuild": "passed",
       "docsCheck": "passed"
+    },
+    {
+      "name": "Cancel every hover gesture on arbitration, blur and abort; reuse shortcut normalization",
+      "baseCommit": "c16341cd",
+      "scope": "Complete hover controller/public barrel and quickTranslationRuntime review; retraced content lifecycle/viewport chain. Affected suites, native gesture and source-preservation fixtures only; goal remains active.",
+      "strictCoverage": {
+        "testFiles": 7,
+        "testCases": 172,
+        "tests": [
+          "tests/hoverTranslationContentFeature.test.ts",
+          "tests/quickTranslationContentFeature.test.ts",
+          "tests/quickTranslationRuntime.test.ts",
+          "tests/quickTranslation.test.ts",
+          "tests/contentRuntimeLifecycle.test.ts",
+          "tests/pageTranslationAdvanced.test.ts",
+          "tests/viewportStability.test.ts"
+        ],
+        "modules": {
+          "src/features/hover-translation/content/index.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdsUnchanged": true,
+        "newExecutedCoreCases": 13
+      },
+      "typeCheck": "passed",
+      "chromeBuild": {
+        "status": "passed",
+        "sha256": {
+          "manifest.json": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844",
+          "content-scripts/content.js": "303ac7ea6aa4007fcdb0deeb7f298ad21aee33237fdcf94101fba6b951783344"
+        }
+      },
+      "firefoxBuild": "passed",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "passed",
+        "registeredFiles": 466,
+        "registeredCases": 6064
+      },
+      "affectedArchitecture": {
+        "status": "passed",
+        "testFiles": 3,
+        "testCases": 815,
+        "wholeRepositoryGatePassed": false
+      },
+      "regressionEvidence": {
+        "redLifecycleCases": 8,
+        "previousMouseShortcutSplitCallsFor200Moves": 403,
+        "currentMouseShortcutSplitCallUpperBound": 2,
+        "configurationChangeInvalidatesOldGesture": true,
+        "unitAbortCancelsInjectedRuntimeDelay": true,
+        "touchDeviceValidated": false
+      },
+      "controlledContentBaseline": {
+        "buildSha256": "9f9fdc54b7df14c2388779458d720e6bddc3429bc1ebc0c22e206f64c2ad6bcd",
+        "evidence": "Production extension; local deterministic transport, temporary background-visible Edge",
+        "cachePolicy": "Microsoft hover disables persistent cache; continuous hover reuses its active request",
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "functionalPassed": false,
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "visible": true,
+          "hidden": false,
+          "windowState": "normal",
+          "displayTarget": "secondary",
+          "browserFrontmost": false
+        },
+        "cases": [],
+        "gestureChecks": {
+          "phases": [
+            {
+              "name": "long-press-arbitration",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 27
+            }
+          ],
+          "arbitrationDispatchMs": 30,
+          "wrappersAfterLongPressDeadline": 1,
+          "arbitrationRequests": 2
+        },
+        "consoleErrors": [],
+        "cleanupVerified": true,
+        "expectedRegressionReproduced": true,
+        "boundary": "Temporary copy of current extension backend/assets with only the saved eighth content script replaced. Reproduces gesture arbitration duplicate request; not an unmodified full eighth build or performance comparison."
+      },
+      "controlledBrowser": {
+        "buildSha256": "303ac7ea6aa4007fcdb0deeb7f298ad21aee33237fdcf94101fba6b951783344",
+        "evidence": "Production extension; local deterministic transport, temporary background-visible Edge",
+        "cachePolicy": "Microsoft hover disables persistent cache; continuous hover reuses its active request",
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "functionalPassed": true,
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "visible": true,
+          "hidden": false,
+          "windowState": "normal",
+          "displayTarget": "secondary",
+          "browserFrontmost": false
+        },
+        "cases": [
+          {
+            "id": "giant-tail",
+            "originalCharacters": 135120,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 75.89999961853027
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.200000286102295
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 35.5
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 39.30000019073486
+              }
+            ],
+            "sourceChunkCharacters": 1550,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "empty-nodes",
+            "originalCharacters": 6240,
+            "emptyNodes": 20000,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 44
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 23.40000009536743
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.600000381469727
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 24.5
+              }
+            ],
+            "sourceChunkCharacters": 1560,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "long-token",
+            "originalCharacters": 9100,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 51.19999980926514
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.40000009536743
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.800000190734863
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.399999618530273
+              }
+            ],
+            "sourceChunkCharacters": 1600,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          }
+        ],
+        "gestureChecks": {
+          "phases": [
+            {
+              "name": "long-press-arbitration",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 24.40000009536743
+            },
+            {
+              "name": "delayed-hover-abort",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22
+            }
+          ],
+          "arbitrationDispatchMs": 31,
+          "wrappersAfterLongPressDeadline": 1,
+          "arbitrationRequests": 1,
+          "disableDispatchMs": 23,
+          "requestsWhileDisabled": 0,
+          "reenabledGestureWorks": true,
+          "originalPreserved": true
+        },
+        "consoleErrors": [],
+        "cleanupVerified": true,
+        "screenshotsInspected": true
+      },
+      "diagnosticCPUProfile": {
+        "buildSha256": "9f9fdc54b7df14c2388779458d720e6bddc3429bc1ebc0c22e206f64c2ad6bcd",
+        "functionalPassed": true,
+        "samplingIntervalMicroseconds": 1000,
+        "sampledSelfTimeMs": {
+          "lazyStyleFieldRead": 20.6,
+          "localViewportCompensationCheck": 17.8,
+          "sentenceSegmentation": 7.1
+        },
+        "boundary": "Diagnostic sampling on eighth content script adds overhead. Samples guide style/anchor investigation; not an exact layout-duration attribution or quiet performance comparison. Raw profiles are private evidence."
+      },
+      "openPerformanceIssue": "500-owner synchronous whole-root remounts still have 122-153ms long tasks. The normal giant-owner hover run has no observed >50ms long task but a 75.9ms maximum heartbeat gap. Continue measuring synchronous layout, reading-anchor and checkpoint work; no whole-chain constant-time or all-page latency claim.",
+      "docsBuild": "passed",
+      "docsCheck": "passed"
     }
   ]
 }

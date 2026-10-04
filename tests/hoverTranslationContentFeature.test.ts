@@ -88,6 +88,124 @@ afterEach(() => {
 });
 
 describe('hover translation content feature', () => {
+    it.each(['reset', 'blur', 'selection-reserved', 'abort'])(
+        '长按在 %s 仲裁后不会发出迟到翻译', reason => {
+            vi.useFakeTimers();
+            const {deps, documentTarget, windowTarget, controller, resetKeyboardGesture} = mountHarness();
+            deps.config.hotkey = deps.constants.LongPress;
+            documentTarget.emit('mousedown', trustedEvent({clientX: 10, clientY: 20}));
+            if (reason === 'reset') resetKeyboardGesture();
+            if (reason === 'blur') windowTarget.emit('blur');
+            if (reason === 'abort') controller.abort();
+            if (reason === 'selection-reserved') {
+                vi.mocked(deps.shouldReserveSelectionShortcut).mockReturnValue(true);
+                windowTarget.emit('keydown', trustedEvent({key: 'Control', ctrlKey: true}));
+            }
+            vi.advanceTimersByTime(500);
+            expect(deps.handleTranslation).not.toHaveBeenCalled();
+            expect(vi.getTimerCount()).toBe(0);
+        },
+    );
+
+    it.each(['reset', 'blur', 'selection-reserved'])(
+        '触摸连击在 %s 后重新计数，不借用取消前的触摸', reason => {
+            vi.useFakeTimers();
+            const {deps, documentTarget, windowTarget, resetKeyboardGesture} = mountHarness();
+            deps.config.hotkey = deps.constants.DoubleClickScreen;
+            const tap = () => documentTarget.emit('touchstart', trustedEvent({touches: [{clientX: 10, clientY: 20}]}));
+            tap();
+            if (reason === 'reset') resetKeyboardGesture();
+            if (reason === 'blur') windowTarget.emit('blur');
+            if (reason === 'selection-reserved') {
+                vi.mocked(deps.shouldReserveSelectionShortcut).mockReturnValue(true);
+                windowTarget.emit('keydown', trustedEvent({key: 'Control', ctrlKey: true}));
+            }
+            tap();
+            expect(deps.handleTranslation).not.toHaveBeenCalled();
+            tap();
+            expect(deps.handleTranslation).toHaveBeenCalledOnce();
+            expect(vi.getTimerCount()).toBe(0);
+        },
+    );
+
+    it('中止手势会取消已交给运行时的悬浮延迟，停止迟到上游工作', () => {
+        vi.useFakeTimers();
+        const upstream = vi.fn();
+        let pending: ReturnType<typeof setTimeout> | undefined;
+        const {documentTarget, windowTarget, controller, deps} = mountHarness({
+            handleTranslation: vi.fn((_x, _y, invocation) => {
+                pending = setTimeout(upstream, invocation?.delayMs ?? 0);
+            }),
+            cancelPendingHoverTranslation: vi.fn(() => clearTimeout(pending)),
+        });
+        windowTarget.emit('keydown', trustedEvent({key: 'Control', code: 'ControlLeft', ctrlKey: true}));
+        documentTarget.emit('mousemove', trustedEvent({clientX: 10, clientY: 20}));
+        expect(deps.handleTranslation).toHaveBeenCalledOnce();
+        controller.abort();
+        vi.advanceTimersByTime(500);
+        expect(upstream).not.toHaveBeenCalled();
+        expect(deps.cancelPendingHoverTranslation).toHaveBeenCalledOnce();
+    });
+
+    it.each(['hotkey-change', 'disabled', 'site-disabled'])(
+        '触摸连击不会跨越 %s 混合前后手势', reason => {
+            vi.useFakeTimers();
+            let disabled = false;
+            const {deps, documentTarget} = mountHarness({isSiteDisabled: () => disabled});
+            deps.config.hotkey = deps.constants.DoubleClickScreen;
+            const tap = () => documentTarget.emit('touchstart', trustedEvent({touches: [{clientX: 10, clientY: 20}]}));
+            tap();
+            if (reason === 'hotkey-change') deps.config.hotkey = deps.constants.TripleClickScreen;
+            if (reason === 'disabled') deps.config.on = false;
+            if (reason === 'site-disabled') disabled = true;
+            tap();
+            expect(deps.handleTranslation).not.toHaveBeenCalled();
+            if (reason !== 'hotkey-change') {
+                deps.config.on = true; disabled = false;
+            }
+            tap();
+            expect(deps.handleTranslation).not.toHaveBeenCalled();
+            tap();
+            expect(deps.handleTranslation).toHaveBeenCalledOnce();
+            expect(vi.getTimerCount()).toBe(0);
+        },
+    );
+
+    it('关闭时的触摸不为重新启用后的连击留下计数', () => {
+        vi.useFakeTimers();
+        const {deps, documentTarget} = mountHarness();
+        deps.config.hotkey = deps.constants.DoubleClickScreen;
+        const tap = () => documentTarget.emit('touchstart', trustedEvent({touches: [{clientX: 10, clientY: 20}]}));
+        deps.config.on = false;
+        tap();
+        deps.config.on = true;
+        tap();
+        expect(deps.handleTranslation).not.toHaveBeenCalled();
+        tap();
+        expect(deps.handleTranslation).toHaveBeenCalledOnce();
+    });
+
+    it('持续移动复用鼠标快捷键解析，配置改变后仍按新组合判定', () => {
+        const {deps, documentTarget, windowTarget} = mountHarness();
+        deps.config.hotkey = 'custom';
+        deps.config.customHotkey = 'Control+Shift';
+        const split = vi.spyOn(String.prototype, 'split');
+        try {
+            windowTarget.emit('keydown', trustedEvent({key: 'Control', code: 'ControlLeft', ctrlKey: true}));
+            windowTarget.emit('keydown', trustedEvent({key: 'Shift', code: 'ShiftLeft', ctrlKey: true, shiftKey: true}));
+            for (let index = 0; index < 200; index++) {
+                documentTarget.emit('mousemove', trustedEvent({clientX: index, clientY: 20}));
+            }
+            const mouseShortcutSplits = split.mock.contexts.filter(context => String(context) === 'Control+Shift').length;
+            expect(mouseShortcutSplits).toBeLessThanOrEqual(2);
+            expect(deps.handleTranslation).toHaveBeenCalledTimes(200);
+            deps.config.customHotkey = 'Control+Alt';
+            documentTarget.emit('mousemove', trustedEvent({clientX: 201, clientY: 20}));
+            expect(deps.handleTranslation).toHaveBeenCalledTimes(200);
+            expect(deps.cancelPendingHoverTranslation).toHaveBeenCalledOnce();
+        } finally { split.mockRestore(); }
+    });
+
     it.each(['blur', 'config-change', 'right-button', 'middle-button'])('长按在 %s 时保留宿主手势，不触发迟到翻译', reason => {
         vi.useFakeTimers();
         const {deps, documentTarget, windowTarget} = mountHarness();

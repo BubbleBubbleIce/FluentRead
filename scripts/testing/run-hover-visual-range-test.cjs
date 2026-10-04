@@ -14,6 +14,11 @@ const arg = (name, fallback) => {const index = process.argv.indexOf(`--${name}`)
 const extensionDir = path.resolve(arg('extension-dir', '.output/chrome-mv3'));
 const artifactsDir = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-hover-window'));
 const baseline = process.argv.includes('--baseline');
+const profileCPU = process.argv.includes('--cpu-profile');
+const gestureLifecycle = process.argv.includes('--gesture-lifecycle');
+const gestureOnly = process.argv.includes('--gesture-only');
+if(gestureOnly && !gestureLifecycle)throw new Error('--gesture-only requires --gesture-lifecycle');
+const cpuSessions = new WeakMap();
 const {chromium} = require(path.join(arg('playwright-root', path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules')), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(arg('focus-safe-helper', path.join(os.homedir(), '.codex/skills/fluentread-extension-ui-test/scripts/focus-safe-browser.cjs')));
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-hover-window-'));
@@ -25,13 +30,20 @@ const cases = [
 ];
 const html = '<!doctype html><meta charset="utf-8"><title>Hover range fixture</title><style>body{font:16px/1.7 system-ui;margin:40px}#target{max-width:740px;overflow-wrap:anywhere}#probe{position:fixed;right:20px;top:20px;z-index:100000}</style><button id="probe" translate="no">Host click</button><main><div id="target"></div></main><script>window.probeClicks=0;document.querySelector("#probe").onclick=()=>window.probeClicks++;</script>';
 const server = http.createServer((_request, response) => {response.writeHead(200, {'content-type':'text/html;charset=utf-8'}); response.end(html);});
-const report = {baseline, evidence:'Production extension; local deterministic transport, temporary background-visible Edge',
+const report = {baseline, profileCPU, gestureLifecycle, evidence:'Production extension; local deterministic transport, temporary background-visible Edge',
   buildSha256:sha256(path.join(extensionDir,'content-scripts/content.js')),
   cachePolicy:'Microsoft hover disables persistent cache; continuous hover reuses its active request',
   cases:[], consoleErrors:[]};
 fs.mkdirSync(artifactsDir,{recursive:true});
 
 async function startPhase(page) {
+  if(profileCPU) {
+    const session=await page.context().newCDPSession(page);
+    await session.send('Profiler.enable');
+    await session.send('Profiler.setSamplingInterval',{interval:1000});
+    await session.send('Profiler.start');
+    cpuSessions.set(page,session);
+  }
   await page.evaluate(() => {
     window.__hoverTasks=[]; window.__hoverTicks=[];
     window.__hoverObserver=new PerformanceObserver(list=>window.__hoverTasks.push(...list.getEntries().map(entry=>entry.duration)));
@@ -42,10 +54,19 @@ async function startPhase(page) {
 }
 
 async function finishPhase(page, name) {
-  return page.evaluate(name=>{
+  const result=await page.evaluate(name=>{
     window.__hoverObserver.disconnect(); clearInterval(window.__hoverTimer);
     return {name, longTasksMs:window.__hoverTasks, maxHeartbeatGapMs:Math.max(0,...window.__hoverTicks)};
   },name);
+  const session=cpuSessions.get(page);
+  if(session) {
+    const {profile}=await session.send('Profiler.stop');
+    const fixtureId=new URL(page.url()).pathname.slice(1);
+    fs.writeFileSync(path.join(artifactsDir,fixtureId+'-'+name+'.cpuprofile'),JSON.stringify(profile));
+    await session.detach();cpuSessions.delete(page);
+    result.cpuProfileSaved=true;
+  }
+  return result;
 }
 
 async function sourcePoint(page, offset) {
@@ -79,6 +100,16 @@ async function originalSource(page) {
   });
 }
 
+async function patchFixtureConfig(setup, patch, sequence) {
+  await setup.evaluate(async({patch,sequence})=>{
+    const current=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});
+    const saved=await chrome.runtime.sendMessage({type:'persistConfig',mode:'patch',config:patch,
+      expected:Object.fromEntries(Object.keys(patch).map(key=>[key,current.value[key]])),
+      clientId:'hover-window-fixture',sequence,baseRevision:current.value.__fluentConfigRevision||0});
+    if(!saved?.success)throw new Error('Fixture configuration failed');
+  },{patch,sequence});
+}
+
 (async()=>{
   let launched,provider;
   try {
@@ -95,15 +126,10 @@ async function originalSource(page) {
     await installTranslationFixtureOnWorker(worker,{translationUrl:provider.translationUrl,blockedUrl:provider.blockedUrl});
     const setup=await newPageWithoutForeground(context);
     await setup.goto(`chrome-extension://${new URL(worker.url()).host}/icon/128.png`);
-    await setup.evaluate(async()=>{
-      const current=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});
-      const patch={on:true,hotkey:'Control',customHotkey:'',mouseHoverTranslationDelay:0,service:'microsoft',from:'auto',to:'zh-Hans',display:1,translationScope:'content',longParagraphLineBreak:false,uiLanguageSetupCompleted:true,uiLanguage:'zh-CN'};
-      const saved=await chrome.runtime.sendMessage({type:'persistConfig',mode:'patch',config:patch,
-        expected:Object.fromEntries(Object.keys(patch).map(key=>[key,current.value[key]])),clientId:'hover-window-fixture',sequence:1,baseRevision:current.value.__fluentConfigRevision||0});
-      if(!saved?.success)throw new Error('Fixture configuration failed');
-    });
-    await setup.close();
-    for(const fixture of cases) {
+    await patchFixtureConfig(setup,{on:true,hotkey:'Control',customHotkey:'',mouseHoverTranslationDelay:0,
+      service:'microsoft',from:'auto',to:'zh-Hans',display:1,translationScope:'content',longParagraphLineBreak:false,
+      uiLanguageSetupCompleted:true,uiLanguage:'zh-CN'},1);
+    for(const fixture of gestureOnly ? [] : cases) {
       const page=await newPageWithoutForeground(context);
       page.on('pageerror',error=>report.consoleErrors.push(error.message));
       await page.goto(`http://127.0.0.1:${server.address().port}/${fixture.id}`,{waitUntil:'domcontentloaded'});
@@ -170,6 +196,68 @@ async function originalSource(page) {
       result.originalPreserved=true; result.restoreAndRetranslate=true; result.continuousHoverNoRepeatedRequests=true;
       await page.close();
     }
+    if(gestureLifecycle) {
+      await patchFixtureConfig(setup,{hotkey:'LongPress',quickTranslationProfiles:[{
+        id:'hover-arbitration',enabled:true,action:'hover',hotkey:'Ctrl+Shift+Y',service:'microsoft',model:'',
+        targetLanguage:'zh-Hans',displayMode:'bilingual',fullPageMode:'inherit',
+      }]},2);
+      const page=await newPageWithoutForeground(context);
+      page.on('pageerror',error=>report.consoleErrors.push(error.message));
+      await page.goto(`http://127.0.0.1:${server.address().port}/long-press-arbitration`,{waitUntil:'domcontentloaded'});
+      await page.locator('#fluent-read-page-styles').waitFor({state:'attached'});
+      const value='This paragraph keeps a stable source while an exclusive quick shortcut cancels the pending long press.';
+      await page.evaluate(value=>{document.getElementById('target').textContent=value;},value);
+      await activateExtensionTabWithoutForeground(context,page);await page.waitForTimeout(500);
+      const result={phases:[]};report.gestureChecks=result;
+      const before=provider.requestCount();
+      const point=await sourcePoint(page,25);
+      await page.mouse.move(point.x,point.y);await startPhase(page);
+      const started=Date.now();
+      await page.mouse.down();
+      try {
+        await page.keyboard.press('Control+Shift+Y');
+        result.arbitrationDispatchMs=Date.now()-started;
+        assert.ok(result.arbitrationDispatchMs<450,'Gesture arbitration reached the long-press deadline');
+        await page.waitForFunction(()=>document.querySelector('#target .fluent-read-bilingual-content'),undefined,{timeout:15000});
+        await page.waitForTimeout(750);
+      } finally {await page.mouse.up();}
+      result.phases.push(await finishPhase(page,'long-press-arbitration'));
+      result.wrappersAfterLongPressDeadline=await page.locator('#target .fluent-read-bilingual-content').count();
+      result.arbitrationRequests=provider.requestCount()-before;
+      await page.screenshot({path:path.join(artifactsDir,'long-press-arbitration.png')});
+      assert.equal(result.wrappersAfterLongPressDeadline,1,'Pending long press must not toggle away the quick translation');
+      assert.equal(result.arbitrationRequests,1,'Quick shortcut owns the only request');
+      assert.equal(await originalSource(page),value);
+      await page.keyboard.press('Control+Shift+Y');
+      await page.waitForFunction(()=>!document.querySelector('#target .fluent-read-bilingual-content'));
+      await patchFixtureConfig(setup,{hotkey:'Control',mouseHoverTranslationDelay:250,quickTranslationProfiles:[]},3);
+      await page.waitForTimeout(100);
+      const pendingBefore=provider.requestCount();
+      const hoverPoint=await sourcePoint(page,25);
+      await page.mouse.move(hoverPoint.x,hoverPoint.y);
+      await startPhase(page);await page.keyboard.down('Control');
+      const queued=Date.now();
+      await page.mouse.move(hoverPoint.x+1,hoverPoint.y);
+      await patchFixtureConfig(setup,{on:false},4);
+      result.disableDispatchMs=Date.now()-queued;
+      assert.ok(result.disableDispatchMs<250,'Disable happened after the hover delay');
+      await page.waitForTimeout(400);await page.keyboard.up('Control');
+      result.phases.push(await finishPhase(page,'delayed-hover-abort'));
+      result.requestsWhileDisabled=provider.requestCount()-pendingBefore;
+      assert.equal(result.requestsWhileDisabled,0,'Aborted gesture must not start upstream work');
+      assert.equal(await page.locator('#target .fluent-read-bilingual-content').count(),0);
+      assert.equal(await originalSource(page),value);
+      await patchFixtureConfig(setup,{on:true,mouseHoverTranslationDelay:0},5);
+      await page.locator('#fluent-read-page-styles').waitFor({state:'attached'});await page.waitForTimeout(250);
+      await gesture(page,25);
+      await page.waitForFunction(()=>document.querySelector('#target .fluent-read-bilingual-content'));
+      await gesture(page,25);
+      await page.waitForFunction(()=>!document.querySelector('#target .fluent-read-bilingual-content'));
+      assert.equal(await originalSource(page),value);
+      result.reenabledGestureWorks=true;result.originalPreserved=true;
+      await page.close();
+    }
+    await setup.close();
     assert.deepEqual(report.consoleErrors,[]);report.ok=true;
     assert.equal(report.buildSha256,sha256(path.join(extensionDir,'content-scripts/content.js')),'Build changed during browser evidence');
     console.log(JSON.stringify(report,null,2));

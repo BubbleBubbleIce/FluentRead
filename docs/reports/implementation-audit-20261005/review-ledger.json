@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14580,
+    "functions": 14578,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -163,8 +163,8 @@
       },
       "src/features/hover-translation": {
         "files": 2,
-        "functions": 30,
-        "lines": 364
+        "functions": 28,
+        "lines": 379
       },
       "src/features/image-translation": {
         "files": 46,
@@ -531,6 +531,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/content/quickTranslationRuntime.ts",
+      "sha256": "3466ba59f6b980042c52fa04c75b56d1d9da7dab9a4577dc41b2a68632300710",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/content/runtime.ts",
       "sha256": "3549147565242c425714bee512b6aa9164c3a509688fde51d2785e80c75c152c",
       "functionBodies": 46,
@@ -775,6 +781,18 @@
       "status": "source-read-and-traced",
       "sha256": "f48e3e06ea2bdd526c8316a52e17ae2938d12a7da7beef79ca8aca10952fc453",
       "functionBodies": 21
+    },
+    {
+      "file": "src/features/hover-translation/content/index.ts",
+      "sha256": "466f2e986ed0f51f53cc91cc8c6f723d0f7db8f51f9324a448061279f81189d2",
+      "functionBodies": 28,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/hover-translation/public.ts",
+      "sha256": "24e9ac5214001ce6d5c0cfb22e8a58a8341ed0e1cc5a31b0ac9d2e172d079602",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
     },
     {
       "file": "src/platform/http/errors.ts",
@@ -1046,7 +1064,6 @@
     "src/app/content/learningFeatures.ts",
     "src/app/content/messageRuntime.ts",
     "src/app/content/qqMailFrameRuntime.ts",
-    "src/app/content/quickTranslationRuntime.ts",
     "src/app/content/shadowBridge.ts",
     "src/app/content/siteAdaptationRuntime.ts",
     "src/app/content/translationAppearance.ts",
@@ -1250,8 +1267,6 @@
     "src/features/glossary/public.ts",
     "src/features/glossary/ui/BuiltinGlossaries.vue",
     "src/features/glossary/ui/GlossarySettings.vue",
-    "src/features/hover-translation/content/index.ts",
-    "src/features/hover-translation/public.ts",
     "src/features/image-translation/background/handlers.ts",
     "src/features/image-translation/background/index.ts",
     "src/features/image-translation/background/ocrLanguageRepository.ts",
@@ -1716,9 +1731,9 @@
     "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
   ],
   "progress": {
-    "sourceReadFiles": 84,
-    "sourceReadFunctionBodies": 1671,
-    "pendingFiles": 733,
+    "sourceReadFiles": 87,
+    "sourceReadFunctionBodies": 1705,
+    "pendingFiles": 730,
     "goalComplete": false
   },
   "observations": [
@@ -1761,6 +1776,11 @@
       "file": "src/core/translation/visual.ts",
       "status": "bounded-local-window-verified; wider-hover-latency-still-open",
       "issue": "Reproduced whole-owner traversal, 40000 empty-node data reads, whole giant-owner requests and >1600-character tokens. Caret-first local collection limits both directions to 1024 DOM hops and total captured text to 16384 UTF-16 units; chunks are at most 1600 units. Native hit, unchanged source, no nested/repeated continuous work, restore and identical retranslation source verified. UTF-16 boundaries and terminal hits covered. Protection and caller inspection may still inspect full individual leaf text; no universal constant-time latency claim. One final native run has a 51ms long task; another has a 70ms heartbeat gap. Overall performance remains open."
+    },
+    {
+      "file": "src/features/hover-translation/content/index.ts",
+      "status": "gesture-cancellation-and-shortcut-work-verified; synchronous-layout-and-anchor-performance-open",
+      "issue": "Reproduced pending long-press arbitration starting a second upstream request, stale touch sequences after reset/configuration changes, and abort leaving the injected hover delay alive. One reset path now clears every gesture timer/count and the runtime delay. Equivalent mouse-shortcut normalization is reused until raw configuration changes: the 200-move fixture falls from 403 matching split calls to at most two. New native content has one arbitration request versus two with the saved eighth content script on the same current backend/assets; disabling a pending delayed hover starts no request, re-enable/restore works. Touch races are unit fixtures, not real-device proof. CPU sampling identifies style/viewport readers for further investigation; giant-owner normal-run heartbeat reaches 75.9ms and 500-owner remount long tasks remain 122-153ms."
     }
   ]
 }
