@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 813,
-    "functions": 14567,
+    "files": 815,
+    "functions": 14572,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -132,9 +132,9 @@
         "lines": 164
       },
       "src/core/translation": {
-        "files": 22,
-        "functions": 306,
-        "lines": 4558
+        "files": 23,
+        "functions": 313,
+        "lines": 4622
       },
       "src/features/area-translation": {
         "files": 14,
@@ -152,9 +152,9 @@
         "lines": 1106
       },
       "src/features/full-page-translation": {
-        "files": 48,
-        "functions": 912,
-        "lines": 11050
+        "files": 49,
+        "functions": 910,
+        "lines": 11112
       },
       "src/features/glossary": {
         "files": 3,
@@ -274,7 +274,7 @@
       "src/services": {
         "files": 54,
         "functions": 937,
-        "lines": 11658
+        "lines": 11662
       },
       "src/shared": {
         "files": 8,
@@ -284,7 +284,7 @@
       "src/ui": {
         "files": 16,
         "functions": 143,
-        "lines": 3838
+        "lines": 3837
       },
       "userscript/SettingsPanel.vue": {
         "files": 1,
@@ -597,8 +597,20 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/translation/layoutMeasurements.ts",
+      "sha256": "593fb5a4beed5ccd783758906a44b95eff5d74313a8372019cb7de9c47f8b750",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/translation/liveData.ts",
       "sha256": "185eece9d70eeed7c5b138211bf4f15b66b9432f2cb72f8e1e6311d7c5bec811",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/public.ts",
+      "sha256": "8ecf40f9347649af681634bd485032700c9983e3f31bf04efdd5026471d1d75f",
       "functionBodies": 1,
       "status": "source-read-and-traced"
     },
@@ -610,7 +622,7 @@
     },
     {
       "file": "src/core/translation/serialization.ts",
-      "sha256": "9b987cd8604bb4715789fd8e9a566250dc06fc522150be83b39643259634fb0b",
+      "sha256": "defbf5cadd149be1cfad31151be0125ccea5f33bdb72485664c6a9fc001c3b28",
       "functionBodies": 36,
       "status": "source-read-and-traced"
     },
@@ -634,8 +646,14 @@
     },
     {
       "file": "src/features/full-page-translation/content/bilingualRemount.ts",
-      "sha256": "c587e49db4384369c12cc9f2b0b5ea07acbb089747db92b185eafb81f65184cd",
-      "functionBodies": 50,
+      "sha256": "6449efe72dfb57c08c8735cda2710d1b6f023112a9348dd4d16ab55196717105",
+      "functionBodies": 37,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/bilingualRemountMatching.ts",
+      "sha256": "77fbe987acaea6c73bf47190051e05316e822f3459c793ca366b587b7263bf4d",
+      "functionBodies": 9,
       "status": "source-read-and-traced"
     },
     {
@@ -651,6 +669,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/layout.ts",
+      "sha256": "aa898b62ef08e4da5b012fe1bd721e4a807e3cef0f50348ce8e979bab53b41ac",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/full-page-translation/content/mutationObservation.ts",
       "sha256": "ec0b7f7207cfc38af3c596131ac6bf5e7088f98260c33ad74d9f4599bc2bf84d",
       "functionBodies": 7,
@@ -658,7 +682,7 @@
     },
     {
       "file": "src/features/full-page-translation/content/runtime.ts",
-      "sha256": "d636b6cee70e921a94e32336a34be6e909b08643e5bdf1942274a94bc02bf993",
+      "sha256": "2ac83af14e4d857191f213281be8af667ec3daf3265af0842c2bf19d224ad2cd",
       "functionBodies": 163,
       "status": "source-read-and-traced"
     },
@@ -672,6 +696,12 @@
       "file": "src/features/full-page-translation/content/sourceStabilityGate.ts",
       "sha256": "ff7d62eada7651d0e96809065bc261f139984a16d36ad8ac2f522cab8c0f0fd0",
       "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/state.ts",
+      "sha256": "d93489e7d9fa8921a946061b98b54a16a87a9748d7fe2f66cbe176c8e8793d16",
+      "functionBodies": 171,
       "status": "source-read-and-traced"
     },
     {
@@ -832,7 +862,7 @@
     },
     {
       "file": "src/services/translation/requestSnapshot.ts",
-      "sha256": "400368ab2c1e59d823493bbd70d0f607f14cc651308f831da3cbd8112116044f",
+      "sha256": "a2e96e72af6b0109cc85e9aa35f2cc39fbd8a9307a0f2e068825bbe1c3c195c1",
       "functionBodies": 43,
       "status": "source-read-and-traced"
     },
@@ -1104,7 +1134,6 @@
     "src/core/translation/lineBreak.ts",
     "src/core/translation/localInference.ts",
     "src/core/translation/prompts.ts",
-    "src/core/translation/public.ts",
     "src/core/translation/registry.ts",
     "src/core/translation/sentenceAlignment.ts",
     "src/core/translation/types.ts",
@@ -1144,7 +1173,6 @@
     "src/features/full-page-translation/content/eagerTranslation.ts",
     "src/features/full-page-translation/content/excerpt.ts",
     "src/features/full-page-translation/content/frameSession.ts",
-    "src/features/full-page-translation/content/layout.ts",
     "src/features/full-page-translation/content/liveTextRender.ts",
     "src/features/full-page-translation/content/liveTextTranslation.ts",
     "src/features/full-page-translation/content/loadingIndicator.ts",
@@ -1156,7 +1184,6 @@
     "src/features/full-page-translation/content/requestSession.ts",
     "src/features/full-page-translation/content/sectionTranslation.ts",
     "src/features/full-page-translation/content/sentenceHighlight.ts",
-    "src/features/full-page-translation/content/state.ts",
     "src/features/full-page-translation/content/stateNotification.ts",
     "src/features/full-page-translation/content/syntheticRemount.ts",
     "src/features/full-page-translation/content/translationRequest.ts",
@@ -1632,7 +1659,7 @@
   ],
   "priorities": [
     "Full-page state/render/request pipeline including mass framework remounts",
-    "Measure/remediate Cartesian removed-owner × added-node matching and protocol marker rescans before claiming dynamic-host responsiveness",
+    "Bound synchronous mass-remount work after indexed matching and grouped layout; protocol counting still scans once per marker and lease validation still needs pressure cases.",
     "Selection/hover/input translation lifecycle",
     "Image/area/document/video pipelines",
     "Config persistence, synchronization and providers",
@@ -1640,5 +1667,11 @@
   ],
   "verificationDebt": [
     "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
-  ]
+  ],
+  "progress": {
+    "sourceReadFiles": 75,
+    "sourceReadFunctionBodies": 1492,
+    "pendingFiles": 740,
+    "goalComplete": false
+  }
 }

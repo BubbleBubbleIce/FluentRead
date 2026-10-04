@@ -91,6 +91,55 @@ afterEach(() => {
 });
 
 describe('双语 owner 同源重挂交接', () => {
+    it.each(['distinct', 'repeated'] as const)('500 个 %s 段落整批换代只线性验证可信译文模板', (kind) => {
+        const count = 500;
+        const {document} = parseHTML('<html><body></body></html>');
+        const previousOwners: HTMLElement[] = [];
+        const replacements: HTMLElement[] = [];
+        let templateReads = 0;
+        for (let index = 0; index < count; index += 1) {
+            const source = kind === 'distinct' ? `Source paragraph ${index}.` : 'Repeated source paragraph.';
+            const owner = document.createElement('p');
+            owner.textContent = source;
+            document.body.appendChild(owner);
+            const attempt = beginTranslation(owner, 'bilingual', 'content', false, source, [])!;
+            expect(markTranslationComplete(owner, attempt.state, attempt.generation)).toBe(true);
+            const wrapper = document.createElement('span');
+            wrapper.className = 'fluent-read-bilingual-content';
+            wrapper.setAttribute('data-fr-translation-owned', 'true');
+            wrapper.textContent = kind === 'distinct' ? `段落 ${index}` : '重复段落';
+            owner.appendChild(wrapper);
+            setBilingualContent(owner, wrapper);
+            const template = attempt.state.bilingualContentTemplate!;
+            let prototype = Object.getPrototypeOf(template);
+            while (!Object.getOwnPropertyDescriptor(prototype, 'innerHTML')) prototype = Object.getPrototypeOf(prototype);
+            const readHTML = Object.getOwnPropertyDescriptor(prototype, 'innerHTML')!.get!;
+            Object.defineProperty(template, 'innerHTML', {configurable: true, get() {
+                templateReads += 1;
+                return readHTML.call(this);
+            }});
+            previousOwners.push(owner);
+            const replacement = document.createElement('p');
+            replacement.textContent = source;
+            replacements.push(replacement);
+        }
+        document.body.replaceChildren(...replacements);
+        const prepare = vi.fn(() => preparation());
+        const result = transferEquivalentBilingualOwners(
+            childListRecord(document.body, replacements, previousOwners), prepare,
+        );
+        expect(result.transfers).toHaveLength(count);
+        expect(result.capitulations).toEqual([]);
+        expect(prepare).toHaveBeenCalledTimes(count);
+        replacements.forEach((owner, index) => {
+            expect(owner.querySelectorAll(BILINGUAL_SELECTOR)).toHaveLength(1);
+            expect(owner.querySelector(BILINGUAL_SELECTOR)?.textContent).toBe(
+                kind === 'distinct' ? `段落 ${index}` : '重复段落',
+            );
+        });
+        expect(templateReads).toBeLessThanOrEqual(count * 6);
+    });
+
     it('全部节点中的 GitHub 动态文字熔断后保持范围签名，显式重试可清除记录', () => {
         vi.stubGlobal('location', {href: 'https://github.com/org/repo/issues/1'});
         try {
@@ -720,6 +769,11 @@ describe('双语 owner 同源重挂交接', () => {
             childListRecord(document.body, [changedRootOwner], [replacementOwner]),
             () => preparation(),
         )).toEqual({transfers: [], capitulations: []});
+        changedRootOwner.removeAttribute('lang');
+        expect(transferEquivalentBilingualOwners(
+            childListRecord(document.body, [changedRootOwner], [replacementOwner]),
+            () => { changedRootOwner.setAttribute('lang', 'fr'); return preparation(); },
+        )).toEqual({transfers: [], capitulations: []});
     });
 
     it('不等量批量替换只在唯一结构候选上交接，歧义时保守拒绝', () => {
@@ -858,6 +912,76 @@ describe('双语 owner 同源重挂交接', () => {
             expect(getTranslationState(owner)).toBeUndefined();
             expect(owner.querySelector(BILINGUAL_SELECTOR)).toBeNull();
         });
+    });
+
+    it.each([false, true])('跨两种移除路径指向同一新 owner 时统一汇总输出歧义：相同=%s', (sameOutput) => {
+        const {document} = parseHTML('<html><body><p>Same source.</p><section><p>Same source.</p></section></body></html>');
+        const previousOwners = Array.from(document.querySelectorAll<HTMLElement>('p'));
+        const previousSection = document.querySelector<HTMLElement>('section')!;
+        previousOwners.forEach((owner, index) => {
+            const attempt = beginTranslation(owner, 'bilingual', 'content', false, 'Same source.', [])!;
+            expect(markTranslationComplete(owner, attempt.state, attempt.generation)).toBe(true);
+            const wrapper = document.createElement('span');
+            wrapper.className = 'fluent-read-bilingual-content';
+            wrapper.setAttribute('data-fr-translation-owned', 'true');
+            wrapper.textContent = sameOutput ? '同一译文' : `不同译文 ${index}`;
+            owner.appendChild(wrapper);
+            setBilingualContent(owner, wrapper);
+        });
+        const replacementSection = document.createElement('section');
+        const replacement = document.createElement('p');
+        replacement.textContent = 'Same source.';
+        replacementSection.appendChild(replacement);
+        document.body.replaceChildren(replacementSection);
+        const result = transferEquivalentBilingualOwners([
+            childListRecord(document.body, [replacement], [previousOwners[0]!]),
+            childListRecord(document.body, [replacementSection], [previousSection]),
+        ], () => preparation());
+        expect(result.transfers).toHaveLength(sameOutput ? 1 : 0);
+        expect(replacement.querySelectorAll(BILINGUAL_SELECTOR)).toHaveLength(sameOutput ? 1 : 0);
+        if (sameOutput) expect(result.transfers[0]!.previousOwner).toBe(previousOwners[1]);
+    });
+
+    it('结构快照缺失的旧 owner 不复用已有译文', () => {
+        const scenario = createCommittedScenario();
+        scenario.previousState.sourceStructureSignature = undefined;
+        expect(transferEquivalentBilingualOwners(scenario.record(), () => preparation()))
+            .toEqual({transfers: [], capitulations: []});
+        expect(scenario.replacementOwner.querySelector(BILINGUAL_SELECTOR)).toBeNull();
+    });
+
+    it.each([false, true])('批量接管先落位再校验布局，单项拒绝不影响其他段落：来源变更=%s', (changeSource) => {
+        const {document} = parseHTML('<html><body><p>Source one.</p><p>Source two.</p></body></html>');
+        const previousOwners = Array.from(document.querySelectorAll<HTMLElement>('p'));
+        const replacements = previousOwners.map((owner) => owner.cloneNode(true) as HTMLElement);
+        previousOwners.forEach((owner, index) => {
+            const attempt = beginTranslation(owner, 'bilingual', 'content', false, owner.textContent!, [])!;
+            expect(markTranslationComplete(owner, attempt.state, attempt.generation)).toBe(true);
+            const wrapper = document.createElement('span');
+            wrapper.className = 'fluent-read-bilingual-content';
+            wrapper.setAttribute('data-fr-translation-owned', 'true');
+            wrapper.textContent = `译文 ${index}`;
+            owner.appendChild(wrapper);
+            setBilingualContent(owner, wrapper);
+        });
+        document.body.replaceChildren(...replacements);
+        let firstLayoutWrapperCount: number | undefined;
+        const result = transferEquivalentBilingualOwners(
+            childListRecord(document.body, replacements, previousOwners),
+            (_previous, replacement) => {
+                if (changeSource && replacement === replacements[1]) replacements[0]!.textContent = 'Host changed source.';
+                return preparation((owner) => {
+                    firstLayoutWrapperCount ??= document.querySelectorAll(BILINGUAL_SELECTOR).length;
+                    return owner !== replacements[0];
+                });
+            },
+        );
+        expect(firstLayoutWrapperCount).toBe(changeSource ? 1 : 2);
+        expect(result.transfers).toEqual([{previousOwner: previousOwners[1], replacementOwner: replacements[1]}]);
+        expect(getTranslationState(replacements[0]!)).toBeUndefined();
+        expect(replacements[0]!.textContent).toBe(changeSource ? 'Host changed source.' : 'Source one.');
+        expect(replacements[0]!.querySelector(BILINGUAL_SELECTOR)).toBeNull();
+        expect(replacements[1]!.querySelector(BILINGUAL_SELECTOR)?.textContent).toBe('译文 1');
     });
 
     it('同一 MutationRecord 删除两个等价 owner 但只新增一个时拒绝歧义配对', () => {

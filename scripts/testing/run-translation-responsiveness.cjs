@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-// 生产扩展的主线程响应性基准：隔离 profile、本地确定性译文、真实按键、宿主点击与恢复。
+// 生产扩展的主线程响应性基准：隔离 profile、本地确定性译文、真实按键、宿主点击、整批重挂与恢复。
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -14,6 +14,8 @@ const artifactsDir = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-
 const paragraphs = Number(arg('paragraphs', '500'));
 const github = process.argv.includes('--github');
 const compare = process.argv.includes('--compare');
+const remount = process.argv.includes('--remount');
+const repeated = process.argv.includes('--repeated-source');
 const allowChineseBaseline = process.argv.includes('--allow-chinese-baseline');
 const cpuRate = Number(arg('cpu-rate', '1'));
 const {chromium} = require(path.join(arg('playwright-root', path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules')), 'playwright'));
@@ -23,9 +25,9 @@ assert.ok(Number.isFinite(cpuRate) && cpuRate>=1, '--cpu-rate must be at least 1
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-responsiveness-'));
 fs.mkdirSync(artifactsDir, {recursive: true});
 const chinese = 'FluentRead 支持在原网页中对照阅读原文与译文，并提供划词翻译、AI 阅读辅助、图片翻译、文档翻译和视频双语字幕。翻译卡片接入了 <strong>DeepSeek Harness 会话内核的浏览器适配</strong>，支持结合上下文解释选中文字并连续追问。';
-const html = '<!doctype html><html lang="en"><meta charset="utf-8"><title>Responsiveness fixture</title><style>body{font:16px/1.7 system-ui;margin:40px}main{max-width:900px}#probe{position:fixed;right:24px;top:24px;z-index:100000}p{margin:20px 0}</style><button id="probe" translate="no">Host click</button><main><p id="chinese">' + chinese + '</p>' + Array.from({length: paragraphs}, (_, i) => `<section><p id="p${i}">The browser should remain responsive while this paragraph number ${i} is translated. Readers can click the controls and scroll through the document without waiting for every translation to finish.</p></section>`).join('') + '</main><script>window.probeClicks=0;document.querySelector("#probe").onclick=()=>window.probeClicks++;</script></html>';
+const html = '<!doctype html><html lang="en"><meta charset="utf-8"><title>Responsiveness fixture</title><style>body{font:16px/1.7 system-ui;margin:40px}main{max-width:900px}#probe{position:fixed;right:24px;top:24px;z-index:100000}p{margin:20px 0}</style><button id="probe" translate="no">Host click</button><main><p id="chinese">' + chinese + '</p>' + Array.from({length: paragraphs}, (_, i) => `<section><p id="p${i}">The browser should remain responsive while this paragraph number ${repeated ? 0 : i} is translated. Readers can click the controls and scroll through the document without waiting for every translation to finish.</p></section>`).join('') + '</main><script>window.probeClicks=0;document.querySelector("#probe").onclick=()=>window.probeClicks++;</script></html>';
 const server = http.createServer((_req, res) => {res.writeHead(200, {'content-type': 'text/html; charset=utf-8'});res.end(html);});
-const report = {extensionDir, paragraphs, evidence: 'Production extension and real browser; local deterministic Microsoft transport, no live provider claims', consoleErrors: [], phases: []};
+const report = {extensionDir, paragraphs, remount, repeated, evidence: 'Production extension and real browser; local deterministic Microsoft transport, no live provider claims', consoleErrors: [], phases: []};
 
 async function startPhase(page, name) {
   await page.evaluate(name => {
@@ -65,6 +67,40 @@ async function translateUntilComplete(page, provider, name) {
   } while(true);
   await page.waitForTimeout(300);
   await finishPhase(page);
+}
+
+async function remountTranslatedParagraphs(page, provider) {
+  const initialItems = provider.translatedItemCount();
+  await page.evaluate(() => {
+    window.__remountOutputs = [...document.querySelectorAll('p[id^="p"]')].map(owner => ({
+      id: owner.id, html: owner.querySelector('.fluent-read-bilingual-content').outerHTML,
+    }));
+  });
+  report.remountChecks = [];
+  for (let round = 0; round < 3; round++) {
+    await startPhase(page, `remount-${round + 1}`);
+    const check = await page.evaluate(() => new Promise(resolve => {
+      const started = performance.now();
+      document.querySelector('main').innerHTML = window.__remountSourceHTML;
+      const hostWriteMs = performance.now() - started;
+      requestAnimationFrame(() => resolve({hostWriteMs,
+        firstFrameMs: performance.now() - started,
+        wrappers: document.querySelectorAll('p[id^="p"] > .fluent-read-bilingual-content').length,
+        nested: document.querySelectorAll('.fluent-read-bilingual-content .fluent-read-bilingual-content').length,
+        exactOutputs: window.__remountOutputs.every(({id, html}) =>
+          document.getElementById(id)?.querySelector('.fluent-read-bilingual-content')?.outerHTML === html),
+      }));
+    }));
+    assert.equal(check.wrappers, paragraphs, '下一帧前必须接管全部已提交段落');
+    assert.equal(check.nested, 0, '重挂不得嵌套双语译文');
+    assert.equal(check.exactOutputs, true, '重挂必须保留已提交的精确译文');
+    await page.locator('#probe').click();
+    await page.waitForTimeout(200);
+    const phase = await finishPhase(page);
+    assert.equal(phase.hostClicks, 1);
+    assert.equal(provider.translatedItemCount(), initialItems, '等价重挂不得重新发送原文');
+    report.remountChecks.push(check);
+  }
 }
 
 async function runCompare(context, setup, provider) {
@@ -260,6 +296,7 @@ async function runGithub(context, provider) {
     await page.locator('#fluent-read-page-styles').waitFor({state:'attached'});
     await activateExtensionTabWithoutForeground(context,page);
     await page.waitForTimeout(500);
+    if (remount) await page.evaluate(() => {window.__remountSourceHTML = document.querySelector('main').innerHTML;});
     console.log('Fixture ready; starting translation');
     const before=Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m=>[m.name,m.value]));
     await cdp.send('Profiler.enable');await cdp.send('Profiler.start');
@@ -268,6 +305,12 @@ async function runGithub(context, provider) {
     const after=Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m=>[m.name,m.value]));
     report.metrics=Object.fromEntries(['ScriptDuration','LayoutDuration','RecalcStyleDuration','TaskDuration','LayoutCount','RecalcStyleCount'].map(k=>[k,after[k]-before[k]]));
     const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(path.join(artifactsDir,'translate.cpuprofile'),JSON.stringify(profile));
+    if (remount) {
+      await cdp.send('Profiler.start');
+      await remountTranslatedParagraphs(page, provider);
+      const profile = await cdp.send('Profiler.stop');
+      fs.writeFileSync(path.join(artifactsDir, 'remount.cpuprofile'), JSON.stringify(profile.profile));
+    }
     await startPhase(page,'scroll-translated');
     for(let i=0;i<12;i++){await page.mouse.wheel(0,600);await page.waitForTimeout(40);await page.locator('#probe').click();}
     await page.waitForTimeout(350);await finishPhase(page);

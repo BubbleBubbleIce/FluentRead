@@ -2,7 +2,7 @@
  * @file src/services/translation/requestSnapshot.ts
  *
  * 文件职责：冻结翻译消息的可编辑字段与数组，并附加只读 provider 配置快照，消除异步缓存读取期间全局配置变化造成的请求身份错配。
- * 主要内容：定义配置快照、剩余预算、内部取消、线路观察与可信术语来源 symbol，冻结术语规则并从完整文本槽协议恢复纯匹配原文，供后台 broker 安全传递进程内状态。
+ * 主要内容：在入口一次读取消息字段并复制原文/术语数组，保留内部 symbol 描述符；定义配置快照、剩余预算、内部取消、线路观察与可信术语来源，冻结术语规则并从完整文本槽协议恢复纯匹配原文。
  * 模块边界：本文件位于翻译 application service 层，负责用例编排和端口契约；不挂载页面 UI，且不应把某家供应商的网络细节扩散到 feature，具体 HTTP 协议由 providers/platform 实现。
  */
 
@@ -24,12 +24,16 @@ import type {TranslationRequestScheduler, TranslationRequestIdentity} from './re
 
 /** 在入口第一次等待前复制用户可编辑的数组与消息字段，同时保留不可枚举的内部 symbol。 */
 export function createTranslationRequestSnapshot<T extends TranslationRequestMessage>(message: T): T {
-    const descriptors = Object.getOwnPropertyDescriptors(message);
-    if (Array.isArray(message.origin)) {
-        descriptors.origin = {...descriptors.origin, value: [...message.origin]};
-    }
-    if (message.glossaryIds) {
-        descriptors.glossaryIds = {...descriptors.glossaryIds, value: [...message.glossaryIds]};
+    const descriptors: PropertyDescriptorMap = Object.getOwnPropertyDescriptors(message);
+    for (const key of Object.keys(descriptors)) {
+        const descriptor = descriptors[key];
+        const value = 'value' in descriptor ? descriptor.value : Reflect.get(message, key);
+        descriptors[key] = {
+            value: (key === 'origin' || key === 'glossaryIds') && Array.isArray(value) ? [...value] : value,
+            enumerable: descriptor.enumerable,
+            configurable: descriptor.configurable,
+            writable: descriptor.writable ?? false,
+        };
     }
     return Object.defineProperties({}, descriptors) as T;
 }

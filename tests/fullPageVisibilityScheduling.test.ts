@@ -168,6 +168,7 @@ vi.mock("@/src/features/full-page-translation/content/renderer", async (importOr
 }));
 vi.mock("@/src/features/full-page-translation/content/layout", () => ({
     ensureTranslationTruncationLayout: runtime.ensureTranslationTruncationLayout,
+    createTranslationTruncationLayoutBatch: () => runtime.ensureTranslationTruncationLayout,
 }));
 vi.mock("@/src/core/translation/public", async (importOriginal) => {
     const actual = await importOriginal<typeof import("@/src/core/translation/public")>();

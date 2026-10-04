@@ -1,9 +1,10 @@
 /**
  * @file src/features/full-page-translation/content/bilingualRemount.ts
  * 文件职责：在 React/Vue 等宿主框架等价重挂双语 owner 时，于同一 MutationObserver 检查点原子接管已提交译文。
- * 主要内容：按 childList 相对路径配对新旧 owner，一次建立兄弟节点位置索引以线性核对行内片段，按正文/全部节点范围隔离熔断身份并校验原文/译文快照与直属工件，重建 WeakMap 状态并安全转移布局租约。
+ * 主要内容：按 childList 路径与结构索引配对新旧 owner，一次建立兄弟节点位置索引以线性核对行内片段，按正文/全部节点范围隔离熔断身份并校验原文/译文快照与直属工件，先读取候选再统一挂载，最后核对布局，避免逐段交错读写触发全页重排；重建 WeakMap 状态并安全转移布局租约。
  * 模块边界：本文件不发起翻译请求、不发现候选也不持有页面会话；runtime 提供候选/语义验证与会话索引收尾。
  */
+import {asHTMLElement, matchBilingualRemountOwners, nodeAtPath, nodePathWithin} from './bilingualRemountMatching';
 import {
     beginTranslation,
     consumeBilingualArtifactHostWriteBudget,
@@ -338,123 +339,15 @@ export function stabilizeBilingualArtifact(
     return 'capitulated';
 }
 
-function nodePathWithin(root: Node, target: Node): number[] | null {
-    if (root === target) return [];
-    const path: number[] = [];
-    let current: Node | null = target;
-    while (current && current !== root) {
-        const parent: Node | null = current.parentNode;
-        if (!parent) return null;
-        const index = Array.from(parent.childNodes).indexOf(current as ChildNode);
-        path.unshift(index);
-        current = parent;
-    }
-    return path;
-}
-
-function nodeAtPath(root: Node, path: readonly number[]): Node | null {
-    let current: Node | null = root;
-    for (const index of path) {
-        current = current?.childNodes.item(index) ?? null;
-        if (!current) return null;
-    }
-    return current;
-}
-
-function asHTMLElement(node: Node | null): HTMLElement | null {
-    if (!node || node.nodeType !== 1) return null;
-    return node as HTMLElement;
-}
-
-function hasTransferableBilingualOwner(
-    previousOwner: HTMLElement,
-    replacementOwner: HTMLElement,
-    signatureCache: WeakMap<HTMLElement, Map<string, string>>,
-): boolean {
-    const previousState = getTranslationState(previousOwner);
-    const previousWrapper = previousState?.bilingualContent;
-    const trustedTemplate = previousState?.bilingualContentTemplate;
-    if (
-        !previousState ||
-        previousState.phase !== 'translated' ||
-        previousState.mode !== 'bilingual' ||
-        previousState.kind !== 'content' ||
-        previousOwner.isConnected ||
-        !replacementOwner.isConnected ||
-        getTranslationState(replacementOwner) ||
-        previousOwner.localName !== replacementOwner.localName ||
-        previousOwner.namespaceURI !== replacementOwner.namespaceURI ||
-        !previousWrapper ||
-        !trustedTemplate ||
-        !isTrustedBilingualArtifactWithHostClass(trustedTemplate, previousState) ||
-        previousState.syntheticSegment !==
-            (replacementOwner.getAttribute('data-fr-translation-segment') === 'true') ||
-        (previousWrapper.parentNode !== previousOwner && previousWrapper.parentNode !== null &&
-            previousWrapper.parentNode !== replacementOwner)
-    ) return false;
-    const replacementSignature = cachedSourceStructureSignature(
-            replacementOwner,
-            previousState.allowTopLevelApplicationShell === true,
-            signatureCache,
-            previousState,
-        );
-    if (isTranslationSourceStructureOverflow(previousState.sourceStructureSignature)
-        ? getTranslationOverflowGenerationIdentity(replacementOwner) !==
-            previousState.sourceOverflowGenerationIdentity
-        : replacementSignature !== previousState.sourceStructureSignature) return false;
-
-    return true;
-}
-
-function cachedSourceStructureSignature(
-    owner: HTMLElement,
-    allowTopLevelApplicationShell: boolean,
-    cache: WeakMap<HTMLElement, Map<string, string>>,
-    state?: TranslationState,
-): string {
-    let signatures = cache.get(owner);
-    if (!signatures) {
-        signatures = new Map<string, string>();
-        cache.set(owner, signatures);
-    }
-    const cacheKey = `${allowTopLevelApplicationShell ? 1 : 0}:${state?.syntheticSegment ? 1 : 0}:${state?.scope ?? 'content'}`;
-    const cached = signatures.get(cacheKey);
-    if (cached !== undefined) return cached;
-    const sourceTextNodes = state?.syntheticSegment ? collectLiveTranslationTextSlots(
-        owner,
-        getCurrentTranslationCore(state.scope).shouldStayOriginal,
-        owner,
-        state.allowTopLevelApplicationShell === true
-            ? {allowTopLevelApplicationShell: true, protectedElement: owner}
-            : {protectedElement: owner},
-    ).map((slot) => slot.node) : undefined;
-    const signature = getTranslationSourceStructureSignature(
-        owner,
-        allowTopLevelApplicationShell,
-        sourceTextNodes,
-        state?.scope,
-    );
-    signatures.set(cacheKey, signature);
-    return signature;
-}
-
-function haveEquivalentBilingualOutputs(owners: ReadonlySet<HTMLElement> | undefined): boolean {
-    if (!owners || owners.size <= 1) return true;
-    return new Set(Array.from(owners, (owner) => getTranslationState(owner)?.bilingualOuterHTML)).size === 1;
-}
-
 type BilingualTransferOutcome = 'transferred' | 'capitulated' | 'rejected';
+interface PendingBilingualTransfer {finish: () => BilingualTransferOutcome;}
 
 function tryTransferBilingualOwner(
     previousOwner: HTMLElement,
     replacementOwner: HTMLElement,
     layoutElementPairs: readonly (readonly [HTMLElement, HTMLElement])[],
-    prepare: (
-        previousOwner: HTMLElement,
-        replacementOwner: HTMLElement,
-        state: TranslationState,
-    ) => BilingualRemountPreparation | null,
-): BilingualTransferOutcome {
+    preparation: BilingualRemountPreparation,
+): PendingBilingualTransfer | 'capitulated' | 'rejected' {
     const previousState = getTranslationState(previousOwner)!;
     const previousWrapper = previousState.bilingualContent!;
     const trustedTemplate = previousState.bilingualContentTemplate!;
@@ -463,8 +356,6 @@ function tryTransferBilingualOwner(
     const copiedWrappers = directOwnedArtifacts.filter((child) =>
         child.matches(BILINGUAL_ARTIFACT_SELECTOR)) as HTMLElement[];
 
-    const preparation = prepare(previousOwner, replacementOwner, previousState);
-    if (!preparation) return 'rejected';
     const copiedContent = directOwnedArtifacts.length === 1 && copiedWrappers.length === 1 &&
         isTrustedBilingualArtifactWithHostClass(copiedWrappers[0]!, previousState)
         ? copiedWrappers[0] : undefined;
@@ -490,6 +381,13 @@ function tryTransferBilingualOwner(
         previousState.scope,
     );
     if (!attempt) return 'rejected';
+    // 前置读取期间其他候选可能同步改写宿主；提交前以本次 begin 的新快照再次核对。
+    if (isTranslationSourceStructureOverflow(previousState.sourceStructureSignature)
+        ? attempt.state.sourceOverflowGenerationIdentity !== previousState.sourceOverflowGenerationIdentity
+        : attempt.state.sourceStructureSignature !== previousState.sourceStructureSignature) {
+        discardTranslation(replacementOwner, attempt.state);
+        return 'rejected';
+    }
     if (!markTranslationComplete(replacementOwner, attempt.state, attempt.generation)) {
         discardTranslation(replacementOwner, attempt.state);
         return 'rejected';
@@ -510,21 +408,23 @@ function tryTransferBilingualOwner(
     }
 
     if (content.parentNode !== replacementOwner) replacementOwner.appendChild(content);
-    if (!preparation.reconcileLayout(replacementOwner)) {
-        content.remove();
-        discardTranslation(replacementOwner, attempt.state);
-        return 'rejected';
-    }
-    setBilingualContent(
-        replacementOwner,
-        content,
-        previousState.bilingualReplay,
-        trustedTemplate,
-    );
-    setRenderedStyleAttribute(replacementOwner);
-    if (previousWrapper === content) previousState.bilingualContent = undefined;
-    discardTranslation(previousOwner, previousState);
-    return 'transferred';
+    return {finish: () => {
+        if (!preparation.reconcileLayout(replacementOwner)) {
+            content.remove();
+            discardTranslation(replacementOwner, attempt.state);
+            return 'rejected';
+        }
+        setBilingualContent(
+            replacementOwner,
+            content,
+            previousState.bilingualReplay,
+            trustedTemplate,
+        );
+        setRenderedStyleAttribute(replacementOwner);
+        if (previousWrapper === content) previousState.bilingualContent = undefined;
+        discardTranslation(previousOwner, previousState);
+        return 'transferred';
+    }};
 }
 
 export function transferEquivalentBilingualOwners(
@@ -540,94 +440,23 @@ export function transferEquivalentBilingualOwners(
         ? mutationInput as readonly MutationRecord[]
         : [mutationInput as MutationRecord];
     const childListMutations = mutations.filter((mutation) => mutation.type === 'childList');
-    const addedEntries = childListMutations.flatMap((mutation) =>
-        Array.from(mutation.addedNodes).map((node, index) => ({mutation, node, index})));
-    if (addedEntries.length === 0 || !childListMutations.some((mutation) => mutation.removedNodes.length > 0)) {
+    if (!childListMutations.some((mutation) => mutation.addedNodes.length > 0) ||
+        !childListMutations.some((mutation) => mutation.removedNodes.length > 0)) {
         return {transfers: [], capitulations: []};
     }
 
-    type RemovedEntry = {
-        mutation: MutationRecord;
-        removedRoot: Node;
-        previousOwner: HTMLElement;
-        path: number[];
-        index: number;
-    };
-    const removedEntries: RemovedEntry[] = [];
-    childListMutations.forEach((mutation) => Array.from(mutation.removedNodes).forEach((removedRoot, index) => {
-        resolveRemovedOwners(removedRoot).forEach((previousOwner) => {
-            const path = nodePathWithin(removedRoot, previousOwner);
-            if (path) removedEntries.push({mutation, removedRoot, previousOwner, path, index});
-        });
-    }));
-    const addedByBoundary = new Map<Node, typeof addedEntries>();
-    addedEntries.forEach((entry) => {
-        const entries = addedByBoundary.get(entry.mutation.target) ?? [];
-        entries.push(entry);
-        addedByBoundary.set(entry.mutation.target, entries);
-    });
-    const signatureCache = new WeakMap<HTMLElement, Map<string, string>>();
-    const eligibleByRemoved = new Map<RemovedEntry, Map<HTMLElement, Node>>();
-    const removedByReplacement = new Map<HTMLElement, Set<HTMLElement>>();
-    const replacementsByPrevious = new Map<HTMLElement, Set<HTMLElement>>();
-    const entriesByPrevious = new Map<HTMLElement, number>();
-    removedEntries.forEach((entry) => {
-        entriesByPrevious.set(entry.previousOwner, (entriesByPrevious.get(entry.previousOwner) ?? 0) + 1);
-        const eligible = new Map<HTMLElement, Node>();
-        for (const added of addedByBoundary.get(entry.mutation.target) ?? []) {
-            const replacement = asHTMLElement(nodeAtPath(added.node, entry.path));
-            if (replacement && hasTransferableBilingualOwner(
-                entry.previousOwner,
-                replacement,
-                signatureCache,
-            )) eligible.set(replacement, added.node);
-        }
-        eligibleByRemoved.set(entry, eligible);
-        eligible.forEach((_addedRoot, replacement) => {
-            const replacements = replacementsByPrevious.get(entry.previousOwner) ?? new Set<HTMLElement>();
-            replacements.add(replacement);
-            replacementsByPrevious.set(entry.previousOwner, replacements);
-            const previousOwners = removedByReplacement.get(replacement) ?? new Set<HTMLElement>();
-            previousOwners.add(entry.previousOwner);
-            removedByReplacement.set(replacement, previousOwners);
-        });
-    });
-
-    const pairs: Array<BilingualOwnerTransfer & {
-        depth: number;
-        boundary: Node;
-        previousRoot: Node;
-        replacementRoot: Node;
-    }> = [];
-    removedEntries.forEach((entry) => {
-        const eligible = eligibleByRemoved.get(entry)!;
-        if (entriesByPrevious.get(entry.previousOwner)! > 1 &&
-            replacementsByPrevious.get(entry.previousOwner)?.size !== 1) return;
-        const positionalOwner = entry.mutation.addedNodes.length === entry.mutation.removedNodes.length
-            ? asHTMLElement(nodeAtPath(Array.from(entry.mutation.addedNodes)[entry.index]!, entry.path))
-            : null;
-        let replacementOwner = positionalOwner && eligible.has(positionalOwner) &&
-            haveEquivalentBilingualOutputs(removedByReplacement.get(positionalOwner)) ? positionalOwner : null;
-        if (!replacementOwner && eligible.size === 1) {
-            const onlyCandidate = [...eligible.keys()][0]!;
-            if (removedByReplacement.get(onlyCandidate)?.size === 1) replacementOwner = onlyCandidate;
-        }
-        if (replacementOwner) pairs.push({
-            previousOwner: entry.previousOwner,
-            replacementOwner,
-            depth: entry.path.length,
-            boundary: entry.mutation.target,
-            previousRoot: entry.removedRoot,
-            replacementRoot: eligible.get(replacementOwner)!,
-        });
-    });
+    const pairs = matchBilingualRemountOwners(childListMutations, resolveRemovedOwners);
 
     pairs.sort((left, right) => right.depth - left.depth);
     const adopted = new Set<HTMLElement>();
     const consumedPrevious = new Set<HTMLElement>();
-    const transfers: BilingualOwnerTransfer[] = [];
-    const capitulations: BilingualOwnerCapitulation[] = [];
-    pairs.forEach(({previousOwner, replacementOwner, boundary, previousRoot, replacementRoot}) => {
+    const prepared: Array<(typeof pairs)[number] & {
+        preparation: BilingualRemountPreparation;
+        layoutElementPairs: Array<readonly [HTMLElement, HTMLElement]>;
+    }> = [];
+    // 先完成所有候选/布局映射读取，后续 append 不再穿插 resolve 的 computed-style 查询。
+    pairs.forEach((pair) => {
+        const {previousOwner, replacementOwner, previousRoot, replacementRoot} = pair;
         if (adopted.has(replacementOwner) || consumedPrevious.has(previousOwner)) return;
         const previousState = getTranslationState(previousOwner)!;
         const layoutElementPairs: Array<readonly [HTMLElement, HTMLElement]> = [];
@@ -639,17 +468,23 @@ export function transferEquivalentBilingualOwners(
                 previousElement.namespaceURI !== replacementElement.namespaceURI) return;
             layoutElementPairs.push([previousElement, replacementElement]);
         }
-        const outcome = tryTransferBilingualOwner(
-            previousOwner,
-            replacementOwner,
-            layoutElementPairs,
-            prepare,
-        );
-        if (outcome === 'rejected') return;
+        const preparation = prepare(previousOwner, replacementOwner, previousState);
+        if (!preparation) return;
+        prepared.push({...pair, preparation, layoutElementPairs});
         adopted.add(replacementOwner);
         consumedPrevious.add(previousOwner);
-        if (outcome === 'transferred') transfers.push({previousOwner, replacementOwner});
-        else capitulations.push({previousOwner, replacementOwner, boundary});
+    });
+    const transfers: BilingualOwnerTransfer[] = [];
+    const capitulations: BilingualOwnerCapitulation[] = [];
+    const pending: Array<BilingualOwnerTransfer & PendingBilingualTransfer> = [];
+    prepared.forEach(({previousOwner, replacementOwner, boundary, layoutElementPairs, preparation}) => {
+        const outcome = tryTransferBilingualOwner(previousOwner, replacementOwner, layoutElementPairs, preparation);
+        if (outcome === 'capitulated') capitulations.push({previousOwner, replacementOwner, boundary});
+        else if (outcome !== 'rejected') pending.push({previousOwner, replacementOwner, finish: outcome.finish});
+    });
+    // 全部工件落位后再读取尺寸；正常段落无需写样式，只触发一次批量布局刷新。
+    pending.forEach(({previousOwner, replacementOwner, finish}) => {
+        if (finish() === 'transferred') transfers.push({previousOwner, replacementOwner});
     });
     return {transfers, capitulations};
 }

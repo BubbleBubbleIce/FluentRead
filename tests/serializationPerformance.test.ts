@@ -6,11 +6,19 @@ import {
     collectLiveTranslationTextSlots,
     createTranslationSourceSnapshot,
     extractTranslationText,
+    parseTranslationSlots,
+    serializeTranslationSlots,
 } from '@/src/core/translation/public';
 import {isForeignTranslationBoundary} from '@/src/core/translation/dom';
 import {isTranslationTextNodeProtected} from '@/src/core/translation/text';
 
 describe('translation snapshot mapping performance', () => {
+    it('标记各出现一次但第二槽结束标记落在第一槽内部时拒绝交错协议', () => {
+        const packet = serializeTranslationSlots(['First', 'Second']);
+        const crossed = `${packet.starts[0]}First${packet.ends[1]}${packet.ends[0]}${packet.starts[1]}Second`;
+        expect(parseTranslationSlots(packet, crossed)).toBeNull();
+        expect(parseTranslationSlots(packet, packet.payload)).toEqual(['First', 'Second']);
+    });
     it('旧 WebView 只探测一次 :has 能力，回退仍识别直属外部译文和同任务 DOM 变更', () => {
         const {document} = parseHTML('<html><body><article><p id="source">Source text.</p></article></body></html>');
         const source = document.querySelector('#source')!;

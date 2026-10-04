@@ -472,6 +472,7 @@
       "tests/pageTranslationAdvanced.test.ts",
       "tests/mainWorldBridgeCore.test.ts",
       "tests/serializationPerformance.test.ts",
+      "tests/translationLayoutMeasurements.test.ts",
       "tests/siteTranslationHarness.test.ts",
       "tests/siteTranslationIdle.test.ts",
       "tests/translationDocumentCorpus.test.ts",

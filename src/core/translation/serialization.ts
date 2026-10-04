@@ -2,12 +2,13 @@
  * @file src/core/translation/serialization.ts
  *
  * 文件职责：把候选 DOM 安全序列化为可翻译文本槽，并在异步请求后依据源快照恢复到仍然匹配的真实节点。
- * 主要内容：定义 TranslationTextSlot、TranslationSourceSnapshot 与样式覆盖规则，负责槽位编码解析、活节点收集（排除候选内的独立 tooltip）、译文写入克隆、可无损拍平骨架的整段原文重建与整块译文纯文本降级、隐藏/编辑/宿主 metadata 省略、可见公式骨架保全、译文产物过滤，以及识别 line-clamp 与溢出截断并提供临时解除截断的样式覆盖规则。 可核对的公开符号包括 TranslationTextSlot、TranslationSourceSnapshot、SerializedTranslationSlots、TranslationStyleOverride、translationTruncationStyleOverrides、serializeTranslationSlots、parseTranslationSlots、createTranslationSourceSnapshot、buildWholeBlockTranslationSource。
+ * 主要内容：定义 TranslationTextSlot、TranslationSourceSnapshot 与样式覆盖规则，负责槽位编码解析、活节点收集（排除候选内的独立 tooltip）、译文写入克隆、可无损拍平骨架的整段原文重建与整块译文纯文本降级、隐藏/编辑/宿主 metadata 省略、可见公式骨架保全、译文产物过滤，以及支持同批样式/几何读数复用，识别 line-clamp 与溢出截断并提供临时解除截断的样式覆盖规则。 可核对的公开符号包括 TranslationTextSlot、TranslationSourceSnapshot、SerializedTranslationSlots、TranslationStyleOverride、translationTruncationStyleOverrides、serializeTranslationSlots、parseTranslationSlots、createTranslationSourceSnapshot、buildWholeBlockTranslationSource。
  * 模块边界：本文件属于可独立测试的 core 候选领域；可以读取传入 DOM 以计算结果，但不访问配置存储、不调用 provider、不注册页面监听器，也不负责译文渲染或 feature 生命周期。
  */
 
 import {createTranslationTextProtectionCache, isIdentifierLikeText, isTranslationTextNodeProtected, normalizeTranslationText} from './text';
 import type {TranslationTextProtectionCache} from './text';
+import type {TranslationLayoutMeasurements, TranslationLayoutStyle} from './layoutMeasurements';
 import {
     hasContentEditableMarker,
     isForeignTranslationBoundary,
@@ -70,7 +71,8 @@ const naturalFlowDisplays = new Set([
     'block', 'flow-root', 'flex', 'grid', 'inline-block', 'inline-flex', 'inline-grid',
 ]);
 
-function getLayoutStyle(element: HTMLElement): CSSStyleDeclaration | undefined {
+function getLayoutStyle(element: HTMLElement, measurements?: TranslationLayoutMeasurements): TranslationLayoutStyle | undefined {
+    if (measurements) return measurements.style(element);
     try {
         return element.ownerDocument?.defaultView?.getComputedStyle(element);
     } catch {
@@ -78,29 +80,30 @@ function getLayoutStyle(element: HTMLElement): CSSStyleDeclaration | undefined {
     }
 }
 
-function isPositionedStyle(style: CSSStyleDeclaration): boolean {
+function isPositionedStyle(style: TranslationLayoutStyle): boolean {
     const position = String(style.position || '').trim().toLowerCase();
     const transform = String(style.transform || '').trim().toLowerCase();
     return ['absolute', 'fixed', 'sticky'].includes(position) ||
         (transform !== '' && transform !== 'none');
 }
 
-function isHeightBoundaryStyle(element: HTMLElement, style: CSSStyleDeclaration): boolean {
+function isHeightBoundaryStyle(element: HTMLElement, style: TranslationLayoutStyle): boolean {
     if (element === element.ownerDocument?.documentElement || element === element.ownerDocument?.body) return true;
     const overflowY = String(style.overflowY || style.overflow || '').trim().toLowerCase();
     return ['auto', 'scroll'].includes(overflowY) || isPositionedStyle(style);
 }
 
 /** 不向文档表面、滚动容器或脱离自然流的定位边界扩展固定高度。 */
-export function isTranslationHeightBoundary(element: HTMLElement): boolean {
-    const style = getLayoutStyle(element);
+export function isTranslationHeightBoundary(element: HTMLElement, measurements?: TranslationLayoutMeasurements): boolean {
+    const style = getLayoutStyle(element, measurements);
     return !style || isHeightBoundaryStyle(element, style);
 }
 
-function hasGeometryOverflow(element: HTMLElement, branch: HTMLElement): boolean {
+function hasGeometryOverflow(element: HTMLElement, branch: HTMLElement, measurements?: TranslationLayoutMeasurements): boolean {
     try {
-        const elementRect = element.getBoundingClientRect();
-        const branchRect = branch.getBoundingClientRect();
+        const elementRect = measurements ? measurements.rect(element) : element.getBoundingClientRect();
+        const branchRect = measurements ? measurements.rect(branch) : branch.getBoundingClientRect();
+        if (!elementRect || !branchRect) return false;
         return branchRect.top < elementRect.top - 1 || branchRect.bottom > elementRect.bottom + 1;
     } catch {
         return false;
@@ -111,12 +114,12 @@ function hasGeometryOverflow(element: HTMLElement, branch: HTMLElement): boolean
  * 判定固定高度自然流容器是否因翻译分支实际变高而需要扩高。
  * branch 必须是通向翻译 owner 的直接 composed 子元素；定位/变换分支不作为依据。
  */
-export function hasTranslationHeightOverflow(element: HTMLElement, branch: HTMLElement): boolean {
+export function hasTranslationHeightOverflow(element: HTMLElement, branch: HTMLElement, measurements?: TranslationLayoutMeasurements): boolean {
     // 每个候选的布局复核都会走到这里；同一元素只取一次计算样式，
     // 避免为 boundary、branch 和高度判定重复触发三次样式重算。
-    const style = getLayoutStyle(element);
+    const style = getLayoutStyle(element, measurements);
     if (!style || isHeightBoundaryStyle(element, style)) return false;
-    const branchStyle = element === branch ? style : getLayoutStyle(branch);
+    const branchStyle = element === branch ? style : getLayoutStyle(branch, measurements);
     if (!branchStyle || isPositionedStyle(branchStyle)) return false;
     const overflowY = String(style.overflowY || style.overflow || '').trim().toLowerCase();
     if (['hidden', 'clip'].includes(overflowY)) return false;
@@ -128,7 +131,7 @@ export function hasTranslationHeightOverflow(element: HTMLElement, branch: HTMLE
     } catch {
         // 某些测试/宿主 DOM 没有完整 layout API，继续使用几何检查。
     }
-    return hasGeometryOverflow(element, branch);
+    return hasGeometryOverflow(element, branch, measurements);
 }
 
 function hashSlotSources(sources: readonly string[]): string {
@@ -173,11 +176,13 @@ export function parseTranslationSlots(
     packet: SerializedTranslationSlots,
     translated: string,
 ): string[] | null {
-    if (packet.starts.length !== packet.ends.length) return null;
+    const starts = Array.from(packet.starts);
+    const ends = Array.from(packet.ends);
+    if (starts.length !== ends.length) return null;
     const countMarker = (marker: string): number => {
         let count = 0;
         let offset = 0;
-        while (marker && offset <= translated.length - marker.length) {
+        while (offset <= translated.length - marker.length) {
             const next = translated.indexOf(marker, offset);
             if (next < 0) break;
             count += 1;
@@ -185,21 +190,20 @@ export function parseTranslationSlots(
         }
         return count;
     };
-    if ([...packet.starts, ...packet.ends].some((marker) => !marker || countMarker(marker) !== 1)) {
+    if ([...starts, ...ends].some((marker) => !marker || countMarker(marker) !== 1)) {
         return null;
     }
     const results: string[] = [];
     let cursor = 0;
-    for (let index = 0; index < packet.starts.length; index += 1) {
-        const start = packet.starts[index];
-        const end = packet.ends[index];
-        if (!start || !end) return null;
+    for (let index = 0; index < starts.length; index += 1) {
+        // 上方已验证快照稠密且每个非空标记只出现一次，无需再次全包查找重复起始标记。
+        const start = starts[index]!;
+        const end = ends[index]!;
         const startIndex = translated.indexOf(start, cursor);
         if (startIndex < 0 || translated.slice(cursor, startIndex).trim()) return null;
         const valueStart = startIndex + start.length;
         const endIndex = translated.indexOf(end, valueStart);
         if (endIndex < 0) return null;
-        if (translated.indexOf(start, valueStart) >= 0 && translated.indexOf(start, valueStart) < endIndex) return null;
         results.push(translated.slice(valueStart, endIndex));
         cursor = endIndex + end.length;
     }
@@ -485,9 +489,9 @@ function isActiveLineClampValue(value: string): boolean {
     return Number.isFinite(lineCount) && lineCount > 0;
 }
 
-export function hasActiveTranslationLineClamp(element: HTMLElement): boolean {
+export function hasActiveTranslationLineClamp(element: HTMLElement, measurements?: TranslationLayoutMeasurements): boolean {
     try {
-        const style = element.ownerDocument?.defaultView?.getComputedStyle(element);
+        const style = getLayoutStyle(element, measurements);
         if (!style) return false;
         return [
             style.webkitLineClamp,
@@ -499,10 +503,10 @@ export function hasActiveTranslationLineClamp(element: HTMLElement): boolean {
     }
 }
 
-export function hasActiveTranslationTruncation(element: HTMLElement): boolean {
-    if (hasActiveTranslationLineClamp(element)) return true;
+export function hasActiveTranslationTruncation(element: HTMLElement, measurements?: TranslationLayoutMeasurements): boolean {
+    if (hasActiveTranslationLineClamp(element, measurements)) return true;
     try {
-        const style = element.ownerDocument?.defaultView?.getComputedStyle(element);
+        const style = getLayoutStyle(element, measurements);
         if (!style) return false;
         const maxHeight = style.maxHeight.trim().toLowerCase();
         if (!maxHeight || ['none', 'auto', 'unset', 'initial', 'max-content'].includes(maxHeight)) return false;

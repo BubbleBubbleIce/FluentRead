@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/state.ts
  * 文件职责：维护每个被翻译 DOM 节点的可恢复状态、请求代次、译文工件和共享布局覆盖所有权，确保重复翻译、宿主变更和移除节点都能安全收敛。
- * 主要内容：包含 WeakMap 状态索引、begin/complete/error/discard 状态机、spinner/译文/retry/仅译文槽节点登记、无主槽原文解包、兼容字体标记与链接提示的译文复验及有界重挂、含固定高度 line-clamp 的共享样式租约、祖先观察器引用计数、文本槽回写、按钮型 input 标签属性的原值记录与回滚、按区域枚举译文所有者，以及全量恢复。
+ * 主要内容：包含 WeakMap 状态索引、begin/complete/error/discard 状态机、spinner/译文/retry/仅译文槽节点登记、无主槽原文解包、兼容字体标记与链接提示的译文复验及有界重挂、含固定高度 line-clamp 的共享样式租约、同批布局读数复用及写入失效、祖先观察器引用计数、文本槽回写、按钮型 input 标签属性的原值记录与回滚、按区域枚举译文所有者，以及全量恢复。
  * 模块边界：该模块不发现候选、不请求翻译也不生成译文 HTML；runtime 负责会话编排，renderer 负责内容创建，本文件仅拥有 DOM 状态与可逆样式资源，避免跨 session 误删新结果。
  */
 import {getTranslatableControlValueAttribute, isTranslationTooltip} from "@/src/core/translation/dom";
@@ -13,6 +13,7 @@ import {
 } from "@/src/core/translation/serialization";
 import {
     collectLiveTranslationTextSlots,
+    createTranslationLayoutMeasurements,
     createTranslationTextProtectionCache,
     getComposedParent,
     getCurrentTranslationCore,
@@ -23,6 +24,7 @@ import {
     translationTruncationStyleOverrides,
     type TranslationCandidate,
     type TranslationScope,
+    type TranslationLayoutMeasurements,
 } from "@/src/core/translation/public";
 
 /**
@@ -1613,7 +1615,10 @@ function releaseTranslationHeightOverride(element: HTMLElement): void {
 }
 
 /** 从内向外解除实际截断及高度溢出，保留滚动/定位边界，并释放重挂后过期的租约。 */
-export function ensureTranslationTruncationLayout(owner: HTMLElement): boolean {
+export function ensureTranslationTruncationLayout(
+    owner: HTMLElement,
+    measurements: TranslationLayoutMeasurements = createTranslationLayoutMeasurements(),
+): boolean {
     const state = states.get(owner);
     if (!state || !owner.isConnected) return false;
 
@@ -1629,31 +1634,46 @@ export function ensureTranslationTruncationLayout(owner: HTMLElement): boolean {
     }
     // 先吸收宿主对已租用属性的改写；新增属性不能掩盖这些新的恢复基线。
     if (!reconcileTranslationLayoutOverrides(owner)) return false;
+    if (state.layoutOverrideElements?.size) measurements.invalidate();
     const hasBilingualContent = state.mode === "bilingual" && state.kind === "content" &&
         Boolean(owner.querySelector(BILINGUAL_ARTIFACT_SELECTOR));
     let heightBoundary = !hasBilingualContent;
     let branch = owner;
     for (const element of chain) {
-        const elementIsBoundary = isTranslationHeightBoundary(element);
-        if (elementIsBoundary) releaseTranslationHeightOverride(element);
-        const truncation = hasActiveTranslationTruncation(element);
+        const elementIsBoundary = isTranslationHeightBoundary(element, measurements);
+        if (elementIsBoundary) {
+            const hadHeightOverride = sharedLayoutOverrides.get(element)?.properties.some(({property}) => property === 'height');
+            releaseTranslationHeightOverride(element);
+            if (hadHeightOverride) measurements.invalidate();
+        }
+        const truncation = hasActiveTranslationTruncation(element, measurements);
         if (sharedLayoutOverrides.has(element) || truncation) {
             // 有些站点把 line-clamp 与固定 height、overflow:hidden 同时设在译文 owner 上。
             // 只解除行数限制仍会把中文裁在盒子外；此处一并恢复自然高度，并由租约负责还原。
-            const overrides = !truncation ? [] : hasActiveTranslationLineClamp(element)
+            const overrides = !truncation ? [] : hasActiveTranslationLineClamp(element, measurements)
                 ? [...translationTruncationStyleOverrides, ...translationHeightStyleOverrides]
                 : translationTruncationStyleOverrides;
             acquireTranslationLayoutOverride(owner, element, overrides);
+            if (overrides.length > 0) measurements.invalidate();
         }
         heightBoundary ||= elementIsBoundary;
         // 必须在解除当前内层 clamp 后读外层几何；先收集全部祖先会读到尚未展开的旧高度。
-        if (!heightBoundary && hasTranslationHeightOverflow(element, branch)) {
+        if (!heightBoundary && hasTranslationHeightOverflow(element, branch, measurements)) {
             acquireTranslationLayoutOverride(owner, element, translationHeightStyleOverrides);
+            measurements.invalidate();
         }
         branch = element;
     }
     refreshOwnershipIndex(owner, state);
-    return reconcileTranslationLayoutOverrides(owner);
+    const reconciled = reconcileTranslationLayoutOverrides(owner);
+    if (state.layoutOverrideElements?.size) measurements.invalidate();
+    return reconciled;
+}
+
+/** 同一同步挂载批次共享祖先读数；每次布局写入立即失效，不跨任务复用。 */
+export function createTranslationTruncationLayoutBatch(): (owner: HTMLElement) => boolean {
+    const measurements = createTranslationLayoutMeasurements();
+    return (owner) => ensureTranslationTruncationLayout(owner, measurements);
 }
 
 function releaseTranslationLayoutOverrides(owner: HTMLElement, state: TranslationState): void {
