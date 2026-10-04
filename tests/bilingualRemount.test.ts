@@ -47,7 +47,7 @@ function preparation(
     return {sourceTextNodes: [], reconcileLayout};
 }
 
-function createCommittedScenario() {
+function createCommittedScenario(beforeSource = false) {
     const {document} = parseHTML('<html><body><p id="old">Same source.</p></body></html>');
     const previousOwner = document.querySelector<HTMLElement>('#old')!;
     const attempt = beginTranslation(previousOwner, 'bilingual', 'content', false, 'Same source.', [] )!;
@@ -57,7 +57,8 @@ function createCommittedScenario() {
     previousWrapper.setAttribute('data-fr-translation-owned', 'true');
     previousWrapper.setAttribute('translate', 'no');
     previousWrapper.textContent = '相同译文。';
-    previousOwner.appendChild(previousWrapper);
+    if (beforeSource) previousOwner.insertBefore(previousWrapper, previousOwner.firstChild);
+    else previousOwner.appendChild(previousWrapper);
     setBilingualContent(previousOwner, previousWrapper);
 
     let replacementOwner: HTMLElement = document.createElement('p');
@@ -91,6 +92,76 @@ afterEach(() => {
 });
 
 describe('双语 owner 同源重挂交接', () => {
+    it.each([true, false])('source-only 重挂保留已提交的译文位置，前置选项为 %s', beforeSource => {
+        const scenario = createCommittedScenario(beforeSource);
+        expect(transferEquivalentBilingualOwners(scenario.record(), () => preparation()).transfers).toHaveLength(1);
+        const owner = scenario.replacementOwner;
+        const content = owner.querySelector(BILINGUAL_SELECTOR)!;
+        expect(content === owner.firstChild).toBe(beforeSource);
+        expect(owner.querySelectorAll(BILINGUAL_SELECTOR)).toHaveLength(1);
+        expect(owner.textContent).toBe(beforeSource ? '相同译文。Same source.' : 'Same source.相同译文。');
+    });
+
+    it.each(['content', 'all'] as const)('500 个 %s owner 匹配共享祖先只读一次，下一次宿主样式变化重新判定', (scope) => {
+        const count = 500;
+        const {document, window} = parseHTML('<html><body></body></html>');
+        const previousStyle = Object.getOwnPropertyDescriptor(window, 'getComputedStyle');
+        let hidden = false;
+        let bodyReads = 0;
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true, value: (element: Element) => {
+            if (element === document.body) bodyReads += 1;
+            return {display: 'block', position: 'static', fontFamily: 'serif',
+                visibility: element === document.body && hidden ? 'hidden' : 'visible'};
+        }});
+        try {
+            const previousOwners = Array.from({length: count}, (_, index) => {
+                const owner = document.createElement('p');
+                owner.textContent = `Stable paragraph ${index}.`;
+                document.body.append(owner);
+                const attempt = beginTranslation(owner, 'bilingual', 'content', false,
+                    owner.textContent!, [owner.firstChild as Text], false, undefined, scope)!;
+                markTranslationComplete(owner, attempt.state, attempt.generation);
+                const wrapper = document.createElement('span');
+                wrapper.className = 'fluent-read-bilingual-content';
+                wrapper.setAttribute('data-fr-translation-owned', 'true');
+                wrapper.textContent = `稳定译文 ${index}`;
+                owner.append(wrapper);
+                setBilingualContent(owner, wrapper);
+                return owner;
+            });
+            const replacements = previousOwners.map(owner => {
+                const replacement = document.createElement('p');
+                replacement.textContent = getTranslationState(owner)!.sourceText;
+                return replacement;
+            });
+            document.body.replaceChildren(...replacements);
+            bodyReads = 0;
+            const prepare = (_old: HTMLElement, owner: HTMLElement): BilingualRemountPreparation => ({
+                sourceTextNodes: [owner.firstChild as Text], reconcileLayout: () => true,
+            });
+            const first = transferEquivalentBilingualOwners(
+                childListRecord(document.body, replacements, previousOwners), prepare);
+            expect(first.transfers).toHaveLength(count);
+            expect(bodyReads).toBe(1);
+
+            hidden = true;
+            const hiddenReplacements = replacements.map(owner => {
+                const replacement = document.createElement('p');
+                replacement.textContent = getTranslationState(owner)!.sourceText;
+                return replacement;
+            });
+            document.body.replaceChildren(...hiddenReplacements);
+            bodyReads = 0;
+            expect(transferEquivalentBilingualOwners(
+                childListRecord(document.body, hiddenReplacements, replacements), prepare).transfers).toEqual([]);
+            expect(bodyReads).toBe(1);
+            expect(hiddenReplacements.every(owner => !getTranslationState(owner))).toBe(true);
+        } finally {
+            if (previousStyle) Object.defineProperty(window, 'getComputedStyle', previousStyle);
+            else Reflect.deleteProperty(window, 'getComputedStyle');
+        }
+    });
+
     it.each(['distinct', 'repeated'] as const)('500 个 %s 段落整批换代只线性验证可信译文模板', (kind) => {
         const count = 500;
         const {document} = parseHTML('<html><body></body></html>');

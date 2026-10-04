@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/bilingualRemount.ts
  * 文件职责：在 React/Vue 等宿主框架等价重挂双语 owner 时，于同一 MutationObserver 检查点原子接管已提交译文。
- * 主要内容：按 childList 路径与结构索引配对新旧 owner，一次建立兄弟节点位置索引以线性核对行内片段，按正文/全部节点范围隔离熔断身份并校验原文/译文快照与直属工件，先读取候选再统一挂载，最后核对布局，避免逐段交错读写触发全页重排；重建 WeakMap 状态并安全转移布局租约。
+ * 主要内容：按 childList 路径与结构索引配对新旧 owner，一次建立兄弟节点位置索引以线性核对行内片段，按正文/全部节点范围隔离熔断身份并校验原文/译文快照与直属工件，先读取候选再按已提交的原文前后位置统一挂载，最后核对布局，避免逐段交错读写触发全页重排；重建 WeakMap 状态并安全转移布局租约。
  * 模块边界：本文件不发起翻译请求、不发现候选也不持有页面会话；runtime 提供候选/语义验证与会话索引收尾。
  */
 import {asHTMLElement, matchBilingualRemountOwners, nodeAtPath, nodePathWithin} from './bilingualRemountMatching';
@@ -407,7 +407,10 @@ function tryTransferBilingualOwner(
         return 'capitulated';
     }
 
-    if (content.parentNode !== replacementOwner) replacementOwner.appendChild(content);
+    if (content.parentNode !== replacementOwner) {
+        if (previousState.bilingualBeforeSource) replacementOwner.insertBefore(content, replacementOwner.firstChild);
+        else replacementOwner.appendChild(content);
+    }
     return {finish: () => {
         if (!preparation.reconcileLayout(replacementOwner)) {
             content.remove();

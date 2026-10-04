@@ -75,6 +75,7 @@ export type {
 export {createDeclarativeAdapter} from './adapters/declarative';
 export {
     getCurrentTranslationCore,
+    createCurrentTranslationResolverBatch,
     setCurrentTranslationAdapters,
     setCurrentTranslationSidebarRegions,
     resolveTranslationCandidateAtPoint,

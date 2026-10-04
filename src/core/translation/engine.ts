@@ -2,7 +2,7 @@
  * @file src/core/translation/engine.ts
  *
  * 文件职责：实现 DOM 节点到 TranslationCandidate 的核心解析引擎，协调安全守卫、站点适配器、布局边界和文本有效性。
- * 主要内容：按正文/全部节点范围协调候选；定义 TranslationCandidateCore、候选优选与键值函数，记录发现步骤和原因，按站点规则把显式换行拆为两种入口一致的内联候选，处理编辑器坐标命中屏障、hover 屏障、适配优先级、快照省略、缓存及坐标命中；悬浮命中独立后代的包裹层时禁止回退吞并整个容器，让独立 tooltip 不抢占外层控件候选，保证全文与悬浮共享决策。 可核对的公开符号包括 TranslationCoreInspection、TranslationDiscoveryStep、getTranslationCandidateKey、selectPreferredTranslationCandidate、TranslationCandidateCore。
+ * 主要内容：按正文/全部节点范围协调候选；定义 TranslationCandidateCore、候选优选与键值函数，记录发现步骤和原因，按站点规则把显式换行拆为两种入口一致的内联候选，处理编辑器坐标命中屏障、hover 屏障、适配优先级、快照省略、缓存及坐标命中；全部节点的同步只读批量解析复用祖先守卫和文本保护，正文解析保持每个显式命中的独立外壳边界；悬浮命中独立后代的包裹层时禁止回退吞并整个容器，让独立 tooltip 不抢占外层控件候选，保证全文与悬浮共享决策。 可核对的公开符号包括 TranslationCoreInspection、TranslationDiscoveryStep、getTranslationCandidateKey、selectPreferredTranslationCandidate、TranslationCandidateCore。
  * 模块边界：本文件属于可独立测试的 core 候选领域；可以读取传入 DOM 以计算结果，但不访问配置存储、不调用 provider、不注册页面监听器，也不负责译文渲染或 feature 生命周期。
  */
 
@@ -76,6 +76,11 @@ interface InlineRunResolution {
     blocksWholeCandidate: boolean;
 }
 
+interface InlineRunSummary {
+    candidates: TranslationCandidate[];
+    blocksWholeCandidate: boolean;
+}
+
 interface AdapterPrunedAncestor {
     reason: string;
     adapterId?: string;
@@ -92,6 +97,7 @@ interface ResolutionEvaluationContext {
     extensionElements: WeakMap<Element, boolean>;
     structuralContainers: WeakMap<Element, boolean>;
     structuralAncestors: WeakMap<Element, boolean>;
+    inlineRuns: WeakMap<Element, InlineRunSummary>;
 }
 
 function createResolutionEvaluationContext(
@@ -107,6 +113,7 @@ function createResolutionEvaluationContext(
         extensionElements: new WeakMap(),
         structuralContainers: new WeakMap(),
         structuralAncestors: new WeakMap(),
+        inlineRuns: new WeakMap(),
     };
 }
 
@@ -347,7 +354,7 @@ export class TranslationCandidateCore {
         }
 
         const ownGuards = chain.map((item) =>
-            this.evaluateResolutionElementHardGuard(item, evaluationContext));
+            evaluationContext.hardGuards.get(item) ?? this.evaluateResolutionElementHardGuard(item, evaluationContext));
         let inheritedGuard: HardGuardResult = {prune: false};
         for (let index = chain.length - 1; index >= 0; index -= 1) {
             const item = chain[index]!;
@@ -522,8 +529,8 @@ export class TranslationCandidateCore {
 
     private inlineRunCandidates(
         element: Element,
-        skipStructuralAncestorCheck = false,
-        textProtectionCache = createTranslationTextProtectionCache(),
+        skipStructuralAncestorCheck: boolean,
+        textProtectionCache: TranslationTextProtectionCache,
         candidateChildBarriers?: ReadonlySet<Element>,
         evaluationContext?: ResolutionEvaluationContext,
     ): TranslationCandidate[] {
@@ -626,25 +633,28 @@ export class TranslationCandidateCore {
         }
         // 优先探测全文后序发现记录的所有权屏障，再在统一严格预算内复核每个内联子节点；
         // 即使页面实时变更，也能保持两种发现结果一致，而不会在指针处理中无限遍历子树。
-        const childBarriers = this.probeHoverCandidateChildBarriers(
-            element,
-            this.discoveredCandidateChildBarriers.get(element),
-            explicitContainer,
-        );
-        const candidates = this.inlineRunCandidates(
-            element,
-            true,
-            evaluationContext.textProtectionCache,
-            childBarriers,
-            evaluationContext,
-        );
-        const blocksWholeCandidate = childBarriers.size > 0;
+        let summary = evaluationContext.inlineRuns.get(element);
+        if (!summary) {
+            const childBarriers = this.probeHoverCandidateChildBarriers(
+                element,
+                this.discoveredCandidateChildBarriers.get(element),
+                explicitContainer,
+            );
+            summary = {
+                candidates: this.inlineRunCandidates(
+                    element, true, evaluationContext.textProtectionCache, childBarriers, evaluationContext,
+                ),
+                blocksWholeCandidate: childBarriers.size > 0,
+            };
+            evaluationContext.inlineRuns.set(element, summary);
+        }
+        const {candidates, blocksWholeCandidate} = summary;
         if (candidates.length === 0) return {candidate: null, blocksWholeCandidate};
         let direct: Node | null = start;
         while (direct && direct !== element && direct.parentNode !== element) direct = direct.parentNode;
         const candidate = !direct || direct === element
             ? candidates[0]!
-            : candidates.find((candidate) => candidate.nodes?.includes(direct as ChildNode)) ?? null;
+            : candidates.find((candidate) => candidate.nodes!.includes(direct as ChildNode)) ?? null;
         return {candidate, blocksWholeCandidate};
     }
 
@@ -699,13 +709,27 @@ export class TranslationCandidateCore {
     }
 
     resolve(start: Node | null | undefined): TranslationCandidate | null {
+        return this.resolveWithContext(start);
+    }
+
+    /** 仅在同一同步只读阶段复用；写 DOM 或让出任务后必须重新创建。 */
+    createSynchronousResolver(): (start: Node | null | undefined) => TranslationCandidate | null {
+        // 正文的 protectedElement 随显式命中变化，不能共享另一目标的外壳放行结果。
+        const context = this.scope === 'all' ? createResolutionEvaluationContext() : undefined;
+        return start => this.resolveWithContext(start, context);
+    }
+
+    private resolveWithContext(
+        start: Node | null | undefined,
+        sharedContext?: ResolutionEvaluationContext,
+    ): TranslationCandidate | null {
         if (!start) return null;
         const hit = start;
         let current: Element | null = start.nodeType === 3
             ? (start as Text).parentElement
             : isElementNode(start) ? start : null;
         if (!current) return null;
-        const evaluationContext = createResolutionEvaluationContext(this.scope === 'content' ? {
+        const evaluationContext = sharedContext ?? createResolutionEvaluationContext(this.scope === 'content' ? {
             allowTopLevelApplicationShell: true,
             protectedElement: current,
         } : undefined);
@@ -732,7 +756,8 @@ export class TranslationCandidateCore {
                 continue;
             }
             // 继承硬守卫适用于每个可能的祖先候选；遇到极深树时立即停止，避免反复上溯。
-            const guardReason = this.hardGuard(current, evaluationContext).reason;
+            const guard = this.hardGuard(current, evaluationContext);
+            const guardReason = guard.reason;
             if (guardReason === 'ancestor-depth-limit' || guardReason === 'foreign-translation') return null;
             // 外壳本身不是显式目标；避免在缺少更细粒度块边界的 SPA 中把整个应用根
             // 当作候选，同时允许继续向其上方寻找正常的页面结构。
@@ -745,6 +770,12 @@ export class TranslationCandidateCore {
             // 相同的继承裁剪，再尝试通用内联 run。否则命中 GitHub Quick Search 等区域时，
             // 可能解析出本应被 discover() 排除的对话框祖先。
             if (this.hasAdapterPrunedAncestor(current, evaluationContext)) return null;
+            // 当前元素已经由继承硬守卫拒绝，内联屏障与子树探测不可能产生候选。
+            // 仍向上寻找合法宿主，并保留上面的适配器裁剪边界。
+            if (guard.prune) {
+                current = getComposedParent(current);
+                continue;
+            }
             const ownDecision = this.adapterDecision(current, evaluationContext).decision;
             if (ownDecision.kind === 'force-target' && ownDecision.atomic !== false) {
                 const exact = this.inspectWithTextProtectionCache(

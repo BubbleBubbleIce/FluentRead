@@ -2,7 +2,7 @@
  * @file src/core/translation/current.ts
  *
  * 文件职责：提供当前文档按翻译范围隔离的 TranslationCandidateCore 便捷访问与候选解析入口，统一悬浮和按坐标发现行为。
- * 主要内容：按当前 URL 和正文/全部节点范围懒加载共享核心实例，由应用层注入适配器并在适配器或侧边栏范围变更后清空全部范围缓存，并导出 getCurrentTranslationCore 与 resolveTranslationCandidateAtPoint，把视口坐标交给同一套候选政策。 可核对的公开符号包括 getCurrentTranslationCore、setCurrentTranslationSidebarRegions、resolveTranslationCandidateAtPoint。
+ * 主要内容：按当前 URL 和正文/全部节点范围懒加载共享核心实例，由应用层注入适配器并在适配器或侧边栏范围变更后清空全部范围缓存；同一同步只读批次按范围创建并复用解析器，统一 getCurrentTranslationCore 与 resolveTranslationCandidateAtPoint 的候选政策。 可核对的公开符号包括 getCurrentTranslationCore、createCurrentTranslationResolverBatch、setCurrentTranslationSidebarRegions、resolveTranslationCandidateAtPoint。
  * 模块边界：本文件属于可独立测试的 core 候选领域；可以读取传入 DOM 以计算结果，但不访问配置存储、不调用 provider、不注册页面监听器，也不负责译文渲染或 feature 生命周期。
  */
 
@@ -69,4 +69,19 @@ export function getCurrentTranslationCore(scope: TranslationScope = 'content'): 
 export function resolveTranslationCandidateAtPoint(x: number, y: number, scope?: TranslationScope): TranslationCandidate | null {
     if (typeof document === 'undefined') return null;
     return getCurrentTranslationCore(scope).resolveAtPoint(document, x, y);
+}
+
+/** 同一同步只读阶段可混用范围；写 DOM、改变策略或让出任务后重新创建。 */
+export function createCurrentTranslationResolverBatch(): (
+    start: Node, scope?: TranslationScope,
+) => TranslationCandidate | null {
+    const resolvers = new Map<TranslationScope, (start: Node) => TranslationCandidate | null>();
+    return (start, scope = 'content') => {
+        let resolve = resolvers.get(scope);
+        if (!resolve) {
+            resolve = getCurrentTranslationCore(scope).createSynchronousResolver();
+            resolvers.set(scope, resolve);
+        }
+        return resolve(start);
+    };
 }

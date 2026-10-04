@@ -1356,6 +1356,501 @@
       "openPerformanceIssue": "500-paragraph remounts still synchronously block the observer checkpoint. Functional success is not performance-target completion.",
       "docsBuild": "passed",
       "docsCheck": "passed"
+    },
+    {
+      "name": "Reuse synchronous remount scans and preserve committed bilingual order",
+      "baseCommit": "f5527f3e",
+      "strictCoverage": {
+        "testFiles": 18,
+        "cases": 679,
+        "testPaths": [
+          "tests/translationCore.test.ts",
+          "tests/allNodesTranslationCore.test.ts",
+          "tests/siteAdaptationSession.test.ts",
+          "tests/fullPageVisibilityScheduling.test.ts",
+          "tests/bilingualRemount.test.ts",
+          "tests/translationStability.test.ts",
+          "tests/translationState.test.ts",
+          "tests/syntheticRemount.test.ts",
+          "tests/bilingualReplay.test.ts",
+          "tests/pageTranslationAdvanced.test.ts",
+          "tests/serializationPerformance.test.ts",
+          "tests/translationLayoutMeasurements.test.ts",
+          "tests/fullPagePriority.test.ts",
+          "tests/fullPageHostClassPreservation.test.ts",
+          "tests/sectionTranslationRuntime.test.ts",
+          "tests/sectionTranslationRegion.test.ts",
+          "tests/sectionTranslationCore.test.ts",
+          "tests/areaTranslationCore.test.ts"
+        ],
+        "modules": {
+          "src/core/translation/current.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "src/core/translation/engine.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "src/features/full-page-translation/content/bilingualRemount.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "src/features/full-page-translation/content/bilingualRemountMatching.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "src/features/full-page-translation/content/translationStability.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdsUnchanged": true
+      },
+      "typeCheck": "passed",
+      "chromeBuild": {
+        "status": "passed",
+        "sha256": {
+          "manifest.json": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844",
+          "content-scripts/content.js": "1de414d7d189a933f13ce8f8b0a040550efcba81d323b51f1b9c80c93837cb04"
+        }
+      },
+      "firefoxBuild": "passed",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "passed",
+        "registeredFiles": 466,
+        "registeredCases": 6041
+      },
+      "affectedArchitecture": {
+        "testFiles": 3,
+        "testCases": 815,
+        "status": "passed",
+        "wholeRepositoryGatePassed": false
+      },
+      "regressionEvidence": {
+        "terminalRediscovery": {
+          "owners": 20,
+          "priorSourceReads": 40,
+          "currentSourceReads": 0,
+          "windowMs": 100,
+          "changedSourceStillTranslates": true
+        },
+        "remountOrder": {
+          "beforeSource": "passed",
+          "afterSource": "passed"
+        },
+        "batchWork": {
+          "owners": 500,
+          "matchingBodyStyleReads": 1,
+          "resolverBodyStyleReadLimit": 3,
+          "nextBatchRechecksDOM": true
+        }
+      },
+      "unchangedFourthBuildBaseline": {
+        "contentSha256": "4760c42aeb561ca726b4bc4cf71c8bdd720dce1ec95887b71fb9f4abb38105e8",
+        "remountChecks": [
+          {
+            "hostWriteMs": 4.599999904632568,
+            "firstFrameMs": 186.09999990463257,
+            "wrappers": 500,
+            "nested": 0,
+            "exactOutputs": true,
+            "metrics": {
+              "ScriptDuration": 0.225093,
+              "LayoutDuration": 0.03158299999999997,
+              "RecalcStyleDuration": 0.0025550000000000017,
+              "TaskDuration": 0.3021229999999999,
+              "LayoutCount": 1,
+              "RecalcStyleCount": 4
+            }
+          },
+          {
+            "hostWriteMs": 3.5,
+            "firstFrameMs": 171.40000009536743,
+            "wrappers": 500,
+            "nested": 0,
+            "exactOutputs": true,
+            "metrics": {
+              "ScriptDuration": 0.20928499999999994,
+              "LayoutDuration": 0.03076300000000004,
+              "RecalcStyleDuration": 0.0024419999999999997,
+              "TaskDuration": 0.26741199999999976,
+              "LayoutCount": 1,
+              "RecalcStyleCount": 4
+            }
+          },
+          {
+            "hostWriteMs": 3.8999996185302734,
+            "firstFrameMs": 182.89999961853027,
+            "wrappers": 500,
+            "nested": 0,
+            "exactOutputs": true,
+            "metrics": {
+              "ScriptDuration": 0.22251200000000004,
+              "LayoutDuration": 0.03121099999999999,
+              "RecalcStyleDuration": 0.002704999999999999,
+              "TaskDuration": 0.2846730000000002,
+              "LayoutCount": 1,
+              "RecalcStyleCount": 4
+            }
+          }
+        ],
+        "longTasksMs": [
+          183,
+          168,
+          180
+        ],
+        "evidence": "Same controlled deterministic transport fixture; no claim of a general acceleration ratio."
+      },
+      "controlledBrowser": [
+        {
+          "paragraphs": 500,
+          "remountMiddle": true,
+          "translationBefore": true,
+          "repeated": false,
+          "functionalPassed": true,
+          "performanceTargetAchieved": false,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "visible": true,
+            "hidden": false,
+            "windowState": "normal",
+            "displayTarget": "secondary",
+            "browserFrontmost": false
+          },
+          "remountChecks": [
+            {
+              "hostWriteMs": 3.5999999046325684,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 139.19999980926514,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.13328299999999993,
+                "LayoutDuration": 0.028934000000000015,
+                "RecalcStyleDuration": 0.0025400000000000006,
+                "TaskDuration": 0.18960500000000002,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 5.400000095367432,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 143.09999990463257,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.13244800000000012,
+                "LayoutDuration": 0.029654000000000014,
+                "RecalcStyleDuration": 0.003093000000000002,
+                "TaskDuration": 0.2031900000000002,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 4.399999618530273,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 142.69999980926514,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.13057499999999989,
+                "LayoutDuration": 0.02918299999999996,
+                "RecalcStyleDuration": 0.002606999999999998,
+                "TaskDuration": 0.1872799999999999,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            }
+          ],
+          "phases": [
+            {
+              "name": "translate",
+              "elapsedMs": 1999.3000001907349,
+              "maxHeartbeatGapMs": 34.30000019073486,
+              "p95HeartbeatGapMs": 26,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 8,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            },
+            {
+              "name": "remount-1",
+              "elapsedMs": 400.30000019073486,
+              "maxHeartbeatGapMs": 153.5,
+              "p95HeartbeatGapMs": 153.5,
+              "totalBlockingMs": 86,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 1,
+              "maxLongTaskMs": 136
+            },
+            {
+              "name": "remount-2",
+              "elapsedMs": 414.7999997138977,
+              "maxHeartbeatGapMs": 156.69999980926514,
+              "p95HeartbeatGapMs": 156.69999980926514,
+              "totalBlockingMs": 90,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 1,
+              "maxLongTaskMs": 140
+            },
+            {
+              "name": "remount-3",
+              "elapsedMs": 410.2000002861023,
+              "maxHeartbeatGapMs": 154.80000019073486,
+              "p95HeartbeatGapMs": 154.80000019073486,
+              "totalBlockingMs": 90,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 1,
+              "maxLongTaskMs": 140
+            },
+            {
+              "name": "scroll-translated",
+              "elapsedMs": 1345,
+              "maxHeartbeatGapMs": 22.300000190734863,
+              "p95HeartbeatGapMs": 22,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 12,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            },
+            {
+              "name": "restore",
+              "elapsedMs": 190.7000002861023,
+              "maxHeartbeatGapMs": 31,
+              "p95HeartbeatGapMs": 31,
+              "totalBlockingMs": 0,
+              "wrappers": 0,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            },
+            {
+              "name": "retranslate-cached",
+              "elapsedMs": 7261.599999904633,
+              "maxHeartbeatGapMs": 34.80000019073486,
+              "p95HeartbeatGapMs": 22.90000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 44,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            }
+          ],
+          "requests": 501,
+          "items": 501,
+          "submittedChinese": [],
+          "consoleErrors": [],
+          "cleanupVerified": true,
+          "screenshotInspected": true
+        },
+        {
+          "paragraphs": 500,
+          "remountMiddle": true,
+          "translationBefore": false,
+          "repeated": true,
+          "functionalPassed": true,
+          "performanceTargetAchieved": false,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "visible": true,
+            "hidden": false,
+            "windowState": "normal",
+            "displayTarget": "secondary",
+            "browserFrontmost": false
+          },
+          "remountChecks": [
+            {
+              "hostWriteMs": 6,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 153.69999980926514,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.144623,
+                "LayoutDuration": 0.02876200000000001,
+                "RecalcStyleDuration": 0.0024079999999999987,
+                "TaskDuration": 0.20902199999999993,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 5.299999713897705,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 146.69999980926514,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.13680899999999996,
+                "LayoutDuration": 0.027953000000000006,
+                "RecalcStyleDuration": 0.0033360000000000004,
+                "TaskDuration": 0.194048,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 5.099999904632568,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 138.7999997138977,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.12935000000000008,
+                "LayoutDuration": 0.027967999999999993,
+                "RecalcStyleDuration": 0.0026470000000000018,
+                "TaskDuration": 0.18603999999999998,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            }
+          ],
+          "phases": [
+            {
+              "name": "translate",
+              "elapsedMs": 1229.2999997138977,
+              "maxHeartbeatGapMs": 30.5,
+              "p95HeartbeatGapMs": 25.90000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 5,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            },
+            {
+              "name": "remount-1",
+              "elapsedMs": 423.19999980926514,
+              "maxHeartbeatGapMs": 169.40000009536743,
+              "p95HeartbeatGapMs": 169.40000009536743,
+              "totalBlockingMs": 101,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 1,
+              "maxLongTaskMs": 151
+            },
+            {
+              "name": "remount-2",
+              "elapsedMs": 421,
+              "maxHeartbeatGapMs": 160.80000019073486,
+              "p95HeartbeatGapMs": 160.80000019073486,
+              "totalBlockingMs": 94,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 1,
+              "maxLongTaskMs": 144
+            },
+            {
+              "name": "remount-3",
+              "elapsedMs": 405.09999990463257,
+              "maxHeartbeatGapMs": 151.40000009536743,
+              "p95HeartbeatGapMs": 151.40000009536743,
+              "totalBlockingMs": 86,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 1,
+              "maxLongTaskMs": 136
+            },
+            {
+              "name": "scroll-translated",
+              "elapsedMs": 1385.4000000953674,
+              "maxHeartbeatGapMs": 29.59999990463257,
+              "p95HeartbeatGapMs": 21.59999990463257,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 12,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            },
+            {
+              "name": "restore",
+              "elapsedMs": 180.09999990463257,
+              "maxHeartbeatGapMs": 32.19999980926514,
+              "p95HeartbeatGapMs": 32.19999980926514,
+              "totalBlockingMs": 0,
+              "wrappers": 0,
+              "chineseWrappers": 0,
+              "hostClicks": 1,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            },
+            {
+              "name": "retranslate-cached",
+              "elapsedMs": 7561.300000190735,
+              "maxHeartbeatGapMs": 36.200000286102295,
+              "p95HeartbeatGapMs": 26.40000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 44,
+              "longTaskCount": 0,
+              "maxLongTaskMs": 0
+            }
+          ],
+          "requests": 2,
+          "items": 2,
+          "submittedChinese": [],
+          "consoleErrors": [],
+          "cleanupVerified": true,
+          "screenshotInspected": true
+        }
+      ],
+      "openPerformanceIssue": "500-owner synchronous remounts still produce 136-151ms long tasks. Bound total checkpoint work while preserving viewport stability, exact outputs, cancellation and restore.",
+      "docsBuild": "passed",
+      "docsCheck": "passed"
     }
   ]
 }

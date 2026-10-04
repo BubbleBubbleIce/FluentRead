@@ -2,6 +2,7 @@ import {describe, expect, it, vi} from 'vitest';
 import {parseHTML} from 'linkedom';
 import {
     canKeepTranslationAttempt,
+    getCurrentTranslationStateSourceSnapshot,
     hasCurrentTranslationSource,
     isBilingualArtifactKept,
     isOwnCurrentArtifactAddition,
@@ -51,6 +52,31 @@ function childListRecord(
 }
 
 describe('动态翻译稳定性判定', () => {
+    it('单个直接文本重挂时只遍历一次，并同时取得规范化原文与精确槽身份', () => {
+        const {document} = parseHTML('<html><body><p>  Read\n the source.  </p></body></html>');
+        const owner = document.querySelector<HTMLElement>('p')!;
+        const walk = vi.spyOn(document, 'createTreeWalker');
+        expect(getCurrentTranslationStateSourceSnapshot(owner, state())).toEqual({
+            sourceText: 'Read the source.', sourceTextNodes: [owner.firstChild],
+        });
+        expect(walk).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        {html: '<p><em>Read the source.</em></p>', source: 'Read the source.', slots: 1},
+        {html: '<p translate="no">Protected source.</p>', source: '', slots: 0},
+        {html: '<input type="button" value="Read the source">', source: 'Read the source', slots: 0},
+        {html: '<p>Read <a href="https://example.test">https://example.test</a> carefully.<code>protected()</code></p>',
+            source: 'Read https://example.test carefully.', slots: 2},
+        {html: '<p>Read the source.<span data-fr-translation-owned="true">译文</span></p>', source: 'Read the source.', slots: 1},
+    ])('复杂或受保护骨架保留独立的原文与槽提取政策：$html', ({html, source, slots}) => {
+        const {document} = parseHTML(`<html><body>${html}</body></html>`);
+        const snapshot = getCurrentTranslationStateSourceSnapshot(document.body.firstElementChild as HTMLElement, state());
+        expect(snapshot.sourceText).toBe(source);
+        expect(snapshot.sourceTextNodes).toHaveLength(slots);
+        expect(snapshot.sourceTextNodes.every(node => node.isConnected)).toBe(true);
+    });
+
     it('来源候选移出文档后失效，显式应用外壳例外仍不能穿过新增的局部禁译边界', () => {
         const {document} = parseHTML('<html><body><div translate="no"><p>Readable application source.</p></div></body></html>');
         const owner = document.querySelector<HTMLElement>('p')!;

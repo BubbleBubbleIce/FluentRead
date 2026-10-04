@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/runtime.ts
  * 文件职责：实现全文翻译的页面级会话引擎，负责候选发现、可见性调度、批量请求、动态 DOM 重扫、失败重试、缓存复用和恢复原文。
- * 主要内容：相同译文保留原文且不重复展示；维护 FullPageSession、AbortController、Intersection/Mutation 观察器、弹窗优先调度、精确属性写入过滤、候选所有权和生命周期重试；对变化来源等待安静窗口、跳过持续变化的计数，并清理延迟重扫，只有真实宿主删除启动候选回收，同批重复属性变化只处理一次；按时间片派发并在全文结果提交前让出主线程，合并同段 DOM 写入并在重挂时复用同批布局读数；按阅读进度撤回离开预取区的待派发候选，冻结配置与识别范围，在弹窗关闭后继续正文，按实际节点阶段发布进度及工具栏结果；悬浮调用冻结独立服务且保留快捷方案覆盖优先级；向局部翻译开放单候选 translateTarget 与单个译文所有者的恢复入口。
+ * 主要内容：相同译文保留原文且不重复展示；维护 FullPageSession、AbortController、Intersection/Mutation 观察器、弹窗优先调度、精确属性写入过滤、候选所有权和生命周期重试；对变化来源等待安静窗口、跳过持续变化的计数，并清理延迟重扫，只有真实宿主删除启动候选回收，同批重复属性变化只处理一次；按时间片派发并在全文结果提交前让出主线程，合并同段 DOM 写入并在重挂时复用同批布局读数与单文本来源快照；已拥有状态的发现候选直接登记复验，取消记录命中后才提取原文，避免整批重扫重复计算熔断签名；按阅读进度撤回离开预取区的待派发候选，冻结配置与识别范围，在弹窗关闭后继续正文，按实际节点阶段发布进度及工具栏结果；悬浮调用冻结独立服务且保留快捷方案覆盖优先级；向局部翻译开放单候选 translateTarget 与单个译文所有者的恢复入口。
  * 模块边界：这是 content 侧编排层，不实现 provider 协议、纯候选算法或底层状态存储；翻译调用经 app client，发现规则来自 core/translation，渲染与状态分别交给 renderer、liveTextRender 和 state。
  */
 import {resolveTranslationToolbarStatus, countFullPageTranslationWork} from '../toolbarStatus';
@@ -19,6 +19,7 @@ import {
     applyTranslationsToSnapshot,
     collectLiveTranslationTextSlots,
     createTranslationSourceSnapshot,
+    createCurrentTranslationResolverBatch,
     getComposedParent,
     getCurrentTranslationCore,
     getOpenShadowRoots,
@@ -106,6 +107,7 @@ import {
     getCandidateTranslationTextProtectionOptions,
     isTranslationCandidateCurrent as candidateIsCurrent,
     getCurrentTranslationStateSourceText,
+    getCurrentTranslationStateSourceSnapshot,
     getCurrentTranslationStateTextNodes,
     getTranslationStateProtectionBoundary,
     getTranslationTextProtectionOptions,
@@ -340,13 +342,14 @@ function transferEquivalentBilingualOwners(session: FullPageSession | undefined,
             .remember(boundary, owner, state);
     });
     const reconcileRemountLayout = createTranslationTruncationLayoutBatch();
+    const resolveRemountCandidate = createCurrentTranslationResolverBatch();
     const result = adoptEquivalentBilingualOwners(mutations, (_previousOwner, replacementOwner, state) => {
-        const candidate = getCurrentTranslationCore(state.scope).resolve(replacementOwner);
+        const candidate = resolveRemountCandidate(replacementOwner, state.scope);
         if (!candidate || candidate.element !== replacementOwner || candidate.kind !== state.kind ||
-            Boolean(candidate.allowTopLevelApplicationShell) !== Boolean(state.allowTopLevelApplicationShell) ||
-            normalizeComparableText(getCurrentTranslationStateSourceText(replacementOwner, state)) !==
-                normalizeComparableText(state.sourceText)) return null;
-        return {sourceTextNodes: getCurrentTranslationStateTextNodes(replacementOwner, state), reconcileLayout: reconcileRemountLayout};
+            Boolean(candidate.allowTopLevelApplicationShell) !== Boolean(state.allowTopLevelApplicationShell)) return null;
+        const source = getCurrentTranslationStateSourceSnapshot(replacementOwner, state);
+        if (normalizeComparableText(source.sourceText) !== normalizeComparableText(state.sourceText)) return null;
+        return {sourceTextNodes: source.sourceTextNodes, reconcileLayout: reconcileRemountLayout};
     }, resolveRemovedOwners);
     result.transfers.forEach(({previousOwner, replacementOwner}) => {
         if (!session) return;
@@ -632,7 +635,7 @@ function isUserCancelledCandidate(
     session: FullPageSession,
     candidate: TranslationCandidate,
 ): boolean {
-    const source = candidateLifecycleSource(candidate);
+    let source: string | undefined;
     const identities = [
         getTranslationCandidateKey(candidate),
         ...(candidate.nodes ?? []),
@@ -641,6 +644,7 @@ function isUserCancelledCandidate(
     identities.forEach((identity) => {
         const cancelledSource = session.userCancelledCandidates.get(identity);
         if (cancelledSource === undefined) return;
+        source ??= candidateLifecycleSource(candidate);
         if (cancelledSource === source) {
             cancelled = true;
         } else {
@@ -1166,15 +1170,6 @@ function drainFullPage(session: FullPageSession): void {
 function scheduleDiscoveredCandidate(session: FullPageSession, candidate: TranslationCandidate): void {
     const target = asHTMLElement(candidate.element);
     if (!session.active || !target || !target.isConnected) return;
-    if (session.translationConfig.displayMode === 'bilingual' && blocksBilingualRemountCandidate(
-        session.bilingualRemountCapitulations,
-        target,
-        candidateLifecycleSource(candidate),
-        candidate.allowTopLevelApplicationShell === true,
-        getTranslationInvocationIdentity(session.translationConfig),
-        candidate.nodes,
-        candidate.scope,
-    )) return;
     const key = getTranslationCandidateKey(candidate);
     if (isUserCancelledCandidate(session, candidate)) {
         // 用户显式取消后的恢复 mutation 仍会被全文会话观察到。丢弃重新发现的候选前
@@ -1213,6 +1208,15 @@ function scheduleDiscoveredCandidate(session: FullPageSession, candidate: Transl
         // 会通过 observer 重新启动它们。
         return;
     }
+    if (session.translationConfig.displayMode === 'bilingual' && blocksBilingualRemountCandidate(
+        session.bilingualRemountCapitulations,
+        target,
+        candidateLifecycleSource(candidate),
+        candidate.allowTopLevelApplicationShell === true,
+        getTranslationInvocationIdentity(session.translationConfig),
+        candidate.nodes,
+        candidate.scope,
+    )) return;
     const unchanged = session.unchangedCandidates.get(key);
     const cappedRetry = session.lifecycleRetries.get(key);
     if (unchanged || (cappedRetry && cappedRetry.attempts > FULL_PAGE_LIFECYCLE_RETRY_LIMIT)) {

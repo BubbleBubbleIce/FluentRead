@@ -12,6 +12,7 @@ const runtime = vi.hoisted(() => ({
     adapters: [] as TranslationSiteAdapter[],
     candidateEligible: vi.fn<(element: Element) => boolean>(() => true),
     ignoreMutation: vi.fn<(element: Element) => boolean>(() => false),
+    sourceReads: vi.fn<(element: HTMLElement) => void>(),
     candidates: [] as Array<{
         element: HTMLElement;
         kind: "content" | "control";
@@ -203,13 +204,23 @@ vi.mock("@/src/core/translation/public", async (importOriginal) => {
         }
         return slots;
     };
+    const resolveCandidate = (scope: string) => (start: Node | null | undefined) =>
+        [...runtime.candidates].reverse().find((candidate) => {
+            if (!start || (candidate.scope === 'all' && scope !== 'all') || isProtected(candidate.element) || !runtime.candidateEligible(candidate.element)) return false;
+            const key = candidate.nodes?.[0] ?? candidate.element;
+            return key === start || candidate.element === start || candidate.element.contains(start);
+        }) ?? null;
 
     return {
         // 属性型按钮标签的安全边界由 core 唯一定义，测试替身不复制其判定规则。
         getTranslatableControlValueAttribute: actual.getTranslatableControlValueAttribute,
         normalizeTranslationText: actual.normalizeTranslationText,
-        extractTranslationText: (element: HTMLElement, keepOriginal?: (element: Element) => boolean) =>
-            textSlots(element, keepOriginal).map(({source}) => source).join(""),
+        createCurrentTranslationResolverBatch: () => (start: Node, scope = 'content') => runtime.realCore
+            ? runtime.realCore.resolve(start) : resolveCandidate(scope)(start),
+        extractTranslationText: (element: HTMLElement, keepOriginal?: (element: Element) => boolean) => {
+            runtime.sourceReads(element);
+            return textSlots(element, keepOriginal).map(({source}) => source).join("");
+        },
         extractTranslationTextFromNodes: (nodes: readonly Node[]) =>
             nodes.map((node) => node.textContent ?? "").join(""),
         applyTranslationsToSnapshot: (_snapshot: unknown, translations: readonly string[]) => translations.join(""),
@@ -240,11 +251,8 @@ vi.mock("@/src/core/translation/public", async (importOriginal) => {
                 candidate: [...runtime.candidates].reverse().find((candidate) =>
                     (candidate.scope !== "all" || scope === "all") && candidate.element === element && !isProtected(candidate.element) && runtime.candidateEligible(element)),
             }),
-            resolve: (start: Node | null | undefined) => [...runtime.candidates].reverse().find((candidate) => {
-                if (!start || (candidate.scope === "all" && scope !== "all") || isProtected(candidate.element) || !runtime.candidateEligible(candidate.element)) return false;
-                const key = candidate.nodes?.[0] ?? candidate.element;
-                return key === start || candidate.element === start || candidate.element.contains(start);
-            }),
+            resolve: resolveCandidate(scope),
+            createSynchronousResolver: () => resolveCandidate(scope),
             *discoverSteps() {
                 for (const segment of document.querySelectorAll<HTMLElement>(
                     '[data-fr-translation-segment="true"]',
@@ -487,6 +495,7 @@ describe("全文翻译可见性锚点", () => {
         runtime.realCore = null;
         runtime.candidateEligible.mockReset().mockReturnValue(true);
         runtime.ignoreMutation.mockReset().mockReturnValue(false);
+        runtime.sourceReads.mockClear();
 
         const {window, document} = parseHTML("<html><head><title>Fixture</title></head><body></body></html>");
         replaceGlobal("window", window);
@@ -4181,6 +4190,41 @@ describe("全文翻译可见性锚点", () => {
         expect(getTranslationState(replacement)?.phase).toBe("translated");
         expect(replacement.querySelectorAll(".fluent-read-bilingual-content")).toHaveLength(1);
         expect(runtime.requests).toHaveBeenCalledTimes(1);
+    });
+
+    it('已提交的整批候选重新发现时不重复提取原文，后续来源变化仍会翻译', async () => {
+        runtime.config.display = 1;
+        runtime.config.fullPageTranslationMode = 'all';
+        document.body.innerHTML = '<main>' + Array.from({length: 20}, (_, index) =>
+            `<p>Committed paragraph ${index} remains readable.</p>`).join('') + '</main>';
+        const paragraphs = [...document.querySelectorAll<HTMLElement>('p')];
+        paragraphs.forEach(paragraph => setLayoutBox(paragraph, 600, 80));
+        runtime.candidates = paragraphs.map(element => ({element, kind: 'content', reason: 'paragraph'}));
+        autoTranslateEnglishPage();
+        await finishScheduledWork();
+        const initialRequests = runtime.requests.mock.calls.length;
+        expect(initialRequests).toBe(20);
+        const wrappers = paragraphs.map(paragraph => paragraph.querySelector('.fluent-read-bilingual-content'));
+        runtime.sourceReads.mockClear();
+        TestMutationObserver.instances.at(-1)!.emit([{
+            type: 'childList', target: document.querySelector('main')!,
+            addedNodes: [], removedNodes: [],
+        } as unknown as MutationRecord]);
+        await vi.advanceTimersByTimeAsync(100);
+        expect(runtime.sourceReads).not.toHaveBeenCalled();
+        expect(runtime.requests).toHaveBeenCalledTimes(initialRequests);
+        paragraphs.forEach((paragraph, index) =>
+            expect(paragraph.querySelector('.fluent-read-bilingual-content')).toBe(wrappers[index]));
+
+        const changedSource = paragraphs[0]!.firstChild as Text;
+        changedSource.data = 'The host has published a different paragraph.';
+        TestMutationObserver.instances.at(-1)!.emit([{
+            type: 'characterData', target: changedSource, addedNodes: [], removedNodes: [],
+        } as unknown as MutationRecord]);
+        await finishScheduledWork();
+        expect(runtime.requests).toHaveBeenCalledTimes(initialRequests + 1);
+        expect(paragraphs[0]!.querySelector('.fluent-read-bilingual-content')?.textContent)
+            .toBe('译:The host has published a different paragraph.');
     });
 
     it("宿主把 remove/add 拆记录并连续拒绝整块 wrapper 时，三次后稳定降级且不重译", async () => {

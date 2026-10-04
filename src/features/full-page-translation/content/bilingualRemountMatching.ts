@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/bilingualRemountMatching.ts
  * 文件职责：为同一宿主 mutation 边界的双语 owner 换代建立结构索引，避免旧/新段落两两验证。
- * 主要内容：缓存可信旧状态，按相对路径、语义范围和结构签名索引新节点，以共享候选组汇总歧义与译文差异，保留严格位置配对和溢出身份校验。
+ * 主要内容：缓存可信旧状态，按相对路径、语义范围和结构签名索引新节点，以共享候选组汇总歧义与译文差异；同批普通 owner 在相同识别范围下共享祖先保护读数，显式外壳例外仍按 owner 单独判断，保留严格位置配对和溢出身份校验。
  * 模块边界：只计算交接配对，不改写 DOM、不提交翻译状态、不发起请求；交接与布局恢复由 bilingualRemount 执行。
  */
 import {
@@ -12,7 +12,8 @@ import {
     isTrustedBilingualArtifactWithHostClass,
     type TranslationState,
 } from './state';
-import {collectLiveTranslationTextSlots, getCurrentTranslationCore} from '@/src/core/translation/public';
+import {collectLiveTranslationTextSlots, createTranslationTextProtectionCache, getCurrentTranslationCore,
+    type TranslationScope, type TranslationTextProtectionCache} from '@/src/core/translation/public';
 
 export interface BilingualRemountPair {
     previousOwner: HTMLElement;
@@ -55,6 +56,7 @@ function cachedSourceStructureSignature(
     owner: HTMLElement,
     allowTopLevelApplicationShell: boolean,
     cache: WeakMap<HTMLElement, Map<string, string>>,
+    protectionCaches: Map<TranslationScope, TranslationTextProtectionCache>,
     state?: TranslationState,
 ): string {
     let signatures = cache.get(owner);
@@ -73,11 +75,22 @@ function cachedSourceStructureSignature(
             ? {allowTopLevelApplicationShell: true, protectedElement: owner}
             : {protectedElement: owner},
     ).map((slot) => slot.node) : undefined;
+    // 显式外壳例外以本次 owner 为保护边界，不能继承另一 owner 的放行结果。
+    let protectionCache: TranslationTextProtectionCache | undefined;
+    if (!allowTopLevelApplicationShell) {
+        const scope = state?.scope ?? 'content';
+        protectionCache = protectionCaches.get(scope);
+        if (!protectionCache) {
+            protectionCache = createTranslationTextProtectionCache();
+            protectionCaches.set(scope, protectionCache);
+        }
+    }
     const signature = getTranslationSourceStructureSignature(
         owner,
         allowTopLevelApplicationShell,
         sourceTextNodes,
         state?.scope,
+        protectionCache,
     );
     signatures.set(cacheKey, signature);
     return signature;
@@ -107,6 +120,7 @@ export function matchBilingualRemountOwners(
         addedByBoundary.set(mutation.target, added);
     }
     const signatureCache = new WeakMap<HTMLElement, Map<string, string>>();
+    const protectionCaches = new Map<TranslationScope, TranslationTextProtectionCache>();
     const states = new Map<HTMLElement, TranslationState | null>();
     const indexes = new Map<Node, Map<string, Map<string, Map<HTMLElement, Node>>>>();
     const entries: Array<{
@@ -149,7 +163,7 @@ export function matchBilingualRemountOwners(
                         const identity = isTranslationSourceStructureOverflow(state.sourceStructureSignature)
                             ? getTranslationOverflowGenerationIdentity(replacement)
                             : cachedSourceStructureSignature(replacement, state.allowTopLevelApplicationShell === true,
-                                signatureCache, state);
+                                signatureCache, protectionCaches, state);
                         const candidates = bySignature.get(identity) ?? new Map<HTMLElement, Node>();
                         candidates.set(replacement, addedRoot);
                         bySignature.set(identity, candidates);

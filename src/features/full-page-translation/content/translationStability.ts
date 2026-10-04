@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/translationStability.ts
  * 文件职责：提供动态页面翻译的语义稳定性判断和实时文本槽重绑定，隔离 React/虚拟列表重建造成的生命周期噪声。
- * 主要内容：判断原文与译文工件是否仍完整，排队行内候选逐一复验全部来源节点及顺序，在保留宿主链接焦点管理的前提下决定是否保留当前翻译 generation，并在逐槽核对当前来源后把异步结果映射到实时 Text 节点与空白边界；按钮型 input 的译文写在标签属性上，另按已记录属性值复验其时效与自身写入。
+ * 主要内容：判断原文与译文工件是否仍完整，排队行内候选逐一复验全部来源节点及顺序，在保留宿主链接焦点管理的前提下决定是否保留当前翻译 generation，并在逐槽核对当前来源后把异步结果映射到实时 Text 节点与空白边界；重挂提取原文和文本槽时共享单文本读取，多槽仍保留独立的链接标识符与属性标签提取政策；按钮型 input 的译文写在标签属性上，另按已记录属性值复验其时效与自身写入。
  * 模块边界：本文件不读取配置、不监听 DOM、不执行 provider 请求；runtime 通过回调提供当前来源与槽位快照。
  */
 import {
@@ -139,6 +139,21 @@ export function getCurrentTranslationStateTextNodes(node: HTMLElement, state: Tr
         getTranslationStateProtectionBoundary(node, state),
         getTranslationTextProtectionOptions(state.allowTopLevelApplicationShell, node),
     ).map((slot) => slot.node);
+}
+
+/** 单个直接 Text 的已验证槽就是完整原文；复杂骨架仍按原文提取政策复核。 */
+export function getCurrentTranslationStateSourceSnapshot(node: HTMLElement, state: TranslationState): {
+    sourceText: string;
+    sourceTextNodes: Text[];
+} {
+    const sourceTextNodes = getCurrentTranslationStateTextNodes(node, state);
+    const singleText = node.childNodes.length === 1 && sourceTextNodes.length === 1 &&
+        node.firstChild === sourceTextNodes[0];
+    return {
+        sourceText: singleText ? normalizeComparableText(sourceTextNodes[0]!.data)
+            : getCurrentTranslationStateSourceText(node, state),
+        sourceTextNodes,
+    };
 }
 
 function sourceHTMLWithoutDirectBilingualArtifacts(node: HTMLElement): string {

@@ -7,6 +7,7 @@ import {
     collectLiveTranslationTextSlots,
     createDeclarativeAdapter,
     createTranslationCore,
+    createCurrentTranslationResolverBatch,
     createTranslationSourceSnapshot,
     extractTranslationText,
     extractTranslationTextFromNodes,
@@ -329,6 +330,142 @@ describe('translation candidate core', () => {
         expect(full).toBeDefined();
         expect(hover?.element).toBe(full?.element);
         expect(hover?.kind).toBe(full?.kind);
+    });
+
+    it('500 个全部节点候选在同步批量解析中共享祖先守卫，下一批重新读取宿主样式', () => {
+        const {document, window} = parseHTML('<html><body><main>' + Array.from({length: 500}, (_, index) =>
+            `<section><p>Readable batch paragraph ${index}.</p></section>`).join('') + '</main></body></html>');
+        const core = new TranslationCandidateCore({scope: 'all'});
+        const previousStyle = Object.getOwnPropertyDescriptor(window, 'getComputedStyle');
+        let bodyReads = 0;
+        let hidden = false;
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true, value: (element: Element) => {
+            if (element === document.body) bodyReads += 1;
+            return {display: 'block', position: 'static', fontFamily: 'serif',
+                visibility: element === document.body && hidden ? 'hidden' : 'visible'};
+        }});
+        try {
+            const paragraphs = [...document.querySelectorAll('p')];
+            const resolve = core.createSynchronousResolver();
+            expect(resolve(null)).toBeNull();
+            paragraphs.forEach(paragraph => expect(resolve(paragraph)).toMatchObject({element: paragraph, scope: 'all'}));
+            expect(bodyReads).toBeLessThanOrEqual(3);
+            hidden = true;
+            bodyReads = 0;
+            const resolveHidden = core.createSynchronousResolver();
+            paragraphs.forEach(paragraph => expect(resolveHidden(paragraph)).toBeNull());
+            expect(bodyReads).toBeLessThanOrEqual(3);
+            expect(bodyReads).toBeGreaterThan(0);
+        } finally {
+            if (previousStyle) Object.defineProperty(window, 'getComputedStyle', previousStyle);
+            else Reflect.deleteProperty(window, 'getComputedStyle');
+        }
+    });
+
+    it('正文批量解析不复用其他命中的外壳放行标记或保护边界', () => {
+        const {document, core} = page('<div translate="no" id="shell"><p id="inside">Readable application paragraph.</p></div><p id="outside">Another readable paragraph.</p>');
+        const resolve = core.createSynchronousResolver();
+        expect(resolve(document.querySelector('#inside'))).toMatchObject({allowTopLevelApplicationShell: true});
+        expect(resolve(document.querySelector('#shell'))).toBeNull();
+        const outside = resolve(document.querySelector('#outside'));
+        expect(outside?.element).toBe(document.querySelector('#outside'));
+        expect(outside?.allowTopLevelApplicationShell).toBeUndefined();
+    });
+
+    it('当前文档的同批解析按范围隔离核心，下一批反映新保护属性', () => {
+        const {document} = parseHTML('<html><body><main><p>Readable article source.</p></main><nav><p>Readable navigation source.</p></nav></body></html>');
+        const article = document.querySelector('main p')!;
+        const navigation = document.querySelector('nav p')!;
+        const resolve = createCurrentTranslationResolverBatch();
+        expect(resolve(article)?.element).toBe(article);
+        expect(resolve(navigation)).toBeNull();
+        expect(resolve(navigation, 'all')?.element).toBe(navigation);
+        expect(resolve(article, 'all')?.element).toBe(article);
+        navigation.setAttribute('translate', 'no');
+        expect(createCurrentTranslationResolverBatch()(navigation, 'all')).toBeNull();
+    });
+
+    it('同步解析复用内联分组时仍按每次命中的原节点选择前后两段', () => {
+        const {document} = parseHTML('<html><body><div>First readable inline sentence.<p>A separate paragraph.</p>Last readable inline sentence.</div></body></html>');
+        const container = document.querySelector('div')!;
+        const core = new TranslationCandidateCore({scope: 'all'});
+        const resolve = core.createSynchronousResolver();
+        const first = resolve(container.firstChild);
+        const last = resolve(container.lastChild);
+        expect(first?.element).toBe(container);
+        expect(last?.element).toBe(container);
+        expect(first?.nodes).toEqual([container.firstChild]);
+        expect(last?.nodes).toEqual([container.lastChild]);
+    });
+
+    it('仅显式目标的适配器重定向不能从当前内联容器偷取来源', () => {
+        const {document} = parseHTML('<html><body><div id="redirect">Readable redirected text.<p>A separate paragraph.</p>More readable text.</div><p id="target">The declared target.</p></body></html>');
+        const redirect = document.querySelector('#redirect')!;
+        const target = document.querySelector<HTMLElement>('#target')!;
+        const core = new TranslationCandidateCore({adapters: [{
+            id: 'redirect-only', matches: () => true, genericCandidatePolicy: 'targets-only',
+            decide: element => element === redirect
+                ? {kind: 'force-target', atomic: false, target, reason: 'redirect'}
+                : {kind: 'pass'},
+        }]});
+        expect(core.resolve(redirect.firstChild)?.element).toBe(target);
+        expect(core.resolve(redirect)?.element).toBe(target);
+        target.hidden = true;
+        const atomicCore = new TranslationCandidateCore({adapters: [{
+            id: 'atomic-redirect-only', matches: () => true, genericCandidatePolicy: 'targets-only',
+            decide: element => element === redirect
+                ? {kind: 'force-target', target, reason: 'atomic-redirect'} : {kind: 'pass'},
+        }]});
+        expect(atomicCore.resolve(redirect.firstChild)).toBeNull();
+    });
+
+    it('显式非原子容器保留前后内联段，命中未声明的块子节点仍沿用容器目标', () => {
+        const {document} = parseHTML('<html><body><div id="declared">First readable group.<p>A separate undeclared paragraph.</p>Last readable group.</div></body></html>');
+        const declared = document.querySelector('div')!;
+        const core = new TranslationCandidateCore({adapters: [{
+            id: 'container-only', matches: () => true, genericCandidatePolicy: 'targets-only',
+            decide: element => element === declared
+                ? {kind: 'force-target', atomic: false, reason: 'declared-container'} : {kind: 'pass'},
+        }]});
+        expect(core.resolve(declared.firstChild)?.nodes).toEqual([declared.firstChild]);
+        expect(core.resolve(declared.lastChild)?.nodes).toEqual([declared.lastChild]);
+        expect(core.resolve(declared.querySelector('p')!.firstChild)).toMatchObject({element: declared});
+    });
+
+    it('带独立子按钮的显式交互容器内联段继续采用控件展示路径', () => {
+        const {document} = parseHTML('<html><body><div role="button">First readable label.<button>A separate action.</button>Last readable label.</div></body></html>');
+        const container = document.querySelector('div')!;
+        const core = new TranslationCandidateCore({adapters: [{
+            id: 'composite-control', matches: () => true,
+            decide: element => element === container
+                ? {kind: 'force-target', atomic: false, reason: 'composite-control'} : {kind: 'pass'},
+        }]});
+        expect(core.resolve(container.firstChild)).toMatchObject({element: container, kind: 'control',
+            nodes: [container.firstChild]});
+    });
+
+    it('全部节点的已物化片段沿宿主决定控件种类，脱离宿主时仍可识别自身', () => {
+        const {document} = parseHTML('<html><body><button><span data-fr-translation-segment="true">Read the action.</span></button></body></html>');
+        const segment = document.querySelector('span')!;
+        const core = new TranslationCandidateCore({scope: 'all'});
+        expect(new TranslationCandidateCore().resolve(segment)).toMatchObject({element: segment, kind: 'control'});
+        expect(core.resolve(segment)).toMatchObject({element: segment, kind: 'control', scope: 'all'});
+        segment.remove();
+        expect(core.resolve(segment)).toMatchObject({element: segment, kind: 'control', scope: 'all'});
+    });
+
+    it.each(['visible', 'hidden', 'adapter'] as const)('动态控件标签的 %s 状态遵守外壳提升和保护门禁', kind => {
+        const {document} = parseHTML('<html><body><button><span>Readable action label.</span></button></body></html>');
+        const label = document.querySelector<HTMLElement>('span')!;
+        const button = document.querySelector('button')!;
+        if (kind === 'hidden') label.hidden = true;
+        const core = new TranslationCandidateCore({adapters: kind === 'adapter' ? [{
+            id: 'protected-label', matches: () => true,
+            decide: element => element === label ? {kind: 'prune-subtree', reason: 'owned-label'} : {kind: 'pass'},
+        }] : []});
+        const steps = [...core.discoverSteps(label)];
+        expect(steps.some(step => step.element === button)).toBe(kind === 'visible');
+        expect(steps.some(step => step.candidate)).toBe(kind === 'visible');
     });
 
     it('reclassifies a candidate when its interactive role changes', () => {
