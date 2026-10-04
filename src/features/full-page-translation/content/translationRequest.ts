@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/translationRequest.ts
  * 文件职责：为单次全文翻译会话冻结请求配置，并执行文本槽的批量、AI 跨候选合并、分包、回退与会话级结果复用。
- * 主要内容：在调用入口复制原文与服务/模型/语言/术语/排除列表快照，先过滤排除语言的文本槽再合批，在本地保留尚未排版的三美元公式源码，构造显式 client 参数，按服务选择批译策略，为本地模型只构造一次整段语言样本，为 Chrome auto 富文本包保留无哨兵检测样本，严格隔离 AI 批次并维护有界会话缓存。
+ * 主要内容：冻结调用时的长段落换行与译文位置，操作身份区分展示设置而 provider 结果键仍只包含请求维度；在调用入口复制原文与服务/模型/语言/术语/排除列表快照，先过滤排除语言的文本槽再合批，在本地保留尚未排版的三美元公式源码，构造显式 client 参数，按服务选择批译策略，为本地模型只构造一次整段语言样本，为 Chrome auto 富文本包保留无哨兵检测样本，严格隔离 AI 批次并维护有界会话缓存。
  * 模块边界：本文件不发现候选、不持有 DOM 翻译状态也不渲染译文；runtime 提供会话缓存和取消作用域，client 负责后台协议与队列执行。
  */
 import {resolveConfiguredModel, services, servicesType} from '@/src/core/config/catalog';
@@ -37,6 +37,7 @@ export function getTranslationInvocationIdentity(snapshot: FullPageTranslationCo
     return JSON.stringify([
         snapshot.profileId ?? '', snapshot.service, snapshot.model, snapshot.thinking,
         snapshot.sourceLanguage, snapshot.targetLanguage, snapshot.displayMode, snapshot.style,
+        snapshot.longParagraphLineBreak ?? false, snapshot.translationBeforeOriginal ?? false,
         snapshot.enableAIContext, snapshot.enableAIMultiSegment,
         snapshot.glossaryRevision, snapshot.glossaryIds,
         snapshot.excludedLanguages,
@@ -124,6 +125,8 @@ export function captureFullPageTranslationConfig(
         displayMode: overrides.displayMode
             ?? (config.display === styles.bilingualTranslation ? 'bilingual' : 'single'),
         style: config.style,
+        longParagraphLineBreak: Boolean(config.longParagraphLineBreakEnabled),
+        translationBeforeOriginal: Boolean(config.translationBeforeOriginal),
         ...(profileId ? {profileId} : {}),
         ...(requestOverridesApplied ? {requestOverridesApplied: true as const} : {}),
     };

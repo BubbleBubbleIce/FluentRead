@@ -51,6 +51,8 @@ const runtime = vi.hoisted(() => ({
         enableAIMultiSegment: false,
         display: 0,
         style: 0,
+        longParagraphLineBreakEnabled: false,
+        translationBeforeOriginal: false,
         fullPageTranslationMode: "viewport" as "viewport" | "all",
         translationScope: "content" as "content" | "all",
         // 这些用例验证纯视口门禁，关闭免滚动预翻译预算以隔离被测调度路径。
@@ -152,7 +154,8 @@ vi.mock("@/src/features/full-page-translation/content/renderer", async (importOr
         wrapper.setAttribute("data-fr-translation-owned", "true");
         wrapper.lang = typeof options.targetLanguage === 'string' ? options.targetLanguage : '';
         wrapper.textContent = text;
-        node.appendChild(wrapper);
+        if (options.translationBeforeOriginal) node.insertBefore(wrapper, node.firstChild);
+        else node.appendChild(wrapper);
         return wrapper;
     },
     refreshBilingualTranslation: (
@@ -482,6 +485,8 @@ describe("全文翻译可见性锚点", () => {
         runtime.config.enableAIMultiSegment = false;
         runtime.config.display = 0;
         runtime.config.style = 0;
+        runtime.config.longParagraphLineBreakEnabled = false;
+        runtime.config.translationBeforeOriginal = false;
         runtime.config.fullPageTranslationMode = "viewport";
         runtime.config.eagerTranslationCharacters = 0;
         runtime.config.translationScope = "content";
@@ -1759,6 +1764,50 @@ describe("全文翻译可见性锚点", () => {
         await finishScheduledWork();
         expect(runtime.requests).toHaveBeenCalledTimes(1);
         expect(singleTranslationText(second)).toBe(`译:${sourceText}`);
+    });
+
+    it.each([true, false])('provider 等待期间显示设置变化仍沿用会话换行与顺序 %s', async (frozen) => {
+        runtime.config.display = 1;
+        runtime.config.fullPageTranslationMode = 'all';
+        runtime.config.longParagraphLineBreakEnabled = frozen;
+        runtime.config.translationBeforeOriginal = frozen;
+        document.body.innerHTML = '<p id="display-snapshot">This paragraph keeps the display settings selected when translation started.</p>';
+        const paragraph = document.querySelector<HTMLElement>('p')!;
+        const source = paragraph.firstChild;
+        setLayoutBox(paragraph, 600, 80);
+        runtime.candidates = [{element: paragraph, kind: 'content', reason: 'paragraph'}];
+        const pending = deferred<string[]>();
+        runtime.requests.mockReturnValueOnce(pending.promise);
+        autoTranslateEnglishPage();
+        await vi.advanceTimersByTimeAsync(50);
+        await waitForRequestCount(1);
+        runtime.config.longParagraphLineBreakEnabled = !frozen;
+        runtime.config.translationBeforeOriginal = !frozen;
+        pending.resolve(['保持开始翻译时选择的展示设置。']);
+        await finishScheduledWork();
+        expect(runtime.renderOptions.at(-1)).toMatchObject({
+            longParagraphLineBreak: frozen, translationBeforeOriginal: frozen,
+        });
+        const state = getTranslationState(paragraph)!;
+        expect(state.bilingualReplay).toMatchObject({longParagraphLineBreak: frozen});
+        expect(state.bilingualBeforeSource).toBe(frozen);
+        expect(paragraph.contains(source)).toBe(true);
+        expect(runtime.requests).toHaveBeenCalledTimes(1);
+    });
+
+    it('展示选项改变操作身份，但复用同一原文的 provider 结果', async () => {
+        const session = {active: true, translationSlotCache: new Map(), translationRequestCache: new Map()};
+        const original = captureFullPageTranslationConfig();
+        runtime.config.longParagraphLineBreakEnabled = true;
+        runtime.config.translationBeforeOriginal = true;
+        const changed = captureFullPageTranslationConfig();
+        expect(getTranslationInvocationIdentity(original)).not.toBe(getTranslationInvocationIdentity(changed));
+        await expect(translateTextSlots(['Display-only change'], original, undefined, undefined, session))
+            .resolves.toEqual(['译:Display-only change']);
+        await expect(translateTextSlots(['Display-only change'], changed, undefined, undefined, session))
+            .resolves.toEqual(['译:Display-only change']);
+        expect(runtime.requests).toHaveBeenCalledTimes(1);
+        clearFullPageTranslationRequestCache(session);
     });
 
     it('请求配置快照解析自定义模型并冻结单/双语展示模式', () => {
@@ -3536,7 +3585,7 @@ describe("全文翻译可见性锚点", () => {
         expect(runtime.requests).toHaveBeenCalledTimes(2);
         expect(getTranslationState(paragraph)?.phase).toBe('translated');
         expect(paragraph.querySelectorAll('.fluent-read-bilingual-content')).toHaveLength(1);
-        expect(runtime.renderOptions.at(-1)).toEqual({targetLanguage: 'ja', style: 2, sourceText: 'Same configuration slot source.'});
+        expect(runtime.renderOptions.at(-1)).toEqual({targetLanguage: 'ja', style: 2, sourceText: 'Same configuration slot source.', longParagraphLineBreak: false, translationBeforeOriginal: false});
     });
 
     it("取消已排队的延迟悬浮后，计时器到期也不会晚到翻译", async () => {
@@ -3893,8 +3942,8 @@ describe("全文翻译可见性锚点", () => {
             enableAIContext: true,
         }));
         expect(runtime.renderOptions).toEqual([
-            {targetLanguage: 'zh', style: 2, sourceText: 'First paragraph uses the session snapshot.'},
-            {targetLanguage: 'zh', style: 2, sourceText: 'Later paragraph must use the same snapshot.'},
+            {targetLanguage: 'zh', style: 2, sourceText: 'First paragraph uses the session snapshot.', longParagraphLineBreak: false, translationBeforeOriginal: false},
+            {targetLanguage: 'zh', style: 2, sourceText: 'Later paragraph must use the same snapshot.', longParagraphLineBreak: false, translationBeforeOriginal: false},
         ]);
         expect(first.querySelector('.fluent-read-bilingual-content')?.getAttribute('lang')).toBe('zh');
         expect(second.querySelector('.fluent-read-bilingual-content')?.getAttribute('lang')).toBe('zh');

@@ -2,7 +2,7 @@
  * @file src/core/translation/lineBreak.ts
  *
  * 文件职责：为长段落译文按句子边界插入换行，让连续大段译文在保持原有内联结构的前提下更易阅读。
- * 主要内容：识别中英文句末标点并排除常见缩写与小数点误判，提供句子切分纯函数，以及在已渲染译文容器内就地插入 <br> 的 DOM 改写函数，只处理超过长度门槛且确实包含多句的段落。 可核对的公开符号包括 LONG_PARAGRAPH_LINE_BREAK_MIN_LENGTH、splitTranslationSentences、applyLongParagraphLineBreaks。
+ * 主要内容：识别中英文句末标点并排除常见缩写与小数点误判，提供句子切分纯函数，以及在已渲染译文容器内以 TreeWalker 收集文本并就地插入 <br> 的 DOM 改写函数，只处理超过长度门槛且确实包含多句的段落。 可核对的公开符号包括 LONG_PARAGRAPH_LINE_BREAK_MIN_LENGTH、splitTranslationSentences、applyLongParagraphLineBreaks。
  * 模块边界：本文件属于可独立测试的 core 候选领域；可以读取和改写传入的译文 DOM，但不访问配置存储、不调用 provider、不注册页面监听器，也不决定译文何时渲染。
  */
 
@@ -49,13 +49,9 @@ export function applyLongParagraphLineBreaks(
 
     const document = container.ownerDocument;
     const textNodes: Text[] = [];
-    const collect = (node: Node): void => {
-        for (const child of Array.from(node.childNodes)) {
-            if (child.nodeType === 3) textNodes.push(child as Text);
-            else if (child.nodeType === 1) collect(child);
-        }
-    };
-    collect(container);
+    // 先读取全部 Text 再改写，TreeWalker 不使用随 DOM 深度增长的 JS 调用栈。
+    const walker = document.createTreeWalker(container, 4 /* SHOW_TEXT */);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) textNodes.push(node as Text);
 
     let inserted = false;
     for (const node of textNodes) {

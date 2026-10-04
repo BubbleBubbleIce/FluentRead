@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/translationConfigSnapshot.ts
  * 文件职责：定义单次网页翻译的配置快照，并隔离异步合批与回退链路所使用的可编辑数组。
- * 主要内容：保留服务、模型、语言、展示、术语与请求覆盖字段，在入口一次读取字段并复制术语选择和排除语言列表。
+ * 主要内容：保留服务、模型、语言、展示模式、长段落换行、译文位置、术语与请求覆盖字段，在入口一次读取字段并复制术语选择和排除语言列表。
  * 模块边界：只定义类型并复制传入数据，不读取全局配置、不调用 provider、不管理会话或 DOM；请求和正文回退链路共享同一复制规则。
  */
 export interface FullPageTranslationConfigSnapshot {
@@ -18,6 +18,9 @@ export interface FullPageTranslationConfigSnapshot {
     enableAIMultiSegment: boolean;
     displayMode: 'bilingual' | 'single';
     style: number;
+    /** 调用入口冻结的展示设置；外部手工快照缺省沿用 renderer 的当前设置。 */
+    longParagraphLineBreak?: boolean;
+    translationBeforeOriginal?: boolean;
     profileId?: string;
     requestOverridesApplied?: true;
 }

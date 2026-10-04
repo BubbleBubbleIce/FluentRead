@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/renderer.ts
  * 文件职责：把翻译返回的受限 HTML 或纯文本安全插入原页面，构造 FluentRead 双语与仅译文节点，为学习标记保留逐行文字片段，同时保护链接属性并触发布局截断修复。
- * 主要内容：包含复验来源连续顺序的安全候选物化与显式原文行容器、URL 协议白名单、可复制属性集合、递归节点净化、本地公式可视骨架的受限克隆与辅助副本排除、DocumentFragment 创建、不改写宿主 class 的双语 wrapper、跨 CJK 书写体系时前置目标字体族、可选的译文前置与长段落按句换行，以及通过 Shadow DOM 保留宿主原文的仅译文文本槽。
+ * 主要内容：包含复验来源连续顺序的安全候选物化与显式原文行容器、URL 协议白名单、可复制属性集合、显式迭代节点净化、本地公式可视骨架的无递归受限克隆与辅助副本排除、DocumentFragment 创建、不改写宿主 class 的双语 wrapper、跨 CJK 书写体系时前置目标字体族、可选的译文前置与长段落按句换行，以及通过 Shadow DOM 保留宿主原文的仅译文文本槽。
  * 模块边界：本文件只负责安全渲染，不发起翻译或管理请求状态；服务调用归 runtime，节点所有权归 state，配置仅用于展示选项，任意脚本、事件属性和危险链接都不得穿过净化边界。
  */
 import type {TranslationCandidate} from "@/src/core/translation/types";
@@ -103,42 +103,60 @@ function cloneSourceFormula(source: Element): Element | null {
                 if (!/(?:url\s*\(|javascript:)/iu.test(value)) target.setAttribute(name, value);
             }
         }
-        for (const child of Array.from(element.childNodes)) {
-            if (child.nodeType === Node.TEXT_NODE) target.appendChild(document.createTextNode((child as Text).data));
-            else if (child.nodeType === Node.ELEMENT_NODE) {
-                const safe = clone(child as Element);
-                if (safe) target.appendChild(safe);
-            }
-        }
         return target;
     };
-    return clone(source);
+    const root = clone(source);
+    if (!root) return null;
+    const stack: Array<{children: Iterator<ChildNode>; target: Element}> = [
+        {children: source.childNodes[Symbol.iterator](), target: root},
+    ];
+    while (stack.length) {
+        const frame = stack[stack.length - 1]!;
+        const next = frame.children.next();
+        if (next.done) { stack.pop(); continue; }
+        const child = next.value;
+        if (child.nodeType === Node.TEXT_NODE) frame.target.appendChild(document.createTextNode((child as Text).data));
+        else if (child.nodeType === Node.ELEMENT_NODE) {
+            const safe = clone(child as Element);
+            if (!safe) continue;
+            frame.target.appendChild(safe);
+            stack.push({children: child.childNodes[Symbol.iterator](), target: safe});
+        }
+    }
+    return root;
 }
 
-function sanitizeNode(node: Node, sourceSkeleton = false): Node[] {
-    if (node.nodeType === Node.TEXT_NODE) {
-        return [document.createTextNode(node.nodeValue ?? "")];
+/** 深度优先迁移，每个来源节点只访问一次；未知标签就地展开，避免 flatMap 的深层反复复制。 */
+function sanitizeChildren(sourceRoot: Node, targetRoot: Node, sourceSkeleton = false): void {
+    const stack: Array<{children: Iterator<ChildNode>; target: Node}> = [
+        {children: sourceRoot.childNodes[Symbol.iterator](), target: targetRoot},
+    ];
+    while (stack.length) {
+        const frame = stack[stack.length - 1]!;
+        const next = frame.children.next();
+        if (next.done) { stack.pop(); continue; }
+        const node = next.value;
+        if (node.nodeType === Node.TEXT_NODE) {
+            frame.target.appendChild(document.createTextNode(node.nodeValue ?? ""));
+            continue;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) continue;
+        const source = node as Element;
+        const tag = source.tagName.toLowerCase();
+        if (blockedTags.has(tag)) continue;
+        if (sourceSkeleton && source.matches(formulaSelector)) {
+            const formula = cloneSourceFormula(source);
+            if (formula) frame.target.appendChild(formula);
+            continue;
+        }
+        let target = frame.target;
+        if (allowedTags.has(tag)) {
+            target = document.createElement(tag);
+            copySafeAttributes(source, target as HTMLElement);
+            frame.target.appendChild(target);
+        }
+        stack.push({children: source.childNodes[Symbol.iterator](), target});
     }
-
-    if (node.nodeType !== Node.ELEMENT_NODE) return [];
-
-    const source = node as Element;
-    const tag = source.tagName.toLowerCase();
-    if (blockedTags.has(tag)) return [];
-
-    if (sourceSkeleton && source.matches(formulaSelector)) {
-        const formula = cloneSourceFormula(source);
-        return formula ? [formula] : [];
-    }
-    const children = Array.from(source.childNodes).flatMap((child) => sanitizeNode(child, sourceSkeleton));
-
-    // 不在白名单中的结构只展开其安全文本/内联子节点，避免丢失译文内容。
-    if (!allowedTags.has(tag)) return children;
-
-    const target = document.createElement(tag);
-    copySafeAttributes(source, target);
-    children.forEach((child) => target.appendChild(child));
-    return [target];
 }
 
 /**
@@ -148,9 +166,7 @@ function sanitizeNode(node: Node, sourceSkeleton = false): Node[] {
 function createSafeTranslationFragment(text: string): DocumentFragment {
     const parsed = new DOMParser().parseFromString(text || "", "text/html");
     const fragment = document.createDocumentFragment();
-    Array.from(parsed.body.childNodes)
-        .flatMap((node) => sanitizeNode(node))
-        .forEach((node) => fragment.appendChild(node));
+    sanitizeChildren(parsed.body, fragment);
     return fragment;
 }
 
@@ -272,9 +288,7 @@ function createBilingualTranslationContent(
         ? document.createDocumentFragment()
         : createSafeTranslationFragment(text);
     if (renderOptions.sourceSkeleton) {
-        Array.from(renderOptions.sourceSkeleton.childNodes)
-            .flatMap((child) => sanitizeNode(child, true))
-            .forEach((child) => fragment.appendChild(child));
+        sanitizeChildren(renderOptions.sourceSkeleton, fragment, true);
     }
     content.appendChild(fragment);
     // 换行只作用于本次渲染出的译文容器，原文 DOM 不受影响。

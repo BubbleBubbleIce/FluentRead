@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14583,
+    "functions": 14576,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -133,8 +133,8 @@
       },
       "src/core/translation": {
         "files": 24,
-        "functions": 322,
-        "lines": 4720
+        "functions": 321,
+        "lines": 4716
       },
       "src/features/area-translation": {
         "files": 14,
@@ -153,8 +153,8 @@
       },
       "src/features/full-page-translation": {
         "files": 50,
-        "functions": 912,
-        "lines": 11175
+        "functions": 906,
+        "lines": 11198
       },
       "src/features/glossary": {
         "files": 3,
@@ -603,6 +603,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/translation/lineBreak.ts",
+      "sha256": "c62a224b155c47366d2cd41499a2b34c1e6751768da9387aff6aeafab428bf1e",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/translation/liveData.ts",
       "sha256": "185eece9d70eeed7c5b138211bf4f15b66b9432f2cb72f8e1e6311d7c5bec811",
       "functionBodies": 1,
@@ -664,7 +670,7 @@
     },
     {
       "file": "src/features/full-page-translation/content/bilingualReplay.ts",
-      "sha256": "231c10b9e53e6f26248a3bc79658d4cbf134b05159ec8ab5c48bce199350877a",
+      "sha256": "3165b16a7f61e9b08ad4e5be592a86947c1a67dda6bcb33c3675f84f0fecb516",
       "functionBodies": 5,
       "status": "source-read-and-traced"
     },
@@ -700,8 +706,8 @@
     },
     {
       "file": "src/features/full-page-translation/content/renderer.ts",
-      "sha256": "1c9a65bd43ddbef07fd0a701bb8c17af3598cc26b7e244c3a770f6ed41248480",
-      "functionBodies": 28,
+      "sha256": "0204610bb2b035ec85fd5bb422505139f22ae12c266c1b01587cf7d6f5a04d49",
+      "functionBodies": 22,
       "status": "source-read-and-traced"
     },
     {
@@ -712,7 +718,7 @@
     },
     {
       "file": "src/features/full-page-translation/content/runtime.ts",
-      "sha256": "a4fc1394230b50acfec6f7a58342ff9e186a6cbb17176858da45ee254e1aea78",
+      "sha256": "d7cefefe9287d2e4c76ae0a2f23b12f4a0c03fee35f5001dd05a9c5240a2ff34",
       "functionBodies": 163,
       "status": "source-read-and-traced"
     },
@@ -730,7 +736,7 @@
     },
     {
       "file": "src/features/full-page-translation/content/state.ts",
-      "sha256": "186e2277f1e6ec3979f146a58c57cf69f4b5e14cc87373bdf42ae71675bc406a",
+      "sha256": "29efb216c202e8e85b02917662b792898563c74211e8d20ad45402b1337ae8d8",
       "functionBodies": 171,
       "status": "source-read-and-traced"
     },
@@ -743,13 +749,13 @@
     {
       "file": "src/features/full-page-translation/content/translationConfigSnapshot.ts",
       "status": "source-read-and-traced",
-      "sha256": "ed23e5ce01ab67c80b848564cd913f76ba73ea422bafea3156b870e527090681",
+      "sha256": "8dde41a79379e8765e8bbe2469f6359f94aeca9a88eeae74c7f52021126c4073",
       "functionBodies": 1
     },
     {
       "file": "src/features/full-page-translation/content/translationRequest.ts",
       "status": "source-read-and-traced",
-      "sha256": "f99b8d5f42b4040e1c3621b044691cd83074b74687cea488728f12eb398c6caa",
+      "sha256": "5170fba86c5bf37c1a1668c4ee4ec780123820d7e5facf0171fa9d9f59bee250",
       "functionBodies": 90
     },
     {
@@ -1173,7 +1179,6 @@
     "src/core/translation/adapters/declarative.ts",
     "src/core/translation/font.ts",
     "src/core/translation/languages.ts",
-    "src/core/translation/lineBreak.ts",
     "src/core/translation/localInference.ts",
     "src/core/translation/prompts.ts",
     "src/core/translation/registry.ts",
@@ -1706,9 +1711,9 @@
     "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
   ],
   "progress": {
-    "sourceReadFiles": 82,
-    "sourceReadFunctionBodies": 1649,
-    "pendingFiles": 735,
+    "sourceReadFiles": 83,
+    "sourceReadFunctionBodies": 1646,
+    "pendingFiles": 734,
     "goalComplete": false
   },
   "observations": [
@@ -1724,13 +1729,18 @@
     },
     {
       "file": "src/features/full-page-translation/content/renderer.ts",
-      "status": "source-traced-needs-regression",
-      "issue": "Provider HTML sanitization and source formula cloning recursively traverse nested DOM. Reproduce deep-tree stack exhaustion and measure work before replacing the recursive traversals."
+      "status": "fixed-and-verified",
+      "issue": "Reproduced call-stack exhaustion for 4096-level local ordinary/unknown skeletons and formula trees. Replaced recursive sanitization and formula cloning with iterative depth-first migration, preserving ordering, namespaces and attribute restrictions without mutating original nodes. Deep-tree proof is a Node DOM fixture, not a native browser latency guarantee."
     },
     {
       "file": "src/features/full-page-translation/content/bilingualReplay.ts",
-      "status": "source-traced-needs-regression",
-      "issue": "Replay records target language/style but does not snapshot longParagraphLineBreak. Reproduce configuration changes between initial commit and equivalent host-skeleton refresh before fixing."
+      "status": "fixed-and-verified",
+      "issue": "Reproduced changed line breaks on equivalent skeleton replay and live display settings leaking into pending commits. Capture longParagraphLineBreak and translationBeforeOriginal at invocation; record line breaks for replay. Display settings affect invocation identity but do not invalidate provider result keys."
+    },
+    {
+      "file": "src/core/translation/lineBreak.ts",
+      "status": "fixed-and-verified",
+      "issue": "Reproduced call-stack exhaustion at 16384 nested inline elements. Collect Text nodes with TreeWalker before writing sentence breaks. This does not bound native layout or the total size of arbitrary host input."
     }
   ]
 }

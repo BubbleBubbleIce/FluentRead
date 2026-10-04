@@ -199,6 +199,17 @@ describe('长段落自动换行', () => {
         expect(container.textContent).toBe(long);
     });
 
+    it('深层译文按句换行不会递归耗尽调用栈，也不丢失内联顺序', () => {
+        const depth = 16384;
+        const translated = '这是第一句长段落译文。这是第二句长段落译文。'.repeat(8);
+        const {document} = page('<span id="deep">' + '<span>'.repeat(depth) + translated + '</span>'.repeat(depth) + '</span>');
+        const container = document.querySelector<HTMLElement>('#deep')!;
+        expect(() => applyLongParagraphLineBreaks(container)).not.toThrow();
+        expect(container.querySelectorAll('span')).toHaveLength(depth);
+        expect(container.querySelectorAll('br').length).toBeGreaterThan(0);
+        expect(container.textContent).toBe(translated);
+    });
+
     it('保留内联结构，只在文本节点内部插入换行', () => {
         const {document} = page('<p id="target"></p>');
         const container = document.createElement('span');

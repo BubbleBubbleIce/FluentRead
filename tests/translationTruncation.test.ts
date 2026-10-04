@@ -218,6 +218,55 @@ function dynamicClampFixture() {
 }
 
 describe('translation truncation layout', () => {
+    it.each(['span', 'x-inert'])('本地骨架净化深层 %s 时不递归耗尽调用栈或改写来源', async (tag) => {
+        const depth = 4096;
+        const {document} = parseHTML('<html><body><p id="owner">Translate the shallow sentence.' +
+            `<${tag}>`.repeat(depth) + 'Keep the deeply nested original.' + `</${tag}>`.repeat(depth) + '</p></body></html>');
+        const owner = document.querySelector<HTMLElement>('#owner')!;
+        await withDocumentRealm(document, async () => {
+            const originalHTML = owner.innerHTML;
+            const snapshot = createTranslationSourceSnapshot(owner);
+            let wrapper: HTMLElement | undefined;
+            expect(() => {
+                wrapper = appendBilingualTranslation(owner, '', {sourceSkeleton: snapshot.clone});
+            }).not.toThrow();
+            expect(wrapper!.textContent).toBe(snapshot.clone.textContent);
+            expect(wrapper!.querySelectorAll(tag)).toHaveLength(tag === 'span' ? depth : 0);
+            wrapper!.remove();
+            expect(owner.innerHTML).toBe(originalHTML);
+        });
+    });
+
+    it('本地深层公式克隆保持命名空间和原文且不递归耗尽调用栈', async () => {
+        const depth = 4096;
+        const {document} = parseHTML('<html><body><p id="owner">Translate around this formula.</p></body></html>');
+        const owner = document.querySelector<HTMLElement>('#owner')!;
+        const namespace = 'http://www.w3.org/1998/Math/MathML';
+        const math = document.createElementNS(namespace, 'math');
+        let current = math;
+        for (let i = 0; i < depth; i++) {
+            const row = document.createElementNS(namespace, 'mrow');
+            current.appendChild(row); current = row;
+        }
+        const symbol = document.createElementNS(namespace, 'mi');
+        symbol.setAttribute('onclick', 'unsafe()');
+        symbol.textContent = 'x'; current.appendChild(symbol); owner.appendChild(math);
+        await withDocumentRealm(document, async () => {
+            const snapshot = createTranslationSourceSnapshot(owner);
+            let wrapper: HTMLElement | undefined;
+            expect(() => {
+                wrapper = appendBilingualTranslation(owner, '', {sourceSkeleton: snapshot.clone});
+            }).not.toThrow();
+            expect(wrapper!.querySelectorAll('mrow')).toHaveLength(depth);
+            expect(wrapper!.querySelector('mi')?.textContent).toBe('x');
+            expect(wrapper!.querySelector('[onclick]')).toBeNull();
+            expect(wrapper!.querySelector('math')?.namespaceURI).toBe(math.namespaceURI);
+            wrapper!.remove();
+            expect(owner.lastChild).toBe(math);
+            expect(symbol.getAttribute('onclick')).toBe('unsafe()');
+        });
+    });
+
     it('只识别自然流固定高度容器的真实几何溢出，并提供 height auto 覆盖契约', () => {
         const {document} = parseHTML('<html><body><div id="box"><div id="branch">content</div></div></body></html>');
         const box = document.querySelector<HTMLElement>('#box')!;

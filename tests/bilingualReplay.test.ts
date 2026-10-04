@@ -14,6 +14,7 @@ import {
     createTranslationSourceSnapshot,
     getCurrentTranslationCore,
 } from '@/src/core/translation/public';
+import {config as liveConfig} from '@/src/services/config/store';
 import {refreshBilingualTranslationSkeleton} from
     '@/src/features/full-page-translation/content/bilingualReplay';
 import {stabilizeBilingualArtifact, createBilingualRemountCapitulationRegistry} from
@@ -159,7 +160,9 @@ function createCommittedReplayFixture(
  * 单槽候选：整段可见文本就是一个链接。多槽候选会把整段译文降级成纯文本，
  * 这里的骨架仍然携带复制来的内联节点，用于验证宿主改写这些节点属性时的行为。
  */
-function createCommittedSingleSlotFixture(document: Document): CommittedReplayFixture {
+function createCommittedSingleSlotFixture(
+    document: Document, translation = '阅读最新详情。', longParagraphLineBreak = false,
+): CommittedReplayFixture {
     const base = document.createElement('base');
     base.setAttribute('href', 'https://example.com/');
     document.head.appendChild(base);
@@ -173,7 +176,7 @@ function createCommittedSingleSlotFixture(document: Document): CommittedReplayFi
         owner, core.shouldStayOriginal, undefined, options);
     const liveSlots = collectLiveTranslationTextSlots(owner, core.shouldStayOriginal, undefined, options);
     const sources = snapshot.slots.map((slot) => slot.source);
-    const translations = Object.freeze(['阅读最新详情。']);
+    const translations = Object.freeze([translation]);
     expect(sources).toEqual(['Read the details.']);
     const attempt = beginTranslation(
         owner, 'bilingual', 'content', false, sources.join(' '),
@@ -181,8 +184,8 @@ function createCommittedSingleSlotFixture(document: Document): CommittedReplayFi
     )!;
     expect(markTranslationComplete(owner, attempt.state, attempt.generation)).toBe(true);
     const wrapper = appendBilingualTranslation(
-        owner, applyTranslationsToSnapshot(snapshot, translations), {targetLanguage: 'zh-Hans', style: 1});
-    setBilingualContent(owner, wrapper, {sources, translations, targetLanguage: 'zh-Hans', style: 1});
+        owner, applyTranslationsToSnapshot(snapshot, translations), {targetLanguage: 'zh-Hans', style: 1, longParagraphLineBreak});
+    setBilingualContent(owner, wrapper, {sources, translations, targetLanguage: 'zh-Hans', style: 1, longParagraphLineBreak});
     setRenderedStyleAttribute(owner);
 
     return {owner, state: attempt.state, wrapper, sources, translations};
@@ -199,6 +202,28 @@ async function flushLayoutRefresh(): Promise<void> {
 }
 
 describe('双语译文骨架重放', () => {
+    it.each([true, false])('宿主刷新骨架时保持已提交的长段落换行 %s', async (frozen) => {
+        const {document} = parseHTML('<html><body></body></html>');
+        await withDocumentRealm(document, () => {
+            const previous = liveConfig.longParagraphLineBreakEnabled;
+            try {
+                const translation = '这是第一句需要保留的较长译文内容。这是第二句需要保留的较长译文内容。'.repeat(5);
+                const fixture = createCommittedSingleSlotFixture(document, translation, frozen);
+                const originalBreaks = fixture.wrapper.querySelectorAll('br').length;
+                expect(originalBreaks > 0).toBe(frozen);
+                liveConfig.longParagraphLineBreakEnabled = !frozen;
+                fixture.owner.querySelector('#source-link')!.setAttribute('href', 'https://example.com/new');
+                expect(refreshBilingualTranslationSkeleton(fixture.owner, fixture.state)).toBe(true);
+                expect(fixture.owner.lastChild).toBe(fixture.wrapper);
+                expect(fixture.wrapper.querySelectorAll('br')).toHaveLength(originalBreaks);
+                expect(fixture.wrapper.textContent).toBe(translation);
+                expect(fixture.wrapper.querySelector('a')?.getAttribute('href')).toBe('https://example.com/new');
+            } finally {
+                liveConfig.longParagraphLineBreakEnabled = previous;
+            }
+        });
+    });
+
     it('保持同一 wrapper 并用最新安全骨架就地重放原 provider 译文', async () => {
         const {document} = parseHTML('<html><body></body></html>');
         await withDocumentRealm(document, () => {
