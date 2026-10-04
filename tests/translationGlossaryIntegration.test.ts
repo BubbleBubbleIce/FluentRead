@@ -148,6 +148,16 @@ describe('术语库与真实翻译编排协作', () => {
         expect(h.provider).toHaveBeenCalledTimes(1);
     });
 
+    it('错语种重试后尊重整句术语的保留原文规则，不继续重试或误报失败', async () => {
+        const h = harness();
+        h.config.glossaryLibraries[0].entries = [{id: 'phrase', source: 'これは日本語の文章です。翻訳結果を確認してください。', target: '', caseSensitive: false}];
+        h.provider.mockImplementationOnce(async message => `${message.origin} これは日本語の文章です。翻訳結果を確認してください。`);
+        await expect(h.request({origin: 'これは日本語の文章です。翻訳結果を確認してください。'})).resolves.toBe('これは日本語の文章です。翻訳結果を確認してください。');
+        expect(h.provider).toHaveBeenCalledTimes(2);
+        await expect(h.request({origin: 'これは日本語の文章です。翻訳結果を確認してください。'})).resolves.toBe('これは日本語の文章です。翻訳結果を確認してください。');
+        expect(h.provider).toHaveBeenCalledTimes(2);
+    });
+
     it('缺失词库或当前片段无实际词条时不能豁免回显检查', () => {
         const snapshot = createTranslationProviderConfigSnapshot(new Config());
         const missing = {...snapshot, glossaryLibraries: undefined, glossaryTerms: [{source: 'agent', target: '智能体'}],

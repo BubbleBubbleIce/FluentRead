@@ -22,6 +22,18 @@ function fixture(on = true, ready: Promise<unknown> = Promise.resolve()) {
 const message = (): TranslationRequestMessage => ({origin: 'Source text', context: 'test'});
 
 describe('全局翻译开关的共享请求边界', () => {
+    it('共享入口在配置水合前固定原文和选项，仍保留内部预算与取消所有权', async () => {
+        const hydration = deferred<void>();
+        const f = fixture(true, hydration.promise);
+        const original = markTranslationRemainingBudget({origin: ['Original text'], glossaryIds: ['library-a'], targetLanguage: 'zh-Hans', requestTimeoutMs: 100});
+        const result = f.api.translateWithCache(original);
+        original.origin[0] = 'Changed text';
+        original.glossaryIds.push('library-b');
+        original.targetLanguage = 'ja';
+        hydration.resolve();
+        await expect(result).resolves.toBe('译文');
+        expect(f.translate.mock.calls[0][0]).toMatchObject({origin: ['Original text'], glossaryIds: ['library-a'], targetLanguage: 'zh-Hans', [TRANSLATION_REMAINING_BUDGET]: true});
+    });
     it('配置水合为关闭时不进入缓存或 provider；错误跨 runtime 后不可重试', async () => {
         const hydration = deferred<void>();
         const f = fixture(true, hydration.promise);

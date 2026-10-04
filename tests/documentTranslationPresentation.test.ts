@@ -6,8 +6,6 @@ import {
     DOCUMENT_QUICK_SAMPLES,
     getDocumentExportPreview,
     getDocumentEmptyReaderHint,
-    getDocumentFormatTone,
-    getDocumentPreviewMeta,
     getDocumentReaderSourceClass,
     getDocxPartLabel,
     isRichDocumentFormat,
@@ -62,22 +60,7 @@ describe('document translation presentation', () => {
         expect(getDocumentExportPreview(pdf, ['译文'], 'bilingual')).toBe('Original\n译文\n\nPending');
     });
 
-    it('按文档类型返回稳定的阅读器说明', () => {
-        const pdf = parsed('pdf', {kind: 'pdf', bytes: new Uint8Array(), pages: []});
-        const epub = parsed('epub', {kind: 'epub', bytes: new Uint8Array(), chapters: []});
-        const docx = parsed('docx', {kind: 'docx', bytes: new Uint8Array(), parts: []});
-
-        expect(getDocumentPreviewMeta(pdf).title).toBe('PDF 原页与译页');
-        expect(getDocumentPreviewMeta(epub).title).toBe('ePub 章节双语阅读');
-        expect(getDocumentPreviewMeta(docx).title).toBe('Word 文档原文与译文');
-        expect(getDocumentPreviewMeta(parsed('srt')).title).toBe('字幕时间轴与译文');
-        expect(getDocumentPreviewMeta(parsed('json')).title).toBe('JSON 路径与字符串译文');
-        expect(getDocumentPreviewMeta(parsed('markdown')).title).toBe('Markdown 双语文章');
-        expect(getDocumentPreviewMeta(parsed('html')).title).toBe('HTML 双语排版预览');
-        expect(getDocumentPreviewMeta(null).title).toBe('原文与译文');
-    });
-
-    it('区分格式族、空态提示和视觉色调', () => {
+    it('区分格式族和空态提示', () => {
         expect(isSubtitleDocumentFormat('vtt')).toBe(true);
         expect(isSubtitleDocumentFormat('txt')).toBe(false);
         expect(isSubtitleDocumentFormat()).toBe(false);
@@ -90,11 +73,6 @@ describe('document translation presentation', () => {
         expect(getDocumentEmptyReaderHint(parsed('json'))).toContain('JSON 路径');
         expect(getDocumentEmptyReaderHint(null)).toContain('阅读结构');
 
-        expect(getDocumentFormatTone('pdf')).toBe('coral');
-        expect(getDocumentFormatTone('json')).toBe('teal');
-        expect(getDocumentFormatTone('lrc')).toBe('violet');
-        expect(getDocumentFormatTone('markdown')).toBe('sand');
-        expect(getDocumentFormatTone()).toBe('slate');
     });
 
     it('把 DOCX 部件路径映射为中文阅读标签', () => {

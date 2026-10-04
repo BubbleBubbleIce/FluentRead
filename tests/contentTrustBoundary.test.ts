@@ -70,8 +70,11 @@ describe('host-page trust boundary', () => {
   it('keeps selection UI wheel handling out of the host document', () => {
     const selection = source('src/features/selection-translation/ui/SelectionTranslator.vue');
 
+    // 卡片边缘要阻止滚动串入正文；只有 UI 内的非 passive 监听能执行 preventDefault。
     expect(selection).toContain('@wheel.stop="handleUiWheel"');
     expect(selection).not.toContain('@wheel.stop.passive="handleUiWheel"');
+    expect(selection).toContain('if (event.ctrlKey) return;');
+    expect(selection).toContain('if (event.cancelable) event.preventDefault();');
     expect(selection).not.toContain("document.addEventListener('wheel'");
     expect(selection).not.toContain("document.removeEventListener('wheel'");
   });

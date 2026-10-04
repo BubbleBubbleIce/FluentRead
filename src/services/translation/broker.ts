@@ -2,7 +2,7 @@
  * @file src/services/translation/broker.ts
  *
  * 文件职责：编排翻译请求的配置快照、语言解析、缓存、请求去重、超时与 provider 调用，是后台翻译用例的中心服务。
- * 主要内容：createTranslationBroker 同时支持单条、批量和页面摘要，验证 provider 返回数量、类型及明显的原文回显或错语种，在剩余预算内重试并排除旧异常缓存；对完整多段协议逐槽修复上下文回显，以包含 Chrome auto 检测样本的完整身份构建缓存键，并按匿名额度身份、等待策略、清理代次与剩余 deadline 隔离 pending 请求；每次公开请求累计缓存复用、上游调用次数、耗时与免费链线路尝试，结束后向注入的统计端口交付只含规模数值、服务与线路标识的事件。 可核对的公开符号包括 createTranslationBroker、聚合导出。
+ * 主要内容：createTranslationBroker 同时支持单条、批量和页面摘要，验证 provider 返回数量、类型及明显的原文回显或错语种，在剩余预算内重试并排除旧异常缓存；对完整多段协议逐槽修复上下文回显，以包含 Chrome auto 检测样本的完整身份构建缓存键，并按匿名额度身份、等待策略、清理代次与剩余 deadline 隔离 pending 请求；入口在等待前复制消息，批次摘要与分项缓存键只构建一次并复用，重复身份只读写一次；每次公开请求累计缓存复用、上游调用次数、耗时与免费链线路尝试，结束后向注入的统计端口交付只含规模数值、服务与线路标识的事件。 可核对的公开符号包括 createTranslationBroker、聚合导出。
  * 模块边界：本文件位于翻译 application service 层，负责用例编排和端口契约；不挂载页面 UI，且不应把某家供应商的网络细节扩散到 feature，具体 HTTP 协议由 providers/platform 实现。
  */
 
@@ -24,6 +24,7 @@ import {
     attachTranslationRouteObserver,
     attachTranslationRequestScheduler,
     createTranslationProviderConfigSnapshot,
+    createTranslationRequestSnapshot,
     getTranslationGlossaryContext,
     getTranslationProviderConfig,
     getTranslationGlossarySourceText,
@@ -351,16 +352,16 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         execution: TranslationRequestExecution,
         origin: string,
         itemIndex: number,
-        batchOrigins: readonly string[],
+        batchFingerprint: string,
         context: string,
         pageContext: string,
         mode: CacheRequestMode,
         modelOverride?: string,
     ): string {
         // AI 多段结果会受同批邻段影响，不能只按当前 origin 复用到另一种组合。
-        // 把槽位序号和当前项放在首位，再携带完整有序批次；同批重复原文也不会被错误折叠。
+        // 把槽位序号和当前项放在首位，再携带完整有序批次的摘要；同批重复原文也不会被错误折叠。
         const sourceIdentity = mode === 'ai-multi-segment'
-            ? [`slot:${itemIndex}`, origin, ...batchOrigins]
+            ? [`slot:${itemIndex}`, origin, `batch:${batchFingerprint}`]
             : origin;
         return buildCacheKey(
             execution,
@@ -894,19 +895,20 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         const nonEmptyIndexes = message.origin
             .map((origin, index) => origin.trim() ? index : -1)
             .filter((index) => index >= 0);
+        // 协议解析与数量校验已保证两侧都是等长的稠密字符串数组，后续按槽访问无需空串兜底。
         if (nonEmptyIndexes.length > 0 && nonEmptyIndexes.every((index) => (
-            normalizeTranslationComparable(parsed[index] ?? '')
-                === normalizeTranslationComparable(message.origin[index] ?? '')
+            normalizeTranslationComparable(parsed[index])
+                === normalizeTranslationComparable(message.origin[index])
         ))) throw new AIMultiSegmentResponseError();
 
         // 若协议完整但只有个别段落误译了页面上下文，只对这些段落做极简单段重译，
         // 已正确的同批结果继续复用，避免整批再次消耗。
         for (let index = 0; index < parsed.length; index += 1) {
-            const origin = message.origin[index] ?? '';
+            const origin = message.origin[index];
             const leakedPageContext = shouldRecoverPageContextLeak(
                 execution,
                 origin,
-                parsed[index] ?? '',
+                parsed[index],
                 pageContext,
                 message.modelOverride,
             );
@@ -915,7 +917,7 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
                 if (isDefiniteRecoveryPageContextLeak(
                     execution,
                     origin,
-                    parsed[index] ?? '',
+                    parsed[index],
                     pageContext,
                     message.modelOverride,
                 )) throw new AIContextRecoveryResponseError();
@@ -930,12 +932,12 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         }
         const finalized = Array.from(parsed);
         if (finalized.some((result, index) => !isGlossaryOnlyResult(execution.config, message.origin[index], result) && isLikelyUntranslatedResponse(
-            message.origin[index] ?? '', result ?? '', execution.targetLanguage,
+            message.origin[index], result, execution.targetLanguage,
         ))) throw new AIMultiSegmentResponseError();
         for (let index = 0; index < finalized.length; index += 1) {
-            const origin = message.origin[index] ?? '';
+            const origin = message.origin[index];
             if (isGlossaryOnlyResult(execution.config, origin, finalized[index])
-                || !isClearlyWrongLanguageResponse(origin, finalized[index] ?? '', execution.targetLanguage)) continue;
+                || !isClearlyWrongLanguageResponse(origin, finalized[index], execution.targetLanguage)) continue;
             finalized[index] = await recoverInvalidResult(
                 execution, {...message, origin}, finalized[index], requestDeadline, '', pageContext,
             );
@@ -1307,6 +1309,8 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
             cacheMode,
             message.modelOverride,
         );
+        // 完整批次身份只计算一次；AI 分项用定长摘要保留邻段和槽位语义，避免逐项携带整个批次。
+        const batchFingerprint = cacheMode === 'ai-multi-segment' ? sha256Hex(batchKey) : '';
         const pendingKey = `${buildPendingRequestKey(batchKey, pendingBudgetMs, requestGeneration)}:cache:${useCache ? 'on' : 'off'}${pendingOwnershipSuffix(execution)}${pendingAnonymousConfigSuffix(execution)}`;
         const existing = pendingBatches.get(pendingKey);
         if (existing) {
@@ -1315,20 +1319,19 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         }
 
         const request = useCache ? (async () => {
+            const itemKeys = message.origin.map((origin, index) => buildBatchItemCacheKey(
+                execution, origin, index, batchFingerprint, context, pageContext, cacheMode, message.modelOverride,
+            ));
+            const reads = new Map<string, Promise<string | null>>();
             // 步骤 1：分项读取缓存，只把缺失且去重后的原文交给 provider。
             const cached = await runWithinDeadline(
-                () => Promise.all(message.origin.map((origin, index) => {
-                    const itemKey = buildBatchItemCacheKey(
-                        execution,
-                        origin,
-                        index,
-                        message.origin,
-                        context,
-                        pageContext,
-                        cacheMode,
-                        message.modelOverride,
-                    );
-                    return readCacheWithPendingValue(requestGeneration, itemKey);
+                () => Promise.all(itemKeys.map(itemKey => {
+                    let read = reads.get(itemKey);
+                    if (!read) {
+                        read = readCacheWithPendingValue(requestGeneration, itemKey);
+                        reads.set(itemKey, read);
+                    }
+                    return read;
                 })),
                 requestDeadline,
                 execution.abortSignal,
@@ -1369,20 +1372,11 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
                     requestDeadline,
                 );
                 await Promise.all(translated.map(async (value, index) => {
-                    const origin = message.origin[index] ?? '';
+                    const origin = message.origin[index];
                     if (!isCacheableResult(origin, value, execution.targetLanguage, execution.config)) return;
                     await persistCacheWrite(
                         requestGeneration,
-                        buildBatchItemCacheKey(
-                            execution,
-                            origin,
-                            index,
-                            message.origin,
-                            context,
-                            pageContext,
-                            cacheMode,
-                            message.modelOverride,
-                        ),
+                        itemKeys[index],
                         value,
                     );
                 }));
@@ -1404,16 +1398,7 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
             for (const group of groups) {
                 if (group.entries.length === 0) continue;
                 const uniqueEntries = [...new Map(group.entries.map(({origin, index}) => [
-                    buildBatchItemCacheKey(
-                        execution,
-                        origin,
-                        index,
-                        message.origin,
-                        context,
-                        pageContext,
-                        cacheMode,
-                        message.modelOverride,
-                    ),
+                    itemKeys[index],
                     origin,
                 ])).entries()];
                 const uniqueOrigins = uniqueEntries.map(([, origin]) => origin);
@@ -1426,27 +1411,20 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
                     group.startWithoutPageContext,
                 );
                 uniqueEntries.forEach(([key], index) => {
-                    translatedByKey.set(key, translated[index] ?? '');
+                    translatedByKey.set(key, translated[index]);
                 });
             }
 
             // 步骤 2：按原请求顺序回填结果，并只缓存有效译文。
             const result = [...validatedCached] as Array<string | null>;
             const cacheWrites: Promise<void>[] = [];
+            const writtenKeys = new Set<string>();
             missingEntries.forEach(({index, origin}) => {
-                const itemKey = buildBatchItemCacheKey(
-                    execution,
-                    origin,
-                    index,
-                    message.origin,
-                    context,
-                    pageContext,
-                    cacheMode,
-                    message.modelOverride,
-                );
+                const itemKey = itemKeys[index];
                 const value = translatedByKey.get(itemKey);
                 result[index] = value as string;
-                if (isCacheableResult(origin, value, execution.targetLanguage, execution.config)) {
+                if (!writtenKeys.has(itemKey) && isCacheableResult(origin, value, execution.targetLanguage, execution.config)) {
+                    writtenKeys.add(itemKey);
                     cacheWrites.push(persistCacheWrite(
                         requestGeneration,
                         itemKey,
@@ -1547,6 +1525,8 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         // 空请求没有 provider 语义，也不应被配置水合阻塞或计入统计。
         if (Array.isArray(message.origin) && message.origin.length === 0) return [];
         if (typeof message.origin === 'string' && !message.origin.trim()) return message.origin;
+
+        message = createTranslationRequestSnapshot(message);
 
         const trace: TranslationRequestTrace = {cachedSegments: 0, shared: false, upstreamCalls: 0, upstreamMs: 0, routeAttempts: []};
         const startedAt = now();

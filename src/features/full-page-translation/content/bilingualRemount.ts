@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/bilingualRemount.ts
  * 文件职责：在 React/Vue 等宿主框架等价重挂双语 owner 时，于同一 MutationObserver 检查点原子接管已提交译文。
- * 主要内容：按 childList 相对路径配对新旧 owner，按正文/全部节点范围隔离熔断身份并校验原文/译文快照与直属工件，重建 WeakMap 状态并安全转移布局租约。
+ * 主要内容：按 childList 相对路径配对新旧 owner，一次建立兄弟节点位置索引以线性核对行内片段，按正文/全部节点范围隔离熔断身份并校验原文/译文快照与直属工件，重建 WeakMap 状态并安全转移布局租约。
  * 模块边界：本文件不发起翻译请求、不发现候选也不持有页面会话；runtime 提供候选/语义验证与会话索引收尾。
  */
 import {
@@ -99,7 +99,8 @@ function syntheticRunIndexes(
         return start < 0 ? null : sourceNodes.map((_node, index) => start + index);
     }
     if (!sourceNodes.every((node) => node.parentNode === host)) return null;
-    const indexes = sourceNodes.map((node) => Array.from(host.childNodes).indexOf(node as ChildNode));
+    const positions = new Map(Array.from(host.childNodes, (node, index) => [node, index] as const));
+    const indexes = sourceNodes.map((node) => positions.get(node as ChildNode) ?? -1);
     return indexes.some((index) => index < 0) ? null : indexes;
 }
 

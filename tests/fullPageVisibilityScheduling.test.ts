@@ -513,6 +513,70 @@ describe("全文翻译可见性锚点", () => {
         replacedGlobals.clear();
     });
 
+    it('自有译文 mutation 风暴不反复遍历等待视口的候选，宿主删除仍会清理', async () => {
+        runtime.config.display = 1;
+        document.body.innerHTML = '<p id="visible">A visible paragraph.</p>' +
+            Array.from({length: 200}, (_, index) => `<p id="waiting-${index}">Waiting paragraph ${index}.</p>`).join('');
+        const visible = document.querySelector<HTMLElement>('#visible')!;
+        const waiting = Array.from(document.querySelectorAll<HTMLElement>('p[id^="waiting-"]'));
+        setLayoutBox(visible, 600, 60);
+        waiting.forEach(element => setLayoutBox(element, 600, 60));
+        runtime.candidates = [visible, ...waiting].map(element => ({element, kind: 'content', reason: 'ownership-storm'}));
+        autoTranslateEnglishPage();
+        await vi.advanceTimersByTimeAsync(50);
+        TestIntersectionObserver.instances[0]!.emit(visible, true);
+        await finishScheduledWork();
+        const wrapper = visible.querySelector<HTMLElement>('.fluent-read-bilingual-content')!;
+        const connectedReads = vi.fn(() => true);
+        waiting.forEach(element => Object.defineProperty(element, 'isConnected', {configurable: true, get: connectedReads}));
+        const observer = TestMutationObserver.instances[0]!;
+        const ownRecord = {type: 'childList', target: visible, addedNodes: [wrapper], removedNodes: []} as unknown as MutationRecord;
+        for (let round = 0; round < 20; round += 1) {
+            observer.emit(Array.from({length: 100}, () => ownRecord));
+            await vi.advanceTimersByTimeAsync(16);
+        }
+        expect(connectedReads.mock.calls.length).toBe(0);
+        expect(runtime.requests).toHaveBeenCalledTimes(1);
+        expect(getTranslationState(visible)?.bilingualContent).toBe(wrapper);
+        expect(visible.querySelectorAll('.fluent-read-bilingual-content')).toHaveLength(1);
+
+        const removed = waiting[0];
+        Object.defineProperty(removed, 'isConnected', {configurable: true, value: false});
+        removed.remove();
+        observer.emit([{type: 'childList', target: document.body, addedNodes: [], removedNodes: [removed]} as unknown as MutationRecord]);
+        await vi.advanceTimersByTimeAsync(20);
+        expect(connectedReads).toHaveBeenCalled();
+        expect(TestIntersectionObserver.instances[0]!.observed.has(removed)).toBe(false);
+    });
+
+    it('同批重复宿主属性变更只安排一次目标复验，保留译文并仍处理下一批变化', async () => {
+        runtime.config.display = 1;
+        runtime.config.fullPageTranslationMode = 'all';
+        document.body.innerHTML = '<p>A paragraph that must remain stable during host layout updates.</p>';
+        const paragraph = document.querySelector<HTMLElement>('p')!;
+        setLayoutBox(paragraph, 600, 60);
+        runtime.candidates = [{element: paragraph, kind: 'content', reason: 'attribute-storm'}];
+        autoTranslateEnglishPage();
+        await finishScheduledWork();
+        const wrapper = paragraph.querySelector<HTMLElement>('.fluent-read-bilingual-content')!;
+        const timer = vi.spyOn(window, 'setTimeout');
+        const observer = TestMutationObserver.instances[0]!;
+        for (let batch = 0; batch < 3; batch += 1) {
+            const oldValue = document.body.className;
+            document.body.className = `host-theme-${batch}`;
+            timer.mockClear();
+            observer.emit(Array.from({length: 1000}, () => ({
+                type: 'attributes', target: document.body, attributeName: 'class', oldValue,
+                addedNodes: [], removedNodes: [],
+            } as unknown as MutationRecord)));
+            expect(timer.mock.calls.length).toBe(1);
+            await vi.advanceTimersByTimeAsync(600);
+            expect(runtime.requests).toHaveBeenCalledTimes(1);
+            expect(getTranslationState(paragraph)?.bilingualContent).toBe(wrapper);
+        }
+        timer.mockRestore();
+    });
+
     it.each([0, 1])('模式 %s 的连续计数更新停止重译，邻段稳定且新正文可恢复', async display => {
         runtime.config.display = display;
         runtime.config.fullPageTranslationMode = 'all';

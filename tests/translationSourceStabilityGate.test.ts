@@ -40,6 +40,25 @@ describe('动态来源安静窗口调度', () => {
         expect(gate.blocks(candidate,'The latest source.',session)).toBe(false);
     });
 
+    it('高频正文更新只保留一个安静窗口，稳定后仅派发最新来源一次', async () => {
+        const {candidate, session, ports, gate} = fixture();
+        let source = '';
+        for (let index = 0; index < 500; index += 1) {
+            source = `The article is being updated with section ${index}.`;
+            expect(gate.blocks(candidate, source, session)).toBe(true);
+            expect(vi.getTimerCount()).toBe(1);
+            await vi.advanceTimersByTimeAsync(16);
+        }
+        expect(ports.queue).not.toHaveBeenCalled();
+        ports.source.mockReturnValue(source);
+        await vi.advanceTimersByTimeAsync(1800);
+        expect(ports.queue).toHaveBeenCalledOnce();
+        expect(ports.queue.mock.calls[0][3]).toBe(source);
+        expect(ports.drain).toHaveBeenCalledOnce();
+        expect(vi.getTimerCount()).toBe(0);
+        gate.dispose(session);
+    });
+
     it('连续数字变化取消安静定时器，悬浮暂停时不创建后台请求', async () => {
         const {candidate, session, ports, gate} = fixture();
         expect(gate.blocks(candidate,'Visitors: 2',session)).toBe(true);

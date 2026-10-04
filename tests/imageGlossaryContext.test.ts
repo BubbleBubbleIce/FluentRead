@@ -232,7 +232,8 @@ describe('图片、圈选OCR到真实术语broker的完整请求边界', () => {
         const fourthStarted = deferred<void>();
         const started: string[] = [];
         h.provider.mockImplementation(async message => {
-            const origin = String(message.origin);
+            // 真实 broker 会把术语替换为受保护 token；乱序夹具按保留的原文安排回执。
+            const origin = String(message.sourceLanguageDetectionText ?? message.origin);
             started.push(origin);
             if (started.length === 3) firstWindow.resolve();
             if (origin === 'fourth') fourthStarted.resolve();
@@ -274,7 +275,7 @@ describe('图片、圈选OCR到真实术语broker的完整请求边界', () => {
         let started = 0;
         h.provider.mockImplementation(async message => {
             if (++started === 3) firstWindow.resolve();
-            await gates.get(String(message.origin))!.promise;
+            await gates.get(String(message.sourceLanguageDetectionText ?? message.origin))!.promise;
             return translate(message);
         });
         const oldRevision = buildGlossaryRevision(h.config.glossaryLibraries, true);

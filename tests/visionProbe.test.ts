@@ -151,6 +151,30 @@ describe('共享识图探测服务', () => {
         const controller=new AbortController();controller.abort();
         await expect(service.resolve(base(),'deepseek','future-vision',{force:true,signal:controller.signal})).rejects.toMatchObject({name:'AbortError'});
     });
+    it.each(['cancel', 'timeout'])('缓存加载挂起时仍遵守调用者 %s，迟到加载不启动探测', async (mode) => {
+        vi.useFakeTimers();
+        let finishLoad!: (value: unknown) => void;
+        const storage = store();
+        storage.load.mockImplementation(() => new Promise(resolve => {finishLoad = resolve;}));
+        const translate = vi.fn(async () => 'ABCDEF');
+        const service = createModelVisionProbe({storage, translate, random});
+        const controller = new AbortController();
+        let failure: unknown;
+        const result = service.resolve(base(), 'deepseek', 'future-vision', {
+            force: true, signal: controller.signal, timeoutMs: 10,
+        }).catch(error => {failure = error;});
+        if (mode === 'cancel') controller.abort();
+        await vi.advanceTimersByTimeAsync(11);
+        expect(failure).toMatchObject(mode === 'cancel' ? {name: 'AbortError'} : {message: expect.stringContaining('超时')});
+        await result;
+        expect(vi.getTimerCount()).toBe(0);
+        finishLoad([]);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(translate).not.toHaveBeenCalled();
+        expect(storage.save).not.toHaveBeenCalled();
+        await expect(service.resolve(base(), 'deepseek', 'future-vision', {force: true})).resolves.toMatchObject({capability: 'supported'});
+    });
+
     it('默认安全随机数可用，存储失败必须显示失败并且不绕过探测', async () => {
         const translate=vi.fn(async()=> 'UNKNOWN'), storage=store(); const service=createModelVisionProbe({storage,translate});
         await expect(service.resolve(base(),'deepseek','future-vision',{force:true})).resolves.toMatchObject({capability:'unknown'});

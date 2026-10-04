@@ -2,7 +2,7 @@
  * @file src/services/translation/context/browser.ts
  *
  * 文件职责：从当前浏览器页面捕获隐私受限、大小受控的翻译上下文，为页面摘要和大模型翻译提供可读背景。
- * 主要内容：克隆并清洗 DOM，排除表单、隐藏、脚本和敏感属性，优先使用 Defuddle 后回退正文提取，缓存 snapshot，并导出 getPageTranslationContext 与 resetPageTranslationContextCache。 可核对的公开符号包括 getPageTranslationContext、resetPageTranslationContextCache、聚合导出。
+ * 主要内容：克隆并清洗 DOM，排除表单、隐藏、脚本和敏感属性；大型页面有界捕获也检查根节点及祖先，避免绕过排除规则。优先使用 Defuddle 后回退正文提取，缓存 snapshot，并导出 getPageTranslationContext 与 resetPageTranslationContextCache。
  * 模块边界：本文件位于翻译 application service 层，负责用例编排和端口契约；不挂载页面 UI，且不应把某家供应商的网络细节扩散到 feature，具体 HTTP 协议由 providers/platform 实现。
  */
 
@@ -120,6 +120,9 @@ function exceedsDefuddleBudget(doc: Document): boolean {
 function collectBoundedReadableText(doc: Document): string {
     const root = doc.querySelector?.('main, article, [role="main"]') || doc.body || doc.documentElement;
     if (!root) return '';
+    // TreeWalker 的过滤器不检查 root，也看不到 root 外的祖先。
+    // 草稿、隐藏文章和扩展自有正文不能因有界捕获选择了它们作为根而进入提示词。
+    if (root.closest?.(PAGE_CONTEXT_EXCLUDED_SELECTOR)) return '';
     if (typeof doc.createTreeWalker !== 'function') {
         return normalizePageText(root.textContent || '').slice(0, pageContextLimits.captureCharacters);
     }

@@ -1,12 +1,27 @@
 /**
  * @file src/features/full-page-translation/content/mutationObservation.ts
  * 文件职责：为全文翻译组合 DOM 观察选项，并计算突发变化的扫描边界。
- * 主要内容：保留通用保护和产物完整性属性，合并网站依赖；复杂选择器取消属性过滤，校验合成段身份标记，按断言批量判定增删节点，并按树包含关系合并扫描根。
+ * 主要内容：保留通用保护和产物完整性属性，合并网站依赖；复杂选择器取消属性过滤，校验合成段身份标记，按断言批量判定增删节点，按检查点去重同节点同属性的变化，并按树包含关系合并扫描根。
  * 模块边界：仅生成选项和读取传入节点的树关系，不创建 MutationObserver、不读取全局 DOM 或配置。
  */
 import {getSiteAdapterAttributeFilter} from '@/src/core/site-adaptation/compiler';
 import type {TranslationSiteAdapter} from '@/src/core/translation/types';
 import type {TranslationState} from './state';
+
+/** 同一 observer 检查点只能读取最终 DOM；自有写入过滤后再标记，不吞掉后续真实宿主变化。 */
+export function createTranslationAttributeMutationFilter(): (element: Element, attribute: string) => boolean {
+    const checked = new WeakMap<Element, Set<string>>();
+    return (element, attribute) => {
+        let attributes = checked.get(element);
+        if (attributes?.has(attribute)) return false;
+        if (!attributes) {
+            attributes = new Set();
+            checked.set(element, attributes);
+        }
+        attributes.add(attribute);
+        return true;
+    };
+}
 
 export function createTranslationMutationObserverOptions(adapters: readonly TranslationSiteAdapter[]): MutationObserverInit {
     const attributeFilter = getSiteAdapterAttributeFilter(adapters, [

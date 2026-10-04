@@ -1,7 +1,7 @@
 /**
  * @file src/core/translation/apiKeyPool.ts
  * 文件职责：为同一服务的多个 API Key 提供不记录明文凭据的动态加权轮询算法。
- * 主要内容：维护权重、并发租约、限流等待与恢复窗口，并按服务身份隔离有界状态。
+ * 主要内容：维护权重、常数时间释放的并发租约计数、限流等待与恢复窗口，手动成功检查同步清除冷却，并按服务身份隔离有界状态。
  * 模块边界：只处理调用方提供的摘要身份和时间，不执行 HTTP、配置持久化或界面操作。
  */
 
@@ -67,7 +67,7 @@ interface KeyState {
   readonly keyId: string;
   weight: number;
   current: number;
-  inFlight: boolean;
+  activeLeaseCount: number;
   lastFailureAt: number | null;
   cooldownUntil: number | null;
   failureRevision: number;
@@ -142,7 +142,7 @@ export function createApiKeyPool(
     if (typeof keyId !== 'string' || !keyId.trim() || byId.has(keyId)) {
       throw new TypeError('API key pool 需要唯一且非空的 opaque id');
     }
-    const state: KeyState = {keyId, weight: initialWeight, current: 0, inFlight: false, lastFailureAt: null, cooldownUntil: null, failureRevision: 0};
+    const state: KeyState = {keyId, weight: initialWeight, current: 0, activeLeaseCount: 0, lastFailureAt: null, cooldownUntil: null, failureRevision: 0};
     keys.push(state);
     byId.set(keyId, state);
   }
@@ -185,7 +185,7 @@ export function createApiKeyPool(
     selected.current -= totalWeight;
     const leaseId = nextLeaseId++;
     activeLeases.set(leaseId, {key: selected, failureRevision: selected.failureRevision});
-    selected.inFlight = true;
+    selected.activeLeaseCount += 1;
     return {keyId: selected.keyId, leaseId, poolGeneration};
   }
 
@@ -198,7 +198,7 @@ export function createApiKeyPool(
     const key = getLeaseState(lease);
     if (!key) return null;
     activeLeases.delete(lease.leaseId);
-    key.inFlight = [...activeLeases.values()].some((candidate) => candidate.key === key);
+    key.activeLeaseCount -= 1;
     return key;
   }
 
@@ -231,6 +231,7 @@ export function createApiKeyPool(
     if (!key) return false;
     recover(normalizeTime(nowInput));
     key.lastFailureAt = null;
+    key.cooldownUntil = null;
     key.failureRevision += 1;
     key.weight = initialWeight;
     return true;
@@ -252,7 +253,7 @@ export function createApiKeyPool(
 
   function getState(nowInput?: number): readonly ApiKeyPoolState[] {
     recover(normalizeTime(nowInput));
-    return keys.map(({keyId, weight, current, inFlight, lastFailureAt, cooldownUntil}) => ({keyId, weight, current, inFlight, lastFailureAt, cooldownUntil}));
+    return keys.map(({keyId, weight, current, activeLeaseCount, lastFailureAt, cooldownUntil}) => ({keyId, weight, current, inFlight: activeLeaseCount > 0, lastFailureAt, cooldownUntil}));
   }
 
   function sync(keyIds: readonly string[]): void {
@@ -267,7 +268,7 @@ export function createApiKeyPool(
     for (const [leaseId, entry] of activeLeases) if (!next.has(entry.key.keyId)) activeLeases.delete(leaseId);
     for (const keyId of keyIds) {
       if (!byId.has(keyId)) {
-        const state: KeyState = {keyId, weight: initialWeight, current: 0, inFlight: false, lastFailureAt: null, cooldownUntil: null, failureRevision: 0};
+        const state: KeyState = {keyId, weight: initialWeight, current: 0, activeLeaseCount: 0, lastFailureAt: null, cooldownUntil: null, failureRevision: 0};
         keys.push(state);
         byId.set(keyId, state);
       }

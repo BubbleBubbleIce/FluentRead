@@ -1,0 +1,1644 @@
+{
+  "baseline": "fd4fac8847ce6afa0c00475fc2c3172f18877a48",
+  "status": "active",
+  "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
+  "inventory": {
+    "files": 813,
+    "functions": 14567,
+    "groups": {
+      "entrypoints/background.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 14
+      },
+      "entrypoints/content.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 14
+      },
+      "entrypoints/document": {
+        "files": 1,
+        "functions": 0,
+        "lines": 10
+      },
+      "entrypoints/localTranslationWorker.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 8
+      },
+      "entrypoints/localTtsWorker.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 8
+      },
+      "entrypoints/neteaseMailFrame.content.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 16
+      },
+      "entrypoints/offscreen": {
+        "files": 1,
+        "functions": 0,
+        "lines": 10
+      },
+      "entrypoints/options": {
+        "files": 1,
+        "functions": 0,
+        "lines": 10
+      },
+      "entrypoints/popup": {
+        "files": 1,
+        "functions": 0,
+        "lines": 10
+      },
+      "entrypoints/shadowBridge.content.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 16
+      },
+      "entrypoints/supportedFrame.content.ts": {
+        "files": 1,
+        "functions": 1,
+        "lines": 22
+      },
+      "entrypoints/videoTranscriptionWorker.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 9
+      },
+      "entrypoints/xVideoBridge.content.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 13
+      },
+      "entrypoints/youtubeBridge.content.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 16
+      },
+      "integrations/obsidian": {
+        "files": 7,
+        "functions": 57,
+        "lines": 433
+      },
+      "src/app": {
+        "files": 101,
+        "functions": 1167,
+        "lines": 11403
+      },
+      "src/core/config": {
+        "files": 52,
+        "functions": 701,
+        "lines": 9062
+      },
+      "src/core/context-menu": {
+        "files": 2,
+        "functions": 22,
+        "lines": 295
+      },
+      "src/core/glossary": {
+        "files": 6,
+        "functions": 81,
+        "lines": 805
+      },
+      "src/core/harness": {
+        "files": 5,
+        "functions": 42,
+        "lines": 564
+      },
+      "src/core/hotkey": {
+        "files": 1,
+        "functions": 19,
+        "lines": 481
+      },
+      "src/core/i18n": {
+        "files": 22,
+        "functions": 43,
+        "lines": 28327
+      },
+      "src/core/language": {
+        "files": 11,
+        "functions": 91,
+        "lines": 1386
+      },
+      "src/core/site-adaptation": {
+        "files": 6,
+        "functions": 65,
+        "lines": 568
+      },
+      "src/core/site-rules": {
+        "files": 1,
+        "functions": 14,
+        "lines": 164
+      },
+      "src/core/translation": {
+        "files": 22,
+        "functions": 306,
+        "lines": 4558
+      },
+      "src/features/area-translation": {
+        "files": 14,
+        "functions": 86,
+        "lines": 1283
+      },
+      "src/features/document-translation": {
+        "files": 8,
+        "functions": 228,
+        "lines": 2608
+      },
+      "src/features/floating-ball": {
+        "files": 5,
+        "functions": 86,
+        "lines": 1106
+      },
+      "src/features/full-page-translation": {
+        "files": 48,
+        "functions": 912,
+        "lines": 11050
+      },
+      "src/features/glossary": {
+        "files": 3,
+        "functions": 93,
+        "lines": 545
+      },
+      "src/features/hover-translation": {
+        "files": 2,
+        "functions": 30,
+        "lines": 364
+      },
+      "src/features/image-translation": {
+        "files": 46,
+        "functions": 834,
+        "lines": 6696
+      },
+      "src/features/input-translation": {
+        "files": 6,
+        "functions": 82,
+        "lines": 1377
+      },
+      "src/features/local-translation": {
+        "files": 7,
+        "functions": 126,
+        "lines": 1065
+      },
+      "src/features/local-tts": {
+        "files": 7,
+        "functions": 102,
+        "lines": 1071
+      },
+      "src/features/model-usage": {
+        "files": 4,
+        "functions": 116,
+        "lines": 1290
+      },
+      "src/features/page-notice": {
+        "files": 2,
+        "functions": 18,
+        "lines": 253
+      },
+      "src/features/paragraph-copy": {
+        "files": 3,
+        "functions": 22,
+        "lines": 354
+      },
+      "src/features/quick-translation": {
+        "files": 3,
+        "functions": 23,
+        "lines": 400
+      },
+      "src/features/reading-assistant": {
+        "files": 14,
+        "functions": 172,
+        "lines": 1656
+      },
+      "src/features/section-translation": {
+        "files": 4,
+        "functions": 66,
+        "lines": 729
+      },
+      "src/features/selection-translation": {
+        "files": 22,
+        "functions": 453,
+        "lines": 5248
+      },
+      "src/features/settings": {
+        "files": 77,
+        "functions": 1374,
+        "lines": 19069
+      },
+      "src/features/share-card": {
+        "files": 7,
+        "functions": 45,
+        "lines": 591
+      },
+      "src/features/site-rules": {
+        "files": 1,
+        "functions": 0,
+        "lines": 9
+      },
+      "src/features/translation-center": {
+        "files": 3,
+        "functions": 113,
+        "lines": 445
+      },
+      "src/features/translation-stats": {
+        "files": 3,
+        "functions": 97,
+        "lines": 1164
+      },
+      "src/features/video-subtitle": {
+        "files": 46,
+        "functions": 1019,
+        "lines": 12778
+      },
+      "src/features/vocabulary": {
+        "files": 20,
+        "functions": 387,
+        "lines": 3970
+      },
+      "src/features/writing-assistant": {
+        "files": 17,
+        "functions": 212,
+        "lines": 1234
+      },
+      "src/platform": {
+        "files": 37,
+        "functions": 482,
+        "lines": 4455
+      },
+      "src/providers": {
+        "files": 40,
+        "functions": 275,
+        "lines": 5411
+      },
+      "src/services": {
+        "files": 54,
+        "functions": 937,
+        "lines": 11658
+      },
+      "src/shared": {
+        "files": 8,
+        "functions": 24,
+        "lines": 331
+      },
+      "src/ui": {
+        "files": 16,
+        "functions": 143,
+        "lines": 3838
+      },
+      "userscript/SettingsPanel.vue": {
+        "files": 1,
+        "functions": 57,
+        "lines": 578
+      },
+      "userscript/api.ts": {
+        "files": 1,
+        "functions": 1,
+        "lines": 21
+      },
+      "userscript/browser.ts": {
+        "files": 1,
+        "functions": 27,
+        "lines": 151
+      },
+      "userscript/chromeTranslator.ts": {
+        "files": 1,
+        "functions": 1,
+        "lines": 4
+      },
+      "userscript/compression.ts": {
+        "files": 1,
+        "functions": 2,
+        "lines": 13
+      },
+      "userscript/context.ts": {
+        "files": 1,
+        "functions": 5,
+        "lines": 27
+      },
+      "userscript/count.ts": {
+        "files": 1,
+        "functions": 28,
+        "lines": 227
+      },
+      "userscript/credentialContext.ts": {
+        "files": 1,
+        "functions": 1,
+        "lines": 5
+      },
+      "userscript/dexie-dist.d.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 12
+      },
+      "userscript/dexie.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 22
+      },
+      "userscript/globals.d.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 73
+      },
+      "userscript/http.ts": {
+        "files": 1,
+        "functions": 27,
+        "lines": 179
+      },
+      "userscript/initialize.ts": {
+        "files": 1,
+        "functions": 12,
+        "lines": 205
+      },
+      "userscript/main.ts": {
+        "files": 1,
+        "functions": 20,
+        "lines": 191
+      },
+      "userscript/metadata.ts": {
+        "files": 1,
+        "functions": 4,
+        "lines": 52
+      },
+      "userscript/pageContext.ts": {
+        "files": 1,
+        "functions": 6,
+        "lines": 89
+      },
+      "userscript/pageTranslationContext.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 7
+      },
+      "userscript/pako.d.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 4
+      },
+      "userscript/pakoBundled.ts": {
+        "files": 1,
+        "functions": 1,
+        "lines": 7
+      },
+      "userscript/pakoRuntime.ts": {
+        "files": 1,
+        "functions": 1,
+        "lines": 8
+      },
+      "userscript/platform.ts": {
+        "files": 1,
+        "functions": 7,
+        "lines": 166
+      },
+      "userscript/platformFull.ts": {
+        "files": 1,
+        "functions": 13,
+        "lines": 208
+      },
+      "userscript/resources": {
+        "files": 2,
+        "functions": 3043,
+        "lines": 925
+      },
+      "userscript/settings.ts": {
+        "files": 1,
+        "functions": 3,
+        "lines": 29
+      },
+      "userscript/settingsFull.ts": {
+        "files": 1,
+        "functions": 15,
+        "lines": 165
+      },
+      "userscript/settingsPage.ts": {
+        "files": 1,
+        "functions": 3,
+        "lines": 32
+      },
+      "userscript/shadow-root.ts": {
+        "files": 1,
+        "functions": 6,
+        "lines": 99
+      },
+      "userscript/storage.ts": {
+        "files": 1,
+        "functions": 30,
+        "lines": 170
+      },
+      "userscript/uiLanguageBundles.ts": {
+        "files": 1,
+        "functions": 11,
+        "lines": 90
+      },
+      "userscript/unsupportedCapabilities.ts": {
+        "files": 1,
+        "functions": 24,
+        "lines": 68
+      },
+      "userscript/vendor.vite.config.ts": {
+        "files": 1,
+        "functions": 6,
+        "lines": 61
+      },
+      "userscript/vendorEntry.ts": {
+        "files": 1,
+        "functions": 0,
+        "lines": 23
+      },
+      "userscript/vite.config.ts": {
+        "files": 1,
+        "functions": 44,
+        "lines": 513
+      },
+      "userscript/vueElementPlusBridge.v1.js": {
+        "files": 1,
+        "functions": 0,
+        "lines": 6
+      },
+      "userscript/writingAssistant.ts": {
+        "files": 1,
+        "functions": 3,
+        "lines": 9
+      }
+    }
+  },
+  "reviewed": [
+    {
+      "file": "src/app/background/cacheCleanup.ts",
+      "sha256": "7b3a9e88921a8775610f732d647d84a62cd0402cb22e666de04defd3714fcd91",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/maintenanceRuntime.ts",
+      "sha256": "1ddb0cdac471ef0b07b7ee9c3fcba96071a26a7dc4bf49eaa85859228686e4f3",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/messageRouter.ts",
+      "sha256": "df82a43487059237ec614c4847a3a043a0bf0e628482641a9415ab5477ca6741",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/embeddedFrameRuntime.ts",
+      "sha256": "9c52b4c9639b8626f54322ebb8f351344578c5f064d7a564983f4cb87e1e38a6",
+      "functionBodies": 29,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/featureLifecycle.ts",
+      "sha256": "3385fa7c5a3863b7f6e3bbac0ff0716c77a447da2a921df1ba9363e5df1c6a39",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/featureRegistry.ts",
+      "sha256": "f7e6c6ce57bdc03d51ebe92f3f19b4b7ebd60e35d53cf914894648ed3fa017c8",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/mainWorldBridgeLifecycle.ts",
+      "sha256": "f442ba8402b2087731d360afbda0c0bdcabe41473877e00a443a7b6a4312312f",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/optionalFeatures.ts",
+      "sha256": "fec4e749934b650ada6080916c2ed37802a155dd3cfa41613ceb39ec8f61004e",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/pageAvailability.ts",
+      "sha256": "e373967fdaa80b4c41da1059a1d0cfe423074dd7ce871026fea2d37410fc186c",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/pageLifecycle.ts",
+      "sha256": "3e5e4b3700da83700cb85d1caed899201dbb7c7ec2dc8b9c882d73f1aca61814",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/pageStyles.ts",
+      "sha256": "f99ea3af1670c473ec5380515139dca8bae718e1fb2742f3e3fc645f6be31479",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/runtime.ts",
+      "sha256": "3549147565242c425714bee512b6aa9164c3a509688fde51d2785e80c75c152c",
+      "functionBodies": 46,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/translation/check.ts",
+      "sha256": "77c016fdcc21ee7c76e17d1d02a96552d6a0cba1727b070a2522f76d76f39396",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/translation/client.ts",
+      "sha256": "6c43a6f494546aae25e13f3ce9053b3f3392ce0faa292cbf4a0aad80bbc428d2",
+      "functionBodies": 58,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/translation/runtime.ts",
+      "sha256": "afb91c92da4c9eb73c1540d7e6665522d00c1cd37c973aedb95f33d89b481318",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/translation/visionProbeRuntime.ts",
+      "sha256": "d024916c66722501c0a223591fac734b7d760ce52d09cdefe65d0e828c4c62ab",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/apiKeyPool.ts",
+      "sha256": "0540a915e92c61f830cb5ef465d378b5c6b09c66cdd4e53c9cef2a34c801de1f",
+      "functionBodies": 32,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/current.ts",
+      "sha256": "872cfa88c814a4136a4a0008f2e502f3b64bee2438800281a6ab5e9d4cd6e6a3",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/dom.ts",
+      "sha256": "200f12bf4257b98308a808e982178de416f90f4bafb29cdb3b7a3e3ea3dc8976",
+      "functionBodies": 32,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/engine.ts",
+      "sha256": "05203896e155dfa72b66ad16e2fbe14c8ce2f4015a821529b2bf543e8fb0e26d",
+      "functionBodies": 60,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/internal.ts",
+      "sha256": "bf515739d6a3f6963cfe453cff48b1105e09811ca1e2b87933b867d9be08cf5d",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/layout.ts",
+      "sha256": "75999784938fa01278ba8c018e0f354a29436f85ad7c92fb62357849312005df",
+      "functionBodies": 35,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/liveData.ts",
+      "sha256": "185eece9d70eeed7c5b138211bf4f15b66b9432f2cb72f8e1e6311d7c5bec811",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/resultValidation.ts",
+      "sha256": "e8ff90be7a33ae6091c203349831a33106f8a434755c2c877d0425b710f7c809",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/serialization.ts",
+      "sha256": "9b987cd8604bb4715789fd8e9a566250dc06fc522150be83b39643259634fb0b",
+      "functionBodies": 36,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/text.ts",
+      "sha256": "fafffb17b7cd1a3691a9c23d8b881c747c0e64aa5bb44cd7d612b5a19465f688",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/area-translation/content/areaHotkey.ts",
+      "sha256": "d2d4c3d118bf0212924dffd89098fec6a703e283315a78ba5c236907482c7497",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/document-translation/ui/presentation.ts",
+      "sha256": "ad906fd96c58a901551b6448889104bd672d38e757f7216daf4388ee4c248a7b",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/bilingualRemount.ts",
+      "sha256": "c587e49db4384369c12cc9f2b0b5ea07acbb089747db92b185eafb81f65184cd",
+      "functionBodies": 50,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/fullPagePriority.ts",
+      "sha256": "5a331fb6756da8d6f4dc4badcfc9070f86f662c2895aaac586b51bff8f0711ad",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/fullPageQueue.ts",
+      "sha256": "c797766a426b5312c0b09d9de2f4e5a24c9fe1cdddbac99e907c1fc4df182611",
+      "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/mutationObservation.ts",
+      "sha256": "ec0b7f7207cfc38af3c596131ac6bf5e7088f98260c33ad74d9f4599bc2bf84d",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/runtime.ts",
+      "sha256": "d636b6cee70e921a94e32336a34be6e909b08643e5bdf1942274a94bc02bf993",
+      "functionBodies": 163,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/sourceStability.ts",
+      "sha256": "ea0598e659d445b1ca6527392a603e91b2a14815f86ccb398d8e644efea40dfd",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/sourceStabilityGate.ts",
+      "sha256": "ff7d62eada7651d0e96809065bc261f139984a16d36ad8ac2f522cab8c0f0fd0",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/titleTranslation.ts",
+      "sha256": "89c668c185f7d252099b1e57fa781a8eae111c6301824e31dc292089e8a29ae4",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/translationStability.ts",
+      "sha256": "97e07fc506b4b3d4ffb21b8c2620219b73362a15dab54938c0eb8c77f485f7d3",
+      "functionBodies": 48,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/viewportStability.ts",
+      "sha256": "f48e3e06ea2bdd526c8316a52e17ae2938d12a7da7beef79ca8aca10952fc453",
+      "functionBodies": 21,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/http/errors.ts",
+      "sha256": "6ef75a14f2b4ff54af535a50143d440a010c91cba38e65dd64624d1ef9517b50",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/http/runtime.ts",
+      "sha256": "d7f2296a755c41816ecb284187c81d1c330f5e47fac0b5ceb69a1f500493a8e7",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/apiKeyRotation.ts",
+      "sha256": "60973a3109e14cdaa33375ac4ae4a863353266390270cd471ae938f4e5479b3d",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/availability.ts",
+      "sha256": "63d5b0819036b9cafb4414a502becb2b088f53f069c2f059bf60167d03abbc12",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/broker.ts",
+      "sha256": "c1ca7a84a3509ffa5248a6ff25b9639f0a6d67c6eca89a6855c3bbee61878434",
+      "functionBodies": 135,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/cache.ts",
+      "sha256": "dee132804685258cf8ed4821666052ec1e517017cb40248d7c28bcfa6bf04845",
+      "functionBodies": 38,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/cacheManagement.ts",
+      "sha256": "b6f26b1fb56b0e26bfdc76663ee2718ff988733a1937901b19f9f87ec2ced93b",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/cachePolicyBinding.ts",
+      "sha256": "609332400aed95ab4b841fa615b2430a4149ad3e09282f8b718033caeb659eb2",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/capabilities.ts",
+      "sha256": "886b27b5926178e4ba7e59a29e4b1026e9c86526eb427183d2c7d151c0525e85",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/context/browser.ts",
+      "sha256": "7bfc4e310d5203a040b0d9bdffc75025dbeb1ef66e3bbe3d83f88984cd991f82",
+      "functionBodies": 19,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/context/index.ts",
+      "sha256": "ceafc01b0730c3827f1ddda5345cff2ce4e93903e1e96bcb997a9a0cbb947bf7",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/context/policy.ts",
+      "sha256": "193a477399d611387e60c931e2fa79c44dbf5f43e7e3d7ab2f179a08bf5c633a",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/errors.ts",
+      "sha256": "5a1ea77a8f9e0db3df03e5f9b65dba84cabc2d46a8ade8e40130e0bd25dde871",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/freeFallback.ts",
+      "sha256": "7623f98bafd78f351bd5f618f91bc94b6544af5a3166ab6cc43c60c9d08c59d3",
+      "functionBodies": 60,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/freeRoutingPolicy.ts",
+      "sha256": "9bebaa38bc1b2d85c21b6c82c9980aeca86df17c5b7f43b6b7bb224ac3df0d70",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/freeWeights.ts",
+      "sha256": "870eecbe5221c3d9db6835c9876aa506527e2a39f0051f3aa3513056479fa932",
+      "functionBodies": 17,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/glossaryProtection.ts",
+      "sha256": "9d83fc50a53af6f753bd29cb74d2fa8b45be95e460e08eb01f41f6bacd212140",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/languages.ts",
+      "sha256": "da9ff526d2ead9c9ea0242f8a038c60e0fb4e4ea93b3653712aeefab95c735b6",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/legacyPageCache.ts",
+      "sha256": "99dea489f76336e89f76f59435b49bebc510abf0e4e47b2462b8dce2704c92f0",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/modelThinking.ts",
+      "sha256": "1f717a26a23e006a1c776510c6cd536904526c9d675b97c492af65fc94267b7e",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/persistenceBarrier.ts",
+      "sha256": "d1f9c311463d17d0cf85bce192a1473d3ff6fc16fce82be3ca0f813b5f7cfba3",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/queue.ts",
+      "sha256": "0e2388832261706f2f02df90212a169fd4562b3d1b8cc8180bbdbb522b4efe34",
+      "functionBodies": 23,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/requestScheduler.ts",
+      "sha256": "cadd21513c7bce96b7e73e03d86da2a122bf9d8efa1504a15e31cd8d7c6c022c",
+      "functionBodies": 35,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/requestSnapshot.ts",
+      "sha256": "400368ab2c1e59d823493bbd70d0f607f14cc651308f831da3cbd8112116044f",
+      "functionBodies": 43,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/serviceErrors.ts",
+      "sha256": "1949f39b3d55faee0f0515a4cb157813cbfd3642caba9d02592ca229da271240",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/templates.ts",
+      "sha256": "21600be7c1bef5e0d7388ace9886a06cd910f929762e7a38f01fed247dff90f2",
+      "functionBodies": 21,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/visionProbe.ts",
+      "sha256": "9add21e4a74611a53cc403d72944494f5522be23efc70fabda61bdef49c035da",
+      "functionBodies": 21,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/shared/dom/documentType.ts",
+      "sha256": "d92e8f91061c9a4ba0412c2e155d3e0f113f1a860dcf9c1d769d65300b4fcaf7",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/shared/dom/editingTarget.ts",
+      "sha256": "1dc99495eda40453cb7e7058dcc56f451004582f2085e74eb89a49641a5f9b0c",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/shared/function/throttle.ts",
+      "sha256": "025292ebfffb6e97d2a6bab30d528eb81c6d5541d6350b40154c5460c2643af5",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/shared/geometry/touch.ts",
+      "sha256": "d291f85d5bc5f4941d7e241440a26b86776daf4389586b3bf0e3eaa1aab28d64",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/view-model/serviceCatalog.ts",
+      "sha256": "3df8ce76f457388c3e0648c1fbfcaa200ea698d36ee22c938462c2d1f129303c",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    }
+  ],
+  "pending": [
+    "entrypoints/background.ts",
+    "entrypoints/content.ts",
+    "entrypoints/document/main.ts",
+    "entrypoints/localTranslationWorker.ts",
+    "entrypoints/localTtsWorker.ts",
+    "entrypoints/neteaseMailFrame.content.ts",
+    "entrypoints/offscreen/main.ts",
+    "entrypoints/options/main.ts",
+    "entrypoints/popup/main.ts",
+    "entrypoints/shadowBridge.content.ts",
+    "entrypoints/supportedFrame.content.ts",
+    "entrypoints/videoTranscriptionWorker.ts",
+    "entrypoints/xVideoBridge.content.ts",
+    "entrypoints/youtubeBridge.content.ts",
+    "integrations/obsidian/main.ts",
+    "integrations/obsidian/markdown.ts",
+    "integrations/obsidian/output.ts",
+    "integrations/obsidian/pdf.ts",
+    "integrations/obsidian/translation.ts",
+    "integrations/obsidian/vault.ts",
+    "integrations/obsidian/vite.config.ts",
+    "src/app/background/areaRuntime.ts",
+    "src/app/background/badgeRuntime.ts",
+    "src/app/background/capabilityRegistry.ts",
+    "src/app/background/configAutoBackupRuntime.ts",
+    "src/app/background/configMessageHandlers.ts",
+    "src/app/background/configStorageBroadcast.ts",
+    "src/app/background/configStorageRuntime.ts",
+    "src/app/background/contextMenuActions.ts",
+    "src/app/background/contextMenuPreferences.ts",
+    "src/app/background/contextMenuRuntime.ts",
+    "src/app/background/googleDriveSyncRuntime.ts",
+    "src/app/background/handlers/areaTranslation.ts",
+    "src/app/background/handlers/configAutoBackup.ts",
+    "src/app/background/handlers/configCount.ts",
+    "src/app/background/handlers/configHistory.ts",
+    "src/app/background/handlers/configPersistence.ts",
+    "src/app/background/handlers/configStorage.ts",
+    "src/app/background/handlers/connectionTest.ts",
+    "src/app/background/handlers/freeTranslationWeights.ts",
+    "src/app/background/handlers/fullPageTranslationState.ts",
+    "src/app/background/handlers/googleDriveSync.ts",
+    "src/app/background/handlers/imageTranslation.ts",
+    "src/app/background/handlers/inputTranslation.ts",
+    "src/app/background/handlers/modelUsage.ts",
+    "src/app/background/handlers/openOptions.ts",
+    "src/app/background/handlers/selectionTts.ts",
+    "src/app/background/handlers/selectionWordLookup.ts",
+    "src/app/background/handlers/translation.ts",
+    "src/app/background/handlers/translationCache.ts",
+    "src/app/background/handlers/translationStats.ts",
+    "src/app/background/handlers/visionProbe.ts",
+    "src/app/background/handlers/vocabulary.ts",
+    "src/app/background/handlers/webDavBackup.ts",
+    "src/app/background/harnessRuntime.ts",
+    "src/app/background/imageContextMenu.ts",
+    "src/app/background/imageGlossaryContext.ts",
+    "src/app/background/localInsightsHandlers.ts",
+    "src/app/background/messageRuntime.ts",
+    "src/app/background/providerRuntime.ts",
+    "src/app/background/requestHeaderRuntime.ts",
+    "src/app/background/retiredContentScripts.ts",
+    "src/app/background/runtime.ts",
+    "src/app/background/tabTranslationQuery.ts",
+    "src/app/background/tabTranslationState.ts",
+    "src/app/background/thunderbirdMessageRuntime.ts",
+    "src/app/background/webDavBackupRuntime.ts",
+    "src/app/background/writingRuntime.ts",
+    "src/app/content/areaContextMenuResponse.ts",
+    "src/app/content/bilingualSentenceHighlight.ts",
+    "src/app/content/cacheMessage.ts",
+    "src/app/content/features.ts",
+    "src/app/content/hotkeyRuntime.ts",
+    "src/app/content/learningFeatures.ts",
+    "src/app/content/messageRuntime.ts",
+    "src/app/content/qqMailFrameRuntime.ts",
+    "src/app/content/quickTranslationRuntime.ts",
+    "src/app/content/shadowBridge.ts",
+    "src/app/content/siteAdaptationRuntime.ts",
+    "src/app/content/translationAppearance.ts",
+    "src/app/content/xVideoBridge.ts",
+    "src/app/content/youtubeTimedTextBridge.ts",
+    "src/app/document-translation/DocumentApp.vue",
+    "src/app/document-translation/DocumentSegmentEditor.vue",
+    "src/app/document-translation/index.ts",
+    "src/app/document-translation/page.ts",
+    "src/app/document-translation/runtime.ts",
+    "src/app/offscreen/imageTranslation.ts",
+    "src/app/offscreen/localTranslationWorker.ts",
+    "src/app/offscreen/localTtsWorker.ts",
+    "src/app/offscreen/messageRouter.ts",
+    "src/app/offscreen/runtime.ts",
+    "src/app/offscreen/translation.ts",
+    "src/app/offscreen/ttsPlayback.ts",
+    "src/app/offscreen/videoTranscriptionWorker.ts",
+    "src/app/options/OptionsApp.vue",
+    "src/app/options/index.ts",
+    "src/app/popup/PopupApp.vue",
+    "src/app/popup/PopupDrawer.ts",
+    "src/app/popup/PopupLanguageSelect.vue",
+    "src/app/popup/PopupOnboarding.vue",
+    "src/app/popup/PopupServices.vue",
+    "src/app/popup/PopupSiteRule.vue",
+    "src/app/popup/cache.ts",
+    "src/app/popup/index.ts",
+    "src/app/popup/mount.ts",
+    "src/core/config/apiKeyCheckIdentity.ts",
+    "src/core/config/apiKeys.ts",
+    "src/core/config/areaTranslation.ts",
+    "src/core/config/azure.ts",
+    "src/core/config/catalog.ts",
+    "src/core/config/cloudSync.ts",
+    "src/core/config/constants.ts",
+    "src/core/config/credentialBinding.ts",
+    "src/core/config/credentials.ts",
+    "src/core/config/customBody.ts",
+    "src/core/config/customHeaders.ts",
+    "src/core/config/customOpenAI.ts",
+    "src/core/config/deepl.ts",
+    "src/core/config/deeplx.ts",
+    "src/core/config/diff.ts",
+    "src/core/config/doubaoSeedTranslation.ts",
+    "src/core/config/driveSync.ts",
+    "src/core/config/featureServices.ts",
+    "src/core/config/freeTranslation.ts",
+    "src/core/config/harness.ts",
+    "src/core/config/inputTranslation.ts",
+    "src/core/config/interfaceAppearance.ts",
+    "src/core/config/interfaceFontAssets.ts",
+    "src/core/config/localTranslation.ts",
+    "src/core/config/localTts.ts",
+    "src/core/config/manga.ts",
+    "src/core/config/mangaSiteCatalog.ts",
+    "src/core/config/model.ts",
+    "src/core/config/modelThinking.ts",
+    "src/core/config/pageTranslation.ts",
+    "src/core/config/paragraphCopy.ts",
+    "src/core/config/quickTranslation.ts",
+    "src/core/config/requestHeaders.ts",
+    "src/core/config/requestLimits.ts",
+    "src/core/config/scheduling.ts",
+    "src/core/config/sectionTranslation.ts",
+    "src/core/config/selectionPreview.ts",
+    "src/core/config/selectionTts.ts",
+    "src/core/config/sensitiveKeys.ts",
+    "src/core/config/sentenceHighlight.ts",
+    "src/core/config/shareCard.ts",
+    "src/core/config/transfer.ts",
+    "src/core/config/translationAppearance.ts",
+    "src/core/config/translationCache.ts",
+    "src/core/config/translationLoadingStyle.ts",
+    "src/core/config/validation.ts",
+    "src/core/config/videoSubtitleAppearance.ts",
+    "src/core/config/vision.ts",
+    "src/core/config/visionProbe.ts",
+    "src/core/config/writing.ts",
+    "src/core/config/writingPreview.ts",
+    "src/core/config/writingReadiness.ts",
+    "src/core/context-menu/domain.ts",
+    "src/core/context-menu/presentation.ts",
+    "src/core/glossary/builtins.ts",
+    "src/core/glossary/index.ts",
+    "src/core/glossary/match.ts",
+    "src/core/glossary/model.ts",
+    "src/core/glossary/protection.ts",
+    "src/core/glossary/transfer.ts",
+    "src/core/harness/loop.ts",
+    "src/core/harness/memorySearch.ts",
+    "src/core/harness/promptLocales.ts",
+    "src/core/harness/prompts.ts",
+    "src/core/harness/surface.ts",
+    "src/core/hotkey/index.ts",
+    "src/core/i18n/bundles.ts",
+    "src/core/i18n/index.ts",
+    "src/core/i18n/language.ts",
+    "src/core/i18n/messages/en-US.ts",
+    "src/core/i18n/messages/es-ES.ts",
+    "src/core/i18n/messages/fr-FR.ts",
+    "src/core/i18n/messages/ja-JP.ts",
+    "src/core/i18n/messages/ko-KR.ts",
+    "src/core/i18n/messages/legacy-corrections.ts",
+    "src/core/i18n/messages/legacy-overrides.ts",
+    "src/core/i18n/messages/legacy-patterns.ts",
+    "src/core/i18n/messages/localTranslation.ts",
+    "src/core/i18n/messages/localTts.ts",
+    "src/core/i18n/messages/manga.ts",
+    "src/core/i18n/messages/onboarding.ts",
+    "src/core/i18n/messages/ru-RU.ts",
+    "src/core/i18n/messages/runtime-feedback-patterns.ts",
+    "src/core/i18n/messages/runtime-feedback.ts",
+    "src/core/i18n/messages/siteRules.ts",
+    "src/core/i18n/messages/translationStats.ts",
+    "src/core/i18n/messages/zh-CN.ts",
+    "src/core/i18n/types.ts",
+    "src/core/language/catalog.ts",
+    "src/core/language/chinese.ts",
+    "src/core/language/chineseVariants.ts",
+    "src/core/language/codes.ts",
+    "src/core/language/detect.ts",
+    "src/core/language/identify.ts",
+    "src/core/language/lexicon.ts",
+    "src/core/language/partOfSpeech.ts",
+    "src/core/language/scripts.ts",
+    "src/core/language/statistical.ts",
+    "src/core/language/technicalTokens.ts",
+    "src/core/site-adaptation/catalog.ts",
+    "src/core/site-adaptation/compiler.ts",
+    "src/core/site-adaptation/literalLabel.ts",
+    "src/core/site-adaptation/schema.ts",
+    "src/core/site-adaptation/session.ts",
+    "src/core/site-adaptation/types.ts",
+    "src/core/site-rules/domain.ts",
+    "src/core/translation/adapters/declarative.ts",
+    "src/core/translation/font.ts",
+    "src/core/translation/languages.ts",
+    "src/core/translation/lineBreak.ts",
+    "src/core/translation/localInference.ts",
+    "src/core/translation/prompts.ts",
+    "src/core/translation/public.ts",
+    "src/core/translation/registry.ts",
+    "src/core/translation/sentenceAlignment.ts",
+    "src/core/translation/types.ts",
+    "src/core/translation/visionProbeImage.ts",
+    "src/core/translation/visual.ts",
+    "src/features/area-translation/background/handlers.ts",
+    "src/features/area-translation/background/index.ts",
+    "src/features/area-translation/background/offscreenAdapter.ts",
+    "src/features/area-translation/content/contextMenuBridge.ts",
+    "src/features/area-translation/content/index.ts",
+    "src/features/area-translation/content/runtime.ts",
+    "src/features/area-translation/core.ts",
+    "src/features/area-translation/protocol.ts",
+    "src/features/area-translation/public.ts",
+    "src/features/area-translation/services/client.ts",
+    "src/features/area-translation/services/textTranslation.ts",
+    "src/features/area-translation/types.ts",
+    "src/features/area-translation/ui/AreaTranslator.vue",
+    "src/features/document-translation/core/document.ts",
+    "src/features/document-translation/core/preview.ts",
+    "src/features/document-translation/public.ts",
+    "src/features/document-translation/services/archive.ts",
+    "src/features/document-translation/services/binary.ts",
+    "src/features/document-translation/services/translation.ts",
+    "src/features/document-translation/ui/pdfPreview.ts",
+    "src/features/floating-ball/content/runtime.ts",
+    "src/features/floating-ball/position.ts",
+    "src/features/floating-ball/public.ts",
+    "src/features/floating-ball/types.ts",
+    "src/features/floating-ball/ui/FloatingBall.vue",
+    "src/features/full-page-translation/background/embeddedFrameHandlers.ts",
+    "src/features/full-page-translation/background/index.ts",
+    "src/features/full-page-translation/background/neteaseMailFrameHandlers.ts",
+    "src/features/full-page-translation/background/qqMailFrameHandlers.ts",
+    "src/features/full-page-translation/background/stateHandlers.ts",
+    "src/features/full-page-translation/content/bilingualReplay.ts",
+    "src/features/full-page-translation/content/eagerTranslation.ts",
+    "src/features/full-page-translation/content/excerpt.ts",
+    "src/features/full-page-translation/content/frameSession.ts",
+    "src/features/full-page-translation/content/layout.ts",
+    "src/features/full-page-translation/content/liveTextRender.ts",
+    "src/features/full-page-translation/content/liveTextTranslation.ts",
+    "src/features/full-page-translation/content/loadingIndicator.ts",
+    "src/features/full-page-translation/content/modalPriority.ts",
+    "src/features/full-page-translation/content/modalSession.ts",
+    "src/features/full-page-translation/content/orphanArtifacts.ts",
+    "src/features/full-page-translation/content/progressPanel.ts",
+    "src/features/full-page-translation/content/renderer.ts",
+    "src/features/full-page-translation/content/requestSession.ts",
+    "src/features/full-page-translation/content/sectionTranslation.ts",
+    "src/features/full-page-translation/content/sentenceHighlight.ts",
+    "src/features/full-page-translation/content/state.ts",
+    "src/features/full-page-translation/content/stateNotification.ts",
+    "src/features/full-page-translation/content/syntheticRemount.ts",
+    "src/features/full-page-translation/content/translationRequest.ts",
+    "src/features/full-page-translation/core/errorMessage.ts",
+    "src/features/full-page-translation/core/hostMarkers.ts",
+    "src/features/full-page-translation/embeddedFrames.ts",
+    "src/features/full-page-translation/highlight/public.ts",
+    "src/features/full-page-translation/neteaseMailFrames.ts",
+    "src/features/full-page-translation/progress.ts",
+    "src/features/full-page-translation/public.ts",
+    "src/features/full-page-translation/qqMailFrames.ts",
+    "src/features/full-page-translation/toolbarStatus.ts",
+    "src/features/full-page-translation/ui/TranslationProgressPanel.vue",
+    "src/features/full-page-translation/ui/modalProgressHint.ts",
+    "src/features/full-page-translation/ui/progressPanelVisibility.ts",
+    "src/features/full-page-translation/ui/translationIndicators.ts",
+    "src/features/glossary/public.ts",
+    "src/features/glossary/ui/BuiltinGlossaries.vue",
+    "src/features/glossary/ui/GlossarySettings.vue",
+    "src/features/hover-translation/content/index.ts",
+    "src/features/hover-translation/public.ts",
+    "src/features/image-translation/background/handlers.ts",
+    "src/features/image-translation/background/index.ts",
+    "src/features/image-translation/background/ocrLanguageRepository.ts",
+    "src/features/image-translation/background/offscreenAdapter.ts",
+    "src/features/image-translation/background/pixivImageReferrer.ts",
+    "src/features/image-translation/content/controls.ts",
+    "src/features/image-translation/content/hoverEligibility.ts",
+    "src/features/image-translation/content/imageLoads.ts",
+    "src/features/image-translation/content/index.ts",
+    "src/features/image-translation/content/mangaCompositor.ts",
+    "src/features/image-translation/content/mangaEntry.ts",
+    "src/features/image-translation/content/mangaReader.ts",
+    "src/features/image-translation/content/mangaSession.ts",
+    "src/features/image-translation/content/presentation.ts",
+    "src/features/image-translation/content/runtime.ts",
+    "src/features/image-translation/content/sourceAuthorization.ts",
+    "src/features/image-translation/content/textReader.ts",
+    "src/features/image-translation/core.ts",
+    "src/features/image-translation/mangaPatchResult.ts",
+    "src/features/image-translation/ocrLanguages.ts",
+    "src/features/image-translation/progress.ts",
+    "src/features/image-translation/protocol.ts",
+    "src/features/image-translation/public.ts",
+    "src/features/image-translation/services/client.ts",
+    "src/features/image-translation/services/inpainting.ts",
+    "src/features/image-translation/services/mangaBubbles.ts",
+    "src/features/image-translation/services/mangaEncoding.ts",
+    "src/features/image-translation/services/mangaGpu.ts",
+    "src/features/image-translation/services/mangaInpainting.ts",
+    "src/features/image-translation/services/mangaOcr.ts",
+    "src/features/image-translation/services/mangaOcrAssets.ts",
+    "src/features/image-translation/services/mangaRegions.ts",
+    "src/features/image-translation/services/mangaRendering.ts",
+    "src/features/image-translation/services/mangaSessionFallback.ts",
+    "src/features/image-translation/services/mangaTypography.ts",
+    "src/features/image-translation/services/ocrModelCache.ts",
+    "src/features/image-translation/services/ocrRuntime.ts",
+    "src/features/image-translation/services/ocrWorkerRuntime.ts",
+    "src/features/image-translation/services/offscreenRuntime.ts",
+    "src/features/image-translation/services/remoteImage.ts",
+    "src/features/image-translation/services/rendering.ts",
+    "src/features/image-translation/services/sharedOcrTasks.ts",
+    "src/features/image-translation/ui/ImageOcrSettings.vue",
+    "src/features/image-translation/ui/MangaEntry.vue",
+    "src/features/image-translation/ui/MangaModelSettings.vue",
+    "src/features/image-translation/ui/MangaSettings.vue",
+    "src/features/input-translation/background/handler.ts",
+    "src/features/input-translation/background/index.ts",
+    "src/features/input-translation/content/editableHost.ts",
+    "src/features/input-translation/content/index.ts",
+    "src/features/input-translation/content/inputBox.ts",
+    "src/features/input-translation/public.ts",
+    "src/features/local-translation/background/handlers.ts",
+    "src/features/local-translation/background/runtime.ts",
+    "src/features/local-translation/offscreen/artifactStore.ts",
+    "src/features/local-translation/offscreen/downloads.ts",
+    "src/features/local-translation/offscreen/modelCache.ts",
+    "src/features/local-translation/offscreen/translation.ts",
+    "src/features/local-translation/offscreen/translation.worker.ts",
+    "src/features/local-tts/background/handlers.ts",
+    "src/features/local-tts/background/offscreenAdapter.ts",
+    "src/features/local-tts/background/runtime.ts",
+    "src/features/local-tts/offscreen/modelCache.ts",
+    "src/features/local-tts/offscreen/tts.ts",
+    "src/features/local-tts/offscreen/tts.worker.ts",
+    "src/features/local-tts/protocol.ts",
+    "src/features/model-usage/model/insights.ts",
+    "src/features/model-usage/model/tokenFormat.ts",
+    "src/features/model-usage/public.ts",
+    "src/features/model-usage/ui/ModelUsageDashboard.vue",
+    "src/features/page-notice/content/notice.ts",
+    "src/features/page-notice/public.ts",
+    "src/features/paragraph-copy/content/index.ts",
+    "src/features/paragraph-copy/core.ts",
+    "src/features/paragraph-copy/public.ts",
+    "src/features/quick-translation/content/index.ts",
+    "src/features/quick-translation/core.ts",
+    "src/features/quick-translation/public.ts",
+    "src/features/reading-assistant/answerFormat.ts",
+    "src/features/reading-assistant/background.ts",
+    "src/features/reading-assistant/client.ts",
+    "src/features/reading-assistant/memoryHandler.ts",
+    "src/features/reading-assistant/public.ts",
+    "src/features/reading-assistant/selectionContext.ts",
+    "src/features/reading-assistant/sentenceAnalysis.ts",
+    "src/features/reading-assistant/sessionHandler.ts",
+    "src/features/reading-assistant/streamPort.ts",
+    "src/features/reading-assistant/types.ts",
+    "src/features/reading-assistant/ui/HarnessReadingHistory.vue",
+    "src/features/reading-assistant/ui/ReadingAnswer.vue",
+    "src/features/reading-assistant/ui/ReadingPanel.vue",
+    "src/features/reading-assistant/ui/SentenceAnalysis.vue",
+    "src/features/section-translation/content/index.ts",
+    "src/features/section-translation/content/picker.ts",
+    "src/features/section-translation/core.ts",
+    "src/features/section-translation/public.ts",
+    "src/features/selection-translation/background/offscreenAdapter.ts",
+    "src/features/selection-translation/background/pageZoomHandler.ts",
+    "src/features/selection-translation/background/selectionTtsSynthesis.ts",
+    "src/features/selection-translation/background/ttsHandler.ts",
+    "src/features/selection-translation/background/wordLookupHandler.ts",
+    "src/features/selection-translation/content/contextMenuBridge.ts",
+    "src/features/selection-translation/content/index.ts",
+    "src/features/selection-translation/content/modalDialogHost.ts",
+    "src/features/selection-translation/content/runtime.ts",
+    "src/features/selection-translation/content/selectionTtsContentController.ts",
+    "src/features/selection-translation/core.ts",
+    "src/features/selection-translation/core/public.ts",
+    "src/features/selection-translation/pageZoom.ts",
+    "src/features/selection-translation/protocol.ts",
+    "src/features/selection-translation/public.ts",
+    "src/features/selection-translation/services/ecdictAsset.ts",
+    "src/features/selection-translation/services/edgeTts.ts",
+    "src/features/selection-translation/services/edgeTtsPolicy.ts",
+    "src/features/selection-translation/services/wordDictionary.ts",
+    "src/features/selection-translation/services/wordNormalization.ts",
+    "src/features/selection-translation/speech/public.ts",
+    "src/features/selection-translation/ui/SelectionTranslator.vue",
+    "src/features/settings/background/index.ts",
+    "src/features/settings/background/openOptionsHandler.ts",
+    "src/features/settings/model/chromeTranslationPreparation.ts",
+    "src/features/settings/model/configHistory.ts",
+    "src/features/settings/model/credentialPreview.ts",
+    "src/features/settings/model/dataBackup.ts",
+    "src/features/settings/model/googleDrivePreview.ts",
+    "src/features/settings/model/navigation.ts",
+    "src/features/settings/model/siteAdaptationEditor.ts",
+    "src/features/settings/model/sitePreferences.ts",
+    "src/features/settings/ui/AlwaysTranslateSites.vue",
+    "src/features/settings/ui/AreaTranslationSettings.vue",
+    "src/features/settings/ui/CloudConfigBackup.vue",
+    "src/features/settings/ui/ConfigManagement.vue",
+    "src/features/settings/ui/ContextMenuSettings.vue",
+    "src/features/settings/ui/ExcludedLanguageSettings.vue",
+    "src/features/settings/ui/FeatureServiceSettings.vue",
+    "src/features/settings/ui/FloatingBallSettings.vue",
+    "src/features/settings/ui/GoogleDriveSync.vue",
+    "src/features/settings/ui/HarnessPromptSettings.vue",
+    "src/features/settings/ui/HarnessSettings.vue",
+    "src/features/settings/ui/InputTranslationSettings.vue",
+    "src/features/settings/ui/InterfaceSettings.vue",
+    "src/features/settings/ui/LearningCenter.vue",
+    "src/features/settings/ui/LearningMemoryManager.vue",
+    "src/features/settings/ui/LocalDataManagement.vue",
+    "src/features/settings/ui/LocalTranslationModelSettings.vue",
+    "src/features/settings/ui/LocalTtsSettings.vue",
+    "src/features/settings/ui/ParagraphCopySettings.vue",
+    "src/features/settings/ui/ParagraphHandlingSettings.vue",
+    "src/features/settings/ui/PopupLayoutEditor.vue",
+    "src/features/settings/ui/QuickTranslationProfiles.vue",
+    "src/features/settings/ui/ReadingAssistanceSettings.vue",
+    "src/features/settings/ui/RemoteConfigSync.vue",
+    "src/features/settings/ui/SectionTranslationSettings.vue",
+    "src/features/settings/ui/SelectionSettings.vue",
+    "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
+    "src/features/settings/ui/SettingsNavigationIcon.vue",
+    "src/features/settings/ui/SettingsSections.vue",
+    "src/features/settings/ui/SiteAdaptationSettings.vue",
+    "src/features/settings/ui/SitePreferencesSettings.vue",
+    "src/features/settings/ui/SiteRulePreview.vue",
+    "src/features/settings/ui/TranslationCacheSettings.vue",
+    "src/features/settings/ui/TranslationLoadingStyleSettings.vue",
+    "src/features/settings/ui/TranslationStyleSettings.vue",
+    "src/features/settings/ui/VideoLocalModelSettings.vue",
+    "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+    "src/features/settings/ui/WebDavBackup.vue",
+    "src/features/settings/ui/WritingSettings.vue",
+    "src/features/settings/ui/components/InterfaceSkinPreview.vue",
+    "src/features/settings/ui/components/PopupLayoutPreview.vue",
+    "src/features/settings/ui/components/PopupLayoutPreviewItem.vue",
+    "src/features/settings/ui/components/SegmentedControl.vue",
+    "src/features/settings/ui/components/SettingsGroup.vue",
+    "src/features/settings/ui/components/SettingsItem.vue",
+    "src/features/settings/ui/components/SettingsPanel.vue",
+    "src/features/settings/ui/components/TranslationColorField.vue",
+    "src/features/settings/ui/components/TranslationStylePreview.vue",
+    "src/features/settings/ui/components/WritingStylePreview.vue",
+    "src/features/settings/ui/services/ApiKeyList.vue",
+    "src/features/settings/ui/services/CustomOpenAIProviderDialog.vue",
+    "src/features/settings/ui/services/FreeTranslationSettings.vue",
+    "src/features/settings/ui/services/ModelPicker.vue",
+    "src/features/settings/ui/services/ModelVisionSettings.vue",
+    "src/features/settings/ui/services/PromptTemplateEditor.vue",
+    "src/features/settings/ui/services/RequestHeaderSettings.vue",
+    "src/features/settings/ui/services/RequestLimitFields.vue",
+    "src/features/settings/ui/services/RequestLimitSettings.vue",
+    "src/features/settings/ui/services/ServiceCatalog.vue",
+    "src/features/settings/ui/services/ServiceCatalogItem.vue",
+    "src/features/settings/ui/services/ServiceConfiguration.vue",
+    "src/features/settings/ui/services/apiKeyTypes.ts",
+    "src/features/settings/ui/services/freeTranslationChecks.ts",
+    "src/features/settings/ui/services/modelOptions.ts",
+    "src/features/settings/ui/services/useVisionProbeStatus.ts",
+    "src/features/settings/ui/usePopupLayoutReorder.ts",
+    "src/features/settings/ui/useTranslationShortcutSettings.ts",
+    "src/features/share-card/content/runtime.ts",
+    "src/features/share-card/core.ts",
+    "src/features/share-card/export.ts",
+    "src/features/share-card/public.ts",
+    "src/features/share-card/render.ts",
+    "src/features/share-card/themes.ts",
+    "src/features/share-card/ui/ShareCardStudio.vue",
+    "src/features/site-rules/domain.ts",
+    "src/features/translation-center/model/comparison.ts",
+    "src/features/translation-center/public.ts",
+    "src/features/translation-center/ui/TranslationCenter.vue",
+    "src/features/translation-stats/model/presentation.ts",
+    "src/features/translation-stats/public.ts",
+    "src/features/translation-stats/ui/TranslationStatsDashboard.vue",
+    "src/features/video-subtitle/background/cacheHandlers.ts",
+    "src/features/video-subtitle/background/handlers.ts",
+    "src/features/video-subtitle/background/runtime.ts",
+    "src/features/video-subtitle/background/transcriptionCache.ts",
+    "src/features/video-subtitle/content/downloads.ts",
+    "src/features/video-subtitle/content/hlsAudio.ts",
+    "src/features/video-subtitle/content/hlsAudioRuntime.ts",
+    "src/features/video-subtitle/content/localModelReadiness.ts",
+    "src/features/video-subtitle/content/platformRuntime.ts",
+    "src/features/video-subtitle/content/platforms.ts",
+    "src/features/video-subtitle/content/playerMenu.ts",
+    "src/features/video-subtitle/content/pretranslationController.ts",
+    "src/features/video-subtitle/content/runtime.ts",
+    "src/features/video-subtitle/content/serviceProfile.ts",
+    "src/features/video-subtitle/content/subtitleLanguage.ts",
+    "src/features/video-subtitle/content/subtitleLogic.ts",
+    "src/features/video-subtitle/content/transcriptionCacheClient.ts",
+    "src/features/video-subtitle/content/translationCache.ts",
+    "src/features/video-subtitle/content/translationScheduler.ts",
+    "src/features/video-subtitle/content/ui.ts",
+    "src/features/video-subtitle/content/video-ai/audioWindow.ts",
+    "src/features/video-subtitle/content/video-ai/capture.ts",
+    "src/features/video-subtitle/content/video-ai/cueTimeline.ts",
+    "src/features/video-subtitle/content/video-ai/fullCapture.ts",
+    "src/features/video-subtitle/content/video-ai/generationRegistry.ts",
+    "src/features/video-subtitle/content/video-ai/modelSetup.ts",
+    "src/features/video-subtitle/content/video-ai/speechAlignment.ts",
+    "src/features/video-subtitle/content/video-ai/streamingTranscript.ts",
+    "src/features/video-subtitle/content/videoPlayerBinding.ts",
+    "src/features/video-subtitle/content/videoPlayerLocator.ts",
+    "src/features/video-subtitle/content/xCaptionSource.ts",
+    "src/features/video-subtitle/content/xSubtitleLoader.ts",
+    "src/features/video-subtitle/content/xVideoSubtitleData.ts",
+    "src/features/video-subtitle/content/youtubeHumanCaptions.ts",
+    "src/features/video-subtitle/content/youtubeSubtitleData.ts",
+    "src/features/video-subtitle/content/youtubeTimedTextBridge.ts",
+    "src/features/video-subtitle/content/youtubeTimedTextBridgeCore.ts",
+    "src/features/video-subtitle/content/youtubeTimedTextMessage.ts",
+    "src/features/video-subtitle/offscreen/modelCache.ts",
+    "src/features/video-subtitle/offscreen/timestampParser.ts",
+    "src/features/video-subtitle/offscreen/transcription.ts",
+    "src/features/video-subtitle/offscreen/transcription.worker.ts",
+    "src/features/video-subtitle/offscreen/transcriptionOptions.ts",
+    "src/features/video-subtitle/public.ts",
+    "src/features/video-subtitle/transcription.ts",
+    "src/features/video-subtitle/transcriptionCache.ts",
+    "src/features/vocabulary/background/handler.ts",
+    "src/features/vocabulary/background/index.ts",
+    "src/features/vocabulary/content.ts",
+    "src/features/vocabulary/content/public.ts",
+    "src/features/vocabulary/content/readingText.ts",
+    "src/features/vocabulary/content/reencounter.ts",
+    "src/features/vocabulary/content/reencounterState.ts",
+    "src/features/vocabulary/content/scanner.ts",
+    "src/features/vocabulary/domain/reencounter.ts",
+    "src/features/vocabulary/learningModel.ts",
+    "src/features/vocabulary/protocol.ts",
+    "src/features/vocabulary/public.ts",
+    "src/features/vocabulary/repository.ts",
+    "src/features/vocabulary/ui/CollectionEntry.vue",
+    "src/features/vocabulary/ui/ReencounterPanel.vue",
+    "src/features/vocabulary/ui/SavedExplanation.vue",
+    "src/features/vocabulary/ui/SentenceActions.vue",
+    "src/features/vocabulary/ui/VocabularyBook.vue",
+    "src/features/vocabulary/ui/VocabularyStudy.vue",
+    "src/features/vocabulary/ui/public.ts",
+    "src/features/writing-assistant/background.ts",
+    "src/features/writing-assistant/client.ts",
+    "src/features/writing-assistant/content.ts",
+    "src/features/writing-assistant/editors.ts",
+    "src/features/writing-assistant/entryPlacement.ts",
+    "src/features/writing-assistant/entrySession.ts",
+    "src/features/writing-assistant/markdown.ts",
+    "src/features/writing-assistant/public.ts",
+    "src/features/writing-assistant/reference.ts",
+    "src/features/writing-assistant/types.ts",
+    "src/features/writing-assistant/ui/WritingChoices.vue",
+    "src/features/writing-assistant/ui/WritingEntrySettings.vue",
+    "src/features/writing-assistant/ui/WritingLanguagePicker.vue",
+    "src/features/writing-assistant/ui/WritingPanel.vue",
+    "src/features/writing-assistant/ui/WritingPopover.vue",
+    "src/features/writing-assistant/ui/WritingStyleEditor.vue",
+    "src/features/writing-assistant/ui/WritingSurface.vue",
+    "src/platform/browser/actionIcon.ts",
+    "src/platform/browser/capabilities.ts",
+    "src/platform/browser/chromeTranslationPreparationRequest.ts",
+    "src/platform/browser/ids.ts",
+    "src/platform/browser/localTranslationSupport.ts",
+    "src/platform/browser/requestHeaderRules.ts",
+    "src/platform/browser/runtimeMessages.ts",
+    "src/platform/google-drive/api.ts",
+    "src/platform/google-drive/auth.ts",
+    "src/platform/google-drive/constants.ts",
+    "src/platform/google-drive/encryption.ts",
+    "src/platform/i18n/uiLanguageBundles.ts",
+    "src/platform/offscreen/client.ts",
+    "src/platform/offscreen/extensionClient.ts",
+    "src/platform/offscreen/firefoxDocument.ts",
+    "src/platform/offscreen/localTranslation.ts",
+    "src/platform/shadow-ui/index.ts",
+    "src/platform/shadow-ui/pageBridge.ts",
+    "src/platform/shadow-ui/pageBridgeCore.ts",
+    "src/platform/shadow-ui/vue.ts",
+    "src/platform/storage/configEncryption.ts",
+    "src/platform/storage/configRepository.ts",
+    "src/platform/storage/configStorage.ts",
+    "src/platform/storage/configStorageRuntime.ts",
+    "src/platform/storage/credentialContext.ts",
+    "src/platform/storage/freeTranslationHealthStorage.ts",
+    "src/platform/storage/harnessSessionRepository.ts",
+    "src/platform/storage/learningMemoryRepository.ts",
+    "src/platform/storage/modelUsageRepository.ts",
+    "src/platform/storage/remoteConfigStorageRuntime.ts",
+    "src/platform/storage/translationStatsRepository.ts",
+    "src/platform/storage/visionProbeStorage.ts",
+    "src/platform/webdav/api.ts",
+    "src/platform/webdav/connection.ts",
+    "src/platform/webdav/properties.ts",
+    "src/providers/translation/ai-sdk/endpoints.ts",
+    "src/providers/translation/ai-sdk/errors.ts",
+    "src/providers/translation/ai-sdk/openai-compatible.ts",
+    "src/providers/translation/aliyun-translation.ts",
+    "src/providers/translation/auth.ts",
+    "src/providers/translation/azure-openai.ts",
+    "src/providers/translation/azure-translator.ts",
+    "src/providers/translation/baidu-translation.ts",
+    "src/providers/translation/chrome-translator.ts",
+    "src/providers/translation/chromeTranslatorRequest.ts",
+    "src/providers/translation/claude.ts",
+    "src/providers/translation/cloud/languages.ts",
+    "src/providers/translation/cloud/signature.ts",
+    "src/providers/translation/connectionTest.ts",
+    "src/providers/translation/deepl.ts",
+    "src/providers/translation/deeplx.ts",
+    "src/providers/translation/deepseek.ts",
+    "src/providers/translation/doubao-seed-translation.ts",
+    "src/providers/translation/doubao.ts",
+    "src/providers/translation/free-chinese-web.ts",
+    "src/providers/translation/free-extra-web.ts",
+    "src/providers/translation/free-translation.ts",
+    "src/providers/translation/free-web.ts",
+    "src/providers/translation/gemini.ts",
+    "src/providers/translation/google-cloud-translation.ts",
+    "src/providers/translation/google.ts",
+    "src/providers/translation/hunyuan-translation.ts",
+    "src/providers/translation/local-translation.ts",
+    "src/providers/translation/microsoft.ts",
+    "src/providers/translation/microsoftTransport.ts",
+    "src/providers/translation/mymemory.ts",
+    "src/providers/translation/registry.ts",
+    "src/providers/translation/responses-api.ts",
+    "src/providers/translation/tencent.ts",
+    "src/providers/translation/tongyi.ts",
+    "src/providers/translation/usage.ts",
+    "src/providers/translation/volc-translation.ts",
+    "src/providers/translation/xiaoniu.ts",
+    "src/providers/translation/youdao.ts",
+    "src/providers/translation/zhipu.ts",
+    "src/services/config/autoBackup.ts",
+    "src/services/config/autoBackupStore.ts",
+    "src/services/config/cloudBackupClient.ts",
+    "src/services/config/count.ts",
+    "src/services/config/googleDriveSync.ts",
+    "src/services/config/googleDriveSyncClient.ts",
+    "src/services/config/history.ts",
+    "src/services/config/index.ts",
+    "src/services/config/remoteConfigSync.ts",
+    "src/services/config/schema.ts",
+    "src/services/config/store.ts",
+    "src/services/config/webDavBackup.ts",
+    "src/services/config/webDavBackupClient.ts",
+    "src/services/harness/conversation.ts",
+    "src/services/harness/learningMemory.ts",
+    "src/services/harness/memoryRecall.ts",
+    "src/services/harness/modelGateway.ts",
+    "src/services/harness/runtime.ts",
+    "src/services/harness/sessionTypes.ts",
+    "src/services/harness/sessions.ts",
+    "src/services/harness/usage.ts",
+    "src/services/interfaceFonts.ts",
+    "src/services/model-usage/aggregation.ts",
+    "src/services/model-usage/types.ts",
+    "src/services/translation-stats/aggregation.ts",
+    "src/services/translation-stats/measure.ts",
+    "src/services/translation-stats/types.ts",
+    "src/services/translation/types.ts",
+    "src/services/writing/runtime.ts",
+    "src/shared/function/sha256.ts",
+    "src/shared/image/types.ts",
+    "src/shared/onnx/wasmBinary.ts",
+    "src/shared/onnx/webgpu.ts",
+    "src/ui/components/CustomHotkeyInput.vue",
+    "src/ui/components/FeatureEnableCard.vue",
+    "src/ui/components/GlossaryLibrarySelect.vue",
+    "src/ui/components/InterfaceBackdrop.vue",
+    "src/ui/components/ServiceIcon.vue",
+    "src/ui/components/TranslationLoadingPreview.vue",
+    "src/ui/components/UiIcon.vue",
+    "src/ui/components/UiLanguageOnboarding.vue",
+    "src/ui/components/UiLanguageSelector.vue",
+    "src/ui/components/UiSelect.vue",
+    "src/ui/i18n.ts",
+    "src/ui/interfaceAppearance.ts",
+    "src/ui/translationLoadingIndicator.ts",
+    "src/ui/view-model/aiContext.ts",
+    "src/ui/view-model/serviceLibrary.ts",
+    "userscript/SettingsPanel.vue",
+    "userscript/api.ts",
+    "userscript/browser.ts",
+    "userscript/chromeTranslator.ts",
+    "userscript/compression.ts",
+    "userscript/context.ts",
+    "userscript/count.ts",
+    "userscript/credentialContext.ts",
+    "userscript/dexie-dist.d.ts",
+    "userscript/dexie.ts",
+    "userscript/globals.d.ts",
+    "userscript/http.ts",
+    "userscript/initialize.ts",
+    "userscript/main.ts",
+    "userscript/metadata.ts",
+    "userscript/pageContext.ts",
+    "userscript/pageTranslationContext.ts",
+    "userscript/pako.d.ts",
+    "userscript/pakoBundled.ts",
+    "userscript/pakoRuntime.ts",
+    "userscript/platform.ts",
+    "userscript/platformFull.ts",
+    "userscript/resources/fluentread-data.v1.js",
+    "userscript/resources/fluentread-vendor.v1.js",
+    "userscript/settings.ts",
+    "userscript/settingsFull.ts",
+    "userscript/settingsPage.ts",
+    "userscript/shadow-root.ts",
+    "userscript/storage.ts",
+    "userscript/uiLanguageBundles.ts",
+    "userscript/unsupportedCapabilities.ts",
+    "userscript/vendor.vite.config.ts",
+    "userscript/vendorEntry.ts",
+    "userscript/vite.config.ts",
+    "userscript/vueElementPlusBridge.v1.js",
+    "userscript/writingAssistant.ts"
+  ],
+  "priorities": [
+    "Full-page state/render/request pipeline including mass framework remounts",
+    "Measure/remediate Cartesian removed-owner × added-node matching and protocol marker rescans before claiming dynamic-host responsiveness",
+    "Selection/hover/input translation lifecycle",
+    "Image/area/document/video pipelines",
+    "Config persistence, synchronization and providers",
+    "Learning features, UI and build entrypoints"
+  ],
+  "verificationDebt": [
+    "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
+  ]
+}

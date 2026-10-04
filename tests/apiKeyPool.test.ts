@@ -3,7 +3,7 @@
  * @职责 覆盖 API key 动态轮询的公平性、降权、恢复、并发租约和安全错误边界。
  */
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {
   API_KEY_POOL_DEFAULT_WEIGHT,
   API_KEY_POOL_RECOVERY_MS,
@@ -14,6 +14,34 @@ import {
 } from '@/src/core/translation/apiKeyPool';
 
 describe('createApiKeyPool', () => {
+  it('大量并发租约完成时不遍历其他租约，重复结算也不能提前清除在途状态', () => {
+    const pool = createApiKeyPool(['a', 'b']);
+    const leases = Array.from({length: 2000}, () => pool.lease([], 0));
+    const traversal = vi.spyOn(Map.prototype, 'values');
+    try {
+      for (const lease of leases.slice(0, -2)) {
+        pool.reportSuccess(lease, 0);
+        pool.reportSuccess(lease, 0);
+      }
+      expect(traversal).not.toHaveBeenCalled();
+      expect(pool.getState(0).map(state => state.inFlight)).toEqual([true, true]);
+      pool.reportFailure(leases[leases.length - 2], 'cancelled', 0);
+      expect(pool.getState(0).map(state => state.inFlight)).toEqual([false, true]);
+      pool.reportSuccess(leases[leases.length - 1], 0);
+      expect(pool.getState(0).every(state => !state.inFlight)).toBe(true);
+    } finally {
+      traversal.mockRestore();
+    }
+  });
+
+  it('主动检测成功后完整清除旧冷却状态', () => {
+    const pool = createApiKeyPool(['a']);
+    pool.reportFailureForKey('a', 'auth', 100);
+    expect(pool.getState(100)[0].cooldownUntil).toBe(100 + API_KEY_POOL_RECOVERY_MS);
+    pool.reportSuccessForKey('a', 101);
+    expect(pool.getState(101)[0]).toMatchObject({lastFailureAt: null, cooldownUntil: null, weight: API_KEY_POOL_DEFAULT_WEIGHT});
+    expect(pool.lease([], 101).keyId).toBe('a');
+  });
   it('starts equal and uses smooth weighted rotation', () => {
     const pool = createApiKeyPool(['a', 'b', 'c']);
     const ids = Array.from({length: 6}, () => {

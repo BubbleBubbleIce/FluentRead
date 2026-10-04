@@ -1,10 +1,10 @@
 /**
  * @file src/ui/view-model/serviceCatalog.ts
  * 文件职责：为服务与模型选择界面提供无框架的视图模型转换，把扁平配置选项整理成可搜索、可分层和可稳定展示的数据。
- * 主要内容：定义服务目录分组与官方网站入口，提供云服务厂商的免费额度与开通指引，安全派生自定义服务站点，按服务与模型关键词搜索，并解析当前模型标签。
+ * 主要内容：定义服务目录分组与官方网站入口，提供云服务厂商的免费额度与开通指引，安全派生自定义服务站点，按服务与模型关键词搜索。
  * 模块边界：这些函数不读取 Vue 状态、不修改 Config，也不判断平台能力或发起连接测试；原始目录由 core/config 提供，Popup/Options 等调用方负责交互与渲染。
  */
-import { customModelString, resolveConfiguredModel, services, servicesType } from '@/src/core/config/catalog'
+import { resolveConfiguredModel, services } from '@/src/core/config/catalog'
 import { isCustomOpenAIProviderId } from '@/src/core/config/customOpenAI'
 
 export interface ServiceWebsite {
@@ -320,16 +320,4 @@ export function searchServiceOptions(
       ? [{ ...item, matchingModels }]
       : []
   })
-}
-
-export function getSelectedModelLabel(
-  service: string,
-  selectedModels: Record<string, string>,
-  activeCustomModels: Record<string, string>,
-) {
-  if (!servicesType.isUseModel(service)) return ''
-
-  const selectedModel = selectedModels[service]
-  const configuredModel = resolveConfiguredModel(selectedModel, activeCustomModels[service])
-  return configuredModel || (selectedModel === customModelString ? customModelString : '未选择模型')
 }

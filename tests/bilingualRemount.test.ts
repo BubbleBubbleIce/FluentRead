@@ -266,6 +266,33 @@ describe('双语 owner 同源重挂交接', () => {
         expect(registry.blocks).toHaveBeenCalledOnce();
     });
 
+    it('长行内片段的熔断查询只复制一次宿主兄弟列表，并保留精确节点位置', () => {
+        const {document} = parseHTML('<html><body><p id="host"><code>Before</code><code>After</code></p></body></html>');
+        const host = document.querySelector<HTMLElement>('#host')!;
+        const before = host.firstChild!;
+        const after = host.lastChild!;
+        const sources = Array.from({length: 500}, (_, index) => document.createTextNode(`Source ${index}. `));
+        sources.forEach(source => host.insertBefore(source, after));
+        const registry = {hasEntries: () => true, remember: vi.fn(), blocks: vi.fn((_owner: HTMLElement, _source: string, _signature: string) => true), forget: vi.fn()};
+        const from = Array.from;
+        let siblingCopies = 0;
+        const copies = vi.spyOn(Array, 'from').mockImplementation(((input: ArrayLike<unknown>, ...rest: unknown[]) => {
+            if (input[0] === before && input[input.length - 1] === after) siblingCopies += 1;
+            return Reflect.apply(from, Array, [input, ...rest]);
+        }) as typeof Array.from);
+        let blocked: boolean;
+        try {
+            blocked = blocksBilingualRemountCandidate(registry, host, sources.map(source => source.data).join(''), false, 'profile', sources);
+        } finally {
+            copies.mockRestore();
+        }
+        expect(blocked!).toBe(true);
+        const signature = JSON.parse(registry.blocks.mock.calls[0][2] as string);
+        expect(signature[1]).toEqual(Array.from({length: 500}, (_, index) => index + 1));
+        expect(siblingCopies).toBeLessThanOrEqual(1);
+        expect(Array.from(host.childNodes)).toEqual([before, ...sources, after]);
+    });
+
     it('synthetic registry 从 materialized segment 记录墓碑，解包后可按 run 节点精确忘记', () => {
         const {document} = parseHTML(
             '<html><body><p id="host"><span id="segment" data-fr-translation-segment="true">Inline source.</span></p></body></html>',

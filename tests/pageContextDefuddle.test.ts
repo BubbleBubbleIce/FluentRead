@@ -190,6 +190,23 @@ describe('Defuddle page snapshot adapter', () => {
         expect(parse).not.toHaveBeenCalled();
     });
 
+    it.each([
+        ['main root', '<main contenteditable="true"><p>private draft</p></main>'],
+        ['excluded ancestor', '<form><main><p>private draft</p></main></form>'],
+        ['hidden ancestor', '<div hidden><article><p>private draft</p></article></div>'],
+        ['extension-owned root', '<main data-fr-translation-owned="true"><p>private draft</p></main>'],
+    ])('does not capture a bounded article inside an excluded %s', async (_, markup) => {
+        const {document} = parseHTML(`<html><body data-payload="${'x'.repeat(300_000)}">${markup}</body></html>`);
+        Object.defineProperty(globalThis, 'location', {value: {href: 'https://example.com/excluded-root'}, configurable: true});
+        Object.defineProperty(globalThis, 'document', {value: document, configurable: true});
+
+        const context = await getPageTranslationContext();
+
+        expect(context).not.toContain('private draft');
+        expect(constructor).not.toHaveBeenCalled();
+        expect(parse).not.toHaveBeenCalled();
+    });
+
     it('does not serialize a small tree with an oversized attribute payload', async () => {
         const {document} = parseHTML(
             `<html><body><main data-payload="${'x'.repeat(300_000)}"><p>Bounded attribute page.</p></main></body></html>`,

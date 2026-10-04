@@ -32,6 +32,20 @@ describe('语义化公共工具', () => {
         expect(now).toHaveBeenCalledTimes(4);
     });
 
+    it('节流首次调用不受时钟起点影响，系统时钟回退后仍可继续提示错误', () => {
+        vi.spyOn(Date, 'now')
+            .mockReturnValueOnce(0)
+            .mockReturnValueOnce(50)
+            .mockReturnValueOnce(100)
+            .mockReturnValueOnce(-1_000)
+            .mockReturnValueOnce(-950)
+            .mockReturnValueOnce(-900);
+        const calls: number[] = [];
+        const throttled = throttle((value: number) => { calls.push(value); }, 100);
+        for (let value = 0; value < 6; value += 1) throttled(value);
+        expect(calls).toEqual([0, 2, 3, 5]);
+    });
+
     it.each([
         ['这是一个用于中文语言识别的完整句子。', 'zh-Hans'],
         ['這是一個用於中文語言識別的完整句子。', 'zh-Hant'],

@@ -1,0 +1,645 @@
+{
+  "scope": "First audit batch; controlled production-build fixtures only. This is not a whole-repository completion claim or live-provider benchmark.",
+  "browser": {
+    "browser": "Microsoft Edge",
+    "profileMode": "new-temporary-profile",
+    "launchMode": "macos-background-cdp",
+    "focusPolicy": "launchservices-no-foreground",
+    "windowPlacement": {
+      "mode": "background-visible-no-focus",
+      "browserFrontmost": false
+    },
+    "provider": "local deterministic Microsoft fixture",
+    "passed": true,
+    "build": {
+      "manifest.json": {
+        "mtime": "2026-10-04T17:10:52.387Z",
+        "sha256": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844"
+      },
+      "content-scripts/content.js": {
+        "mtime": "2026-10-04T17:10:33.859Z",
+        "sha256": "1f63b46b9fc2bf1b7f829896cf4e3e7f1a7eda5d7407b97fce0ea89c2d6da15d"
+      }
+    },
+    "cases": [
+      {
+        "id": "generic-focus",
+        "display": 1,
+        "passed": true,
+        "first": {
+          "translatedOwners": 4,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 5
+        },
+        "stable": {
+          "translatedOwners": 4,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 5
+        },
+        "restored": {
+          "translatedOwners": 0,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 5
+        },
+        "retranslated": {
+          "translatedOwners": 4,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 10
+        }
+      },
+      {
+        "id": "github-focus",
+        "display": 1,
+        "passed": true,
+        "first": {
+          "translatedOwners": 4,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 15
+        },
+        "stable": {
+          "translatedOwners": 4,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 15
+        },
+        "restored": {
+          "translatedOwners": 0,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 15
+        },
+        "retranslated": {
+          "translatedOwners": 4,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 20
+        }
+      },
+      {
+        "id": "button-controls",
+        "display": 1,
+        "passed": true,
+        "first": {
+          "translatedOwners": 9,
+          "translatedControls": 5,
+          "nested": 0,
+          "requests": 42
+        },
+        "stable": {
+          "translatedOwners": 9,
+          "translatedControls": 5,
+          "nested": 0,
+          "requests": 42
+        },
+        "restored": {
+          "translatedOwners": 0,
+          "translatedControls": 5,
+          "nested": 0,
+          "requests": 42
+        },
+        "retranslated": {
+          "translatedOwners": 9,
+          "translatedControls": 5,
+          "nested": 0,
+          "requests": 64
+        }
+      },
+      {
+        "id": "single-slots",
+        "display": 0,
+        "passed": true,
+        "first": {
+          "translatedOwners": 6,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 69
+        },
+        "stable": {
+          "translatedOwners": 6,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 69
+        },
+        "restored": {
+          "translatedOwners": 0,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 69
+        },
+        "retranslated": {
+          "translatedOwners": 6,
+          "translatedControls": 0,
+          "nested": 0,
+          "requests": 74
+        }
+      }
+    ],
+    "errors": [],
+    "cleanupVerified": true
+  },
+  "responsiveness": {
+    "paragraphs": 500,
+    "cpuRate": 1,
+    "ok": true,
+    "provider": "local deterministic Microsoft fixture",
+    "launchMode": "macos-background-cdp",
+    "focusPolicy": "launchservices-no-foreground",
+    "windowPlacement": {
+      "mode": "background-visible-no-focus",
+      "browserFrontmost": false
+    },
+    "phases": [
+      {
+        "name": "translate",
+        "elapsedMs": 2084.699999809265,
+        "maxHeartbeatGapMs": 38,
+        "p95HeartbeatGapMs": 26.699999809265137,
+        "totalBlockingMs": 0,
+        "wrappers": 500,
+        "chineseWrappers": 0,
+        "hostClicks": 9,
+        "longTaskCount": 0,
+        "maxLongTaskMs": 0
+      },
+      {
+        "name": "scroll-translated",
+        "elapsedMs": 1387.3999996185303,
+        "maxHeartbeatGapMs": 22.40000009536743,
+        "p95HeartbeatGapMs": 22.299999713897705,
+        "totalBlockingMs": 0,
+        "wrappers": 500,
+        "chineseWrappers": 0,
+        "hostClicks": 12,
+        "longTaskCount": 0,
+        "maxLongTaskMs": 0
+      },
+      {
+        "name": "restore",
+        "elapsedMs": 187.80000019073486,
+        "maxHeartbeatGapMs": 33,
+        "p95HeartbeatGapMs": 33,
+        "totalBlockingMs": 0,
+        "wrappers": 0,
+        "chineseWrappers": 0,
+        "hostClicks": 1,
+        "longTaskCount": 0,
+        "maxLongTaskMs": 0
+      },
+      {
+        "name": "retranslate-cached",
+        "elapsedMs": 3023.4000000953674,
+        "maxHeartbeatGapMs": 35.09999990463257,
+        "p95HeartbeatGapMs": 25,
+        "totalBlockingMs": 0,
+        "wrappers": 500,
+        "chineseWrappers": 0,
+        "hostClicks": 16,
+        "longTaskCount": 0,
+        "maxLongTaskMs": 0
+      }
+    ],
+    "metrics": {
+      "ScriptDuration": 0.827486,
+      "LayoutDuration": 0.187383,
+      "RecalcStyleDuration": 0.015408,
+      "TaskDuration": 1.5975430000000002,
+      "LayoutCount": 500,
+      "RecalcStyleCount": 519
+    },
+    "requests": 501,
+    "items": 501,
+    "submittedChinese": [],
+    "consoleErrors": [],
+    "cleanupVerified": true
+  },
+  "strictCoverage": {
+    "testFiles": 31,
+    "cases": 907,
+    "modules": 13,
+    "totals": {
+      "lines": {
+        "total": 3133,
+        "covered": 3133,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 3133,
+        "covered": 3133,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 205,
+        "covered": 205,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 1519,
+        "covered": 1519,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "files": {
+      "src/core/translation/apiKeyPool.ts": {
+        "lines": {
+          "total": 231,
+          "covered": 231,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 23,
+          "covered": 23,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 231,
+          "covered": 231,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 166,
+          "covered": 166,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/features/area-translation/content/areaHotkey.ts": {
+        "lines": {
+          "total": 12,
+          "covered": 12,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 12,
+          "covered": 12,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 13,
+          "covered": 13,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/features/document-translation/ui/presentation.ts": {
+        "lines": {
+          "total": 67,
+          "covered": 67,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 8,
+          "covered": 8,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 67,
+          "covered": 67,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 46,
+          "covered": 46,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/features/full-page-translation/content/bilingualRemount.ts": {
+        "lines": {
+          "total": 529,
+          "covered": 529,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 21,
+          "covered": 21,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 529,
+          "covered": 529,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 261,
+          "covered": 261,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/features/full-page-translation/content/mutationObservation.ts": {
+        "lines": {
+          "total": 58,
+          "covered": 58,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 6,
+          "covered": 6,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 58,
+          "covered": 58,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 30,
+          "covered": 30,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/platform/http/runtime.ts": {
+        "lines": {
+          "total": 43,
+          "covered": 43,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 8,
+          "covered": 8,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 43,
+          "covered": 43,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 17,
+          "covered": 17,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/services/translation/availability.ts": {
+        "lines": {
+          "total": 62,
+          "covered": 62,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 8,
+          "covered": 8,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 62,
+          "covered": 62,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 29,
+          "covered": 29,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/services/translation/broker.ts": {
+        "lines": {
+          "total": 1451,
+          "covered": 1451,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 80,
+          "covered": 80,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 1451,
+          "covered": 1451,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 641,
+          "covered": 641,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/services/translation/requestSnapshot.ts": {
+        "lines": {
+          "total": 280,
+          "covered": 280,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 28,
+          "covered": 28,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 280,
+          "covered": 280,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 149,
+          "covered": 149,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/services/translation/visionProbe.ts": {
+        "lines": {
+          "total": 121,
+          "covered": 121,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 9,
+          "covered": 9,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 121,
+          "covered": 121,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 74,
+          "covered": 74,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/shared/dom/editingTarget.ts": {
+        "lines": {
+          "total": 27,
+          "covered": 27,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 4,
+          "covered": 4,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 27,
+          "covered": 27,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 29,
+          "covered": 29,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/shared/function/throttle.ts": {
+        "lines": {
+          "total": 12,
+          "covered": 12,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 2,
+          "covered": 2,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 12,
+          "covered": 12,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 6,
+          "covered": 6,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/ui/view-model/serviceCatalog.ts": {
+        "lines": {
+          "total": 240,
+          "covered": 240,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 7,
+          "covered": 7,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 240,
+          "covered": 240,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 58,
+          "covered": 58,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    },
+    "testPaths": [
+      "tests/fullPageVisibilityScheduling.test.ts",
+      "tests/translationSourceStability.test.ts",
+      "tests/bilingualRemount.test.ts",
+      "tests/syntheticRemount.test.ts",
+      "tests/bilingualReplay.test.ts",
+      "tests/cloudVendorCatalog.test.ts",
+      "tests/translationVisionPayload.test.ts",
+      "tests/translationVisionProviders.test.ts",
+      "tests/aiSdkOpenAICompatible.test.ts",
+      "tests/free-translation.test.ts",
+      "tests/translationCachePolicyBinding.test.ts",
+      "tests/imageGlossaryContext.test.ts",
+      "tests/http.test.ts",
+      "tests/httpError.test.ts",
+      "tests/commonUtilities.test.ts",
+      "tests/requestConfigSnapshot.test.ts",
+      "tests/translationAvailability.test.ts",
+      "tests/translationBroker.test.ts",
+      "tests/translationVisionBroker.test.ts",
+      "tests/translationBrokerStats.test.ts",
+      "tests/translationGlossaryIntegration.test.ts",
+      "tests/apiKeyPool.test.ts",
+      "tests/apiKeyRotation.test.ts",
+      "tests/areaTranslationCore.test.ts",
+      "tests/paragraphCopyRuntime.test.ts",
+      "tests/sectionTranslationRuntime.test.ts",
+      "tests/documentTranslationPresentation.test.ts",
+      "tests/serviceCatalog.test.ts",
+      "tests/visionProbe.test.ts",
+      "tests/backgroundVisionProbe.test.ts",
+      "tests/areaVisionRecognition.test.ts"
+    ]
+  },
+  "checks": {
+    "compile": "passed",
+    "chromeBuild": "passed",
+    "firefoxBuild": "passed",
+    "testAudit": "passed",
+    "affectedArchitecture": {
+      "files": 4,
+      "tests": 115,
+      "passed": true
+    },
+    "completeArchitecture": "pending existing verification ownership repair",
+    "userscriptBuild": "passed",
+    "userscriptVerifier": "passed",
+    "docsBuild": "passed"
+  }
+}

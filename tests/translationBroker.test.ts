@@ -223,6 +223,42 @@ function deferred<T>() {
 }
 
 describe('translation broker', () => {
+    it('配置水合期间保留调用入口的原文与请求选项，后续编辑不能改变在途翻译', async () => {
+        const ready = deferred<void>();
+        installBroker(undefined, ready.promise);
+        const request = {origin: ['Original paragraph'], targetLanguage: 'zh-Hans', useCache: false};
+        mocks.service.mockResolvedValue(['原始段落']);
+        const result = translateWithCache(request);
+        request.origin[0] = 'Changed paragraph';
+        request.targetLanguage = 'ja';
+        ready.resolve();
+
+        await expect(result).resolves.toEqual(['原始段落']);
+        expect(mocks.service.mock.calls[0][0]).toMatchObject({origin: ['Original paragraph'], targetLanguage: 'zh-Hans'});
+    });
+
+    it('长批次每项缓存身份只构建一次，重复原文仍只发一次并按原顺序回填', async () => {
+        const origin = Array.from({length: 200}, (_, index) => `Paragraph ${index % 100}`);
+        mocks.service.mockImplementation(async (message: {origin: string[]}) => message.origin.map(text => `译文 ${text}`));
+        const result = await translateWithCache({origin});
+        expect(result).toEqual(origin.map(text => `译文 ${text}`));
+        expect(mocks.service).toHaveBeenCalledOnce();
+        expect(mocks.service.mock.calls[0][0].origin).toHaveLength(100);
+        expect(mocks.cacheGet).toHaveBeenCalledTimes(100);
+        expect(mocks.cacheSet).toHaveBeenCalledTimes(100);
+        expect(mocks.buildTranslationCacheKey.mock.calls.length).toBeLessThanOrEqual(origin.length + 1);
+    });
+
+    it('AI 长合批使用定长批次摘要，缓存身份总大小随原文线性增长', async () => {
+        mocks.config.service = 'ai';
+        const origin = Array.from({length: 100}, (_, index) => `Paragraph ${index} ${'source '.repeat(10)}`);
+        mocks.service.mockImplementation(async (message: {origin: string}) => message.origin.replaceAll('Paragraph', '段落'));
+        await expect(translateWithCache({origin, aiMultiSegment: true})).resolves.toEqual(origin.map(text => text.replace('Paragraph', '段落')));
+        const sourceIdentities = mocks.buildTranslationCacheKey.mock.calls.map(([identity]) => (identity as CacheIdentity).sourceText);
+        const identityBytes = sourceIdentities.reduce<number>((size, identity) => size + JSON.stringify(identity).length, 0);
+        expect(identityBytes).toBeLessThan(JSON.stringify(origin).length * 4);
+    });
+
     it('调度身份与各 provider 的最终模型规则一致', () => {
         const base = createTranslationProviderConfigSnapshot({
             service: services.custom,
@@ -2182,6 +2218,15 @@ describe('translation broker', () => {
         })).rejects.toMatchObject({code: 'AI_CONTEXT_LEAK_AFTER_RECOVERY'});
     });
 
+    it('AI 多段保留合法空槽，但不为其写入成功缓存', async () => {
+        mocks.config.service = 'ai';
+        mocks.service.mockImplementation((message: {origin: string}) => Promise.resolve(message.origin.replace('Alpha', '甲')));
+        await expect(translateWithCache({origin: ['Alpha', ''], aiMultiSegment: true})).resolves.toEqual(['甲', '']);
+        await flushMicrotasks();
+        expect(mocks.cacheSet).toHaveBeenCalledTimes(1);
+        expect(mocks.cacheSet).toHaveBeenCalledWith(expect.any(String), '甲');
+    });
+
     it('空白单条缓存重新走常规上下文恢复', async () => {
         mocks.cacheGet.mockResolvedValueOnce('   ');
         mocks.service.mockResolvedValueOnce('新译文');
@@ -2199,105 +2244,6 @@ describe('translation broker', () => {
             origin: [undefined] as unknown as string[],
         })).resolves.toEqual(['无源缓存译文']);
         expect(mocks.service).not.toHaveBeenCalled();
-    });
-
-    it('AI 多段对校验后变为缺项的槽位继续使用空串防御值', async () => {
-        mocks.config.service = 'ai';
-        mocks.config.enableAIContext = false;
-        const origins = ['Alpha', 'Beta', 'Gamma'];
-        const originalSome = Array.prototype.some;
-        const originalFilter = Array.prototype.filter;
-        let parsedAdjusted = false;
-        let originsAdjusted = false;
-        const someSpy = vi.spyOn(Array.prototype, 'some').mockImplementation(function (
-            this: unknown[],
-            callback: (value: unknown, index: number, array: unknown[]) => unknown,
-            thisArg?: unknown,
-        ): boolean {
-            const result = Reflect.apply(originalSome, this, [callback, thisArg]) as boolean;
-            if (!parsedAdjusted && this.length === 3
-                && this[0] === 'Alpha' && this[1] === '乙' && this[2] === '丙') {
-                this[1] = undefined;
-                parsedAdjusted = true;
-            }
-            return result;
-        });
-        const filterSpy = vi.spyOn(Array.prototype, 'filter').mockImplementation(function (
-            this: unknown[],
-            callback: (value: unknown, index: number, array: unknown[]) => unknown,
-            thisArg?: unknown,
-        ): unknown[] {
-            const result = Reflect.apply(originalFilter, this, [callback, thisArg]) as unknown[];
-            if (parsedAdjusted && !originsAdjusted
-                && this.length === 3 && this[0] === 0 && this[1] === 1 && this[2] === 2) {
-                origins[1] = undefined as unknown as string;
-                origins[2] = undefined as unknown as string;
-                originsAdjusted = true;
-            }
-            return result;
-        });
-        mocks.service.mockImplementation((message: {origin: string}) => Promise.resolve(
-            message.origin.replace('Beta', '乙').replace('Gamma', '丙'),
-        ));
-
-        try {
-            await expect(translateWithCache({
-                origin: origins,
-                aiMultiSegment: true,
-            })).resolves.toEqual(['Alpha', undefined, '丙']);
-            expect(parsedAdjusted).toBe(true);
-            expect(originsAdjusted).toBe(true);
-        } finally {
-            someSpy.mockRestore();
-            filterSpy.mockRestore();
-        }
-    });
-
-    it('AI 多段无上下文恢复对二次读取时缺失的译文槽采用空串', async () => {
-        mocks.config.service = 'ai';
-        mocks.config.enableAIContext = true;
-        const softLeak = 'Atoll SoundSource StudioDisplay context material remains visible in a long but non-verbatim response for validation';
-        mocks.cacheGet
-            .mockResolvedValueOnce(null)
-            .mockResolvedValueOnce('Alpha <webpage_context> leaked cache </webpage_context>')
-            .mockResolvedValueOnce('Beta <webpage_context> leaked cache </webpage_context>');
-        const originalSome = Array.prototype.some;
-        let adjusted = false;
-        const someSpy = vi.spyOn(Array.prototype, 'some').mockImplementation(function (
-            this: unknown[],
-            callback: (value: unknown, index: number, array: unknown[]) => unknown,
-            thisArg?: unknown,
-        ): boolean {
-            const result = Reflect.apply(originalSome, this, [callback, thisArg]) as boolean;
-            if (!adjusted && this.length === 2 && this[0] === softLeak && this[1] === '安全的乙') {
-                let reads = 0;
-                Object.defineProperty(this, 0, {
-                    configurable: true,
-                    enumerable: true,
-                    get: () => {
-                        reads += 1;
-                        return reads <= 2 ? softLeak : undefined;
-                    },
-                });
-                adjusted = true;
-            }
-            return result;
-        });
-        mocks.service.mockImplementation((message: {summaryPrompt?: string; origin: string}) => {
-            if (message.summaryPrompt) return Promise.resolve('Atoll SoundSource StudioDisplay summary');
-            return Promise.resolve(message.origin.replace('Alpha', softLeak).replace('Beta', '安全的乙'));
-        });
-
-        try {
-            await expect(translateWithCache({
-                origin: ['Alpha', 'Beta'],
-                pageContext: 'Page title: Atoll. Readable page content: SoundSource StudioDisplay reference.',
-                aiMultiSegment: true,
-            })).resolves.toEqual(['', '安全的乙']);
-            expect(adjusted).toBe(true);
-        } finally {
-            someSpy.mockRestore();
-        }
     });
 
     it('普通 AI 批量对校验后缺失的原文与译文槽采用空串恢复', async () => {

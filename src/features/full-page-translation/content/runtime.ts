@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/runtime.ts
  * 文件职责：实现全文翻译的页面级会话引擎，负责候选发现、可见性调度、批量请求、动态 DOM 重扫、失败重试、缓存复用和恢复原文。
- * 主要内容：相同译文保留原文且不重复展示；维护 FullPageSession、AbortController、Intersection/Mutation 观察器、弹窗优先调度、精确属性写入过滤、候选所有权和生命周期重试；对变化来源等待安静窗口、跳过持续变化的计数，并清理延迟重扫；按时间片派发并在全文结果提交前让出主线程，合并同段 DOM 写入；按阅读进度撤回离开预取区的待派发候选，冻结配置与识别范围，在弹窗关闭后继续正文，按实际节点阶段发布进度及工具栏结果；悬浮调用冻结独立服务且保留快捷方案覆盖优先级；向局部翻译开放单候选 translateTarget 与单个译文所有者的恢复入口。
+ * 主要内容：相同译文保留原文且不重复展示；维护 FullPageSession、AbortController、Intersection/Mutation 观察器、弹窗优先调度、精确属性写入过滤、候选所有权和生命周期重试；对变化来源等待安静窗口、跳过持续变化的计数，并清理延迟重扫，只有真实宿主删除启动候选回收，同批重复属性变化只处理一次；按时间片派发并在全文结果提交前让出主线程，合并同段 DOM 写入；按阅读进度撤回离开预取区的待派发候选，冻结配置与识别范围，在弹窗关闭后继续正文，按实际节点阶段发布进度及工具栏结果；悬浮调用冻结独立服务且保留快捷方案覆盖优先级；向局部翻译开放单候选 translateTarget 与单个译文所有者的恢复入口。
  * 模块边界：这是 content 侧编排层，不实现 provider 协议、纯候选算法或底层状态存储；翻译调用经 app client，发现规则来自 core/translation，渲染与状态分别交给 renderer、liveTextRender 和 state。
  */
 import {resolveTranslationToolbarStatus, countFullPageTranslationWork} from '../toolbarStatus';
@@ -126,7 +126,7 @@ import {clearOrphanedTranslationArtifacts, consumeOrphanedOwnerClassMutation, is
     from '@/src/features/full-page-translation/content/orphanArtifacts';
 import {createFullPageRequestSessionState, disposeFullPageRequestSession, getHoverTranslationRequestSession, invalidateContextSensitiveRequestCache, invalidateFullPageRequestSessionCache, invalidateFullPageRequestSessionForRoute, invalidateHoverTranslationRequestSession, resetHoverTranslationRequestSession, type FullPageRequestSessionState} from '@/src/features/full-page-translation/content/requestSession';
 import {getSiteAdapterAttributeFilter} from '@/src/core/site-adaptation/compiler';
-import {allMutationNodesMatch, createTranslationMutationObserverOptions, isOwnSyntheticSegmentMarkerMutation, mutationRootContains as nodeContains, collapseMutationRescanRoot as broadRescanRoot} from './mutationObservation';
+import {allMutationNodesMatch, createTranslationAttributeMutationFilter, createTranslationMutationObserverOptions, isOwnSyntheticSegmentMarkerMutation, mutationRootContains as nodeContains, collapseMutationRescanRoot as broadRescanRoot} from './mutationObservation';
 import {isWithinTranslationModal, mayChangeTranslationModal} from './modalPriority';
 import {refreshModalSession, type ModalPrioritySession} from './modalSession';
 const TRANSLATION_ARTIFACT_SELECTOR = [
@@ -1796,7 +1796,6 @@ function createFullPageMutationObserver(
     return new MutationObserver((mutations) => {
         const session = getSession();
         if (!session.active || fullPageSession !== session) return;
-        scheduleDisconnectedCandidatePrune(session);
         const core = getCurrentTranslationCore(session.scope);
         const siteAttributes = getSiteAdapterAttributeFilter(core.adapters);
         // materialize 较宽行内段时，每个被移动来源节点都可能排入一条 childList 记录。
@@ -1807,11 +1806,19 @@ function createFullPageMutationObserver(
         // 最终状态，因此每个有状态来源/文本槽快照只比较一次，不为每条
         // Preview <-> staging-span 记录反复遍历很长的 P。
         const statefulChildListChecks = new WeakMap<TranslationState, boolean>();
+        const shouldCheckAttribute = createTranslationAttributeMutationFilter();
         const resolveRemovedOwners = transferEquivalentBilingualOwners(session, mutations);
         for (const mutation of mutations) {
             if (isOwnMutation(mutation, loadingSyntheticChecks)) continue;
-            if (mayChangeTranslationModal(mutation, session.modal)) session.modalDirty = true;
             const mutationElement = mutationTargetElement(mutation.target);
+            if (mutation.type === 'attributes' && mutationElement && mutation.attributeName &&
+                !shouldCheckAttribute(mutationElement, mutation.attributeName)) continue;
+            // spinner、译文写入和普通属性/文本变化不会让候选脱离文档。
+            // 只有真实宿主删除才启动全队列的分片清理，避免每次渲染遍历离屏候选。
+            if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
+                scheduleDisconnectedCandidatePrune(session);
+            }
+            if (mayChangeTranslationModal(mutation, session.modal)) session.modalDirty = true;
             const siteAttributeMutation = mutation.type === 'attributes' && mutation.attributeName !== null &&
                 (siteAttributes === null || siteAttributes.includes(mutation.attributeName));
             if (!siteAttributeMutation && mutation.type === 'attributes' && (mutation.attributeName === 'aria-modal' ||

@@ -550,7 +550,7 @@ describe('translation API request lifecycle performance', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it.each(['chrome-text', 'video'])('%s abort 发送精确 cancel，中止后台 broker signal 并及时释放前台队列', async (client) => {
+  it.each(['chrome-text', 'text', 'batch', 'video'])('%s abort 发送精确 cancel，中止后台 broker signal 并及时释放前台队列', async (client) => {
     mocks.config.maxConcurrentTranslations = 1;
     const registry = createTranslationRequestRegistry();
     const cancel = createTranslationCancelHandler(registry);
@@ -577,10 +577,12 @@ describe('translation API request lifecycle performance', () => {
     ));
     const controller = new AbortController();
     const removeListener = vi.spyOn(controller.signal, 'removeEventListener');
-    const first = client === 'video' ? translateVideoText('First readable source', controller.signal) : translateText('First readable source', 'Context', {
+    const first = client === 'video' ? translateVideoText('First readable source', controller.signal)
+      : client === 'batch' ? translateTextBatch(['First readable source'], 'Context', {signal: controller.signal, maxRetries: 0})
+      : translateText('First readable source', 'Context', {
       signal: controller.signal,
       maxRetries: 0,
-      serviceOverride: 'chromeTranslator',
+      serviceOverride: client === 'chrome-text' ? 'chromeTranslator' : 'mock',
     });
     const firstOutcome = first.catch((error) => error);
 
@@ -598,6 +600,28 @@ describe('translation API request lifecycle performance', () => {
     const second = client === 'video' ? translateVideoText('Second readable source') : translateText('Second readable source', 'Context', {maxRetries: 0});
     await expect(second).resolves.toBe('第二段译文');
     expect(translate).toHaveBeenCalledTimes(2);
+  });
+
+  it('上下文提取期间保留批量原文槽位和单条请求选项', async () => {
+    mocks.config.service = 'mock-ai';
+    mocks.config.enableAIContext = true;
+    const context = deferred<string>();
+    mocks.getPageTranslationContext.mockReturnValue(context.promise);
+    mocks.sendMessage.mockImplementation(async ({origin}: {origin: string | string[]}) => Array.isArray(origin) ? origin.map(value => `译:${value}`) : `译:${origin}`);
+    const origins = ['Original first', 'Original second'];
+    const options = {enableAIContext: true, aiMultiSegment: true, sourceLanguageDetectionText: 'Original detection', maxRetries: 0};
+    const batch = translateTextBatch(origins, 'Page', options);
+    const single = translateText('Original single', 'Page', options);
+    origins.push('Added later');
+    options.enableAIContext = false;
+    options.aiMultiSegment = false;
+    context.resolve('captured context');
+
+    await expect(batch).resolves.toEqual(['译:Original first', '译:Original second']);
+    await expect(single).resolves.toBe('译:Original single');
+    expect(mocks.sendMessage.mock.calls[0][0]).toMatchObject({origin: ['Original first', 'Original second'], aiMultiSegment: true, enableAIContext: true});
+    expect(mocks.sendMessage.mock.calls[1][0]).toMatchObject({enableAIContext: true});
+    expect(origins).toEqual(['Original first', 'Original second', 'Added later']);
   });
 
   it('timeout 只发送一次 cancel，中止后台 broker signal 并让下一请求进队', async () => {

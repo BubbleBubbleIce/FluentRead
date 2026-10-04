@@ -20,8 +20,8 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 /** 逐层穿过可读取的 ShadowRoot，找到真正持有焦点的元素。 */
-function deepActiveElement(): Element | null {
-    let focused = document.activeElement;
+function deepActiveElement(pageDocument: Document): Element | null {
+    let focused = pageDocument.activeElement;
     while (focused?.shadowRoot?.activeElement) focused = focused.shadowRoot.activeElement;
     return focused;
 }
@@ -35,8 +35,8 @@ function isOpaqueFocusHost(element: Element): boolean {
 }
 
 /** 判断按键是否发生在输入场景：事件路径或当前焦点落在可输入元素上时返回 true。 */
-export function isEditingInPage(event: KeyboardEvent): boolean {
+export function isEditingInPage(event: KeyboardEvent, pageDocument: Document = document): boolean {
     if (typeof event.composedPath === 'function' && event.composedPath().some(isTypingTarget)) return true;
-    const focused = deepActiveElement();
+    const focused = deepActiveElement(pageDocument);
     return Boolean(focused) && (isTypingTarget(focused) || isOpaqueFocusHost(focused!));
 }

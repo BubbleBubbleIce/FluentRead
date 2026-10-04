@@ -1,11 +1,11 @@
 /**
  * @file src/services/translation/availability.ts
  * 文件职责：把全局翻译开关接入共享翻译入口，关闭时拒绝新请求并取消所有在途请求。
- * 主要内容：等待配置水合、订阅启停状态、合并调用者取消信号，按启用代次隔离请求所有权，保留消息上的内部快照与预算。
+ * 主要内容：在等待前复制请求字段与可编辑数组，等待配置水合、订阅启停状态、合并调用者取消信号，按启用代次隔离请求所有权，保留消息上的内部快照与预算。
  * 模块边界：只组合注入的配置和翻译端口，不访问浏览器、不改写用户设置，也不清除已完成译文或缓存。
  */
 import type {TranslationBroker, TranslationRequestMessage} from './types';
-import {attachTranslationRequestControl, getTranslationRequestControl, TRANSLATION_REQUEST_CONTROL} from './requestSnapshot';
+import {attachTranslationRequestControl, createTranslationRequestSnapshot, getTranslationRequestControl, TRANSLATION_REQUEST_CONTROL} from './requestSnapshot';
 
 interface AvailabilityDependencies {
     ready: Promise<unknown>;
@@ -40,6 +40,7 @@ export function createTranslationAvailability(deps: AvailabilityDependencies) {
     });
 
     async function translateWithCache(message: TranslationRequestMessage): Promise<string | string[]> {
+        message = createTranslationRequestSnapshot(message);
         await ready;
         apply(deps.getConfig());
         if (epoch.signal.aborted) throw new TranslationDisabledError();

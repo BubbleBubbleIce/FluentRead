@@ -2,7 +2,7 @@
  * @file src/platform/http/runtime.ts
  *
  * 文件职责：抽象运行时 fetch 边界，使 provider 请求在扩展、userscript 和测试环境中使用可替换的网络实现。
- * 主要内容：定义 RuntimeFetch，setRuntimeFetch 安装或恢复覆盖实现，runtimeFetch 始终通过当前端口发起请求并默认委托 globalThis.fetch；另提供 caller signal 与局部 timeout 的合并上下文。 可核对的公开符号包括 RuntimeFetch、RuntimeAbortContext、createRuntimeAbortContext、abortErrorFromSignal、setRuntimeFetch、runtimeFetch。
+ * 主要内容：定义 RuntimeFetch，setRuntimeFetch 安装或恢复覆盖实现，runtimeFetch 始终通过当前端口发起请求并默认委托 globalThis.fetch；合并 caller signal 与局部 timeout，保留最先发生的取消来源并立即释放计时器和监听。 可核对的公开符号包括 RuntimeFetch、RuntimeAbortContext、createRuntimeAbortContext、abortErrorFromSignal、setRuntimeFetch、runtimeFetch。
  * 模块边界：本文件属于 platform 基础设施边界，只封装浏览器、网络、存储上下文或 Shadow DOM 机制；不决定翻译业务策略，不直接实现 feature，业务层通过类型化端口消费这里的能力。
  */
 
@@ -27,20 +27,28 @@ export function createRuntimeAbortContext(
 ): RuntimeAbortContext {
     const controller = new AbortController();
     let timedOut = false;
-    const onCallerAbort = () => controller.abort(callerSignal?.reason);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cleanup = () => {
+        clearTimeout(timer);
+        callerSignal?.removeEventListener('abort', onCallerAbort);
+    };
+    const onCallerAbort = () => {
+        cleanup();
+        controller.abort(callerSignal?.reason);
+    };
     if (callerSignal?.aborted) onCallerAbort();
-    else callerSignal?.addEventListener('abort', onCallerAbort, {once: true});
-    const timer = setTimeout(() => {
-        timedOut = true;
-        controller.abort();
-    }, timeoutMs);
+    else {
+        callerSignal?.addEventListener('abort', onCallerAbort, {once: true});
+        timer = setTimeout(() => {
+            cleanup();
+            timedOut = true;
+            controller.abort();
+        }, timeoutMs);
+    }
     return {
         signal: controller.signal,
         didTimeout: () => timedOut,
-        cleanup: () => {
-            clearTimeout(timer);
-            callerSignal?.removeEventListener('abort', onCallerAbort);
-        },
+        cleanup,
     };
 }
 
