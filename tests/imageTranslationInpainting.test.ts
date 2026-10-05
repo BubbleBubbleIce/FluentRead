@@ -130,6 +130,32 @@ describe('图片文字背景修复', () => {
         expect(output).toEqual(inpaintTextRegions(source, 30, 20, [second, first]));
     });
 
+    it('大量相接源框不反复复制已合并成员，完整输出和邻近图案保持不变', () => {
+        const source = solidPixels(12, 12);
+        source.set([0, 0, 0, 255], (5 * 12 + 5) * 4);
+        source.set([255, 0, 0, 255], (10 * 12 + 10) * 4);
+        const boxes = Array.from({length: 5000}, () => line(4, 4, 6, 6));
+        const expected = inpaintTextRegions(source, 12, 12, [boxes[0]]);
+        const before = source.slice();
+        const originalPush = Array.prototype.push;
+        let appended = 0;
+        let output!: Uint8ClampedArray;
+        try {
+            // 单独计数实际数组写入，仍调用原 push；同步算法结束后立即恢复。
+            Array.prototype.push = function (...values: unknown[]) {
+                appended += values.length;
+                return originalPush.apply(this, values);
+            };
+            output = inpaintTextRegions(source, 12, 12, boxes);
+        } finally {
+            Array.prototype.push = originalPush;
+        }
+        expect(output).toEqual(expected);
+        expect(source).toEqual(before);
+        expect(boxes).toHaveLength(5000);
+        expect(appended).toBeLessThan(30_000);
+    });
+
     it('透明背景移除原文字的不透明度，预乘插值不会引入透明像素的杂色', () => {
         const transparent = solidPixels(12, 12, [255, 0, 0, 0]);
         transparent.set([0, 0, 0, 255], (6 * 12 + 6) * 4);

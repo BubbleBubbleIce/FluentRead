@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {createOffscreenMessageListener} from '@/src/app/offscreen/messageRouter';
 import {LOCAL_TRANSLATION_MODEL_IDS} from '@/src/core/config/localTranslation';
-import {OFFSCREEN_CANCEL_LOCAL_TTS_MESSAGE_TYPE} from '@/src/platform/offscreen/client';
+import {OFFSCREEN_CANCEL_LOCAL_TRANSLATION_MESSAGE_TYPE, OFFSCREEN_CANCEL_LOCAL_TTS_MESSAGE_TYPE} from '@/src/platform/offscreen/client';
 import {createChromePreparationRequiredError} from '@/src/app/offscreen/translation';
 import {
     OFFSCREEN_CANCEL_IMAGE_OPERATION_MESSAGE_TYPE,
@@ -581,6 +581,28 @@ describe('Offscreen 消息静态路由', () => {
         for (let index = 0; index <= 512; index += 1) cancel(`bounded-offscreen-${index}`);
 
     });
+
+    it('已消费的取消 ID 再次使用时保留新取消，容量只计算尚未消费的记录', async () => {
+        const translateImage = vi.fn(async () => ({image: 'translated', lines: []}));
+        const handler = createOffscreenMessageListener({...mocks, translateImage,
+            ttsPlayer: {play: mocks.play, stop: mocks.stop}});
+        const cancel = (requestId: string) => dispatch({type: OFFSCREEN_CANCEL_IMAGE_OPERATION_MESSAGE_TYPE, requestId}, handler);
+        const start = (requestId: string) => dispatch({type: 'FLUENT_READ_IMAGE_TRANSLATE_OFFSCREEN', requestId,
+            image: 'data:image/png,x', sourceLanguage: 'en'}, handler);
+        await cancel('reused');
+        expect((await start('reused')).response).toMatchObject({cancelled: true});
+        await cancel('reused');
+        for (let index = 0; index < 511; index++) await cancel(`pending-${index}`);
+        expect((await start('reused')).response).toMatchObject({cancelled: true});
+        expect(translateImage).not.toHaveBeenCalled();
+        // 消费的记录不占容量；溢出时只淘汰最旧的仍未消费记录。
+        await cancel('latest-1'); await cancel('latest-2');
+        expect((await start('pending-0')).response).toMatchObject({success: true});
+        expect((await start('pending-1')).response).toMatchObject({cancelled: true});
+        expect((await start('latest-2')).response).toMatchObject({cancelled: true});
+        expect((await start('reused')).response).toMatchObject({success: true});
+        expect(translateImage).toHaveBeenCalledTimes(2);
+    });
 });
 
 it('模型清除路由等待删除并阻止同时识别或重复清除', async () => {
@@ -635,6 +657,27 @@ describe('Offscreen 本地模型可取消请求', () => {
         expect(result.response).not.toHaveProperty('audio');
         expect(synthesize).toHaveBeenCalledWith({...ttsRequest, target: 'offscreen'}, expect.any(AbortSignal));
         expect(metadata).toEqual(originalMetadata);
+    });
+
+    it('本地翻译取消立即中止 Worker 且只回复一次，迟到结果不污染同 ID 的重试', async () => {
+        const pending = deferred<unknown>();
+        const localTranslation = {translate: vi.fn((_request: Record<string, unknown>, _signal: AbortSignal) => pending.promise),
+            prepare: vi.fn(), status: vi.fn(), removeModel: vi.fn()};
+        const handler = createOffscreenMessageListener({...base, localTranslation});
+        const request = {type: 'LOCAL_TRANSLATION_TRANSLATE', target: 'offscreen', requestId: 'local-cancel', model,
+            text: 'hello', sourceLanguage: 'en', targetLanguage: 'zh-Hans'};
+        const response = vi.fn();
+        handler(request, {}, response);
+        await vi.waitFor(() => expect(localTranslation.translate).toHaveBeenCalledOnce());
+        const signal = localTranslation.translate.mock.calls[0][1];
+        await dispatch({type: OFFSCREEN_CANCEL_LOCAL_TRANSLATION_MESSAGE_TYPE, requestId: request.requestId}, handler);
+        expect(signal.aborted).toBe(true);
+        expect(response).toHaveBeenCalledOnce();
+        expect(response).toHaveBeenCalledWith({success: false, cancelled: true, requestId: 'local-cancel', error: '本地翻译请求已取消'});
+        localTranslation.translate.mockResolvedValueOnce('fresh');
+        expect((await dispatch(request, handler)).response).toMatchObject({success: true, result: 'fresh'});
+        pending.resolve('late'); await Promise.resolve(); await Promise.resolve();
+        expect(response).toHaveBeenCalledOnce();
     });
 
     it('本地 TTS 未启用时所有入口返回明确不可用', async () => {

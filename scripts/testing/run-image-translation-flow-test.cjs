@@ -30,6 +30,9 @@ const multilingual = process.argv.includes('--multilingual');
 const harFixture = process.argv.includes('--har-fixture');
 const paragraphImage = arg('paragraph-image', null);
 const denseParagraphs = process.argv.includes('--dense-paragraphs');
+const manyLineTranslation = process.argv.includes('--many-line-translation');
+if (manyLineTranslation && (!denseParagraphs || liveTranslation))
+    throw new Error('--many-line-translation requires --dense-paragraphs and deterministic transport');
 if (!playwrightRoot || !focusHelper)
     throw new Error('必须提供 --playwright-root 与 --focus-safe-helper');
 const { chromium } = require(path.join(playwrightRoot, 'playwright'));
@@ -419,7 +422,7 @@ async function verifyGeometryCases({worker, ui, wait, shot}) {
         });
         if (!response.success) throw new Error(response.error);
     }, {xSurface, xLightbox});
-    await worker.evaluate(({liveTranslation, paragraphFixture, xLightbox}) => {
+    await worker.evaluate(({liveTranslation, paragraphFixture, xLightbox, manyLineTranslation}) => {
         const originalFetch = globalThis.fetch.bind(globalThis);
         // Keep the real OCR path intact while giving the loading controls enough time to sample.
         const fixture = globalThis.__imageFixture = {requests: [], endpointHosts: [], rejectPrimaryXsrf: false, operationIds: [], delay: 1800, replayProgress: false, progressTimer: null, progressRequestId: null};
@@ -461,6 +464,7 @@ async function verifyGeometryCases({worker, ui, wait, shot}) {
             chrome.runtime.onMessage.removeListener(fixtureListener);
         };
         const translateOrigin = origin => {
+                if (manyLineTranslation) return Array(150_000).fill('a').join('\n');
                 return paragraphFixture ? (() => {
                     if (origin.startsWith('Calculate the best filament grouping')) {
                         assertParagraph(origin.includes('printer based on slicing results.'));
@@ -529,7 +533,7 @@ async function verifyGeometryCases({worker, ui, wait, shot}) {
             // OCR worker、wasm 和语言包仍沿真实生产路径加载，不 mock Tesseract。
             return originalFetch(input, options);
         };
-    }, {liveTranslation, paragraphFixture: Boolean(paragraphImage), xLightbox});
+    }, {liveTranslation, paragraphFixture: Boolean(paragraphImage), xLightbox, manyLineTranslation});
     if (harFixture) {
         if (liveTranslation) throw new Error('--har-fixture 只用于确定性响应验证');
         currentCase = 'HAR identifier filtering and Google XSRF cooldown';
@@ -729,14 +733,25 @@ async function verifyGeometryCases({worker, ui, wait, shot}) {
         await wait(() => ui("return ['error','translated'].includes(this.querySelector('.fr-image-controls')?.dataset.phase)"));
         if (await ui("return this.querySelector('.fr-image-controls')?.dataset.phase==='error'")) {
             await click('下载语言包并翻译');
-            await wait(() => ui("return this.querySelector('.fr-image-controls')?.dataset.phase==='translated'"), 300_000);
+            await wait(() => ui("return ['error','translated'].includes(this.querySelector('.fr-image-controls')?.dataset.phase)"), 300_000);
         }
+        assert.equal(await ui("return this.querySelector('.fr-image-controls')?.dataset.phase"), 'translated',
+            await ui("return this.querySelector('.fr-image-feedback')?.textContent?.slice(0, 1000) || '图片未完成翻译'"));
         const requests = await worker.evaluate(() => ({texts: globalThis.__imageFixture.requests, hosts: globalThis.__imageFixture.endpointHosts}));
         assert.equal(requests.texts.length, 1, 'Dense OCR must send one complete paragraph');
         const recognizedRows = requests.texts[0].split('Read every word in your language').length - 1;
         assert.equal(recognizedRows, 90, 'All separately drawn rows must survive OCR and grouping');
         await shot('dense-paragraph-translated');
-        await click('文字'); await click('原文对照');
+        await click('文字');
+        if (manyLineTranslation) {
+            const translated = await ui("return this.querySelector('.fr-image-reader-body pre')?.textContent");
+            assert.equal(translated, Array(150_000).fill('a').join('\n'), 'Complete many-line response must survive rendering and reader IPC');
+            assert.equal(await ui("const image = this.querySelector('.fluent-read-image-translation-overlay img'); return !!image?.complete && image.naturalWidth > 0"), true);
+            report.manyLineTranslation = {lines: 150_000, bytes: Buffer.byteLength(translated), fullReaderMatches: true, bitmapDecoded: true,
+                scope: 'synthetic Google response through real production rendering/IPC; no live provider or visual readability guarantee'};
+            report.cases.push('many-line synthetic response renders without argument overflow and reader preserves complete text');
+        }
+        await click('原文对照');
         const sourceParagraphs = await ui("return [...this.querySelectorAll('.fr-image-reader-source')].map(line=>line.textContent)");
         assert.deepEqual(sourceParagraphs, requests.texts);
         await shot('dense-paragraph-reader');
@@ -1131,6 +1146,26 @@ async function verifyGeometryCases({worker, ui, wait, shot}) {
     await page.evaluate(() => document.querySelector('#sample').remove());
     await wait(() => ui("return this.querySelectorAll('.fluent-read-image-translation-overlay').length===0"));
     report.cases.push('image removal cleans overlay');
+    currentCase = 'consumed cancellation ID reuse';
+    const reusedCancellation = await worker.evaluate(async () => {
+        const requestId = 'image-flow-reused-cancel';
+        const send = message => chrome.runtime.sendMessage({...message, target: 'offscreen'});
+        const cancel = id => send({type: 'CANCEL_IMAGE_OPERATION_OFFSCREEN', requestId: id});
+        const start = () => send({type: 'FLUENT_READ_IMAGE_TRANSLATE_OFFSCREEN', requestId,
+            image: 'data:image/png,x', sourceLanguage: 'en'});
+        const requestsBefore = globalThis.__imageFixture.requests.length;
+        await cancel(requestId);
+        const first = await start();
+        await cancel(requestId);
+        for (let index = 0; index < 511; index++) await cancel(`image-flow-pending-cancel-${index}`);
+        const reused = await start();
+        return {first, reused, newProviderRequests: globalThis.__imageFixture.requests.length - requestsBefore};
+    });
+    assert.equal(reusedCancellation.first.cancelled, true);
+    assert.equal(reusedCancellation.reused.cancelled, true);
+    assert.equal(reusedCancellation.newProviderRequests, 0);
+    report.reusedCancellation = {bothStartsCancelled: true, newProviderRequests: 0, queuedUniqueCancels: 512};
+    report.cases.push('consumed cancellation ID can be cancelled again across real Offscreen routing without starting OCR/provider');
     assert.equal(report.errors.length, 0);
     report.success = true;
 })().catch(async error => {

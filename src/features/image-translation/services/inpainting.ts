@@ -1,7 +1,7 @@
 /**
  * @file src/features/image-translation/services/inpainting.ts
  * 文件职责：依据有效 OCR 文本框在像素缓冲区中修复原文字，保留修复区域以外的图像内容。
- * 主要内容：按源行框及有界边缘修补，保留行间图案；仅为相接区域的局部范围分配去重蒙版和分层队列，按预乘透明度扩散；默认保留输入，也可显式复用调用方独占的像素缓冲，减少整图复制。
+ * 主要内容：按源行框及有界边缘修补，保留行间图案；相接簇用链表连接成员后一次展开，避免重复复制和参数展开；仅为局部范围分配去重蒙版和分层队列，按预乘透明度扩散；默认保留输入，也可显式复用调用方独占的像素缓冲。
  * 模块边界：本模块是无 DOM、无网络的轻量像素算法，不进行 OCR 或译文绘制，也不宣称能够重建复杂纹理；输入和输出保持原图尺寸，无法取得已知边界时保留原像素。
  */
 import type { OcrLine } from '@/src/shared/image/types';
@@ -20,10 +20,12 @@ function union(a: MaskRectangle, b: MaskRectangle): MaskRectangle {
 }
 
 function clusters(rectangles: MaskRectangle[]): MaskRectangle[][] {
-    const groups: Array<{bounds: MaskRectangle; members: MaskRectangle[]}> = [];
+    type Member = {rectangle: MaskRectangle; next?: Member};
+    const groups: Array<{bounds: MaskRectangle; head: Member; tail: Member}> = [];
     for (const rect of rectangles) {
         let bounds = rect;
-        const members = [rect];
+        const head: Member = {rectangle: rect};
+        let tail = head;
         // 相接区域共享扩散层；中间有已知像素的独立区域可分别处理。
         for (let i = 0; i < groups.length;) {
             const group = groups[i], b = group.bounds;
@@ -32,13 +34,19 @@ function clusters(rectangles: MaskRectangle[]): MaskRectangle[][] {
                 continue;
             }
             bounds = union(bounds, b);
-            members.push(...group.members);
+            // 保留原成员顺序，只接已有链；密集行不再反复复制整个已合并簇。
+            tail.next = group.head;
+            tail = group.tail;
             groups.splice(i, 1);
             i = 0;
         }
-        groups.push({bounds, members});
+        groups.push({bounds, head, tail});
     }
-    return groups.map(group => group.members);
+    return groups.map(group => {
+        const members: MaskRectangle[] = [];
+        for (let member: Member | undefined = group.head; member; member = member.next) members.push(member.rectangle);
+        return members;
+    });
 }
 
 function getMaskRectangle(line: OcrLine, width: number, height: number): MaskRectangle | undefined {

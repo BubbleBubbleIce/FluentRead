@@ -95,6 +95,16 @@ describe('图片译文排版与绘制', () => {
         expect(layout.lineHeight * layout.lines.length).toBeLessThanOrEqual(80);
     });
 
+    it('超多显式行保留全文并适配高度，不因测宽参数展开溢出', () => {
+        const lines = Array.from({length: 150_000}, (_, index) => index % 3 === 1 ? '' : 'a');
+        const countedMeasure = vi.fn((value: string, size: number) => value.length * size);
+        const layout = layoutImageTranslationText(lines.join('\n'), 100, 20, countedMeasure);
+        expect(layout.lines).toEqual(lines);
+        expect(layout.fontSize).toBeGreaterThan(0);
+        expect(layout.lineHeight * layout.lines.length).toBeLessThanOrEqual(20);
+        expect(countedMeasure.mock.calls.length).toBeLessThanOrEqual(28);
+    });
+
     it('小框也能完整容纳长译文，不强加导致越界的最小字号', () => {
         const text = 'longword'.repeat(30);
         const layout = layoutImageTranslationText(text, 8, 4, measure);

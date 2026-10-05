@@ -277,15 +277,16 @@ export function createOffscreenMessageListener(dependencies: OffscreenMessageDep
     let removingOcrModels = false;
     const activeImageOperations = new Map<string, AbortController>();
     const cancelledImageOperations = new Set<string>();
-    const cancellationOrder: string[] = [];
     let legacyImageRequestSequence = 0;
 
     const rememberImageCancellation = (requestId: string) => {
         if (cancelledImageOperations.has(requestId)) return;
         cancelledImageOperations.add(requestId);
-        cancellationOrder.push(requestId);
-        if (cancellationOrder.length <= 512) return;
-        cancelledImageOperations.delete(cancellationOrder.shift()!);
+        // Set 的插入顺序只包含尚未消费的取消；已消费 ID 的旧队列项
+        // 不能在 ID 再用后误删新的取消，也不必维护重复历史或移动数组。
+        if (cancelledImageOperations.size > 512) {
+            cancelledImageOperations.delete(cancelledImageOperations.values().next().value!);
+        }
     };
 
     const startImageOperation = (

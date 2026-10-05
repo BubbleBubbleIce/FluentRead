@@ -13334,6 +13334,460 @@
       "referenceCodeUsedInThisBatch": false,
       "pushed": false,
       "remoteMerged": false
+    },
+    {
+      "batch": "twenty-second",
+      "name": "image-layout-stack-inpaint-members-and-cancellation-reuse",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 171,
+        "sourceReadFunctionBodies": 2838,
+        "pendingFiles": 650,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 4,
+      "newStaticTestDefinitions": 4,
+      "newNativePhases": 2,
+      "oldSourceRuns": {
+        "rendering": {
+          "executed": 20,
+          "passed": 19,
+          "failed": 1,
+          "reason": "150000explicit lines overflow expanded Math.max"
+        },
+        "inpainting": {
+          "executed": 15,
+          "passed": 14,
+          "failed": 1,
+          "reason": "5000connected source boxes write12502500array values"
+        },
+        "messageRouter": {
+          "executed": 28,
+          "passed": 27,
+          "failed": 1,
+          "reason": "Consumed and reused ID loses fresh cancellation after511other pending IDs"
+        },
+        "scope": "Each three new reproduction cases ran on its actual unchanged source. Added local-translation cancel/late/retry case after fix; no old failure claimed for it."
+      },
+      "implementation": {
+        "layout": "Iterative max removes expanded call arguments and temporary width array/map callback, preserving search, text and measure order. No text limit/truncation.",
+        "inpainting": "Disjoint private linked member chains concatenate without copying, flatten once in the original order. No source/rectangle mutation. Additional linked objects O(n); group scans/splice/duplicate pixel work remain.",
+        "cancellation": "Remove duplicate FIFO history array. Set insertion order includes only currently pending cancel IDs, delete oldest at >512; consumed IDs do not count or erase future reused-ID cancels.",
+        "exportsRemoved": 0,
+        "netProductionFunctionBodies": -1,
+        "newIgnores": 0,
+        "thresholdChanges": false
+      },
+      "strictCoverage": {
+        "files": 11,
+        "cases": 236,
+        "modules": 13,
+        "metrics": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "differentialAndTiming": {
+        "sourceSha256": {
+          "rendering": {
+            "baseline": "f7ba0a3d8d6e98f6fab6e1b8b8a974bf58403acdfdc7ba657823de80a6d65a83",
+            "current": "4079b5445e767ce9317c8ffe23014c79d7ebfec409b692ee52f4f606c3f961aa"
+          },
+          "inpainting": {
+            "baseline": "db80e180863bec8344e62479a85b46749c3cd924cf36292370037a4107c5ade9",
+            "current": "9296d98f4b8dafeba9875cb293ba532f45f7ad342cfdea4bde05ccbf28bb2f73"
+          }
+        },
+        "scope": "Actual immutable baseline/current pure functions; no OCR/provider/browser timing",
+        "differentials": {
+          "rendering": 1500,
+          "renderMeasureCallOrderEqual": true,
+          "inpainting": 2500,
+          "inPlaceOutputEqual": true,
+          "pixelsAndRegionsUnchanged": true
+        },
+        "workCounts": {
+          "baseline": {
+            "adjacent5000AppendedArrayValues": 12502500
+          },
+          "current": {
+            "adjacent5000AppendedArrayValues": 10000
+          }
+        },
+        "timing": [
+          {
+            "name": "adjacent100",
+            "medianMs": {
+              "baseline": 0.5237089999999966,
+              "current": 0.33116699999999355
+            },
+            "samplesMs": {
+              "baseline": [
+                0.6155420000000049,
+                0.3525419999999997,
+                0.854375000000033,
+                0.5237089999999966,
+                0.41262499999999136,
+                1.745834000000002,
+                0.8228750000000105,
+                0.13879199999996672,
+                0.13070799999997007
+              ],
+              "current": [
+                0.3272089999999821,
+                0.6414169999999899,
+                0.3872920000000022,
+                0.3259159999999497,
+                0.31649999999996226,
+                0.3352499999999736,
+                0.36841699999996536,
+                0.3102089999999862,
+                0.33116699999999355
+              ]
+            },
+            "outputSha256": "2920796387186fedf514efa565f5887ddd42369de7a19486fd4f9684ea29f746"
+          },
+          {
+            "name": "adjacent1000",
+            "medianMs": {
+              "baseline": 1.8260000000000218,
+              "current": 0.8493750000000091
+            },
+            "samplesMs": {
+              "baseline": [
+                1.9424999999999955,
+                2.1689999999999827,
+                2.033083999999974,
+                1.8260000000000218,
+                1.6937500000000227,
+                1.8804580000000328,
+                1.6577919999999722,
+                1.7585419999999772,
+                1.8151659999999765
+              ],
+              "current": [
+                0.8493750000000091,
+                0.8253750000000082,
+                0.875500000000045,
+                0.8033340000000067,
+                1.087333000000001,
+                0.8680410000000052,
+                1.0558750000000146,
+                0.8239169999999945,
+                0.8041249999999991
+              ]
+            },
+            "outputSha256": "2920796387186fedf514efa565f5887ddd42369de7a19486fd4f9684ea29f746"
+          },
+          {
+            "name": "adjacent5000",
+            "medianMs": {
+              "baseline": 29.605458999999996,
+              "current": 4.493167000000028
+            },
+            "samplesMs": {
+              "baseline": [
+                29.65625,
+                29.605458999999996,
+                29.90599999999995,
+                27.537541999999974,
+                28.037541000000033,
+                31.393749999999955,
+                29.624582999999916,
+                27.86295800000005,
+                29.013999999999896
+              ],
+              "current": [
+                5.060583000000008,
+                4.336250000000007,
+                4.493167000000028,
+                4.228499999999997,
+                5.08887500000003,
+                4.178916999999956,
+                5.364416000000006,
+                4.06837500000006,
+                5.406292000000008
+              ]
+            },
+            "outputSha256": "2920796387186fedf514efa565f5887ddd42369de7a19486fd4f9684ea29f746"
+          },
+          {
+            "name": "dispersed50",
+            "medianMs": {
+              "baseline": 0.14687500000002274,
+              "current": 0.15016700000001038
+            },
+            "samplesMs": {
+              "baseline": [
+                0.144916999999964,
+                0.15308300000003783,
+                0.1906250000000682,
+                0.15162499999996726,
+                0.14616699999999128,
+                0.14620899999999892,
+                0.1493750000000773,
+                0.1458749999999327,
+                0.14687500000002274
+              ],
+              "current": [
+                0.15016700000001038,
+                0.15658399999995254,
+                0.17399999999997817,
+                0.152417000000014,
+                0.14954199999999673,
+                0.14733400000000074,
+                0.14829099999997197,
+                0.1576669999999467,
+                0.1478749999999991
+              ]
+            },
+            "outputSha256": "b0dd6cf8e573b2c62a695926adccd88e081278143bfbb948dbbc7bfd88bda7ab"
+          }
+        ],
+        "largeCurrentOnly": {
+          "inpaintMembers": 150000,
+          "fullPixelsEqual": true,
+          "oldLargeNotRun": true
+        }
+      },
+      "timingBoundary": "Independent Node20.11.1process after own native/test/build/inventory handles ended;3warmups,9alternating rounds. Work counts measured separately. Not machine-wide idle, whole-pipeline/browser/network speed or universal improvement; dispersed50small boxes0.1469->0.1502ms roughly unchanged/slightly slower.",
+      "browser": {
+        "oldManyLineResponse": {
+          "passed": false,
+          "reason": "Actual production pipeline renders image translation failure Maximum call stack size exceeded",
+          "profileRemoved": true,
+          "javascriptAssetsSha256": "c2e76d3af0f82d8fdeee16b9f0f881e453b5335562dab8b514bb6d697d2c65b2"
+        },
+        "finalNormal": {
+          "passed": true,
+          "phases": 22,
+          "cases": [
+            "HAR technical identifiers stay unchanged without requests; repeated primary XSRF failures are skipped",
+            "missing languages exposes preparation action",
+            "real language download, OCR, translation and replacement",
+            "independent viewport reader preserves recognized original alongside translation",
+            "restore and redisplay reuse result without requests or source mutation",
+            "scroll retains same decoded bitmap",
+            "second image hover survives unrelated live DOM updates",
+            "DOM geometry matches source: contain-padding-border",
+            "DOM geometry matches source: cover-padding-border",
+            "DOM geometry matches source: none-padding-border",
+            "DOM geometry matches source: ancestor-clipping",
+            "DOM geometry matches source: ancestor-scroll-clipping",
+            "dynamic source change removes old translation",
+            "loading Cancel retains the same attached hovered focused row and button during progress",
+            "cancel never installs a late result",
+            "retry works after cancellation",
+            "injected offscreen channel closure retries once with a fresh request and installs a valid bitmap",
+            "transparent PNG hides original letters while translated bitmap remains visible",
+            "restoring transparent source releases only the extension opacity lease",
+            "host opacity change removes old replacement and preserves the host value",
+            "image removal cleans overlay",
+            "consumed cancellation ID can be cancelled again across real Offscreen routing without starting OCR/provider"
+          ],
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "profileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 15
+        },
+        "finalManyLine": {
+          "passed": true,
+          "phases": 4,
+          "cases": [
+            "many-line synthetic response renders without argument overflow and reader preserves complete text",
+            "ninety individually drawn rows survive real OCR as a complete paragraph",
+            "dense reader matches complete grouped request and restore preserves source",
+            "dense cached redisplay sends no new translation request"
+          ],
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "profileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 2
+        },
+        "manyLineResult": {
+          "lines": 150000,
+          "bytes": 299999,
+          "fullReaderMatches": true,
+          "bitmapDecoded": true,
+          "scope": "synthetic Google response through real production rendering/IPC; no live provider or visual readability guarantee"
+        },
+        "reusedCancellation": {
+          "bothStartsCancelled": true,
+          "newProviderRequests": 0,
+          "queuedUniqueCancels": 512
+        },
+        "javascriptAssetsSha256": "d84b4cf653408e688e568d5f2a4005d1498da7d6a775a656724bd34831d9d14a",
+        "screenshotsInspected": [
+          "final-normal02translated",
+          "final-many-lines-reader",
+          "diagnostic-dense-reader"
+        ],
+        "cleanupVerified": true,
+        "scopedTemporaryProcessesAfterRun": 0,
+        "scope": "Real English Tesseract/public model preparation, deterministic Google transport, production render/IPC/UI. No live Google/AI semantics, Firefox runtime, cloud account/device or store-release proof."
+      },
+      "ocrDiagnostic": {
+        "scope": "Actual Tesseract result captured by one clone-only argument expression in a private production-bundle copy; not a final release build or timing sample",
+        "rawSha256": "d2282810fb2a183afec3ede01325cc2ab52e5c9bf1e1fa6ac5643d960242f919",
+        "privateDiagnosticPatch": [
+          {
+            "file": "chunks/offscreen-DPceo-Xz.js",
+            "beforeSha256": "36b50fffe0e843ef23485988f96bf62e31584b33a597f2a4d5f7b36195670324",
+            "afterSha256": "ff42fa710c5fc826f58497d835559245801804cafaab7be35990dcd4dde3dcd3",
+            "capture": "clone raw blocks immediately before actual normalization; original normalization still called once"
+          }
+        ],
+        "drawnRows": 90,
+        "rawLines": 90,
+        "rawWords": 540,
+        "wordConfidences": [
+          96
+        ],
+        "rawLinePeriods": 0,
+        "rawWordPeriods": 0,
+        "normalizedProviderInputEqualsRawWordsJoined": true,
+        "rawLineAndWordRightBoundary": 496,
+        "actualSourceBoxHeight": 26,
+        "existingPadding": 3,
+        "maskRightExclusive": 499,
+        "rowsWithNonWhitePixelsBeyondMask": 90,
+        "residualRange": {
+          "x0": 499,
+          "x1": 502
+        },
+        "conclusion": "Tesseract omits every originally drawn period from both raw text and raw boxes; confident words survive normalization, provider input unchanged. Residual marks beyond x499 are outside recognized source boxes plus existing padding. Not evidence that normalizeOcrLines drops punctuation. No blind mask expansion or confidence weakening applied.",
+        "remaining": "Engine punctuation recall and safe pixel-boundary quality remain unresolved; complex background recovery/semantic translation quality not proven.",
+        "diagnosticBrowser": {
+          "passed": true,
+          "phases": 3,
+          "cases": [
+            "ninety individually drawn rows survive real OCR as a complete paragraph",
+            "dense reader matches complete grouped request and restore preserves source",
+            "dense cached redisplay sends no new translation request"
+          ],
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "profileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 2
+        },
+        "diagnosticJavascriptAssetsSha256": "afd26b7f8eda5b9046c5f231218b5a98fb3a7b7db88eb43296abda7732b3f32c",
+        "diagnosticMatchesFinalReleaseBundle": false
+      },
+      "checks": {
+        "typecheck": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed; no real Firefox runtime",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testSuiteAudit": {
+          "passed": true,
+          "files": 466,
+          "staticRegisteredDefinitions": 6217
+        },
+        "docsBuild": "passed public-site build; internal audit reports are excluded by reports/**",
+        "docsCheck": {
+          "passed": true,
+          "pages": 77,
+          "links": 3959,
+          "anchors": 745,
+          "images": 154,
+          "scope": "public-site pages only; does not render/validate the excluded internal audit report"
+        },
+        "internalReportValidation": {
+          "passed": true,
+          "scope": "JSON parsing, every reviewed source hash/function count, complete disjoint reviewed/pending partition, private reproduction/differential/coverage/native evidence assertions",
+          "reviewLedgerSha256": "64aba89de2d7dd4388dc764442373e14c1561f123d9dc702eea126691f89fee2",
+          "readmeSha256": "cbe0caee5fa03f77463be3d80d1a03afe0925f273e9f803b2ac2ce3498e71eec"
+        }
+      },
+      "architecture": {
+        "headerCases": 801,
+        "moduleBoundaryCases": 13,
+        "providerBoundaryCases": 6,
+        "passed": 827,
+        "failed": 2,
+        "ownership": {
+          "cases": 9,
+          "passed": 7,
+          "failed": 2,
+          "remainingExecutableOmissions": 15,
+          "unownedDocumentationTools": 3,
+          "wholeGatePassed": false
+        }
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/image-translation/services/ocrRuntime.ts",
+          "src/features/image-translation/services/ocrWorkerRuntime.ts",
+          "src/features/image-translation/services/sharedOcrTasks.ts",
+          "src/features/image-translation/services/ocrModelCache.ts",
+          "src/features/image-translation/ocrLanguages.ts",
+          "src/features/image-translation/content/textReader.ts",
+          "src/app/offscreen/imageTranslation.ts",
+          "src/app/offscreen/messageRouter.ts"
+        ],
+        "newFunctionBodies": 182,
+        "changedFiles": [
+          "src/features/image-translation/services/rendering.ts",
+          "src/features/image-translation/services/inpainting.ts"
+        ],
+        "inventoryFiles": 821,
+        "inventoryFunctions": 14700,
+        "cachedIntegratedPendingSources": [
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/handlers/webDavBackup.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/config/catalog.ts",
+          "src/core/config/freeTranslation.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/services/mangaOcr.ts",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WebDavBackup.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceCatalogItem.vue",
+          "src/features/settings/ui/services/freeTranslationChecks.ts",
+          "src/platform/google-drive/api.ts",
+          "src/platform/webdav/api.ts",
+          "src/providers/translation/free-extra-web.ts",
+          "src/providers/translation/free-web.ts",
+          "src/services/config/cloudBackupClient.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/config/webDavBackup.ts"
+        ]
+      },
+      "cachedHistoryObservation": {
+        "previousCachedMain": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "currentCachedMain": "5de9e1cfeb1ae581523b402f17f526a1113e1f71",
+        "previousTree": "c5e73add37eead8a7de5fd1c5ac36f1e1a3bf5a6",
+        "currentTree": "c5e73add37eead8a7de5fd1c5ac36f1e1a3bf5a6",
+        "treeEqual": true,
+        "commonAncestorFound": false,
+        "networkRefreshPerformed": false,
+        "integratedNewHistory": false
+      },
+      "remaining": [
+        "650pending source files and cached-main source debt",
+        "Engine omitted punctuation remains pixel quality gap; no blind masks/confidence change",
+        "Inpaint group search/pixel budgets; vertical OCR grouping/dedup; synchronous area/OCR encoding",
+        "All prior highlighter/remount/section/vocabulary budgets and15executable+3docs ownership gaps",
+        "Shared cached origin/main history changed with identical imported tree/no common ancestor; no history reconciliation or remote action done"
+      ],
+      "referenceRepositoriesChanged": false,
+      "referenceCodeUsedInThisBatch": false,
+      "pushed": false,
+      "remoteMerged": false
     }
   ]
 }

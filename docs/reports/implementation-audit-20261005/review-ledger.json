@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 821,
-    "functions": 14701,
+    "functions": 14700,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -84,7 +84,7 @@
       "src/app": {
         "files": 101,
         "functions": 1168,
-        "lines": 11423
+        "lines": 11424
       },
       "src/core/config": {
         "files": 52,
@@ -168,8 +168,8 @@
       },
       "src/features/image-translation": {
         "files": 47,
-        "functions": 864,
-        "lines": 6976
+        "functions": 863,
+        "lines": 6986
       },
       "src/features/input-translation": {
         "files": 6,
@@ -582,6 +582,18 @@
       "file": "src/app/content/runtime.ts",
       "sha256": "3549147565242c425714bee512b6aa9164c3a509688fde51d2785e80c75c152c",
       "functionBodies": 46,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/offscreen/imageTranslation.ts",
+      "sha256": "2cebd43963cf42c5f87dc5c918625c4f7a66afdce237a95390631897966e822d",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/offscreen/messageRouter.ts",
+      "sha256": "ae3248160e831b68f4d1f286178d66bd393fed58e057aa119b47d5e2775e1c5e",
+      "functionBodies": 87,
       "status": "source-read-and-traced"
     },
     {
@@ -1035,9 +1047,21 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/image-translation/content/textReader.ts",
+      "sha256": "a7179d90f75bcb7fe654e28e19fc2b43960c8339b02a5bb6874168c0dd89e796",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/image-translation/core.ts",
       "sha256": "61f75459501d3a4935b32097f9536397aeff66c21915840689cdfe5e234a63c8",
       "functionBodies": 46,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/image-translation/ocrLanguages.ts",
+      "sha256": "409c2c352b9a63b851d5695165ab2cd1940e6a23645fbdf0c8796a98b64caf59",
+      "functionBodies": 6,
       "status": "source-read-and-traced"
     },
     {
@@ -1048,7 +1072,7 @@
     },
     {
       "file": "src/features/image-translation/services/inpainting.ts",
-      "sha256": "db80e180863bec8344e62479a85b46749c3cd924cf36292370037a4107c5ade9",
+      "sha256": "9296d98f4b8dafeba9875cb293ba532f45f7ad342cfdea4bde05ccbf28bb2f73",
       "functionBodies": 9,
       "status": "source-read-and-traced"
     },
@@ -1059,6 +1083,24 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/image-translation/services/ocrModelCache.ts",
+      "sha256": "b6ee111f5cb1dbf3e438bb0e17434e4fb7f19f7dddecb825586177c32dc31cce",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/image-translation/services/ocrRuntime.ts",
+      "sha256": "683aaf48796346a72a64e434553763688948983d3cb6ca0de3756180da1e77fd",
+      "functionBodies": 23,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/image-translation/services/ocrWorkerRuntime.ts",
+      "sha256": "979f16dd4c8bbbd16c24e8674b41bbf4b976a1a615b30ba43447406809d18c0d",
+      "functionBodies": 34,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/image-translation/services/offscreenRuntime.ts",
       "sha256": "6018e5802fb86fa103a454cdfa80ab15a6e9e5a3b85ff84ea332ca915d6f1aa2",
       "functionBodies": 41,
@@ -1066,8 +1108,14 @@
     },
     {
       "file": "src/features/image-translation/services/rendering.ts",
-      "sha256": "f7ba0a3d8d6e98f6fab6e1b8b8a974bf58403acdfdc7ba657823de80a6d65a83",
-      "functionBodies": 19,
+      "sha256": "4079b5445e767ce9317c8ffe23014c79d7ebfec409b692ee52f4f606c3f961aa",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/image-translation/services/sharedOcrTasks.ts",
+      "sha256": "98b583af9fc44a070c8eada52fca7c84b993b4491b4be9c56897efba404ad715",
+      "functionBodies": 12,
       "status": "source-read-and-traced"
     },
     {
@@ -1523,10 +1571,8 @@
     "src/app/document-translation/index.ts",
     "src/app/document-translation/page.ts",
     "src/app/document-translation/runtime.ts",
-    "src/app/offscreen/imageTranslation.ts",
     "src/app/offscreen/localTranslationWorker.ts",
     "src/app/offscreen/localTtsWorker.ts",
-    "src/app/offscreen/messageRouter.ts",
     "src/app/offscreen/runtime.ts",
     "src/app/offscreen/translation.ts",
     "src/app/offscreen/ttsPlayback.ts",
@@ -1699,9 +1745,7 @@
     "src/features/image-translation/content/presentation.ts",
     "src/features/image-translation/content/runtime.ts",
     "src/features/image-translation/content/sourceAuthorization.ts",
-    "src/features/image-translation/content/textReader.ts",
     "src/features/image-translation/mangaPatchResult.ts",
-    "src/features/image-translation/ocrLanguages.ts",
     "src/features/image-translation/progress.ts",
     "src/features/image-translation/protocol.ts",
     "src/features/image-translation/public.ts",
@@ -1715,11 +1759,7 @@
     "src/features/image-translation/services/mangaRendering.ts",
     "src/features/image-translation/services/mangaSessionFallback.ts",
     "src/features/image-translation/services/mangaTypography.ts",
-    "src/features/image-translation/services/ocrModelCache.ts",
-    "src/features/image-translation/services/ocrRuntime.ts",
-    "src/features/image-translation/services/ocrWorkerRuntime.ts",
     "src/features/image-translation/services/remoteImage.ts",
-    "src/features/image-translation/services/sharedOcrTasks.ts",
     "src/features/image-translation/ui/ImageOcrSettings.vue",
     "src/features/image-translation/ui/MangaEntry.vue",
     "src/features/image-translation/ui/MangaModelSettings.vue",
@@ -2104,7 +2144,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Fix reproduced150000line/300KB image layout Math.max argument-expansion RangeError with real unit and output/work validation. Trace dense native punctuation-like residual marks, OCR/raw vs normalized/sourceBoxes ownership; image clustering repeated member-copy/spread and synchronous area crop encoding. Continue cached-main source debt, all pending functions, highlighter/remount/section/vocabulary performance and ownership gaps.",
+    "Continue all pending sources: engine punctuation recall/safe erasure quality, inpaint group-search/mask pixel budgets, vertical grouping and dedup, synchronous area crop/OCR encode; cached-main source debt; highlighter remount/geometry/ancestor mutation budgets, vocabulary import/index memory and ownership validation. Cached main history changed with identical tree and no common ancestor; no merge/rebase/publish performed.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2118,9 +2158,9 @@
     "Cached local origin/main f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab contains 24 post-baseline commits, including image/docs/Google/cloud deletion/service-status/DeepLX opt-in and nature badge/settings in-page navigation. Integrate and re-review before full-goal completion. Concurrent tracking-ref updates are not remote freshness proof."
   ],
   "progress": {
-    "sourceReadFiles": 163,
-    "sourceReadFunctionBodies": 2657,
-    "pendingFiles": 658,
+    "sourceReadFiles": 171,
+    "sourceReadFunctionBodies": 2838,
+    "pendingFiles": 650,
     "goalComplete": false
   },
   "observations": [
@@ -2363,6 +2403,56 @@
       "file": "scripts/testing/run-image-translation-flow-test.cjs",
       "status": "stale-provider-fixture-corrected-and-native-validated",
       "issue": "Old actual production HAR fixture fails because HTML preferred Google endpoint falls through to originalFetch and tracked requests are empty, invalidating deterministic-transport assertion. Fixture now handles HTML/list/RPC arrays and numbered slots, abortable delay, rejects unknown translation endpoints, verifies three XSRF cooldowns and UK fallback; add artifact JS digest and optional90-row real OCR/reader/restore/cache phases. Raw stale run and corrected baseline retained. Dense screenshot shows residual punctuation-like marks beside erased text; causal OCR/normalization/mask investigation not done, no perfect pixel/translation claim."
+    },
+    {
+      "file": "src/features/image-translation/services/rendering.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "150000-line synthetic response RangeError reproduced in old unit (19pass1fail) and actual old production rendering chain. Replace expanded Math.max/map width array with iterative max; remove one callback, retain full text/empty lines/font search and measure call order.1500mixed-language actual-source differentials equal; native final complete299999byte reader/PNG/restore/cache pass. Tiny font is not readable bitmap or live provider quality proof."
+    },
+    {
+      "file": "src/features/image-translation/services/inpainting.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Old5000connected-box fixture14pass1fail with12502500push values. Private member chains concatenate O(1) per merge and flatten once preserving old order; now10000push values.2500seeded gradient/alpha/sourceBoxes/clipped/invalid/alias pixel differentials and in-place equivalence pass.150000member current-only output equal; old huge case not run, no old-stack reproduction claim for inpainting. Group-search/splice and duplicate pixel visits still potentially quadratic/heavy, linked nodes use O(n) extra memory; no whole-pipeline guarantee."
+    },
+    {
+      "file": "src/features/image-translation/services/ocrRuntime.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete23bodies traced: explicit engine/model paths/init, progress adapter, strategy/language image keys, independent shared cancel, bounded count/byte LRU copy ownership, own/borrowed image cleanup and decode timeout, resize coordinates and one fallback/negative-cache prevention. Four100. Scaled OCR still synchronous PNG encoding; cache clear/removal only after queued worker completion."
+    },
+    {
+      "file": "src/features/image-translation/services/ocrWorkerRuntime.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete34bodies traced: serialized worker creation/parameter/language changes, five-model accumulated limit, generation assertions around late transitions, per-job monotonic progress, queued cancel never owning active worker and active cancellation releases tail. Four100. ClearModels remove failure and worker lifecycle are preserved; no real multi-language model accuracy proof."
+    },
+    {
+      "file": "src/features/image-translation/services/sharedOcrTasks.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete12bodies traced: one execution per key, private subscriber resolve/reject/progress, immediate preparation, independent abort and last-subscriber termination, stale completion cannot delete retry identity. Four100; no duplicate result caching here."
+    },
+    {
+      "file": "src/features/image-translation/services/ocrModelCache.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete7bodies traced: exact model-key deletion in real memory IndexedDB, commit/abort/empty-store/open errors and closing own connection. Four100; no cloud/storage real-account or all quota/browser failure proof."
+    },
+    {
+      "file": "src/features/image-translation/ocrLanguages.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete6bodies traced: whitelist source/model language catalog, own-key-safe mapping, Chinese script and region canonicalization, vertical expansion and stable model/pack dedup; no storage/download side effects. Four100."
+    },
+    {
+      "file": "src/features/image-translation/content/textReader.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete13bodies traced: textContent-only source/translation, copied lines, dialog controls, trusted local keyboard/wheel isolation, revision guards after asynchronous clipboard, timer/listener disposal. Four100; native complete response/reader/source/restore exercised."
+    },
+    {
+      "file": "src/app/offscreen/imageTranslation.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete0bodies/type-free export barrel traced: remote image, OCR prepare/remove, image/area processing and manga lifecycle APIs bind app without creating worker/listener. Dependencies still have pending source reviews."
+    },
+    {
+      "file": "src/app/offscreen/messageRouter.ts",
+      "status": "source-read-and-traced-twenty-second",
+      "issue": "Complete87bodies read/traced: parser/result/error/single-response disciplines, image/Chrome/local queues and IDs, tombstone capacity, early-cancel consumption, model-removal exclusivity, video/TTS/model routing and binary chunk serialization. New reused-ID unit old27pass1fail proves old stale FIFO item deletes fresh cancellation; remove redundant array and use insertion-ordered Set of at most512unconsumed IDs. Native real Offscreen both cancelled starts and0provider requests pass. Add local model cancel/late/retry protection case; this existing cancellation behavior was not run as an old failure. Four100; adapters beyond this message boundary remain pending."
     }
   ]
 }

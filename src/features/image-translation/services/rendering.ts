@@ -167,7 +167,9 @@ export function layoutImageTranslationText(
     const largest = wrap(high);
     if (fits(largest)) return largest;
     // 根据完整段落在 1px 字号的宽度推导可容纳下限；极长译文可缩小但始终保留全部文字。
-    const paragraphWidth = Math.max(1, ...paragraphs.map(paragraph => textWidth(paragraph, 1)));
+    // 行数来自完整译文，不展开成函数参数，也不为取最大值另建宽度数组。
+    let paragraphWidth = 1;
+    for (const paragraph of paragraphs) paragraphWidth = Math.max(paragraphWidth, textWidth(paragraph, 1));
     let low = Math.min(1, width / paragraphWidth, height / (paragraphs.length * lineSpacing)) * 0.99;
     let best = wrap(low);
     for (let iteration = 0; iteration < 12; iteration += 1) {
