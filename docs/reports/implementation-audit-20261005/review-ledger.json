@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 822,
-    "functions": 14732,
+    "files": 823,
+    "functions": 14781,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -84,7 +84,7 @@
       "src/app": {
         "files": 101,
         "functions": 1169,
-        "lines": 11451
+        "lines": 11461
       },
       "src/core/config": {
         "files": 52,
@@ -114,7 +114,7 @@
       "src/core/i18n": {
         "files": 22,
         "functions": 43,
-        "lines": 28357
+        "lines": 28447
       },
       "src/core/language": {
         "files": 11,
@@ -159,7 +159,7 @@
       "src/features/glossary": {
         "files": 3,
         "functions": 93,
-        "lines": 545
+        "lines": 542
       },
       "src/features/hover-translation": {
         "files": 2,
@@ -188,8 +188,8 @@
       },
       "src/features/model-usage": {
         "files": 4,
-        "functions": 116,
-        "lines": 1290
+        "functions": 121,
+        "lines": 1295
       },
       "src/features/page-notice": {
         "files": 2,
@@ -213,8 +213,8 @@
       },
       "src/features/section-translation": {
         "files": 4,
-        "functions": 68,
-        "lines": 747
+        "functions": 91,
+        "lines": 1044
       },
       "src/features/selection-translation": {
         "files": 22,
@@ -222,9 +222,9 @@
         "lines": 5248
       },
       "src/features/settings": {
-        "files": 79,
-        "functions": 1415,
-        "lines": 19010
+        "files": 80,
+        "functions": 1424,
+        "lines": 19046
       },
       "src/features/share-card": {
         "files": 7,
@@ -243,13 +243,13 @@
       },
       "src/features/translation-stats": {
         "files": 3,
-        "functions": 97,
-        "lines": 1164
+        "functions": 99,
+        "lines": 1185
       },
       "src/features/video-subtitle": {
         "files": 46,
-        "functions": 1019,
-        "lines": 12778
+        "functions": 1029,
+        "lines": 12835
       },
       "src/features/vocabulary": {
         "files": 21,
@@ -264,7 +264,7 @@
       "src/platform": {
         "files": 37,
         "functions": 486,
-        "lines": 4469
+        "lines": 4479
       },
       "src/providers": {
         "files": 40,
@@ -274,7 +274,7 @@
       "src/services": {
         "files": 54,
         "functions": 952,
-        "lines": 11716
+        "lines": 11721
       },
       "src/shared": {
         "files": 8,
@@ -1294,8 +1294,20 @@
     },
     {
       "file": "src/features/section-translation/content/picker.ts",
-      "sha256": "1c25d1bdb83c62cc7f189f238f28593d07d6d73e9c14fd5396dbb49a71924151",
-      "functionBodies": 43,
+      "sha256": "327421ef97c6a51c913940354881d4a687cc5e29c21789b530476a7ed231444c",
+      "functionBodies": 63,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/section-translation/core.ts",
+      "sha256": "9d1080588f66e439107f83f70a4df69bc9dadd66f07871eeeb13444fdcf63405",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/section-translation/public.ts",
+      "sha256": "dee0cd51d9756ebfaee90df9424681ed2b81d523d2fe5cb6eab62a6c793f3d3f",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -1987,8 +1999,6 @@
     "src/features/reading-assistant/ui/ReadingAnswer.vue",
     "src/features/reading-assistant/ui/ReadingPanel.vue",
     "src/features/reading-assistant/ui/SentenceAnalysis.vue",
-    "src/features/section-translation/core.ts",
-    "src/features/section-translation/public.ts",
     "src/features/selection-translation/background/offscreenAdapter.ts",
     "src/features/selection-translation/background/pageZoomHandler.ts",
     "src/features/selection-translation/background/selectionTtsSynthesis.ts",
@@ -2058,6 +2068,7 @@
     "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
     "src/features/settings/ui/WebDavBackup.vue",
     "src/features/settings/ui/WritingSettings.vue",
+    "src/features/settings/ui/components/FieldHelp.vue",
     "src/features/settings/ui/components/InterfaceSkinPreview.vue",
     "src/features/settings/ui/components/PopupLayoutPreview.vue",
     "src/features/settings/ui/components/PopupLayoutPreviewItem.vue",
@@ -2315,7 +2326,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue617pending source/function chains and image runtime strict-100 debt. Reconciled44main changes581aec18to63819aac; six new full source reviews and three complete rereads,30snapshot-exact/14merged files. 13of22changed source files still need complete review. Cached local origin/main has moved tof7f00e03with80new changes; reconcile source trees without blind rewritten-history merge. No remote freshness/publication claim.",
+    "Continue616pending source/function chains and image runtime strict-100/performance debt. Reconciled133main files63819aacto99511e12;118snapshot-exact/15merged-or-audited files. Two new full source reviews14bodies and complete picker reread63bodies;40of42changed source files still need full review. Cached9c60e79d has83later changes, recorded as pending source reconciliation, not remotely refreshed.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2336,12 +2347,13 @@
     "Twenty-eighth reconciled all50actual main changes through d5 via clean three-way source patch without merging rewritten history. Other imported source files remain pending function review.9selected modules four100 and256affected cases pass; this does not close image runtime/full repository ownership gaps. Userscript language JSON pinned to a verified local snapshot commit, not remotely published or live-download verified. Settings shortcut dialog delayed opening and deep preview/restore costs remain pending.",
     "Twenty-ninth: shortcut settings and actual CustomHotkeyInput client SFC are now permanently owned by strict coverage, both four100;43new executed cases and107affected pass. Actual Options storage/9browser flows verified.15existing executable-module and3documentation-tool ownership gaps remain. Source review198files/3378bodies,623pending. Cached main581aec18 contains68changed files after integrated d5, including SettingsSections; not integrated yet. Primary clean at d5 and not modified by this task. Previous image/runtime debt entries are historical measurements with unresolved scope, not latest successful whole-repository coverage. Local userscript resource commit remains unpublished.",
     "Thirtieth:68actual main changes through581aec18 reconciled; source integration is not full review.199source-read files/3388bodies,622pending. WebDAV URL edge fixed with4baseline failures and actual XML/parser/API/local-HTTP behavior four100; invalid raw parser inputs are a function-boundary issue, not proof that validated live connections failed. Existing image runtime coverage/CPU budgets remain pending. Main cache moved again to63819aac with44new actual changes, not integrated. Userscript resources pinned to local verified04bd1820only, not published. Primary clean at d5, not modified by task.",
-    "Thirty-first: imported44main source changes through63819aac and fully reviewed6new/3changed files,205files3527bodies617pending. Client revoked-port cleanup could strand Promise;9old-source regressions fail, fixed completion keeps registered ownership. Background consumed cancellation history could delete fresh cancellation;2old-source regressions fail, redundant array removed. Native recovery9cases and client6diagnostic comparisons pass with bounded evidence; retained listener when deregistration itself throws is suppressed, not falsely claimed removed.35module coverage gate still fails runtime;14architecture/3documentation ownership debts remain. Cachedf7f00e0380laterchanges unintegrated. Local20ef5b65language pin bytes verified only, not publicly published."
+    "Thirty-first: imported44main source changes through63819aac and fully reviewed6new/3changed files,205files3527bodies617pending. Client revoked-port cleanup could strand Promise;9old-source regressions fail, fixed completion keeps registered ownership. Background consumed cancellation history could delete fresh cancellation;2old-source regressions fail, redundant array removed. Native recovery9cases and client6diagnostic comparisons pass with bounded evidence; retained listener when deregistration itself throws is suppressed, not falsely claimed removed.35module coverage gate still fails runtime;14architecture/3documentation ownership debts remain. Cachedf7f00e0380laterchanges unintegrated. Local20ef5b65language pin bytes verified only, not publicly published.",
+    "Thirty-second: 133main changes reconciled, section picker/core/public fully read. New dynamic nested shadow roots are observed with150-element scan batches, insertion scans only new subtrees, and stop/selection changes cancel queued work. UI exclusion crosses ShadowRoot hosts; layout ancestor traversal stops at512 and redundant ancestor UI checks removed. Old-source7regressions fail;12files308cases and9modules four100 pass.23files883integration cases pass separately with overlap. Native production16cases pass;two dynamic-shadow paragraphs preserve source and requests remain stable for1000ms. Existing14executable/3documentation ownership debts and previously measured image-runtime strict-100 gap remain. Shadow-host text preview still uses light DOM and may be blank; no whole-goal completion or live-provider claim. Local1c4482cc language pin verified but unpublished."
   ],
   "progress": {
-    "sourceReadFiles": 205,
-    "sourceReadFunctionBodies": 3527,
-    "pendingFiles": 617,
+    "sourceReadFiles": 207,
+    "sourceReadFunctionBodies": 3561,
+    "pendingFiles": 616,
     "goalComplete": false
   },
   "observations": [
@@ -2827,6 +2839,21 @@
       "file": "src/features/image-translation/content/controls.ts",
       "status": "fixed-or-reviewed-and-verified-thirty-first",
       "issue": "Full control source/CSS/ownership review; DOM is restricted to owned Shadow UI, progress nodes stay stable, transferred keyboard focus and translated visibility preserved; actual failure/settings/keyboard/mouse/native UI cases pass."
+    },
+    {
+      "file": "src/features/section-translation/content/picker.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-second",
+      "issue": "Fixed newly inserted nested open ShadowRoot observation. Initial discovery and added-subtree scans use150element batches, text/comment insertion only refreshes summary, cancellation releases scanning queues. Actual old snapshot fails dynamic-observer and scan-budget cases. Native production observes dynamic empty-to-source changes and confirms two paragraphs without looping requests."
+    },
+    {
+      "file": "src/features/section-translation/core.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-second",
+      "issue": "Full14function-body review. Fixed composed ShadowRoot UI exclusion and detached translation artifact null parent. Bound resolve/expand layout ancestor scans to512; remove per-ancestor UI rechecks after initial whole-composed-chain exclusion. Old snapshot fails five added core cases;512/513boundaries and real DOM guards verified."
+    },
+    {
+      "file": "src/core/i18n/messages/legacy-corrections.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-second",
+      "issue": "Removed one retired YouTube subtitle source row and six locale corrections after integrated source-reference test failed. This one-row removal is not a full review of this large registry."
     }
   ]
 }

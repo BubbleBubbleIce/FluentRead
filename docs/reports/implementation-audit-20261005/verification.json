@@ -20998,6 +20998,619 @@
         "Image runtime strict coverage and native decode/draw/mutation performance budgets remain pending.",
         "Resource pin is local and unpublished."
       ]
+    },
+    {
+      "batch": "thirty-second",
+      "name": "main-section-picker-reconciliation-dynamic-shadow-observation-and-bounded-traversal",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 207,
+        "sourceReadFunctionBodies": 3561,
+        "pendingFiles": 616,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/section-translation/core.ts",
+          "src/features/section-translation/public.ts"
+        ],
+        "newFunctionBodies": 14,
+        "recheckedFiles": [
+          "src/features/section-translation/content/picker.ts"
+        ],
+        "recheckedFunctionBodies": 63,
+        "mainChangedSourceFiles": 42,
+        "mainChangedSourcesStillPending": [
+          "src/app/background/handlers/modelUsage.ts",
+          "src/core/config/catalog.ts",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/siteRules.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/glossary/ui/GlossarySettings.vue",
+          "src/features/model-usage/ui/ModelUsageDashboard.vue",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/LocalTranslationModelSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/SiteRulePreview.vue",
+          "src/features/settings/ui/components/FieldHelp.vue",
+          "src/features/settings/ui/services/ApiKeyList.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ModelVisionSettings.vue",
+          "src/features/settings/ui/services/PromptTemplateEditor.vue",
+          "src/features/settings/ui/services/RequestHeaderSettings.vue",
+          "src/features/settings/ui/services/RequestLimitFields.vue",
+          "src/features/settings/ui/services/RequestLimitSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/translation-stats/ui/TranslationStatsDashboard.vue",
+          "src/features/video-subtitle/content/hlsAudioRuntime.ts",
+          "src/features/video-subtitle/content/playerMenu.ts",
+          "src/features/video-subtitle/content/runtime.ts",
+          "src/features/video-subtitle/content/video-ai/fullCapture.ts",
+          "src/features/video-subtitle/content/video-ai/modelSetup.ts",
+          "src/features/video-subtitle/content/videoPlayerLocator.ts",
+          "src/platform/storage/modelUsageRepository.ts",
+          "src/services/model-usage/types.ts",
+          "userscript/vite.config.ts"
+        ],
+        "sourceIntegrationIsFullReview": false
+      },
+      "mainIntegration": {
+        "base": "63819aac16b66e22385c1a2a35bcae0f0e657b68",
+        "snapshot": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "files": 133,
+        "conflictsResolved": 2,
+        "executableConflictBlocksDiscarded": 0,
+        "finalSnapshotExactFiles": 118,
+        "finalMergedOrAuditedFiles": [
+          "docs/en/guide/custom-hotkey.md",
+          "docs/guide/custom-hotkey.md",
+          "docs/testing.md",
+          "scripts/testing/run-area-vision-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/section-translation/core.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "tests/sectionTranslationCore.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/test-matrix.json",
+          "userscript/vite.config.ts"
+        ],
+        "sourceTreeOnly": true,
+        "rewrittenHistoryMerged": false,
+        "primaryModified": false
+      },
+      "externalMain": {
+        "snapshot": "9c60e79db6259c95ecfd5c4509c41e2411210c18",
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/webdav.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/webdav.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/testing.md",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/settings-page.css",
+          "tests/settingsUiArchitecture.test.ts"
+        ],
+        "primaryHead": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "primaryStatus": "",
+        "newRemoteFetch": false,
+        "primaryModified": false
+      },
+      "oldSourceRuns": {
+        "snapshot": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "files": 2,
+        "failed": 7,
+        "passed": 71,
+        "total": 78,
+        "unhandledErrors": 0,
+        "baselineHashes": {
+          "src/features/section-translation/content/picker.ts": {
+            "sha256": "c02aa651fa567ec971323d6a32f03bcb282db406f537421f02ce6685fc2a2e2a",
+            "matchesSnapshot995": true
+          },
+          "src/features/section-translation/core.ts": {
+            "sha256": "4ff8be92e0bfe569ef3ab7a4de1d197e1b5b39c7a638439b21f216c3e167d52f",
+            "matchesSnapshot995": true
+          },
+          "src/core/i18n/messages/legacy-corrections.ts": {
+            "sha256": "45b2507f32721641e494304ed4af206c10d3f4ed2a36e8ee9839ae6cf5ca5308",
+            "matchesSnapshot995": false
+          }
+        }
+      },
+      "newExecutedUnitCases": 10,
+      "newStaticTestDefinitions": 7,
+      "newNativeCases": 1,
+      "implementation": {
+        "shadowScanElementBudgetPerBatch": 150,
+        "scope": "initial150steps then additional animation frames; each insertion only schedules its added subtrees; text/comment records do not traverse shadow trees",
+        "ancestorLayoutReadBudget": 512,
+        "removedRedundancy": [
+          "whole-tree synchronous getOpenShadowRoots call on lock",
+          "repeated UI exclusion for every expanded ancestor",
+          "one unused legacy source row and six locale corrections"
+        ],
+        "resourcePin": {
+          "commit": "1c4482cc43d3c5ca79cf8aa8ca0973319920a9c1",
+          "files": [
+            "userscript/languages/ja-JP.eef3c20d9b8f0877.json",
+            "userscript/languages/ko-KR.b349a9fdfe6f337c.json",
+            "userscript/languages/fr-FR.0283a0f7de687af6.json",
+            "userscript/languages/ru-RU.f66db0b4134081c0.json",
+            "userscript/languages/es-ES.fe603a73c6f26d32.json"
+          ],
+          "remotePublished": false,
+          "bytesAndContentHashesVerified": true
+        }
+      },
+      "affectedTests": {
+        "sectionCoverage": {
+          "files": 12,
+          "passed": 308
+        },
+        "mainIntegration": {
+          "files": 23,
+          "passed": 883
+        },
+        "groupsOverlap": true
+      },
+      "strictCoverage": {
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "modules": {
+          "src/app/content/quickTranslationRuntime.ts": {
+            "lines": {
+              "total": 47,
+              "covered": 47,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 7,
+              "covered": 7,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 47,
+              "covered": 47,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 13,
+              "covered": 13,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/quickTranslation.ts": {
+            "lines": {
+              "total": 125,
+              "covered": 125,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 125,
+              "covered": 125,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 72,
+              "covered": 72,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/sectionTranslation.ts": {
+            "lines": {
+              "total": 31,
+              "covered": 31,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 5,
+              "covered": 5,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 31,
+              "covered": 31,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 18,
+              "covered": 18,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/glossary/model.ts": {
+            "lines": {
+              "total": 131,
+              "covered": 131,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 131,
+              "covered": 131,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 95,
+              "covered": 95,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/full-page-translation/content/sectionTranslation.ts": {
+            "lines": {
+              "total": 147,
+              "covered": 147,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 16,
+              "covered": 16,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 147,
+              "covered": 147,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 102,
+              "covered": 102,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/quick-translation/content/index.ts": {
+            "lines": {
+              "total": 272,
+              "covered": 272,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 19,
+              "covered": 19,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 272,
+              "covered": 272,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 125,
+              "covered": 125,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/section-translation/core.ts": {
+            "lines": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 13,
+              "covered": 13,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 115,
+              "covered": 115,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/section-translation/content/index.ts": {
+            "lines": {
+              "total": 74,
+              "covered": 74,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 13,
+              "covered": 13,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 74,
+              "covered": 74,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 66,
+              "covered": 66,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/section-translation/content/picker.ts": {
+            "lines": {
+              "total": 593,
+              "covered": 593,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 46,
+              "covered": 46,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 593,
+              "covered": 593,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 344,
+              "covered": 344,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "totals": {
+          "lines": {
+            "total": 1553,
+            "covered": 1553,
+            "skipped": 0,
+            "pct": 100
+          },
+          "statements": {
+            "total": 1553,
+            "covered": 1553,
+            "skipped": 0,
+            "pct": 100
+          },
+          "functions": {
+            "total": 141,
+            "covered": 141,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branches": {
+            "total": 950,
+            "covered": 950,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branchesTrue": {
+            "total": 0,
+            "covered": 0,
+            "skipped": 0,
+            "pct": 100
+          }
+        },
+        "four100Modules": [
+          "src/app/content/quickTranslationRuntime.ts",
+          "src/core/config/quickTranslation.ts",
+          "src/core/config/sectionTranslation.ts",
+          "src/core/glossary/model.ts",
+          "src/features/full-page-translation/content/sectionTranslation.ts",
+          "src/features/quick-translation/content/index.ts",
+          "src/features/section-translation/content/index.ts",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/section-translation/core.ts"
+        ],
+        "globalGatePassed": true,
+        "previousNineModuleScopePreserved": true,
+        "ignoresAdded": false
+      },
+      "browser": {
+        "browser": "Microsoft Edge",
+        "productionJavascriptSha256": "6d7c3d6058968750784ee8e362ffb9c9276d5730ea456a417579646c8140e481",
+        "scope": "production extension, trusted CDP pointer/keyboard gestures, deterministic Google transport",
+        "cases": [
+          "popup shows the section entry next to the page action",
+          "stable boundary preview, explicit locking, visible range buttons and reselect",
+          "picker highlights the paragraph under the pointer and widens with ArrowUp",
+          "click locks the section without navigation or requests; toolbar confirms only that section",
+          "picking the translated section again restores only that section",
+          "Escape, right-click and forged events leave the page untouched",
+          "picking page chrome translates it even though page translation keeps it original",
+          "same-language and empty sections explain why nothing was requested",
+          "optional shortcut enters and leaves picking, and yields to typing",
+          "restoring page translation also restores translated sections",
+          "independent section shortcut selects a container before requesting its target language",
+          "another section profile switches the container language, and the same profile restores it",
+          "section profile yields while editing and cancels without translation",
+          "narrow layout keeps all range controls and confirmation within the viewport",
+          "new nested open ShadowRoots keep locked empty-to-source summaries current",
+          "turning the plugin off exits picking and rejects new requests"
+        ],
+        "passed": true,
+        "pageErrors": [],
+        "profileRemoved": true,
+        "closeVerifiedByCleanupControlFlow": true,
+        "cleanupErrors": [],
+        "remainingTaskBrowserProcesses": 0,
+        "dynamicShadow": {
+          "paragraphs": 2,
+          "originalPreserved": true,
+          "requestCountStableForMs": 1000
+        },
+        "screenshotsGenerated": 9,
+        "screenshotsInspected": [
+          "10-dynamic-shadow-locked.png",
+          "09-narrow-locked-controls.png"
+        ],
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground"
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 470,
+          "staticDefinitions": 6403
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "verificationRepairs": [
+        "Initial integration i18n test exposed retired legacy source; removed exactly one row.",
+        "Scan-budget fixture getter count initially included900Chai pretty-printer reads; native source stack diagnostic identified them. Boolean identity assertions now avoid DOM pretty-printing during counting.",
+        "Added meaningful text/comment insertion case for the unexecuted non-element scan guard; nine-module strict gate passes without threshold/ignore changes."
+      ],
+      "architectureDebt": {
+        "executableModules": 14,
+        "documentationTools": 3,
+        "wholeRepositoryGatePassed": false,
+        "tests": {
+          "files": 5,
+          "passed": 70,
+          "failed": 2
+        }
+      },
+      "remainingDebt": [
+        "616source files still need complete review;40of42integrated changed source files remain pending.",
+        "Previously measured image runtime strict100gap has not been rechecked this turn; do not transfer section coverage to it.",
+        "Shadow-host source preview is still light-DOM-only and may be empty.",
+        "Cached9c60e79d includes83later file changes; no remote fetch or rewritten-history merge.",
+        "No live Google quality, actual Firefox runtime, user devices/accounts or deployment/store/CDN publication evidence."
+      ]
     }
   ]
 }

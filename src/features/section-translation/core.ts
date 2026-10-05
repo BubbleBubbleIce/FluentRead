@@ -1,7 +1,7 @@
 /**
  * @file src/features/section-translation/core.ts
  * 文件职责：定义局部翻译选择模式里“鼠标指着哪一块区域”的判定规则，把命中的任意节点收敛为可高亮、可翻译的块级容器，并提供向外扩大范围、元素简称与标签文案的纯计算。
- * 主要内容：导出几何判定、范围扩大、界面排除、元素简称、自然语言范围与有界原文预览及动作标签；跳过行内元素、零尺寸盒子、SVG/媒体内部节点和 FluentRead 自身界面，把译文工件映射回原文段落，扩大时略过与当前盒子完全重合的包装层。
+ * 主要内容：导出几何判定、范围扩大、界面排除、元素简称、自然语言范围与有界原文预览及动作标签；跨开放 Shadow DOM 排除 FluentRead 界面，用 512 步预算限制祖先布局读取，跳过行内、零尺寸与媒体节点，安全映射译文工件的原文父级。
  * 模块边界：本模块只读取传入元素与注入的几何/样式端口，不注册监听、不创建界面、不发起翻译，也不读取配置；手势与高亮由 content/picker 负责，区域翻译由全文翻译 feature 的公开接口完成。
  */
 import {getComposedParent} from '@/src/core/translation/public';
@@ -38,6 +38,7 @@ const TRANSLATION_ARTIFACT_SELECTOR = [
 const NON_TEXT_TAGS = new Set(['svg', 'img', 'picture', 'video', 'audio', 'canvas', 'iframe', 'embed', 'object']);
 
 const DOCUMENT_SURFACE_TAGS = new Set(['html', 'body', 'head']);
+const MAX_ANCESTOR_STEPS = 512;
 
 function tagNameOf(element: Element): string {
     return element.tagName.toLowerCase();
@@ -48,7 +49,13 @@ function closestOf(element: Element, selector: string): Element | null {
 }
 
 export function isSectionPickerUi(element: Element): boolean {
-    return closestOf(element, SECTION_PICKER_UI_SELECTOR) !== null;
+    // closest 不穿过 ShadowRoot；每棵树检查一次，再沿宿主继续，避免漏选扩展界面内部节点。
+    for (let current: Element | null = element, depth = 0; current && depth < MAX_ANCESTOR_STEPS; depth += 1) {
+        if (closestOf(current, SECTION_PICKER_UI_SELECTOR)) return true;
+        const root: Node | undefined = current.getRootNode?.();
+        current = root?.nodeType === 11 ? (root as ShadowRoot).host : null;
+    }
+    return false;
 }
 
 /** 行内、contents 与隐藏元素不形成独立盒子，高亮它们会让范围跳动，因此一律向上取块级容器。 */
@@ -77,14 +84,15 @@ function sameBox(left: SectionRect, right: SectionRect): boolean {
  * 由调用方保持“未选中”状态，而不是把整页当成候选。
  */
 export function resolveSectionElement(hit: Element | null, geometry: SectionGeometry): Element | null {
-    // 命中本身或其祖先是 FluentRead 界面时不选区；closest 已覆盖整条祖先链。
+    // 命中本身或组合祖先是 FluentRead 界面时不选区。
     if (!hit || isSectionPickerUi(hit)) return null;
     // 译文工件总挂在原文段落内部，回到它的父级即回到原文。
     const artifact = closestOf(hit, TRANSLATION_ARTIFACT_SELECTOR);
-    const start = artifact ? getComposedParent(artifact)! : hit;
+    const start = artifact ? getComposedParent(artifact) : hit;
+    if (!start) return null;
     let current: Element | null = closestOf(start, 'svg') ?? start;
     if (NON_TEXT_TAGS.has(tagNameOf(current))) current = getComposedParent(current);
-    while (current) {
+    for (let depth = 0; current && depth < MAX_ANCESTOR_STEPS; depth += 1) {
         if (isPickable(current, geometry)) return current;
         current = getComposedParent(current);
     }
@@ -93,9 +101,9 @@ export function resolveSectionElement(hit: Element | null, geometry: SectionGeom
 
 /** 向外扩大一级：跳过与当前盒子完全重合的包装层，保证每按一次范围都肉眼可见地变大；到顶时返回 null。 */
 export function expandSectionElement(current: Element, geometry: SectionGeometry): Element | null {
+    if (isSectionPickerUi(current)) return null;
     const base = geometry.rect(current);
-    for (let parent = getComposedParent(current); parent; parent = getComposedParent(parent)) {
-        if (isSectionPickerUi(parent)) return null;
+    for (let parent = getComposedParent(current), depth = 0; parent && depth < MAX_ANCESTOR_STEPS; parent = getComposedParent(parent), depth += 1) {
         if (!isPickable(parent, geometry)) {
             if (DOCUMENT_SURFACE_TAGS.has(tagNameOf(parent))) return null;
             continue;

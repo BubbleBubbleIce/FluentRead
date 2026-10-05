@@ -60,7 +60,6 @@ fs.mkdirSync(artifactsDir, {recursive: true});
       assert(state.docWidth <= state.width + 1 && state.docHeight <= state.height + 1, `${name}: document overflow ${JSON.stringify(state)}`);
       assert.deepEqual(state.overflow, [], `${name}: control overflow`); assert.deepEqual(state.duplicateIds, [], `${name}: duplicate IDs`); report.layouts.push({name, ...state});
     };
-    const choose = async (selector, value) => {await selector.click(); await page.locator('.el-select-dropdown:visible .el-select-dropdown__item').filter({hasText: value}).click();};
     const saved = async predicate => {
       const deadline = Date.now() + 15000;
       while (Date.now() < deadline) {if (predicate(await readConfig())) return; await popup.waitForTimeout(80);}

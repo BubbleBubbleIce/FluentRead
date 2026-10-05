@@ -245,7 +245,6 @@ onUnmounted(() => {
 .local-model-tag.quality { color: #19755a; background: #e9f6ef; }
 .local-model-info { margin-left: auto; }
 .local-model-languages { margin: 0; font-size: 12px; color: var(--ink); line-height: 1.6; }
-.local-model-summary { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7; overflow-wrap: anywhere; }
 .local-model-description { grid-column: 1 / -1; margin: 0; padding-top: 4px; color: inherit; font-size: 12px; line-height: 1.75; }
 .local-model-description p { margin: 0 0 4px; }
 .local-model-description a { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-decoration: underline; font-size: 12px; }

@@ -1,11 +1,11 @@
 /**
  * @file src/features/section-translation/content/picker.ts
  * 文件职责：实现局部翻译的区域选择模式，稳定预览鼠标下的内容块，点击锁定后用可见按钮调整并确认翻译或恢复的区域，并在选择期间拦截网页自身的点击与悬停反应。
- * 主要内容：在封闭 Shadow Root 中创建高亮框、自然语言范围标签与固定操作条；用边界容差和短暂稳定窗口消除选区抖动，点击锁定后保持区域，按钮与方向键调整范围；识别封闭组件重定向到宿主的按键，操作条焦点不经过网页输入保护；延迟盘点并提供原文预览，确认前刷新区域状态；确认按钮或 Enter 执行、Esc/右键/关闭按钮/页面隐藏退出；确认后短暂收束动画再移除界面。
+ * 主要内容：在封闭 Shadow Root 中创建高亮框、自然语言范围标签与固定操作条；用边界容差和短暂稳定窗口消除选区抖动，点击锁定后保持区域，按钮与方向键调整范围；识别封闭组件重定向到宿主的按键，操作条焦点不经过网页输入保护；按每帧 150 步预算发现开放 ShadowRoot，动态插入只扫描新增子树，换选与退出取消扫描；延迟盘点并提供原文预览，确认前刷新区域状态；确认按钮或 Enter 执行、Esc/右键/关闭按钮/页面隐藏退出；确认后短暂收束动画再移除界面。
  * 模块边界：本模块只处理手势、高亮和选择生命周期，所有事件先校验 isTrusted；区域判定规则来自 ../core，区域盘点、翻译和提示文案由调用方注入，不直接发起翻译、不读取配置存储。
  */
 import pickerStyles from './picker.css?inline';
-import {getComposedParent, getOpenShadowRoots} from '@/src/core/translation/public';
+import {getComposedParent} from '@/src/core/translation/public';
 import {
     describeSectionScope,
     sectionSourcePreview,
@@ -49,6 +49,7 @@ const LABEL_GAP = 6;
 const BOX_OUTSET = 3;
 const VIEWPORT_MARGIN = 4;
 const MAX_SHADOW_DEPTH = 16;
+const SHADOW_SCAN_STEPS_PER_FRAME = 150;
 
 /** 选择期间这些指针事件不交给网页，避免链接跳转、按钮触发、拖拽或划词浮层。 */
 const INTERCEPTED_MOUSE_EVENTS = ['mousedown', 'mouseup', 'click', 'dblclick', 'auxclick'] as const;
@@ -213,6 +214,11 @@ function createPickerSession(options: SectionPickerOptions): PickerSession {
     let topmostTimer: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
     const summaries = new WeakMap<Element, SectionLabelSummary>();
+    let shadowScanFrame = 0;
+    let shadowScans: {root: Node; walker: TreeWalker; current: Element | null}[] = [];
+    let shadowScanIndex = 0;
+    let queuedShadowScans = new WeakSet<Node>();
+    let observedShadowRoots = new WeakSet<ShadowRoot>();
 
     /** 事件落在本浮层或 FluentRead 其他界面（通知、悬浮球等）上时交还给它们自己处理。 */
     const isExtensionUiEvent = (event: Event): boolean => typeof event.composedPath === 'function'
@@ -292,6 +298,7 @@ function createPickerSession(options: SectionPickerOptions): PickerSession {
     }
 
     function setTarget(next: Element | null): void {
+        cancelShadowScanning();
         resizeObserver?.disconnect();
         mutationObserver?.disconnect();
         target = next;
@@ -448,8 +455,10 @@ function createPickerSession(options: SectionPickerOptions): PickerSession {
     function lockSelection(): void {
         if (!target?.isConnected) return;
         cancelSettling();
-        locked = true;
-        observeTarget();
+        if (!locked) {
+            locked = true;
+            observeTarget();
+        }
         // 明确选中后把键盘留在选择器，避免被此前仍聚焦的网页输入框接管 Enter。
         bar.focus?.({preventScroll: true});
         summaries.delete(target);
@@ -480,6 +489,7 @@ function createPickerSession(options: SectionPickerOptions): PickerSession {
         if (shadow.activeElement && previousFocus?.isConnected) previousFocus.focus?.({preventScroll: true});
         mutationObserver?.disconnect();
         resizeObserver?.disconnect();
+        cancelShadowScanning();
         cancelSettling();
         if (frame) cancelFrame(frame);
         if (inspectTimer !== undefined) clearTimeout(inspectTimer);
@@ -609,20 +619,86 @@ function createPickerSession(options: SectionPickerOptions): PickerSession {
             targetDirty = true;
             scheduleRender();
         } else if (records.some(record => containsContent(target!, record.target))) {
+            if (locked) {
+                // 不重新扫描锁定范围；只发现已插入子树中的新宿主和嵌套开放根。
+                for (const record of records) {
+                    if (record.type !== 'childList' || !containsContent(target, record.target)) continue;
+                    for (const added of record.addedNodes) enqueueShadowScan(added);
+                }
+                if (!shadowScanFrame) scanShadowRoots();
+            }
             // 保留上一份可执行摘要直到新盘点完成；确认仍会同步复核，动态正文不会让按钮一直禁用。
             scheduleInspect(true);
             scheduleRender();
         }
     }) : null;
+
+    function cancelShadowScanning(): void {
+        if (shadowScanFrame) cancelFrame(shadowScanFrame);
+        shadowScanFrame = 0;
+        shadowScans = [];
+        shadowScanIndex = 0;
+        queuedShadowScans = new WeakSet<Node>();
+        observedShadowRoots = new WeakSet<ShadowRoot>();
+    }
+
+    function enqueueShadowScan(root: Node): void {
+        if (!mutationObserver || !target || !containsContent(target, root) || queuedShadowScans.has(root)) return;
+        // 文本变更只刷新摘要，不创建扫描器；遍历器只访问元素，不递归进入影子树。
+        if (root.nodeType !== 1 && root.nodeType !== 11) return;
+        queuedShadowScans.add(root);
+        const walker = document.createTreeWalker(root, 1);
+        shadowScans.push({root, walker, current: root.nodeType === 1 ? root as Element : walker.nextNode() as Element | null});
+    }
+
+    function scanShadowRoots(): void {
+        shadowScanFrame = 0;
+        if (disposed || !locked || !target?.isConnected) return;
+        let remaining = SHADOW_SCAN_STEPS_PER_FRAME;
+        let found = false;
+        let checkedRoot: Node | undefined;
+        while (shadowScanIndex < shadowScans.length && remaining > 0) {
+            const scan = shadowScans[shadowScanIndex]!;
+            const element = scan.current;
+            remaining -= 1;
+            // 同一同步批次内只检查一次归属；下一帧继续时仍复核网页是否移走了子树。
+            if (!element || (checkedRoot !== scan.root && !containsContent(target, scan.root))) {
+                queuedShadowScans.delete(scan.root);
+                shadowScanIndex += 1;
+                continue;
+            }
+            checkedRoot = scan.root;
+            const root = element.shadowRoot;
+            if (root && !observedShadowRoots.has(root)) {
+                observedShadowRoots.add(root);
+                mutationObserver!.observe(root, {childList: true, characterData: true, subtree: true});
+                enqueueShadowScan(root);
+                found = true;
+            }
+            scan.current = scan.walker.nextNode() as Element | null;
+            if (!scan.current) {
+                queuedShadowScans.delete(scan.root);
+                shadowScanIndex += 1;
+            }
+        }
+        if (found) scheduleInspect(true);
+        if (shadowScanIndex < shadowScans.length) shadowScanFrame = scheduleFrame(scanShadowRoots);
+        else {
+            shadowScans = [];
+            shadowScanIndex = 0;
+        }
+    }
+
     function observeTarget(): void {
         const observation = {childList: true, characterData: true, subtree: true};
         mutationObserver?.observe(document.documentElement, observation);
         // 文档观察不会穿透 ShadowRoot，额外监听目标所在树，覆盖同尺寸内容替换与祖先移除。
         const root = target?.getRootNode();
         if (root?.nodeType === 11) mutationObserver?.observe(root, observation);
-        // 锁定后才盘点范围内的开放 ShadowRoot，不在逐帧悬停时遍历网页子树。
+        // 锁定后才发现范围内的开放 ShadowRoot；大范围分帧完成，不阻塞一次点击。
         if (locked && target) {
-            for (const shadowRoot of getOpenShadowRoots(target)) mutationObserver?.observe(shadowRoot, observation);
+            enqueueShadowScan(target);
+            scanShadowRoots();
         }
     }
     observeTarget();

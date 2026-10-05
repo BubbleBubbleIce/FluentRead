@@ -458,6 +458,52 @@ async function noticeText() {return page.evaluate(() => document.querySelector('
   await page.setViewportSize({width: 1280, height: 900});
   report.cases.push(currentCase);
 
+  currentCase = 'new nested open ShadowRoots keep locked empty-to-source summaries current';
+  const beforeShadow = await worker.evaluate(() => globalThis.__sectionFixture.requests.length);
+  await page.evaluate(() => {
+    const region = document.createElement('section');
+    region.id = 'dynamic-shadow-region';
+    region.style.cssText = 'margin:20px;padding:24px;min-height:140px;border:1px solid #aaa';
+    document.body.appendChild(region);
+  });
+  await startFromPopupMessage();
+  const shadowPoint = await hover('#dynamic-shadow-region');
+  await waitLabel(/没有可翻译的文字/);
+  await page.mouse.click(shadowPoint.x, shadowPoint.y);
+  await wait(async () => (await pickerState())?.selection === 'locked' && (await pickerState())?.confirmDisabled === true);
+  await page.evaluate(() => {
+    const host = document.createElement('div');
+    const root = host.attachShadow({mode: 'open'});
+    root.innerHTML = '<p id="dynamic-source"></p>';
+    document.querySelector('#dynamic-shadow-region').appendChild(host);
+    window.__sectionShadowRoot = root;
+  });
+  await page.waitForTimeout(180);
+  assert.equal((await pickerState()).confirmDisabled, true);
+  await page.evaluate(() => {window.__sectionShadowRoot.querySelector('p').textContent = 'New English content inside a dynamically inserted web component.';});
+  await waitLabel(/翻译此区域 · 1 段/);
+  assert.equal((await pickerState()).confirmDisabled, false);
+  await page.evaluate(() => {
+    const host = document.createElement('div');
+    const root = host.attachShadow({mode: 'open'});
+    root.innerHTML = '<p id="nested-source"></p>';
+    window.__sectionShadowRoot.appendChild(host);
+    window.__sectionNestedRoot = root;
+  });
+  await page.waitForTimeout(180);
+  await page.evaluate(() => {window.__sectionNestedRoot.querySelector('p').textContent = 'Nested dynamic content must also refresh the locked reading region.';});
+  await waitLabel(/翻译此区域 · 2 段/);
+  assert.equal(await worker.evaluate(() => globalThis.__sectionFixture.requests.length), beforeShadow, 'preview and topology discovery send no provider requests');
+  await shot('10-dynamic-shadow-locked');
+  await clickPickerButton('.fr-section-confirm');
+  await wait(async () => page.evaluate(() => [window.__sectionShadowRoot, window.__sectionNestedRoot].every(root => root.querySelector('p .fluent-read-bilingual-content'))), 20000);
+  assert.equal(await page.evaluate(() => window.__sectionShadowRoot.querySelector('p').firstChild.textContent), 'New English content inside a dynamically inserted web component.');
+  const afterShadow = await worker.evaluate(() => globalThis.__sectionFixture.requests.length);
+  await page.waitForTimeout(1000);
+  assert.equal(await worker.evaluate(() => globalThis.__sectionFixture.requests.length), afterShadow, 'translated shadow content does not loop or repeat requests');
+  report.dynamicShadow = {paragraphs: 2, originalPreserved: true, requestCountStableForMs: 1000};
+  report.cases.push(currentCase);
+
   currentCase = 'turning the plugin off exits picking and rejects new requests';
   await startFromPopupMessage();
   await patch({on: false});

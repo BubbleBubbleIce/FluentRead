@@ -27,7 +27,7 @@ interface PickerHarness {
     options: Record<string, unknown>;
     windowListeners: Listener[];
     mutationObserver: {observe: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn>};
-    emitMutation(target: Node): void;
+    emitMutation(target: Node, addedNodes?: Node[]): void;
     resizeObserver: {observe: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn>};
     emitResize(): void;
 }
@@ -174,7 +174,7 @@ async function createHarness(options: {withAnimationFrame?: boolean; withObserve
         options: pickerOptions,
         windowListeners,
         mutationObserver,
-        emitMutation: (target) => mutationCallback([{type: target.nodeType === 3 ? 'characterData' : 'childList', target} as MutationRecord], mutationObserver as unknown as MutationObserver),
+        emitMutation: (target, addedNodes = []) => mutationCallback([{type: target.nodeType === 3 ? 'characterData' : 'childList', target, addedNodes} as unknown as MutationRecord], mutationObserver as unknown as MutationObserver),
         resizeObserver,
         emitResize: () => resizeCallback([], resizeObserver as unknown as ResizeObserver),
     };
@@ -504,6 +504,110 @@ describe('局部翻译选择模式', () => {
             clickButton(harness, 'confirm');
             expect(harness.onPick).toHaveBeenCalledWith(useAncestor ? ancestor : host);
         }
+    });
+
+    it('锁定后新插入的嵌套 ShadowRoot 持续刷新摘要，扫描只检查新增子树', async () => {
+        const harness = await createHarness();
+        const region = harness.byId('para');
+        region.textContent = '';
+        harness.hit.current = region;
+        let text = '';
+        harness.inspect.mockImplementation(() => summary({action: text ? 'translate' : 'empty'}));
+        harness.picker.startSectionPicker(harness.options as never);
+        harness.flushFrames();
+        harness.emit('click', {clientX: 50, clientY: 70});
+        harness.flushFrames();
+        vi.advanceTimersByTime(90);
+        expect(button(harness, 'confirm').disabled).toBe(true);
+        const createWalker = vi.spyOn(harness.document, 'createTreeWalker');
+        const host = harness.document.createElement('section');
+        const root = host.attachShadow({mode: 'open'});
+        const nested = harness.document.createElement('div');
+        const innerRoot = nested.attachShadow({mode: 'open'});
+        const source = harness.document.createElement('p');
+        innerRoot.appendChild(source);
+        root.appendChild(nested);
+        region.appendChild(host);
+        harness.emitMutation(region, [host]);
+        harness.flushFrames();
+        expect(harness.mutationObserver.observe).toHaveBeenCalledWith(root, expect.anything());
+        expect(harness.mutationObserver.observe).toHaveBeenCalledWith(innerRoot, expect.anything());
+        expect(createWalker.mock.calls.every(([node]) => node !== region && node !== harness.document.documentElement)).toBe(true);
+        vi.advanceTimersByTime(90);
+        expect(button(harness, 'confirm').disabled).toBe(true);
+        text = source.textContent = 'New source inside a newly inserted web component';
+        harness.emitMutation(source.firstChild!);
+        vi.advanceTimersByTime(90);
+        expect(button(harness, 'confirm').disabled).toBe(false);
+        expect(harness.inspect).toHaveBeenLastCalledWith(region);
+        createWalker.mockClear();
+        for (let index = 0; index < 50; index++) harness.emitMutation(source.firstChild!);
+        vi.advanceTimersByTime(90);
+        expect(createWalker).not.toHaveBeenCalled();
+        harness.picker.stopSectionPicker();
+    });
+
+    it('大选区的开放 ShadowRoot 发现每帧最多检查 150 个元素，退出后迟到扫描不再工作', async () => {
+        const harness = await createHarness();
+        const region = harness.byId('para');
+        region.textContent = '';
+        harness.hit.current = region;
+        let reads = 0;
+        let lastRoot: ShadowRoot | undefined;
+        for (let index = 0; index < 450; index++) {
+            const child = harness.document.createElement('section');
+            const root = index === 449 ? child.attachShadow({mode: 'open'}) : null;
+            Object.defineProperty(child, 'shadowRoot', {configurable: true, get: () => {reads++; return root;}});
+            region.appendChild(child);
+            if (root) lastRoot = root;
+        }
+        harness.picker.startSectionPicker(harness.options as never);
+        harness.flushFrames();
+        reads = 0;
+        harness.emit('click', {clientX: 50, clientY: 70});
+        expect(reads).toBeLessThanOrEqual(150);
+        // 用身份布尔值断言，避免 Chai 格式化整棵 DOM 时额外执行 shadowRoot getter。
+        expect(harness.mutationObserver.observe.mock.calls.some(([node]) => node === lastRoot)).toBe(false);
+        while (harness.frames.length) {
+            const before = reads;
+            harness.frames.shift()!();
+            expect(reads - before).toBeLessThanOrEqual(150);
+        }
+        expect(harness.mutationObserver.observe.mock.calls.some(([node]) => node === lastRoot)).toBe(true);
+        expect(reads).toBe(450);
+        const added = harness.document.createElement('div');
+        for (let index = 0; index < 450; index++) added.appendChild(harness.document.createElement('span'));
+        region.appendChild(added);
+        harness.emitMutation(region, [added]);
+        const lateFrames = [...harness.frames];
+        harness.picker.stopSectionPicker();
+        const completed = reads;
+        const observations = harness.mutationObserver.observe.mock.calls.length;
+        lateFrames.forEach(callback => callback());
+        expect(reads).toBe(completed);
+        expect(harness.mutationObserver.observe.mock.calls).toHaveLength(observations);
+        expect(harness.host()).toBeNull();
+    });
+
+    it('锁定正文插入文本和注释只刷新摘要，不为非元素节点扫描影子树', async () => {
+        const harness = await createHarness();
+        const region = harness.byId('para');
+        harness.picker.startSectionPicker(harness.options as never);
+        harness.flushFrames();
+        harness.emit('click', {clientX: 50, clientY: 70});
+        harness.flushFrames();
+        vi.advanceTimersByTime(90);
+        harness.inspect.mockClear();
+        const walker = vi.spyOn(harness.document, 'createTreeWalker');
+        const text = harness.document.createTextNode(' Additional original text');
+        const comment = harness.document.createComment('not translated');
+        region.append(text, comment);
+        harness.emitMutation(region, [text, comment]);
+        vi.advanceTimersByTime(90);
+        expect(walker).not.toHaveBeenCalled();
+        expect(harness.inspect).toHaveBeenCalledOnce();
+        expect(query(harness.shadow(), '.fr-section-bar-preview').textContent).toContain('Additional original text');
+        harness.picker.stopSectionPicker();
     });
 
     it.each(['Enter', 'Escape'])('锁定把焦点移到操作条，操作条支持范围键，%s 退出时还原网页输入焦点', async (exitKey) => {

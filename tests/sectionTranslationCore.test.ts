@@ -119,6 +119,59 @@ describe('局部翻译区域判定', () => {
         expect(expandSectionElement(child, geometry)).toBeNull();
     });
 
+    it.each([false, true])('界面宿主内的开放 Shadow DOM 不参与选区或扩大（嵌套：%s）', (nested) => {
+        const {document, byId, geometry} = setup();
+        const host = byId('fluent-read-floating-ball-container');
+        const root = host.attachShadow({mode: 'open'});
+        const wrapper = document.createElement('section');
+        const inner = document.createElement('p');
+        root.appendChild(wrapper);
+        if (nested) wrapper.attachShadow({mode: 'open'}).appendChild(inner);
+        else wrapper.appendChild(inner);
+        expect(isSectionPickerUi(inner)).toBe(true);
+        expect(resolveSectionElement(inner, geometry)).toBeNull();
+        expect(expandSectionElement(inner, geometry)).toBeNull();
+    });
+
+    it('已经脱离文档的译文工件不会把空父级传给选区判定', () => {
+        const {document, geometry} = setup();
+        const artifact = document.createElement('span');
+        artifact.className = 'fluent-read-bilingual-content';
+        expect(resolveSectionElement(artifact, geometry)).toBeNull();
+    });
+
+    it.each([512, 513])('解析超深行内树只读取前 512 个元素（目标深度：%s）', (depth) => {
+        const {document} = setup();
+        const region = document.createElement('section');
+        document.body.appendChild(region);
+        let hit: Element = region;
+        for (let index = 1; index < depth; index++) {
+            const next = document.createElement('span');
+            hit.appendChild(next);
+            hit = next;
+        }
+        const display = vi.fn((element: Element) => element === region ? 'block' : 'inline');
+        const geometry = {display, rect: () => ({left: 0, top: 0, width: 100, height: 100})};
+        expect(resolveSectionElement(hit, geometry)).toBe(depth === 512 ? region : null);
+        expect(display.mock.calls.length).toBeLessThanOrEqual(512);
+    });
+
+    it.each([512, 513])('扩大超深同盒包装树只读取前 512 个祖先（目标深度：%s）', (depth) => {
+        const {document} = setup();
+        const region = document.createElement('section');
+        document.body.appendChild(region);
+        let inner: Element = region;
+        for (let index = 0; index < depth; index++) {
+            const next = document.createElement('div');
+            inner.appendChild(next);
+            inner = next;
+        }
+        const display = vi.fn(() => 'block');
+        const geometry = {display, rect: (element: Element) => ({left: 0, top: 0, width: element === region ? 200 : 100, height: 100})};
+        expect(expandSectionElement(inner, geometry)).toBe(depth === 512 ? region : null);
+        expect(display.mock.calls.length).toBeLessThanOrEqual(512);
+    });
+
     it('元素简称优先显示 id，其次第一个普通 class，并截断过长名称', () => {
         const {document, byId} = setup();
         expect(describeSectionElement(byId('readme'))).toBe('article#readme');
