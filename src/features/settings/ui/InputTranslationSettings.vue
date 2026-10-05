@@ -1,7 +1,7 @@
 <!--
  * @file src/features/settings/ui/InputTranslationSettings.vue
  * 文件职责：承载输入框翻译的一组独立设置，说明触发与输出方式，再按需编辑翻译配置与连按速度。
- * 主要内容：编辑替换/双语输出顺序模式、三击间隔、输入框翻译服务、AI 模型及独立提示词；机器翻译隐藏不适用的模型与提示词。
+ * 主要内容：按当前配置、服务与模型限定回调归属，关闭过期面板并保护提示词原文；编辑替换/双语输出顺序模式、三击间隔、输入框翻译服务、AI 模型及独立提示词；机器翻译隐藏不适用的模型与提示词。
  * 模块边界：组件只编排设置页状态并写入父级配置副本，触发方式交由父级处理快捷键冲突，服务能力与持久化仍由外层设置链路负责。
  -->
 <template>
@@ -10,7 +10,7 @@
       <SettingsItem :label="t('inputTranslation.trigger')">
         <template #copy>
           <strong class="settings-item-label"><span>{{ t('inputTranslation.trigger') }}</span><FieldHelp :content="t('inputTranslation.triggerDescription')" /></strong>
-          <el-popover v-if="inputConfig.inputBoxTranslationTrigger.startsWith('triple_')" trigger="click" placement="bottom-start" :width="280" popper-class="fluentread-settings-number-popover">
+          <ElPopover :key="revision" :visible="timingOpen" :onUpdate:visible="actions.timing" :disabled="!active" v-if="inputConfig.inputBoxTranslationTrigger.startsWith('triple_')" trigger="click" placement="bottom-start" :width="280" popper-class="fluentread-settings-number-popover">
             <template #reference>
               <button type="button" class="input-translation-text-button input-translation-timing-link" data-testid="input-translation-timing-toggle">
                 {{ t('inputTranslation.adjustTiming') }} · {{ interval }} {{ t('inputTranslation.intervalUnit') }}
@@ -27,28 +27,28 @@
                   :min="INPUT_BOX_TRANSLATION_INTERVAL_MIN"
                   :max="INPUT_BOX_TRANSLATION_INTERVAL_MAX"
                   :step="INPUT_BOX_TRANSLATION_INTERVAL_STEP"
-                  @update:model-value="setIntervalValue"
+                  :onUpdate:modelValue="actions.interval"
                 />
                 <span>{{ t('inputTranslation.intervalUnit') }}</span>
               </div>
               <p>{{ t('inputTranslation.intervalHelp') }}</p>
-              <button type="button" class="input-translation-text-button" data-testid="input-translation-interval-reset" :aria-label="t('inputTranslation.intervalResetAria')" :disabled="interval === DEFAULT_INPUT_BOX_TRANSLATION_INTERVAL" @click="resetInterval">{{ t('inputTranslation.intervalReset') }}</button>
+              <button type="button" class="input-translation-text-button" data-testid="input-translation-interval-reset" :aria-label="t('inputTranslation.intervalResetAria')" :disabled="interval === DEFAULT_INPUT_BOX_TRANSLATION_INTERVAL" :onClick="actions.resetInterval">{{ t('inputTranslation.intervalReset') }}</button>
             </div>
-          </el-popover>
+          </ElPopover>
         </template>
-        <el-select :model-value="props.config.inputBoxTranslationTrigger" data-testid="input-translation-trigger" :aria-label="t('inputTranslation.trigger')" @change="emit('trigger-change', $event)">
+        <el-select :model-value="props.config.inputBoxTranslationTrigger" data-testid="input-translation-trigger" :aria-label="t('inputTranslation.trigger')" :onChange="actions.trigger">
           <el-option v-for="item in triggerOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </SettingsItem>
 
       <SettingsItem :label="t('inputTranslation.target')">
-        <el-select v-model="targetLanguage" data-testid="input-translation-target" :aria-label="t('inputTranslation.target')">
+        <el-select :model-value="targetLanguage" :onUpdate:modelValue="actions.target" data-testid="input-translation-target" :aria-label="t('inputTranslation.target')">
           <el-option v-for="item in targetOptions" :key="item.value" class="select-left" data-i18n-ignore :label="getMultilingualTargetLanguageLabel(item.value, item.label, language)" :value="item.value" />
         </el-select>
       </SettingsItem>
 
       <SettingsItem :label="t('inputTranslation.outputMode')" :description="outputMode !== 'replace' ? t('inputTranslation.appendHelp') : ''">
-        <el-select v-model="outputMode" data-testid="input-translation-output-mode" :aria-label="t('inputTranslation.outputMode')">
+        <el-select :model-value="outputMode" :onUpdate:modelValue="actions.output" data-testid="input-translation-output-mode" :aria-label="t('inputTranslation.outputMode')">
           <el-option value="replace" :label="t('inputTranslation.outputReplace')" />
           <el-option value="append" :label="t('inputTranslation.outputAppend')" />
           <el-option value="prepend" :label="t('inputTranslation.outputPrepend')" />
@@ -57,7 +57,7 @@
 
       <SettingsItem :label="t('inputTranslation.service')">
         <div class="input-translation-service-control" data-testid="input-translation-profile-editor">
-          <el-select id="input-translation-service-control" v-model="translationService" :empty-values="[null, undefined]" data-testid="input-translation-service" :aria-label="t('inputTranslation.service')" filterable>
+          <el-select id="input-translation-service-control" :model-value="translationService" :onUpdate:modelValue="actions.service" :empty-values="[null, undefined]" data-testid="input-translation-service" :aria-label="t('inputTranslation.service')" filterable>
             <el-option v-for="item in serviceOptions" :key="item.value" class="select-left" :label="item.label" :value="item.value" :disabled="item.disabled">
               <span class="input-translation-service-option">
                 <ServiceIcon :service="item.value" :label="item.label" size="small" />
@@ -67,7 +67,7 @@
           </el-select>
           <div v-if="showModel" class="input-translation-model-control">
             <label for="input-translation-model-control">{{ t('inputTranslation.model') }}</label>
-            <el-select id="input-translation-model-control" v-model="translationModel" data-testid="input-translation-model" :aria-label="t('inputTranslation.model')" filterable>
+            <el-select id="input-translation-model-control" :model-value="translationModel" :onUpdate:modelValue="actions.model" data-testid="input-translation-model" :aria-label="t('inputTranslation.model')" filterable>
               <el-option value="" :label="t('inputTranslation.modelPlaceholder')" />
               <el-option v-for="model in modelOptions" :key="model" :label="model" :value="model" />
             </el-select>
@@ -78,7 +78,7 @@
       </SettingsItem>
 
       <div v-if="showPrompt" class="input-translation-prompt-options">
-        <button type="button" class="input-translation-prompt-toggle" data-testid="input-translation-prompt-toggle" :aria-expanded="promptsExpanded" @click="promptsExpanded = !promptsExpanded">
+        <button type="button" class="input-translation-prompt-toggle" data-testid="input-translation-prompt-toggle" :aria-expanded="promptsExpanded" :onClick="actions.togglePrompts">
           <strong>{{ t('inputTranslation.promptGroup') }}</strong>
           <span>{{ promptStateLabel }}</span>
           <el-icon aria-hidden="true"><ArrowDown /></el-icon>
@@ -86,7 +86,10 @@
         <div v-if="promptsExpanded" class="input-translation-prompts" data-testid="input-translation-prompts">
           <div class="input-translation-prompt-section">
             <PromptTemplateEditor
-              v-model="systemPrompt"
+              :active="active && showPrompt && promptsExpanded"
+              :context="props.config"
+              :context-key="revision"
+              :model-value="systemPrompt" :onUpdate:modelValue="actions.systemPrompt"
               role="system"
               :role-label="t('inputTranslation.systemRoleLabel')"
               :title="t('inputTranslation.systemPrompt')"
@@ -96,12 +99,15 @@
               :limit-label="t('inputTranslation.promptLimit', {count: 8192})"
               :tokens="[]"
             />
-            <button v-if="!systemPrompt.trim()" type="button" class="input-translation-text-button" data-testid="input-translation-system-default" @click="systemPrompt = defaultSystemPrompt">{{ t('inputTranslation.editDefaultPrompt') }}</button>
-            <button v-else type="button" class="input-translation-text-button" :aria-label="t('inputTranslation.promptResetAria')" @click="resetSystemPrompt">{{ t('inputTranslation.promptReset') }}</button>
+            <button v-if="!systemPrompt.trim()" type="button" class="input-translation-text-button" data-testid="input-translation-system-default" :onClick="actions.systemDefault">{{ t('inputTranslation.editDefaultPrompt') }}</button>
+            <button v-else type="button" class="input-translation-text-button" :aria-label="t('inputTranslation.promptResetAria')" :onClick="actions.resetSystem">{{ t('inputTranslation.promptReset') }}</button>
           </div>
           <div class="input-translation-prompt-section">
             <PromptTemplateEditor
-              v-model="userPrompt"
+              :active="active && showPrompt && promptsExpanded"
+              :context="props.config"
+              :context-key="revision"
+              :model-value="userPrompt" :onUpdate:modelValue="actions.userPrompt"
               role="user"
               :role-label="t('inputTranslation.userRoleLabel')"
               :title="t('inputTranslation.userPrompt')"
@@ -118,8 +124,8 @@
               <el-icon aria-hidden="true"><WarningFilled /></el-icon>
               <span>{{ promptWarnings.join(' ') }}</span>
             </p>
-            <button v-if="!userPrompt.trim()" type="button" class="input-translation-text-button" data-testid="input-translation-user-default" @click="userPrompt = defaultUserPrompt">{{ t('inputTranslation.editDefaultPrompt') }}</button>
-            <button v-else type="button" class="input-translation-text-button" :aria-label="t('inputTranslation.promptResetAria')" @click="resetUserPrompt">{{ t('inputTranslation.promptReset') }}</button>
+            <button v-if="!userPrompt.trim()" type="button" class="input-translation-text-button" data-testid="input-translation-user-default" :onClick="actions.userDefault">{{ t('inputTranslation.editDefaultPrompt') }}</button>
+            <button v-else type="button" class="input-translation-text-button" :aria-label="t('inputTranslation.promptResetAria')" :onClick="actions.resetUser">{{ t('inputTranslation.promptReset') }}</button>
           </div>
         </div>
       </div>
@@ -128,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ElPopover } from 'element-plus'
 import { ArrowDown, WarningFilled } from '@element-plus/icons-vue'
 import { customModelString, getMultilingualTargetLanguageLabel, models, options, resolveConfiguredModel, servicesType } from '@/src/core/config/catalog'
@@ -153,16 +159,9 @@ import SettingsItem from './components/SettingsItem.vue'
 import FieldHelp from './components/FieldHelp.vue'
 import ServiceIcon from '@/src/ui/components/ServiceIcon.vue'
 import PromptTemplateEditor from './services/PromptTemplateEditor.vue'
+import {useSettingsActionContext} from '../model/useSettingsActionContext'
 
 const MAX_PROMPT_LENGTH = 8192
-
-interface InputTranslationConfig extends Config {
-  inputBoxTranslationInterval: number
-  inputBoxTranslationService: string
-  inputBoxTranslationModel: string
-  inputBoxTranslationPrompt: string
-  inputBoxTranslationSystemPrompt: string
-}
 
 interface ServiceOption {
   value: string
@@ -170,18 +169,22 @@ interface ServiceOption {
   disabled?: boolean
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
+  active?: boolean
   config: Config
   serviceOptions: readonly ServiceOption[]
-}>()
+}>(), {active: true})
 
 const emit = defineEmits<{
   'trigger-change': [value: string]
 }>()
 
 const { language, t, translateLegacy } = useUiI18n()
-const inputConfig = computed(() => props.config as InputTranslationConfig)
+const inputConfig = computed(() => props.config)
 const promptsExpanded = ref(false)
+const timingOpen = ref(false)
+const promptRevision = ref(0)
+watch(promptsExpanded, () => {promptRevision.value += 1}, {flush: 'sync'})
 
 const triggerOptions = computed(() => inputConfig.value.inputBoxTranslationTrigger === 'ctrl_enter'
   ? [...options.inputBoxTranslationTrigger, {value: 'ctrl_enter', label: 'Ctrl+Enter'}]
@@ -195,42 +198,54 @@ const serviceOptions = computed(() => {
 })
 
 const interval = computed({
-  get: () => clampInterval(inputConfig.value.inputBoxTranslationInterval),
+  get: () => normalizeInputBoxTranslationInterval(inputConfig.value.inputBoxTranslationInterval),
   set: (value: number) => {
-    inputConfig.value.inputBoxTranslationInterval = clampInterval(value)
+    if (active.value && inputConfig.value.inputBoxTranslationTrigger.startsWith('triple_')) inputConfig.value.inputBoxTranslationInterval = normalizeInputBoxTranslationInterval(value)
   },
 })
 
 const targetLanguage = computed({
   get: () => inputConfig.value.inputBoxTranslationTarget,
-  set: (value: string) => { inputConfig.value.inputBoxTranslationTarget = value },
+  set: (value: string) => {if (active.value && targetOptions.value.some(item => item.value === value)) inputConfig.value.inputBoxTranslationTarget = value},
 })
 
 const outputMode = computed({
   get: () => normalizeInputBoxTranslationOutputMode(inputConfig.value.inputBoxTranslationOutputMode),
-  set: (value: InputBoxTranslationOutputMode) => { inputConfig.value.inputBoxTranslationOutputMode = value },
+  set: (value: InputBoxTranslationOutputMode) => {if (active.value && ['replace', 'append', 'prepend'].includes(value)) inputConfig.value.inputBoxTranslationOutputMode = value},
 })
 
 const translationService = computed({
   get: () => inputConfig.value.inputBoxTranslationService,
   set: (value: string) => {
-    if (value !== inputConfig.value.inputBoxTranslationService) inputConfig.value.inputBoxTranslationModel = ''
-    inputConfig.value.inputBoxTranslationService = value
+    if (!active.value || !serviceOptions.value.some(item => item.value === value && !item.disabled)) return
+    const config = inputConfig.value
+    if (value !== config.inputBoxTranslationService) config.inputBoxTranslationModel = ''
+    config.inputBoxTranslationService = value
   },
 })
 
 const translationModel = computed({
   get: () => inputConfig.value.inputBoxTranslationModel || '',
-  set: (value: string | undefined) => { inputConfig.value.inputBoxTranslationModel = value?.trim() || '' },
+  set: (value: string | undefined) => {
+    if (!active.value || !showModel.value || (value !== undefined && typeof value !== 'string')) return
+    const model = value?.trim() || ''
+    if (!model || modelOptions.value.includes(model)) inputConfig.value.inputBoxTranslationModel = model
+  },
 })
 
 const effectiveTranslationService = computed(() => translationService.value || props.config.service)
 
 const credentialWarning = computed(() => {
   const service = effectiveTranslationService.value
+  const config = props.config
+  // 凭据验证只需要这些字段；不枚举整份配置与无关模型。
   const message = getMissingCredentialMessage(service, {
-    ...props.config,
-    model: {...props.config.model, [service]: translationModel.value || props.config.model[service]},
+    token: config.token, secret: config.secret,
+    model: {[service]: translationModel.value || config.model[service]},
+    customModel: config.customModel, requireApiKey: config.requireApiKey,
+    customOpenAIProviders: config.customOpenAIProviders,
+    youdaoAppKey: config.youdaoAppKey, youdaoAppSecret: config.youdaoAppSecret,
+    tencentSecretId: config.tencentSecretId, tencentSecretKey: config.tencentSecretKey,
   })
   return message ? translateLegacy(message) : ''
 })
@@ -239,11 +254,11 @@ const defaultSystemPrompt = DEFAULT_INPUT_BOX_TRANSLATION_SYSTEM_PROMPT
 const defaultUserPrompt = DEFAULT_INPUT_BOX_TRANSLATION_PROMPT
 const systemPrompt = computed({
   get: () => inputConfig.value.inputBoxTranslationSystemPrompt || '',
-  set: (value: string) => { inputConfig.value.inputBoxTranslationSystemPrompt = value.slice(0, MAX_PROMPT_LENGTH) },
+  set: (value: string) => { if (active.value && showPrompt.value && typeof value === 'string' && value.length <= MAX_PROMPT_LENGTH) inputConfig.value.inputBoxTranslationSystemPrompt = value },
 })
 const userPrompt = computed({
   get: () => inputConfig.value.inputBoxTranslationPrompt || '',
-  set: (value: string) => { inputConfig.value.inputBoxTranslationPrompt = value.slice(0, MAX_PROMPT_LENGTH) },
+  set: (value: string) => { if (active.value && showPrompt.value && typeof value === 'string' && value.length <= MAX_PROMPT_LENGTH) inputConfig.value.inputBoxTranslationPrompt = value },
 })
 
 const isMachineService = computed(() => servicesType.isMachine(effectiveTranslationService.value))
@@ -252,6 +267,8 @@ const effectiveModel = computed(() => translationModel.value || resolveConfigure
   inputConfig.value.model[effectiveTranslationService.value],
   inputConfig.value.customModel[effectiveTranslationService.value],
 ))
+const {active, capture, revision} = useSettingsActionContext(() => props.active, () => [props.config, effectiveTranslationService.value, effectiveModel.value])
+watch(revision, () => {promptsExpanded.value = false; timingOpen.value = false}, {flush: 'sync'})
 const isAiService = computed(() => !isMachineService.value && (
   isCustomOpenAIProviderId(effectiveTranslationService.value) || servicesType.isAI(effectiveTranslationService.value)
 ))
@@ -293,10 +310,6 @@ const promptStateLabel = computed(() => (
     : t('inputTranslation.promptDefault')
 ))
 
-function clampInterval(value: number | undefined): number {
-  return normalizeInputBoxTranslationInterval(value)
-}
-
 function setIntervalValue(value: number | undefined): void {
   interval.value = value ?? DEFAULT_INPUT_BOX_TRANSLATION_INTERVAL
 }
@@ -306,12 +319,34 @@ function resetInterval(): void {
 }
 
 function resetSystemPrompt(): void {
-  inputConfig.value.inputBoxTranslationSystemPrompt = ''
+  systemPrompt.value = ''
 }
 
 function resetUserPrompt(): void {
-  inputConfig.value.inputBoxTranslationPrompt = ''
+  userPrompt.value = ''
 }
+
+const actions = computed(() => {
+  const current = capture(), promptSession = promptRevision.value
+  const promptCurrent = () => current() && promptsExpanded.value && promptSession === promptRevision.value
+  return {
+    target: (value: string) => {if (current()) targetLanguage.value = value},
+    output: (value: InputBoxTranslationOutputMode) => {if (current()) outputMode.value = value},
+    service: (value: string) => {if (current()) translationService.value = value},
+    model: (value: string | undefined) => {if (current()) translationModel.value = value},
+    interval: (value: number | undefined) => {if (current()) setIntervalValue(value)},
+    resetInterval: () => {if (current()) resetInterval()},
+    trigger: (value: string) => {if (current() && triggerOptions.value.some(item => item.value === value)) emit('trigger-change', value)},
+    timing: (value: boolean) => {if (current()) timingOpen.value = value},
+    togglePrompts: () => {if (current() && showPrompt.value) promptsExpanded.value = !promptsExpanded.value},
+    systemPrompt: (value: string) => {if (promptCurrent()) systemPrompt.value = value},
+    userPrompt: (value: string) => {if (promptCurrent()) userPrompt.value = value},
+    systemDefault: () => {if (promptCurrent()) systemPrompt.value = defaultSystemPrompt},
+    userDefault: () => {if (promptCurrent()) userPrompt.value = defaultUserPrompt},
+    resetSystem: () => {if (promptCurrent()) resetSystemPrompt()},
+    resetUser: () => {if (promptCurrent()) resetUserPrompt()},
+  }
+})
 
 const workflowDescription = computed(() => {
   if (!isInputTranslationEnabled.value) return t('inputTranslation.workflowDisabled')

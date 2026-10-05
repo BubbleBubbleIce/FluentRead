@@ -23,6 +23,10 @@ import {
 } from '@/src/core/config/inputTranslation';
 
 describe('输入框翻译配置', () => {
+    it.each([NaN, Infinity, -Infinity, '700', null])('非有限或非数字间隔 %s 使用默认值，不产生零延迟连击', value => {
+        expect(normalizeInputBoxTranslationInterval(value)).toBe(DEFAULT_INPUT_BOX_TRANSLATION_INTERVAL);
+    });
+
     it('双语追加显式保存，旧配置和非法值继续替换原文', () => {
         expect(normalizeConfig({inputBoxTranslationOutputMode: 'prepend'}).inputBoxTranslationOutputMode).toBe('prepend');
         expect(new Config().inputBoxTranslationOutputMode).toBe('replace');

@@ -379,6 +379,7 @@
     <section v-if="hasVisitedSection('settings-translation')" v-show="props.activeSection === 'settings-translation'" class="settings-section settings-section-continuation">
 <SettingsPanel name="input" :active="props.activePanel">
       <InputTranslationSettings
+        :active="viewActive && props.activeSection === 'settings-translation' && (!props.activePanel || props.activePanel === 'input')"
         :config="config"
         :service-options="availableServiceOptions"
         @trigger-change="handleInputBoxTranslationTriggerChange"

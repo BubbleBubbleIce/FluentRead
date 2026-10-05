@@ -373,8 +373,8 @@
           </div>
 
           <div class="prompt-template-list" data-testid="prompt-template-list">
-            <PromptTemplateEditor v-model="config.system_role[service]" role="system" />
-            <PromptTemplateEditor v-model="config.user_role[service]" role="user" />
+            <PromptTemplateEditor v-model="config.system_role[service]" role="system" :active="active && activeSettingsTab === 'prompts'" :context="config" :context-key="service" />
+            <PromptTemplateEditor v-model="config.user_role[service]" role="user" :active="active && activeSettingsTab === 'prompts'" :context="config" :context-key="service" />
           </div>
 
       </section>

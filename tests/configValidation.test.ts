@@ -4,10 +4,17 @@ import {
     createApiKeyRequirementKey,
     getApiKeyRequirementKey,
     getMissingCredentialMessage,
+    parseApiKeyRequirementKey,
 } from '@/src/core/config/validation';
 import {customModelString, services} from '@/src/core/config/catalog';
 
 describe('翻译服务凭据校验', () => {
+    it.each(['v2:null', 'v2:{}', 'v2:["service",42]', 'v2:["service","model","extra"]', 'v2:[null,"model"]', 'v2:["service",null]'])(
+        '拒绝破损凭据键 %s，避免绑定到另一个模型', key => {
+            expect(parseApiKeyRequirementKey(key)).toBeNull();
+        },
+    );
+
     it('提示需要 API Key 的服务填写访问令牌', () => {
         expect(getMissingCredentialMessage(services.openai, { token: {} })).toContain('API Key');
         expect(getMissingCredentialMessage(services.openai, { token: { [services.openai]: '  ' } })).toContain('API Key');

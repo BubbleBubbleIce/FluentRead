@@ -26810,6 +26810,562 @@
         "Local userscript resource pin1c4482cc unchanged/unpublished",
         "No remote fetch/rebase/merge40; final delivery follows whole audit"
       ]
+    },
+    {
+      "batch": "forty-first",
+      "name": "Prompt composition/draft lifecycle and independent input settings",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 272,
+        "sourceReadFunctionBodies": 5041,
+        "pendingFiles": 555,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/settings/ui/services/PromptTemplateEditor.vue",
+          "src/features/settings/ui/InputTranslationSettings.vue",
+          "src/core/config/validation.ts",
+          "src/core/config/inputTranslation.ts"
+        ],
+        "newFunctionBodies": 110,
+        "rereadPreviouslyReviewedFiles": [
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/settings/ui/SettingsSections.vue"
+        ],
+        "unchangedRelatedRereads": [
+          "src/features/settings/model/useSettingsActionContext.ts",
+          "src/features/settings/ui/useTranslationShortcutSettings.ts",
+          "src/features/settings/ui/components/SettingsPanel.vue",
+          "src/app/options/OptionsApp.vue actual same-page routing and anchor forwarding"
+        ],
+        "sourceProof": {
+          "src/features/settings/ui/services/PromptTemplateEditor.vue": {
+            "sha256": "842aacadb379c50dadc8eb9d26eee8d8315a2dc3361ac751bf6883003edc7653",
+            "fullyRead": true,
+            "functionBodies": 29,
+            "review": "Complete source/function and UI/domain chain review"
+          },
+          "src/features/settings/ui/InputTranslationSettings.vue": {
+            "sha256": "eeac820a0798ecc7152419bade19ea0e88f779b152e5142e97c62914201e8788",
+            "fullyRead": true,
+            "functionBodies": 65,
+            "review": "Complete source/function and UI/domain chain review"
+          },
+          "src/core/config/validation.ts": {
+            "sha256": "e937c757899e3aac08ef727fa917dd9e9f8decb3e8a0c38c7535c1c8189c6270",
+            "fullyRead": true,
+            "functionBodies": 9,
+            "review": "Complete source/function and UI/domain chain review"
+          },
+          "src/core/config/inputTranslation.ts": {
+            "sha256": "d07e283210feba3dbb390f04d929dd6a4605e2a4f6f406a9f4ac8d40b459cafd",
+            "fullyRead": true,
+            "functionBodies": 7,
+            "review": "Complete source/function and UI/domain chain review"
+          },
+          "src/features/settings/ui/services/ServiceConfiguration.vue": {
+            "sha256": "4b9d14b31667128812cd232cb0bfec85d97ed0420174007cb395eda369ddb29e",
+            "fullyRead": true,
+            "functionBodies": 91,
+            "review": "Previous full read retained; changed active/context forwarding traced"
+          },
+          "src/features/settings/ui/SettingsSections.vue": {
+            "sha256": "ef5efc9764574ffba4280b16269fe4f4ef68cf625bf1f6d28911d74fba041c2a",
+            "fullyRead": true,
+            "functionBodies": 166,
+            "review": "Previous full read retained; changed active/context forwarding traced"
+          }
+        },
+        "nextNotCounted": [
+          "QuickTranslationProfiles.vue",
+          "FeatureServiceSettings.vue",
+          "ContextMenuSettings.vue"
+        ]
+      },
+      "implementation": [
+        "Prompt editor owns cached native events and nextTick work by active view/config/service/model/role/external edit. Interrupted composition replaces the old node; ordinary typing, parent acknowledgement and non-composing external update retain textarea. Render reads live native intermediate value during composition to avoid erasing it; final text emits once and missing-start isComposing remains supported.",
+        "Local latest draft and synchronous selected range preserve rapid token inserts and undo before parent acknowledgement. Validate current token membership, finite/clamped selection and resulting UTF-16 length. Reject oversized input without truncation, disable unavailable/composing/full token buttons. All100same-turn inserts retained, latest focus/caret executes once; active/context/input/selection/external changes and user focus elsewhere cancel pending work. Promise callback count and OS IME not claimed.",
+        "Input settings scope captured template events to active configuration and effective service/model; validate current target/output/service/model/trigger choices, preserve disabled selected service display and legacy Ctrl+Enter. Close prompt/timing UI on exit/context change; prompt session revision also rejects old reset/default callbacks after collapse/reopen. Parent sections and per-service prompt tabs forward active/context ownership. Shared independent input prompts and original default service semantics preserved.",
+        "Credential warning reads only CredentialConfig fields plus the selected model instead of enumerating full config and model map; model-specific v2 Key semantics retained. Actual1000unrelatedconfig/500model fixture reads1000/500->0/0; no whole-page latency claim. Remove redundant interval clamp wrapper, duplicate InputTranslationConfig interface/cast and old stale-parent-value/dedup paths.",
+        "Fully read/traced validation and input translation pure rules including credential key boundaries, optional keys, cloud/Youdao/Tencent pairs, custom model/provider labels, interval200-2000/default1000, prompt preservation/execution supplementation and native MT capability. Existing domain tests extended with six malformed tuple schemas and five nonnumeric/nonfinite intervals; no production domain rule changes."
+      ],
+      "newTests": {
+        "executedCases": 43,
+        "componentCases": 32,
+        "unitCases": 11,
+        "staticDefinitions": 22,
+        "newFiles": [
+          "tests/promptEditorLifecycle.test.ts"
+        ],
+        "extendedFiles": [
+          "tests/configValidation.test.ts",
+          "tests/inputTranslationConfig.test.ts"
+        ],
+        "originalComparison": {
+          "baselineHead": "d951024c5b307b105499abef5421827d7439b39e",
+          "sourceFiles": 2,
+          "executed": 32,
+          "failed": 30,
+          "passed": 2,
+          "unhandledErrors": 0,
+          "boundary": "Actual SFC setup and cached client templates with real Linkedom tree and controlled display/focus ports. Same final harness for old/current source. Reproduced failures are scenarios, not independent bugs. Browser native IME is not established."
+        }
+      },
+      "strictCoverage": {
+        "testFiles": 5,
+        "cases": 67,
+        "modules": {
+          "src/core/config/inputTranslation.ts": {
+            "lines": {
+              "total": 50,
+              "covered": 50,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 7,
+              "covered": 7,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 50,
+              "covered": 50,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 32,
+              "covered": 32,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/validation.ts": {
+            "lines": {
+              "total": 75,
+              "covered": 75,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 8,
+              "covered": 8,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 75,
+              "covered": 75,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 67,
+              "covered": 67,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/settings/model/useSettingsActionContext.ts": {
+            "lines": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "unchangedProductionDomainAndContextModules": true,
+        "thresholdsOrExemptionsWeakened": false
+      },
+      "integration": {
+        "files": 14,
+        "cases": 312,
+        "passed": 312,
+        "compiledCachedComponentCases": 32,
+        "newUnitCases": 11,
+        "existingPromptImeCases": 3,
+        "inputContentCases": 69,
+        "inputBackgroundCases": 6,
+        "unhandledErrors": 0
+      },
+      "performance": {
+        "evidence": "Actual original/current SFC setup and cached client templates; assertions exercised with the same controlled DOM/focus ports",
+        "credentialCase": {
+          "configurationFields": 1000,
+          "otherModels": 500,
+          "before": {
+            "unrelatedConfigurationReads": 1000,
+            "otherModelReads": 500
+          },
+          "after": {
+            "unrelatedConfigurationReads": 0,
+            "otherModelReads": 0
+          },
+          "result": "v2 independent-model optional Key selection retained; enabling Key reports missing token"
+        },
+        "focusCase": {
+          "sameTurnTokens": 100,
+          "beforeFocusCalls": 100,
+          "afterFocusCalls": 1,
+          "result": "All 100 tokens retained and final cursor restored"
+        },
+        "boundary": "Counts concern selected field enumeration and focus operations; not total configuration reads, Promise callbacks, end-to-end latency or OS input method."
+      },
+      "browser": {
+        "passed": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "finalBrowserFrontmost": false,
+        "cases": [
+          "AI input profile opens independent blank prompt editors with inherited placeholders",
+          "default editing and normal input persist while retaining the same textarea node",
+          "native token clicks retain both variables and update the caret",
+          "production template retains 100 same-turn tokens and runs one latest focus operation",
+          "capacity disables token insertion and oversized input restores original text without truncation",
+          "synthetic composition events keep native intermediate text without saving it or enabling tokens",
+          "model switch closes prompt session and detached synthetic composition tail cannot overwrite settings",
+          "service switch clears the independent model and preserves shared input prompts and global default",
+          "real timing popover edits interval and leaving translation section closes its overlay",
+          "leaving and returning clears prompt expansion while keeping saved text on narrow layout",
+          "dark narrow prompt controls remain within the viewport",
+          "reload retains final input service prompts interval and original global default",
+          "real per-service prompt parent saves only its service and rejects a detached synthetic composition after directory switch",
+          "leaving service prompt tab disables its editor and keeps independent input prompt unchanged"
+        ],
+        "consoleErrors": [],
+        "screenshotsInspected": [
+          "input-prompts-light-390.png",
+          "input-prompts-light-390-return.png",
+          "input-prompts-dark-390.png"
+        ],
+        "browserClosed": true,
+        "profileRemoved": true,
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-prompt-audit-production-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        },
+        "productionJavascriptSha256": "3f38f052601c10ae444b01555d347ad967a34f58b3b04901a9977d2e8aa5c899",
+        "persistenceCases": [
+          "reload final values"
+        ],
+        "quickClose": false,
+        "crossPageSync": false,
+        "latestWriteWins": true,
+        "evidenceBoundary": "Production Chrome extension actual Vue and Element Plus prompt/input settings. Native editing, token clicks, model/service/panel changes, interval popover and reload. Composition events are synthetic DOM events, not OS IME; no live translation or provider requests.",
+        "priorAttempts": "First12inputflows passed then fixture used incorrect per-service tab label; corrected to actual labels, preserved failed attempt and cleanup. Initial successful screenshots lacked textarea below the fold; final same14flows repeated with textarea scrolled into view. Repeated flows not counted twice. No source changes after final builds."
+      },
+      "architecture": {
+        "selectedFiles": [
+          "tests/architecture/moduleBoundaries.test.ts",
+          "tests/architecture/sourceFileHeaders.test.ts",
+          "tests/architecture/verificationOwnership.test.ts"
+        ],
+        "files": 3,
+        "cases": 830,
+        "passed": 828,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3
+      },
+      "externalMain": {
+        "primaryHead": "510683f2d60985bb4494d6a9cf9ada2bb3b83acf",
+        "primaryClean": true,
+        "cachedOrigin": "4b34f3d9ac3326ba0b4bc7ee35190078a006b376",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/en/guide/webpage-translation.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/guide/webpage-translation.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/reports/settings-ui-polish-20261006/README.md",
+          "docs/reports/settings-ui-polish-20261006/cloud-compatibility-report.json",
+          "docs/reports/settings-ui-polish-20261006/cloud-delete-loading.png",
+          "docs/reports/settings-ui-polish-20261006/delete-loading-report.json",
+          "docs/reports/settings-ui-polish-20261006/key-policy-menu.png",
+          "docs/reports/settings-ui-polish-20261006/layout-report.json",
+          "docs/reports/settings-ui-polish-20261006/learning-level.png",
+          "docs/reports/settings-ui-polish-20261006/reading-desktop.png",
+          "docs/reports/settings-ui-polish-20261006/request-limits.png",
+          "docs/reports/settings-ui-polish-20261006/resources-current.png",
+          "docs/reports/settings-ui-polish-20261006/resources-management.png",
+          "docs/reports/settings-ui-polish-20261006/resources-tesseract.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-dark-390.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-light-1440.png",
+          "docs/reports/settings-ui-polish-20261006/site-preference-menu.png",
+          "docs/reports/settings-ui-polish-20261006/speech-unified.png",
+          "docs/reports/settings-ui-polish-20261006/tooltip-selectable.png",
+          "docs/reports/settings-ui-polish-20261006/vision-single-result.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-drive-version-compat-ui-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-settings-layout-polish-test.cjs",
+          "scripts/testing/run-settings-reading-menu-ui-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/cloudSync.ts",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/localTts.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/image-translation/ui/image-ocr-settings.css",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/LocalTranslationModelSettings.vue",
+          "src/features/settings/ui/LocalTtsSettings.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/FieldHelp.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/services/ModelVisionSettings.vue",
+          "src/features/settings/ui/services/RequestLimitSettings.vue",
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/settings/ui/settings-sections.css",
+          "src/features/settings/ui/site-rule-workspace.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/google-drive/api.ts",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/platform/webdav/api.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/backgroundGoogleDriveSync.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/googleDriveApi.test.ts",
+          "tests/i18n.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/webDavApi.test.ts",
+          "tests/webDavBackup.test.ts",
+          "tests/webDavHttpIntegration.test.ts",
+          "tests/webDavProperties.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.e66b7ea53ace2cc3.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.af00cb4d384a4548.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/ja-JP.1691d1c911d69419.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.3efdea50649f4cd2.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.8d66f666ac96d59f.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts"
+        ],
+        "pendingFileCount": 224
+      },
+      "finalDelivery": {
+        "status": "pending-full-audit",
+        "requestedByUser": true,
+        "steps": [
+          "Complete all source/function/chain review and related fixes/performance/tests",
+          "Rebase onto then-latest verified main and reconcile changed/new source review",
+          "Review the whole resulting code and functional chains, resolve all related findings and verify",
+          "Merge the verified reviewed head using the repository delivery workflow"
+        ],
+        "performed": false
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 486,
+          "staticDefinitions": 6674
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Goal active;555production source files remain pending",
+        "Setup/template/native/strict counts overlap; do not add as unique cases",
+        "IME uses synthetic DOM composition events; no OS input method/device proof",
+        "Native Edge only; Firefox/userscript builds do not prove native target interaction",
+        "No live translation/provider requests or quality proof; no reference repository/dependency changes",
+        "Existing Ctrl+Enter preserved; parent shortcut conflict flow remains authoritative",
+        "Local userscript resource pin1c4482cc unchanged/unpublished",
+        "No remote fetch/rebase/merge41; final delivery follows the full audit"
+      ]
     }
   ]
 }
