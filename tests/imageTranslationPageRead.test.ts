@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 const remote = vi.hoisted(() => vi.fn());
+vi.mock('@/src/platform/browser/runtimeMessages', () => ({sendRuntimeMessage: vi.fn()}));
 vi.mock('@/src/services/config/store', () => ({config: {on: true, from: 'auto'}}));
 vi.mock('@/src/features/image-translation/services/client', () => ({fetchImageInExtension: remote}));
 import {getImageData} from '@/src/features/image-translation/content/runtime';

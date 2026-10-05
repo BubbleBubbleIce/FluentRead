@@ -433,6 +433,46 @@ describe('图片翻译前台交互与生命周期', () => {
         expect(env.canvases[0]).toMatchObject({width: 0, height: 0}); expect(env.readers).toHaveLength(0);
         expect(client.translate).not.toHaveBeenCalled(); expect(env.image.style.opacity).not.toBe('0');
     });
+    it('翻译后离开图片隐藏操作条，回到译图恢复入口且不重复翻译', async () => {
+        const env = setup();env.hover();env.click();await flush();
+        const controls = env.button().closest<HTMLElement>('.fr-image-controls')!;
+        const bitmap = env.bitmap();
+        env.dispatch(env.image,'pointerout');expect(controls.hidden).toBe(true);expect(env.bitmap()).toBe(bitmap);
+        env.hover();expect(controls.hidden).toBe(false);
+        env.dispatch(env.image,'pointerout');
+        const host = document.getElementById('fluent-read-image-translation-root')!;
+        env.dispatch(host,'pointerover',true,{clientX:40,clientY:80});expect(controls.hidden).toBe(false);
+        env.dispatch(host,'pointermove',true,{clientX:40,clientY:80});env.runFrames();expect(controls.hidden).toBe(false);
+        env.dispatch(document.body,'pointerover');expect(controls.hidden).toBe(true);
+        expect(client.translate).toHaveBeenCalledOnce();
+    });
+
+    it('本地失败提供设置导航，用户修改图片服务后重试使用新配置', async () => {
+        settings.imageTranslationService = 'localTranslation';
+        client.translate.mockRejectedValueOnce(createImageTranslationFailure('图片第 2 段文字翻译失败：旧文案',{errorCode:'language'}));
+        const env=setup();env.hover();env.click();await flush();
+        const feedback = env.roots[0].querySelector<HTMLElement>('.fr-image-feedback')!;
+        expect(feedback.querySelector('[role=status]')!.textContent).toContain('图片文字已识别');
+        expect(feedback.querySelector('[role=status]')!.textContent).not.toContain('第 2 段');
+        env.dispatch(feedback.querySelector('.fr-image-model-settings')!,'click');await flush();
+        expect(client.settings).toHaveBeenLastCalledWith({type:'openOptionsPage',section:'settings-services',service:'localTranslation'});
+        env.dispatch(feedback.querySelector('.fr-image-service-settings')!,'click');await flush();
+        expect(client.settings).toHaveBeenLastCalledWith({type:'openOptionsPage',section:'settings-image-translation'});
+        expect(settings.imageTranslationService).toBe('localTranslation');expect(client.translate).toHaveBeenCalledOnce();
+        settings.imageTranslationService='microsoft';env.click();await flush();expect(env.button().dataset.phase).toBe('translated');
+        expect(client.translate).toHaveBeenCalledTimes(2);expect(feedback.hidden).toBe(true);
+    });
+
+    it('打开设置失败保留原图并提供手动入口，卸载后的导航失败不重建控件', async () => {
+        client.translate.mockRejectedValueOnce(createImageTranslationFailure('not downloaded',{errorCode:'notDownloaded'}));
+        const env=setup();env.hover();env.click();await flush();
+        client.settings.mockResolvedValueOnce({success:false});
+        const button = env.roots[0].querySelector('.fr-image-model-settings')!;env.dispatch(button,'click');await flush();
+        expect(env.roots[0].querySelector('[role=status]')!.textContent).toContain('扩展菜单');expect(env.bitmap()).toBeNull();
+        const pending = deferred<unknown>();client.settings.mockReturnValueOnce(pending.promise);env.dispatch(button,'click');
+        unmountImageTranslator();pending.reject(new Error('context invalidated'));await flush();expect(document.getElementById('fluent-read-image-translation-root')).toBeNull();
+    });
+
     it('宿主持续移除 UI 根时停止恢复循环，归还原图且允许新的主动悬停', async () => {
         const env = setup(); const background = env.addBackground();
         env.hover(); env.click(); await flush();

@@ -764,6 +764,38 @@ describe('后台 feature handlers', () => {
 
     });
 
+    it('消费后再次取消同 ID 时，旧历史不能驱逐仍在预算内的新取消', async () => {
+        vi.useFakeTimers();
+        try {
+            const registry = createImageOperationRegistry();
+            const operation = vi.fn(async () => 'unexpected OCR');
+            registry.cancel('reused-image-id');
+            await expect(registry.run({requestId: 'reused-image-id'}, operation)).rejects.toMatchObject({name: 'AbortError'});
+            registry.cancel('reused-image-id');
+            for (let index = 0; index < 511; index++) registry.cancel(`pending-image-${index}`);
+            await expect(registry.run({requestId: 'reused-image-id'}, operation)).rejects.toMatchObject({name: 'AbortError'});
+            expect(operation).not.toHaveBeenCalled();
+            expect(vi.getTimerCount()).toBe(0);
+        } finally {vi.useRealTimers();}
+    });
+
+    it('已消费的取消不占待启动窗口，也不挤掉较早尚未消费的取消', async () => {
+        vi.useFakeTimers();
+        try {
+            const registry = createImageOperationRegistry();
+            const operation = vi.fn(async () => 'unexpected OCR');
+            registry.cancel('still-pending-image');
+            for (let index = 0; index < 512; index++) {
+                const requestId = `consumed-image-${index}`;
+                registry.cancel(requestId);
+                await expect(registry.run({requestId}, operation)).rejects.toMatchObject({name: 'AbortError'});
+            }
+            await expect(registry.run({requestId: 'still-pending-image'}, operation)).rejects.toMatchObject({name: 'AbortError'});
+            expect(operation).not.toHaveBeenCalled();
+            expect(vi.getTimerCount()).toBe(0);
+        } finally {vi.useRealTimers();}
+    });
+
     it('整图翻译在语言包等待期间取消后不进入 Offscreen', async () => {
         const languageWaits: Array<() => void> = [];
         const dependencies = {

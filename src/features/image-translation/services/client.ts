@@ -1,7 +1,7 @@
 /**
  * @file src/features/image-translation/services/client.ts
  * 文件职责：封装网页与扩展页面调用图片翻译后台的 runtime 消息，统一支持跨域图片读取与整图翻译两种可取消客户端操作。
- * 主要内容：提供 fetchImageInExtension 与 translateImageInExtension，生成跨页面安全请求标识，传播取消、超时信号与本地模型失败原因，订阅当前任务的真实阶段和识别百分比、清理监听，并在图片翻译消息断线时按共享截止时间恢复一次；准备语言包时可回报缺失语言包合并后的下载百分比。
+ * 主要内容：提供 fetchImageInExtension 与 translateImageInExtension，生成跨页面安全请求标识，固定开始时的取消信号、进度回调与登记端口，清理异常不阻止结束等待；传播超时与本地模型失败原因，订阅当前任务真实阶段和百分比，并在消息断线时按共享截止时间恢复一次。
  * 模块边界：客户端不读取图片像素、不直接访问网络或 Offscreen；跨域 URL 只作为受控消息交给 background，再由 Offscreen 校验和读取，页面 UI 由 content/runtime 决定。
  */
 import {createImageTranslationFailure} from '../failure';
@@ -108,15 +108,19 @@ export async function sendCancellableImageOperation<TResponse>(
 ): Promise<TResponse | undefined> {
     const requestId = options.requestId || createImageRequestId();
     const timeoutMs = normalizeImageTimeout(options.timeoutMs);
-    if (options.signal?.aborted) throw createImageClientError('图片 OCR 请求已取消', 'AbortError');
+    const signal = options.signal;
+    const onProgress = options.onProgress;
+    if (signal?.aborted) throw createImageClientError('图片 OCR 请求已取消', 'AbortError');
 
     return new Promise<TResponse | undefined>((resolve, reject) => {
         let settled = false;
         let timer: ReturnType<typeof setTimeout> | undefined;
+        let progressPort: typeof browser.runtime.onMessage | undefined;
         const cleanup = () => {
             if (timer !== undefined) clearTimeout(timer);
-            options.signal?.removeEventListener('abort', handleAbort);
-            if (options.onProgress) browser.runtime.onMessage.removeListener(handleProgress);
+            signal?.removeEventListener('abort', handleAbort);
+            try {progressPort?.removeListener(handleProgress);} catch { /* 已撤销的登记端口不能阻止请求结束。 */ }
+            progressPort = undefined;
         };
         const finish = (callback: () => void) => {
             if (settled) return;
@@ -136,20 +140,24 @@ export async function sendCancellableImageOperation<TResponse>(
             const progress = value as Record<string, unknown>;
             if (progress.type === IMAGE_PROGRESS_MESSAGE_TYPE && progress.requestId === requestId
                 && isImageTranslationStage(progress.stage)) {
-                try { options.onProgress?.(progress.stage, normalizeImageProgress(progress.progress)); } catch { /* 展示旁路不能中断请求清理。 */ }
+                try { onProgress?.(progress.stage, normalizeImageProgress(progress.progress)); } catch { /* 展示旁路不能中断请求清理。 */ }
             }
         };
-        if (options.onProgress) browser.runtime.onMessage.addListener(handleProgress);
         const handleAbort = () => finish(() => {
             notifyCancellation();
             reject(createImageClientError('图片 OCR 请求已取消', 'AbortError'));
         });
-        options.signal?.addEventListener('abort', handleAbort, {once: true});
-        timer = setTimeout(() => finish(() => {
-            notifyCancellation();
-            reject(createImageClientError(timeoutMessage, 'TimeoutError'));
-        }), timeoutMs);
         try {
+            if (onProgress) {
+                progressPort = browser.runtime.onMessage;
+                progressPort.addListener(handleProgress);
+            }
+            signal?.addEventListener('abort', handleAbort, {once: true});
+            if (signal?.aborted) {handleAbort(); return;}
+            timer = setTimeout(() => finish(() => {
+                notifyCancellation();
+                reject(createImageClientError(timeoutMessage, 'TimeoutError'));
+            }), timeoutMs);
             void browser.runtime.sendMessage({...message, requestId, timeoutMs}).then(
                 (response: unknown) => finish(() => resolve(response as TResponse | undefined)),
                 (error: unknown) => finish(() => reject(error)),

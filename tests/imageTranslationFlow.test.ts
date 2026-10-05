@@ -107,6 +107,27 @@ describe('图片失败恢复和控件可见性', () => {
     });
 });
 
+it('键盘焦点在操作条与文字面板之间转移后继续保留入口，离开二者才隐藏', () => {
+    const {document, window} = parseHTML('<html><body></body></html>');
+    vi.stubGlobal('document', document);
+    const ui = createImageControls({onAction(){}, onPrepare(){}});
+    document.body.append(ui.element, ui.feedback);
+    ui.setLines([{text:'译文'}]); ui.update('translated','已翻译'); ui.setHovered(false);
+    expect(ui.element.hidden).toBe(true);
+    const readerButton = ui.reader.querySelector('button')!;
+    vi.spyOn(ui.button, 'matches').mockImplementation(selector => selector === ':focus-visible');
+    vi.spyOn(readerButton, 'matches').mockImplementation(selector => selector === ':focus-visible');
+    const moveFocus = (relatedTarget: Element | null) => {
+        const event = new window.Event('focusout', {bubbles: true});
+        Object.defineProperty(event,'relatedTarget',{value: relatedTarget}); ui.button.dispatchEvent(event);
+    };
+    moveFocus(ui.button); expect(ui.element.hidden).toBe(false);
+    moveFocus(readerButton); expect(ui.element.hidden).toBe(false);
+    moveFocus(document.body); expect(ui.element.hidden).toBe(true);
+    moveFocus(null); expect(ui.element.hidden).toBe(true);
+    ui.dispose();
+});
+
 describe('图片翻译流程优化',()=>{
     it.each(['ru', 'ko-KR'])('漫画 %s 先核对语言包，继续携带漫画模式且不采用单图引擎设置', async sourceLanguage => {
         const {handler, dependencies} = setup({getImageOcrEngine: () => 'paddle'});

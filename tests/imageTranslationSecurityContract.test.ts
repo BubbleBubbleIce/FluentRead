@@ -2,6 +2,8 @@ import {existsSync, readdirSync, readFileSync, statSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 
+vi.mock('@/src/platform/browser/runtimeMessages', () => ({sendRuntimeMessage: vi.fn()}));
+
 vi.mock('@/src/services/config/store', () => ({
     config: {on: true, from: 'auto'},
 }));

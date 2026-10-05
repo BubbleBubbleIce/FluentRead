@@ -720,6 +720,40 @@ async function verifyGeometryCases({worker, ui, wait, shot}) {
         await wait(()=>ui("return this.querySelector('.fr-image-controls')?.dataset.phase==='translated'"));
         assert.equal(await worker.evaluate(()=>globalThis.__imageFixture.requests.length),requests);
         report.cases.push('text panel keeps controls available; restore and cached translation work');
+
+        currentCase = 'background consumed cancellation ownership';
+        const providerRequestsBefore = await worker.evaluate(() => globalThis.__imageFixture.requests.length);
+        const cancellation = await popup.evaluate(async () => {
+            const cancel = requestId => chrome.runtime.sendMessage({type:'fluentReadImageCancel',requestId});
+            const start = requestId => chrome.runtime.sendMessage({type:'fluentReadImageTranslate',requestId,
+                image:'data:image/png,x',sourceLanguage:'en',timeoutMs:5_000});
+            const responses = [];
+            const reused = 'image-background-reused-cancel';
+            await cancel(reused); responses.push(await start(reused));
+            await cancel(reused);
+            for (let index = 0; index < 511; index++) await cancel(`image-background-pending-${index}`);
+            responses.push(await start(reused));
+            // 独立新 ID 的已消费取消不能占窗口或驱逐更早仍待启动的取消。
+            const pending = 'image-background-still-pending';
+            await cancel(pending);
+            let consumed = 0;
+            for (let index = 0; index < 512; index++) {
+                const id = `image-background-consumed-${index}`;
+                await cancel(id); const response = await start(id);
+                if (response.success === false && /已取消/.test(response.error)) consumed++;
+            }
+            responses.push(await start(pending));
+            return {responses, consumed};
+        });
+        assert.equal(cancellation.consumed,512);
+        for (const response of cancellation.responses) {
+            assert.equal(response.success,false); assert.match(response.error,/已取消/);
+        }
+        assert.equal(await worker.evaluate(() => globalThis.__imageFixture.requests.length),providerRequestsBefore);
+        report.backgroundCancellation = {reusedStartsCancelled:true,consumedHistoryIgnored:true,
+            consumedStarts:512,pendingUniqueBound:512,newProviderRequests:0};
+        report.cases.push('background reused cancellation survives the pending ID boundary',
+            'background consumed IDs do not evict outstanding cancellation or start OCR/provider');
         assert.equal(report.errors.length,0);
         report.success = true;
         return;

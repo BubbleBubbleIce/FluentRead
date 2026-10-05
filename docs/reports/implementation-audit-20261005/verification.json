@@ -19598,6 +19598,1406 @@
         "Image runtime strict coverage/native decode-draw-mutation budgets remain pending.",
         "Local resource URLs are not publicly available proof."
       ]
+    },
+    {
+      "batch": "thirty-first",
+      "name": "main-image-recovery-reconciliation-client-settlement-and-background-cancellation-ownership",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 205,
+        "sourceReadFunctionBodies": 3527,
+        "pendingFiles": 617,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/image-translation/services/client.ts",
+          "src/features/image-translation/failure.ts",
+          "src/features/image-translation/background/offscreenAdapter.ts",
+          "src/features/image-translation/background/handlers.ts",
+          "src/features/image-translation/content/controls.ts",
+          "src/features/settings/background/openOptionsHandler.ts"
+        ],
+        "newFunctionBodies": 137,
+        "recheckedFiles": [
+          "src/features/image-translation/content/runtime.ts",
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/app/offscreen/messageRouter.ts"
+        ],
+        "recheckedFunctionBodies": 264,
+        "mainChangedSourceFiles": 22,
+        "mainChangedSourcesStillPending": [
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/providers/translation/local-translation.ts"
+        ],
+        "sourceIntegrationIsFullReview": false
+      },
+      "mainIntegration": {
+        "base": "581aec1862884c037e94d8db0cb5c0162a0c0b74",
+        "snapshot": "63819aac16b66e22385c1a2a35bcae0f0e657b68",
+        "files": 44,
+        "conflictsResolved": 4,
+        "executableConflictBlocksDiscarded": 0,
+        "finalSnapshotExactFiles": 30,
+        "finalMergedOrAuditedFiles": [
+          "docs/testing.md",
+          "scripts/testing/run-image-translation-flow-test.cjs",
+          "src/app/offscreen/messageRouter.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/features/image-translation/background/handlers.ts",
+          "src/features/image-translation/content/runtime.ts",
+          "src/features/image-translation/services/client.ts",
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "tests/imageTranslationClientRecovery.test.ts",
+          "tests/imageTranslationFlow.test.ts",
+          "tests/imageTranslationOffscreenRuntime.test.ts",
+          "tests/imageTranslationRuntime.test.ts",
+          "tests/offscreenMessageRouter.test.ts"
+        ],
+        "sourceTreeOnly": true,
+        "rewrittenHistoryMerged": false,
+        "primaryModified": false
+      },
+      "externalMain": {
+        "snapshot": "f7f00e03253764b304df1673e00d3f90be4e690b",
+        "baseline": "63819aac16b66e22385c1a2a35bcae0f0e657b68",
+        "pendingFiles": [
+          "docs/en/guide/custom-hotkey.md",
+          "docs/en/guide/features.md",
+          "docs/en/guide/glossary.md",
+          "docs/en/guide/model-usage.md",
+          "docs/en/guide/translation-stats.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/webpage-translation.md",
+          "docs/guide/custom-hotkey.md",
+          "docs/guide/features.md",
+          "docs/guide/glossary.md",
+          "docs/guide/model-usage.md",
+          "docs/guide/translation-stats.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/webpage-translation.md",
+          "docs/reports/glossary-management-ui-20261005/README.md",
+          "docs/reports/glossary-management-ui-20261005/desktop.png",
+          "docs/reports/glossary-management-ui-20261005/narrow-settings.png",
+          "docs/reports/glossary-management-ui-20261005/report.json",
+          "docs/testing.md",
+          "scripts/run-glossary-test.cjs",
+          "scripts/run-video-caption-prefetch-test.cjs",
+          "scripts/run-x-home-audio-recovery-test.cjs",
+          "scripts/testing/run-model-usage-ui-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-translation-stats-ui-test.cjs",
+          "src/app/background/handlers/modelUsage.ts",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/glossary/ui/GlossarySettings.vue",
+          "src/features/glossary/ui/glossary-settings.css",
+          "src/features/model-usage/ui/ModelUsageDashboard.vue",
+          "src/features/model-usage/ui/model-usage-dashboard.css",
+          "src/features/section-translation/content/picker.css",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/section-translation/core.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/translation-stats/ui/TranslationStatsDashboard.vue",
+          "src/features/translation-stats/ui/translation-stats-dashboard.css",
+          "src/features/video-subtitle/content/hlsAudioRuntime.ts",
+          "src/features/video-subtitle/content/playerMenu.ts",
+          "src/features/video-subtitle/content/runtime.ts",
+          "src/features/video-subtitle/content/video-ai/fullCapture.ts",
+          "src/features/video-subtitle/content/video-ai/modelSetup.ts",
+          "src/features/video-subtitle/content/videoPlayerLocator.ts",
+          "src/platform/storage/modelUsageRepository.ts",
+          "src/services/model-usage/types.ts",
+          "tests/glossarySettingsComponent.test.ts",
+          "tests/modelUsageHandler.test.ts",
+          "tests/modelUsageRepository.test.ts",
+          "tests/sectionTranslationCore.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/test-matrix.json",
+          "tests/videoAiFullCaptureFailures.test.ts",
+          "tests/videoAiModelSetup.test.ts",
+          "tests/videoPlayerLocator.test.ts",
+          "tests/videoUiI18n.test.ts",
+          "tests/xHlsAudioRuntime.test.ts",
+          "userscript/languages/es-ES.27133f60bddfda8e.json",
+          "userscript/languages/es-ES.28e5c05e5a194514.json",
+          "userscript/languages/es-ES.379f0e1b04c7b05d.json",
+          "userscript/languages/fr-FR.166f3f84e1914491.json",
+          "userscript/languages/fr-FR.4e40339f3d03e9c2.json",
+          "userscript/languages/fr-FR.816d02af5ab1bab1.json",
+          "userscript/languages/ja-JP.36f676ac21a74be5.json",
+          "userscript/languages/ja-JP.923ecef88451dfde.json",
+          "userscript/languages/ja-JP.98e978f1119894db.json",
+          "userscript/languages/ko-KR.0d55969d821d9d60.json",
+          "userscript/languages/ko-KR.ab3bcea32316ea19.json",
+          "userscript/languages/ko-KR.c0e66d5942d4f60a.json",
+          "userscript/languages/ru-RU.d02f433a8a4cfec4.json",
+          "userscript/languages/ru-RU.eefb8341daad0de5.json",
+          "userscript/languages/ru-RU.f5b1700c09a19455.json",
+          "userscript/vite.config.ts"
+        ],
+        "primaryHead": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "primaryClean": true,
+        "refSource": "current local cached origin/main; no new remote fetch"
+      },
+      "oldSourceRuns": {
+        "client": {
+          "snapshot": "63819aac16b66e22385c1a2a35bcae0f0e657b68",
+          "savedSha256": "3c12e129e7d7a65db86605d5d1a3556b87224e97929ee0913baeb9584ac27737",
+          "files": 1,
+          "cases": 21,
+          "failed": 9,
+          "passed": 12,
+          "unhandledErrors": 0
+        },
+        "backgroundRegistry": {
+          "snapshot": "63819aac16b66e22385c1a2a35bcae0f0e657b68",
+          "savedSha256": "bb6c4c4b463f909023e6a062482e98b24ea985259ced8c61fdc08cf0944e3554",
+          "files": 1,
+          "casesSelected": 2,
+          "failed": 2,
+          "otherCasesFilteredOut": 50,
+          "unhandledErrors": 0
+        }
+      },
+      "newExecutedUnitCases": 16,
+      "newStaticTestDefinitions": 12,
+      "implementation": {
+        "client": "Capture initial signal/callback/registered runtime event; catch cleanup refusal while settling exactly once; move registration into failure boundary and check abort before sending business request. Preserve bounded one-time disconnect recovery and shared deadline.",
+        "background": "One ordered Set for pending cancellation, consume on start and evict only oldest outstanding ID above512. Removed redundant history array and shifting; shared image/area registry caller contract remains intact.",
+        "performance": "Avoid stale cancelled OCR/provider work and eliminate history array/shift. No CPU/timing or full dynamic page performance guarantee.",
+        "resourcePin": {
+          "commit": "20ef5b652965b8199d3772435c72d1ed9723cd3c",
+          "files": [
+            "userscript/languages/ja-JP.00b72b7e157b2bfe.json",
+            "userscript/languages/ko-KR.36fcecabddaefe71.json",
+            "userscript/languages/fr-FR.edde53b77af8edf5.json",
+            "userscript/languages/ru-RU.5225f94f0e48979c.json",
+            "userscript/languages/es-ES.a118552ffca69b69.json"
+          ],
+          "remotePublished": false,
+          "bytesAndContentHashesVerified": true
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "integration": {
+          "files": 14,
+          "cases": 651,
+          "passed": true
+        },
+        "image": {
+          "files": 31,
+          "cases": 846,
+          "passed": true,
+          "unhandledErrors": 0
+        },
+        "countsAreSeparateOverlappingRuns": true
+      },
+      "strictCoverage": {
+        "testFiles": 31,
+        "cases": 846,
+        "modules": {
+          "src/app/offscreen/messageRouter.ts": {
+            "lines": {
+              "total": 462,
+              "covered": 462,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 45,
+              "covered": 45,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 462,
+              "covered": 462,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 252,
+              "covered": 252,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/manga.ts": {
+            "lines": {
+              "total": 56,
+              "covered": 56,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 6,
+              "covered": 6,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 56,
+              "covered": 56,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 73,
+              "covered": 73,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/mangaSiteCatalog.ts": {
+            "lines": {
+              "total": 9,
+              "covered": 9,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 1,
+              "covered": 1,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 9,
+              "covered": 9,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 5,
+              "covered": 5,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/area-translation/core.ts": {
+            "lines": {
+              "total": 54,
+              "covered": 54,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 5,
+              "covered": 5,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 54,
+              "covered": 54,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 8,
+              "covered": 8,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/core.ts": {
+            "lines": {
+              "total": 200,
+              "covered": 200,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 20,
+              "covered": 20,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 200,
+              "covered": 200,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 125,
+              "covered": 125,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/failure.ts": {
+            "lines": {
+              "total": 30,
+              "covered": 30,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 4,
+              "covered": 4,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 30,
+              "covered": 30,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 32,
+              "covered": 32,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/mangaPatchResult.ts": {
+            "lines": {
+              "total": 91,
+              "covered": 91,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 91,
+              "covered": 91,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 72,
+              "covered": 72,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/ocrLanguages.ts": {
+            "lines": {
+              "total": 79,
+              "covered": 79,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 79,
+              "covered": 79,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 24,
+              "covered": 24,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/paragraphs.ts": {
+            "lines": {
+              "total": 152,
+              "covered": 152,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 13,
+              "covered": 13,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 152,
+              "covered": 152,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 116,
+              "covered": 116,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/progress.ts": {
+            "lines": {
+              "total": 8,
+              "covered": 8,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 2,
+              "covered": 2,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 8,
+              "covered": 8,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/background/handlers.ts": {
+            "lines": {
+              "total": 409,
+              "covered": 409,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 37,
+              "covered": 37,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 409,
+              "covered": 409,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 245,
+              "covered": 245,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/background/offscreenAdapter.ts": {
+            "lines": {
+              "total": 129,
+              "covered": 129,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 14,
+              "covered": 14,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 129,
+              "covered": 129,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 95,
+              "covered": 95,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/controls.ts": {
+            "lines": {
+              "total": 203,
+              "covered": 203,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 13,
+              "covered": 13,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 203,
+              "covered": 203,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 88,
+              "covered": 88,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/hoverEligibility.ts": {
+            "lines": {
+              "total": 60,
+              "covered": 60,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 4,
+              "covered": 4,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 60,
+              "covered": 60,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 73,
+              "covered": 73,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/imageLoads.ts": {
+            "lines": {
+              "total": 26,
+              "covered": 26,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 4,
+              "covered": 4,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 26,
+              "covered": 26,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 14,
+              "covered": 14,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/mangaCompositor.ts": {
+            "lines": {
+              "total": 38,
+              "covered": 38,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 5,
+              "covered": 5,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 38,
+              "covered": 38,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 28,
+              "covered": 28,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/mangaEntry.ts": {
+            "lines": {
+              "total": 51,
+              "covered": 51,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 51,
+              "covered": 51,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 57,
+              "covered": 57,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/mangaReader.ts": {
+            "lines": {
+              "total": 177,
+              "covered": 177,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 13,
+              "covered": 13,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 177,
+              "covered": 177,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 160,
+              "covered": 160,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/mangaSession.ts": {
+            "lines": {
+              "total": 104,
+              "covered": 104,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 9,
+              "covered": 9,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 104,
+              "covered": 104,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 94,
+              "covered": 94,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/runtime.ts": {
+            "lines": {
+              "total": 1112,
+              "covered": 1099,
+              "skipped": 0,
+              "pct": 98.83
+            },
+            "functions": {
+              "total": 92,
+              "covered": 92,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 1112,
+              "covered": 1099,
+              "skipped": 0,
+              "pct": 98.83
+            },
+            "branches": {
+              "total": 715,
+              "covered": 676,
+              "skipped": 0,
+              "pct": 94.54
+            }
+          },
+          "src/features/image-translation/content/sourceAuthorization.ts": {
+            "lines": {
+              "total": 30,
+              "covered": 30,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 30,
+              "covered": 30,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 29,
+              "covered": 29,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/content/textReader.ts": {
+            "lines": {
+              "total": 109,
+              "covered": 109,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 109,
+              "covered": 109,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 43,
+              "covered": 43,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/client.ts": {
+            "lines": {
+              "total": 178,
+              "covered": 178,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 17,
+              "covered": 17,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 178,
+              "covered": 178,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 120,
+              "covered": 120,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/imageEncoding.ts": {
+            "lines": {
+              "total": 43,
+              "covered": 43,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 5,
+              "covered": 5,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 43,
+              "covered": 43,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 28,
+              "covered": 28,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/inpainting.ts": {
+            "lines": {
+              "total": 148,
+              "covered": 148,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 5,
+              "covered": 5,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 148,
+              "covered": 148,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 77,
+              "covered": 77,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/mangaOcr.ts": {
+            "lines": {
+              "total": 135,
+              "covered": 135,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 16,
+              "covered": 16,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 135,
+              "covered": 135,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 82,
+              "covered": 82,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/ocrModelCache.ts": {
+            "lines": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 6,
+              "covered": 6,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/ocrRuntime.ts": {
+            "lines": {
+              "total": 156,
+              "covered": 156,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 17,
+              "covered": 17,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 156,
+              "covered": 156,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 77,
+              "covered": 77,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/ocrWorkerRuntime.ts": {
+            "lines": {
+              "total": 174,
+              "covered": 174,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 174,
+              "covered": 174,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 87,
+              "covered": 87,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/offscreenRuntime.ts": {
+            "lines": {
+              "total": 295,
+              "covered": 295,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 21,
+              "covered": 21,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 295,
+              "covered": 295,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 156,
+              "covered": 156,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/remoteImage.ts": {
+            "lines": {
+              "total": 169,
+              "covered": 169,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 14,
+              "covered": 14,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 169,
+              "covered": 169,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 88,
+              "covered": 88,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/rendering.ts": {
+            "lines": {
+              "total": 206,
+              "covered": 206,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 206,
+              "covered": 206,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 95,
+              "covered": 95,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/services/sharedOcrTasks.ts": {
+            "lines": {
+              "total": 52,
+              "covered": 52,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 8,
+              "covered": 8,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 52,
+              "covered": 52,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 35,
+              "covered": 35,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/image-translation/ui/MangaEntry.vue": {
+            "lines": {
+              "total": 75,
+              "covered": 75,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 75,
+              "covered": 75,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 95,
+              "covered": 95,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/settings/background/openOptionsHandler.ts": {
+            "lines": {
+              "total": 35,
+              "covered": 35,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 35,
+              "covered": 35,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 22,
+              "covered": 22,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "totals": {
+          "lines": {
+            "total": 5270,
+            "covered": 5257,
+            "skipped": 0,
+            "pct": 99.75
+          },
+          "statements": {
+            "total": 5270,
+            "covered": 5257,
+            "skipped": 0,
+            "pct": 99.75
+          },
+          "functions": {
+            "total": 472,
+            "covered": 472,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branches": {
+            "total": 3331,
+            "covered": 3292,
+            "skipped": 0,
+            "pct": 98.82
+          },
+          "branchesTrue": {
+            "total": 0,
+            "covered": 0,
+            "skipped": 0,
+            "pct": 100
+          }
+        },
+        "four100Modules": [
+          "src/app/offscreen/messageRouter.ts",
+          "src/core/config/manga.ts",
+          "src/core/config/mangaSiteCatalog.ts",
+          "src/features/area-translation/core.ts",
+          "src/features/image-translation/core.ts",
+          "src/features/image-translation/failure.ts",
+          "src/features/image-translation/mangaPatchResult.ts",
+          "src/features/image-translation/ocrLanguages.ts",
+          "src/features/image-translation/paragraphs.ts",
+          "src/features/image-translation/progress.ts",
+          "src/features/image-translation/background/handlers.ts",
+          "src/features/image-translation/background/offscreenAdapter.ts",
+          "src/features/image-translation/content/controls.ts",
+          "src/features/image-translation/content/hoverEligibility.ts",
+          "src/features/image-translation/content/imageLoads.ts",
+          "src/features/image-translation/content/mangaCompositor.ts",
+          "src/features/image-translation/content/mangaEntry.ts",
+          "src/features/image-translation/content/mangaReader.ts",
+          "src/features/image-translation/content/mangaSession.ts",
+          "src/features/image-translation/content/sourceAuthorization.ts",
+          "src/features/image-translation/content/textReader.ts",
+          "src/features/image-translation/services/client.ts",
+          "src/features/image-translation/services/imageEncoding.ts",
+          "src/features/image-translation/services/inpainting.ts",
+          "src/features/image-translation/services/mangaOcr.ts",
+          "src/features/image-translation/services/ocrModelCache.ts",
+          "src/features/image-translation/services/ocrRuntime.ts",
+          "src/features/image-translation/services/ocrWorkerRuntime.ts",
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/features/image-translation/services/remoteImage.ts",
+          "src/features/image-translation/services/rendering.ts",
+          "src/features/image-translation/services/sharedOcrTasks.ts",
+          "src/features/image-translation/ui/MangaEntry.vue",
+          "src/features/settings/background/openOptionsHandler.ts"
+        ],
+        "incompleteModules": {
+          "src/features/image-translation/content/runtime.ts": {
+            "lines": {
+              "total": 1112,
+              "covered": 1099,
+              "skipped": 0,
+              "pct": 98.83
+            },
+            "functions": {
+              "total": 92,
+              "covered": 92,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 1112,
+              "covered": 1099,
+              "skipped": 0,
+              "pct": 98.83
+            },
+            "branches": {
+              "total": 715,
+              "covered": 676,
+              "skipped": 0,
+              "pct": 94.54
+            }
+          }
+        },
+        "globalGatePassed": false,
+        "newRegisteredModule": "src/features/image-translation/failure.ts",
+        "scopePreservesPrevious29Modules": true,
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        }
+      },
+      "browser": {
+        "imageRecovery": {
+          "scope": "real Tesseract OCR + real local model failure routing + recovery settings + translated controls",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "browserFrontmost": false
+          },
+          "passed": true,
+          "cases": [
+            "language direction failure has actionable model/service settings",
+            "model settings opens the expected extension section",
+            "model download failure is distinct from OCR language downloads",
+            "changing image service and retrying completes the same image",
+            "pointer leave hides controls; translated bitmap and reentry survive",
+            "keyboard focus keeps controls available; mouse focus does not",
+            "text panel keeps controls available; restore and cached translation work",
+            "background reused cancellation survives the pending ID boundary",
+            "background consumed IDs do not evict outstanding cancellation or start OCR/provider"
+          ],
+          "backgroundCancellation": {
+            "reusedStartsCancelled": true,
+            "consumedHistoryIgnored": true,
+            "consumedStarts": 512,
+            "pendingUniqueBound": 512,
+            "newProviderRequests": 0
+          },
+          "consoleErrors": 0,
+          "cleanupErrors": 0,
+          "profileRemoved": true,
+          "browserCloseVerifiedByProfileCleanupControlFlow": true,
+          "screenshotsCaptured": 4,
+          "screenshotsInspected": [
+            "01-local-language-failure.png",
+            "02-local-model-not-ready.png",
+            "03-translated-hover.png",
+            "04-translated-pointer-away.png"
+          ],
+          "productionJavascriptSha256": "e67909abadec04f53f1559ac0733be070b1d697b416c7647f90af92aa2665531"
+        },
+        "clientNativeDiagnostic": {
+          "scope": "Actual client source bundles in native Chromium Promise, crypto, AbortSignal and timers; diagnostic completion/event ports; no actual extension context revocation proof",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "browserFrontmost": false
+          },
+          "passed": true,
+          "cases": [
+            {
+              "version": "baseline",
+              "kind": "revoked-getter",
+              "outcome": "pending",
+              "completionException": "Extension context invalidated",
+              "removed": 0,
+              "replacementRemoves": 0,
+              "remainingListeners": 1,
+              "lateProgress": 0,
+              "nativePromise": true,
+              "nativeSignal": true
+            },
+            {
+              "version": "baseline",
+              "kind": "throwing-remove",
+              "outcome": "pending",
+              "completionException": "revoked remove",
+              "removed": 1,
+              "replacementRemoves": 0,
+              "remainingListeners": 1,
+              "lateProgress": 0,
+              "nativePromise": true,
+              "nativeSignal": true
+            },
+            {
+              "version": "baseline",
+              "kind": "replaced-port",
+              "outcome": "resolved",
+              "removed": 0,
+              "replacementRemoves": 1,
+              "remainingListeners": 1,
+              "lateProgress": 0,
+              "nativePromise": true,
+              "nativeSignal": true
+            },
+            {
+              "version": "fixed",
+              "kind": "revoked-getter",
+              "outcome": "resolved",
+              "removed": 1,
+              "replacementRemoves": 0,
+              "remainingListeners": 0,
+              "lateProgress": 0,
+              "nativePromise": true,
+              "nativeSignal": true
+            },
+            {
+              "version": "fixed",
+              "kind": "throwing-remove",
+              "outcome": "rejected",
+              "removed": 1,
+              "replacementRemoves": 0,
+              "remainingListeners": 1,
+              "lateProgress": 0,
+              "nativePromise": true,
+              "nativeSignal": true
+            },
+            {
+              "version": "fixed",
+              "kind": "replaced-port",
+              "outcome": "resolved",
+              "removed": 1,
+              "replacementRemoves": 0,
+              "remainingListeners": 0,
+              "lateProgress": 0,
+              "nativePromise": true,
+              "nativeSignal": true
+            }
+          ],
+          "pageErrors": 0,
+          "cleanupErrors": 0,
+          "browserClosed": true,
+          "profileRemoved": true,
+          "sourceSha256": {
+            "baseline": "3c12e129e7d7a65db86605d5d1a3556b87224e97929ee0913baeb9584ac27737",
+            "fixed": "3c4dbbca00e000eadbe291749328f8bd65337467a595cd79290edb307dd8ec65"
+          }
+        },
+        "remainingTaskBrowserProcesses": 0,
+        "scope": "Real Tesseract OCR and actual local-provider direction/not-ready failures; successful translation uses deterministic Google transport. Client uses actual bundled source/native Promise/signal/timers with diagnostic completion ports. No actual runtime revocation/live translation/model inference/Firefox/device/account/store proof."
+      },
+      "checks": {
+        "compile": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "manifestVerifier": "passed",
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "testAudit": "passed-469-files-6347-static-definitions",
+        "affectedArchitecture": "70-passed-two-existing-ownership-failures-72-cases",
+        "scriptSyntax": "passed",
+        "internalReportValidation": "passed"
+      },
+      "verificationRepairs": [
+        "New settings-message boundary import required mocks in two pixel/security test fixtures; initial786cases passed but two suites failed to load webextension-polyfill outside an extension. Kept suites and previous29module scope;846cases now pass.",
+        "Added explicit test port listener types after Vue/TypeScript compile caught two implicit-any callbacks; compile rerun passed.",
+        "Native diagnostic initially assumed root esbuild package; pnpm installs it as Vite dependency. Resolved existing Vite dependency; no install or source change."
+      ],
+      "architectureDebt": {
+        "executableModules": 14,
+        "documentationTools": 3,
+        "wholeRepositoryGatePassed": false
+      },
+      "remainingDebt": [
+        "617source files need complete source/function review.",
+        "13of22main-changed source files remain pending.",
+        "80cachedf7f00e03changes remain unintegrated.",
+        "Image runtime strict coverage and native decode/draw/mutation performance budgets remain pending.",
+        "Resource pin is local and unpublished."
+      ]
     }
   ]
 }
