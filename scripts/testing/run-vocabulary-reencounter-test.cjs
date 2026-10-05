@@ -13,6 +13,7 @@ const artifacts = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-voc
 const packages = arg('playwright-root'); const helperPath = arg('focus-safe-helper');
 const readingStress = process.argv.includes('--reading-stress');
 const readingBaseline = process.argv.includes('--reading-baseline');
+const readingPerformance = process.argv.includes('--reading-performance');
 if (!packages || !helperPath) throw new Error('Provide --playwright-root and --focus-safe-helper');
 const {chromium} = require(path.join(path.resolve(packages), 'playwright'));
 const helper = require(path.resolve(helperPath));
@@ -65,7 +66,7 @@ async function main() {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const report = {ok: false, readingStress, readingBaseline, cases: [], screenshots: [], consoleErrors: [],
+  const report = {ok: false, readingStress, readingBaseline, readingPerformance, cases: [], screenshots: [], consoleErrors: [],
     buildSha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex'),
     evidenceBoundary: 'Production extension and real Edge with local HTML and synthetic model responses; optional verified isolated-world reading counters are work evidence, not timing. No live model or Firefox runtime quality claim.'};
   let session; let page;
@@ -180,6 +181,56 @@ async function main() {
     await ui.locator('.reencounter-entry').click(); await ui.getByText('标记选项',{exact:true}).click(); await ui.getByRole('button',{name:'关闭所有网页标记',exact:true}).click();
     await until(async()=>(await read(options)).vocabularyReencounterEnabled===false,'Permanent disable not saved'); await until(async()=>await ui.count()===0,'Permanent disable left UI'); assert.deepEqual(await marks(),[]);
     await page.reload(); await wait(400); assert.deepEqual(await marks(),[]); assert.equal(await ui.count(),0); record('permanent-disable-persists-across-reload');
+    if (readingPerformance) {
+      for (const entry of (await snapshot()).data) assert.equal((await send(options, {type:'fluentReadVocabularyBook', action:'remove', entryId:entry.id})).success, true);
+      const saved = await send(options, {type:'fluentReadVocabularyBook', action:'upsert', input:{term:'bank', translation:'合成河岸', sourceLanguage:'en', targetLanguage:'zh-CN'}});
+      assert.equal(saved.success, true);
+      await page.evaluate(() => {
+        const root = document.createElement('section'); root.id = 'reading-performance';
+        const wide = document.createElement('div'); wide.innerHTML = '<span></span>'.repeat(30_000); root.append(wide);
+        const paragraph = document.createElement('p'); paragraph.textContent = 'bank '.repeat(20_000); root.append(paragraph);
+        document.querySelector('main').replaceChildren(root);
+        window.performanceSource = paragraph.firstChild; window.performanceMarkup = root.innerHTML;
+      });
+      await wait(800); await page.evaluate(() => document.querySelector('#reading-performance').getBoundingClientRect());
+      const samples = []; const requestsBefore = requests.length; const bookBefore = await snapshot();
+      for (let run = 0; run < 3; run++) {
+        await page.evaluate(() => {
+          const start = performance.now(); let last = start;
+          const state = window.readingPerformance = {start, heartbeats:[], frames:[], longTasks:[], paintAt:null};
+          state.interval = setInterval(() => {const now = performance.now(); state.heartbeats.push(now - last); last = now;}, 10);
+          state.observer = new PerformanceObserver(list => {for (const task of list.getEntries()) state.longTasks.push({start:task.startTime - start, duration:task.duration});});
+          state.observer.observe({type:'longtask'});
+          const frame = () => {
+            const now = performance.now(); state.frames.push(now - start);
+            if (CSS.highlights.get('fluentread-vocabulary-reencounter')?.size === 300) {state.paintAt = now - start; return;}
+            state.raf = requestAnimationFrame(frame);
+          };
+          state.raf = requestAnimationFrame(frame);
+        });
+        await persist(options, {vocabularyReencounterEnabled:true});
+        await until(async()=>await page.evaluate(()=>window.readingPerformance.paintAt!==null), 'Large nonempty reading never finished painting');
+        await wait(100);
+        samples.push(await page.evaluate(() => {
+          const state = window.readingPerformance; clearInterval(state.interval); cancelAnimationFrame(state.raf);
+          state.longTasks.push(...state.observer.takeRecords().map(task=>({start:task.startTime-state.start,duration:task.duration}))); state.observer.disconnect();
+          const root = document.querySelector('#reading-performance'); const paint = CSS.highlights.get('fluentread-vocabulary-reencounter');
+          return {paintAtMs:state.paintAt, heartbeatSamples:state.heartbeats, maxHeartbeatGapMs:Math.max(...state.heartbeats),
+            hostFramesBeforePaint:state.frames.length, longTasks:state.longTasks, paintedRanges:paint.size,
+            allPaintedOriginal: [...paint].every(range=>range.startContainer === window.performanceSource && range.toString()==='bank'),
+            sourcePreserved:root.innerHTML === window.performanceMarkup && root.querySelector('p').firstChild===window.performanceSource};
+        }));
+        assert.equal(samples.at(-1).paintedRanges, 300); assert(samples.at(-1).allPaintedOriginal); assert(samples.at(-1).sourcePreserved);
+        if (run === 0) await shot('large-nonempty-reading');
+        await persist(options, {vocabularyReencounterEnabled:false}); await until(async()=>await ui.count()===0, 'Performance toggle left UI');
+        assert.deepEqual(await marks(), []); await wait(300);
+      }
+      assert.deepEqual(await snapshot(), bookBefore); assert.equal(requests.length, requestsBefore);
+      report.readingPerformanceSamples = {shallowEmptyElements:30_000, sourceCharacters:100_000, repeatedExpressions:20_000, samples,
+        evidence:'Uninstrumented production reading; only host heartbeat, rAF and PerformanceObserver. Enable-to-paint includes config delivery and 180ms debounce. Sequential run after this audit build/test jobs ended; no machine-wide idle or hard latency claim.'};
+      record('large-nonempty-reading-host-response-and-source-preservation');
+      await page.evaluate(() => document.querySelector('#reading-performance').remove());
+    }
     if (readingStress) {
       // 在完整阅读/学习链路之后，只操作本次临时 profile 中的合成收藏。
       for (const entry of (await snapshot()).data) assert.equal((await send(options, {type:'fluentReadVocabularyBook', action:'remove', entryId:entry.id})).success, true);

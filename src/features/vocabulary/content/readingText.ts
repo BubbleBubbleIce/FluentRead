@@ -1,10 +1,10 @@
 /**
  * @file src/features/vocabulary/content/readingText.ts
  * 文件职责：只读收集网页与开放 Shadow DOM 的可读正文，将收藏命中转为原生文字范围。
- * 主要内容：用迭代游标跨内联标签连接文本，在块、换行与受保护区域处断开，排除交互控件、编辑器、代码、公式、译文与插件节点；空索引不读取页面，仅对视口附近内容生成 Range。
+ * 主要内容：以可关闭的工作迭代器收集正文、按需匹配并用二分定位相交文本段；保留块、换行、Shadow 与保护边界，空索引不读取页面，几何在首个有效矩形停止。
  * 模块边界：不包裹或替换原文，不注册监听、不调用模型、不持久化遇见；调用方拥有范围、绘制样式与观察器生命周期。
  */
-import {matchExpressions, reencounterSentence, type ExpressionIndex, type ReencounterEntry} from '../domain/reencounter';
+import {iterateExpressionMatches, reencounterSentence, type ExpressionIndex, type ReencounterEntry} from '../domain/reencounter';
 
 interface TextRun {node: Text; start: number; end: number}
 interface TextGroup {text: string; runs: TextRun[]; root: Document | ShadowRoot}
@@ -14,8 +14,7 @@ export interface ReadingScan {occurrences: ReencounterOccurrence[]; roots: Array
 const excluded = 'script,style,noscript,template,textarea,input,select,button,a,[role="button"],[role="link"],[role="textbox"],pre,code,kbd,svg,math,mjx-container,.katex,[hidden],[inert],[aria-hidden="true"],[translate="no"],[contenteditable]:not([contenteditable="false"]),[data-fr-translation-owned="true"],[data-fluent-read-ui],[id^="fluent-read-"]';
 const blocks = /^(?:ADDRESS|ARTICLE|ASIDE|BLOCKQUOTE|BODY|DD|DETAILS|DIV|DL|DT|FIGCAPTION|FIGURE|FOOTER|H[1-6]|HEADER|HR|LI|MAIN|NAV|OL|P|SECTION|TABLE|TD|TH|TR|UL)$/u;
 
-/** 保留原生 Text 身份，允许短语跨越 em/strong 等内联元素。 */
-export function collectReadingGroups(document: Document): {groups: TextGroup[]; roots: Array<Document | ShadowRoot>} {
+function* collectReadingGroupsWork(document: Document, onRoot?: (root: ShadowRoot) => void): Generator<undefined, {groups: TextGroup[]; roots: Array<Document | ShadowRoot>}> {
   const groups: TextGroup[] = [];
   const roots: Array<Document | ShadowRoot> = [document];
   const view = document.defaultView!;
@@ -23,6 +22,7 @@ export function collectReadingGroups(document: Document): {groups: TextGroup[]; 
   // 每层只保留下一个兄弟游标，不复制整层 childNodes，也不使用 JS 调用栈。
   const stack: ReadingFrame[] = document.body ? [{next: document.body, offset: 0, endGroup: false}] : [];
   while (stack.length) {
+    yield undefined;
     const frame = stack[stack.length - 1];
     const node = frame.next;
     if (!node) {
@@ -59,6 +59,7 @@ export function collectReadingGroups(document: Document): {groups: TextGroup[]; 
     let assigned: Node[] | undefined;
     if (shadow) {
       current = undefined; roots.push(shadow); next = shadow.firstChild;
+      onRoot?.(shadow);
     } else if (element.tagName === 'SLOT' && (element as HTMLSlotElement).assignedNodes) {
       const projected = (element as HTMLSlotElement).assignedNodes({flatten: true});
       if (projected.length) {assigned = projected; next = assigned[0];}
@@ -68,32 +69,61 @@ export function collectReadingGroups(document: Document): {groups: TextGroup[]; 
   return {groups, roots};
 }
 
-/** 附近正文才做词匹配；滚动后重新扫描，避免长网页预先绘制大量离屏 Range。 */
-export function scanReadingExpressions(document: Document, entries: readonly ReencounterEntry[], index: ExpressionIndex): ReadingScan {
+function complete<T>(work: Generator<undefined, T>): T {
+  let step = work.next();
+  while (!step.done) step = work.next();
+  return step.value;
+}
+
+/** 同步公共入口保留完整分组与原生 Text 身份；实际内容生命周期使用分帧工作入口。 */
+export function collectReadingGroups(document: Document): {groups: TextGroup[]; roots: Array<Document | ShadowRoot>} {
+  return complete(collectReadingGroupsWork(document));
+}
+
+/** 每个检查点允许调用方让出执行权；结果全部完成后才交付，关闭迭代器会释放未绘制的分组与范围。 */
+export function* scanReadingExpressionsWork(document: Document, entries: readonly ReencounterEntry[], index: ExpressionIndex, onRoot?: (root: ShadowRoot) => void): Generator<undefined, ReadingScan> {
   if (!entries.length || index.nodes.length === 1) return {occurrences: [], roots: [document]};
-  const {groups, roots} = collectReadingGroups(document);
+  const {groups, roots} = yield* collectReadingGroupsWork(document, onRoot);
   const byId = new Map(entries.map(entry => [entry.id, entry]));
   const occurrences: ReencounterOccurrence[] = [];
   const height = document.defaultView!.innerHeight;
   for (const group of groups) {
-    for (const match of matchExpressions(group.text, index, Infinity)) {
+    for (const match of iterateExpressionMatches(group.text, index)) {
+      yield undefined;
+      if (!match) continue;
       const ranges: Range[] = [];
-      for (const run of group.runs) {
+      let low = 0; let high = group.runs.length;
+      while (low < high) {
+        const middle = (low + high) >>> 1;
+        if (group.runs[middle].end <= match.start) low = middle + 1; else high = middle;
+      }
+      for (let cursor = low; cursor < group.runs.length && group.runs[cursor].start < match.end; cursor += 1) {
+        yield undefined;
+        const run = group.runs[cursor];
         const start = Math.max(match.start, run.start);
         const end = Math.min(match.end, run.end);
-        if (start >= end) continue;
         const range = document.createRange();
         range.setStart(run.node, start - run.start); range.setEnd(run.node, end - run.start);
         ranges.push(range);
       }
-      if (!ranges.some(range => {
-        for (const rect of range.getClientRects()) if (rect.height > 0 && rect.width > 0 && rect.bottom >= -height && rect.top <= height * 2) return true;
-        return false;
-      })) continue;
+      let visible = false;
+      for (const range of ranges) {
+        for (const rect of range.getClientRects()) {
+          yield undefined;
+          if (rect.height > 0 && rect.width > 0 && rect.bottom >= -height && rect.top <= height * 2) {visible = true; break;}
+        }
+        if (visible) break;
+      }
+      if (!visible) continue;
       occurrences.push({entry: byId.get(match.entryId)!, sentence: reencounterSentence(group.text, match.start, match.end), ranges, root: group.root});
       if (occurrences.length >= 300) break;
     }
     if (occurrences.length >= 300) break;
   }
   return {occurrences, roots};
+}
+
+/** 同步入口复用同一工作链路；扫描器按帧执行它，不为一个段落先分配所有候选。 */
+export function scanReadingExpressions(document: Document, entries: readonly ReencounterEntry[], index: ExpressionIndex): ReadingScan {
+  return complete(scanReadingExpressionsWork(document, entries, index));
 }

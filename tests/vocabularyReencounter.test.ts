@@ -1,7 +1,7 @@
 import {parseHTML} from 'linkedom';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {Config, normalizeConfig} from '@/src/core/config/model';
-import {createExpressionIndex, matchExpressions, reencounterSentence, reencounterSnapshot, reencounterTerm, type ReencounterEntry} from '@/src/features/vocabulary/domain/reencounter';
+import {createExpressionIndex, iterateExpressionMatches, matchExpressions, reencounterSentence, reencounterSnapshot, reencounterTerm, type ReencounterEntry} from '@/src/features/vocabulary/domain/reencounter';
 import {collectReadingGroups, scanReadingExpressions} from '@/src/features/vocabulary/content/readingText';
 import {installReencounterScanner, REENCOUNTER_HIGHLIGHT} from '@/src/features/vocabulary/content/scanner';
 import type {VocabularyEntry} from '@/src/features/vocabulary/learningModel';
@@ -302,5 +302,150 @@ describe('bounded reading ownership and fault cleanup', () => {
     scanner.setEntries(terms); await vi.advanceTimersByTimeAsync(180); expect(reads).toBe(2);
     const event = new window.Event('click', {bubbles: true}); Object.assign(event, {button: 0, clientX: 10, clientY: 110});
     document.getElementById('text')!.dispatchEvent(event); expect(reads).toBe(3); expect(open).toHaveBeenCalledTimes(1); scanner.dispose();
+  });
+});
+
+describe('reading work stops and yields before blocking the page', () => {
+  it('does no normalization for a zero limit or an empty expression index', () => {
+    const index = createExpressionIndex([saved('art')]); const empty = createExpressionIndex([]);
+    const normalize = vi.spyOn(String.prototype, 'normalize'); const source = 'art '.repeat(20_000);
+    expect(matchExpressions(source, index, 0)).toEqual([]); expect(matchExpressions(source, empty, 1)).toEqual([]);
+    expect(normalize).not.toHaveBeenCalled();
+  });
+  it('stops normalization after one settled match instead of reading a huge whitespace and match tail', () => {
+    const index = createExpressionIndex([saved('art')]); const normalize = vi.spyOn(String.prototype, 'normalize');
+    expect(matchExpressions('art' + ' '.repeat(20_000) + 'art '.repeat(20_000), index, 1)).toEqual([{entryId: 'art', start: 0, end: 3}]);
+    expect(normalize.mock.calls.length).toBeLessThanOrEqual(8);
+  });
+  it('waits for the longest expression before a result limit while leaving the later reading tail untouched', () => {
+    const index = createExpressionIndex([saved('art'), saved('art gallery'), saved('gallery')]);
+    const normalize = vi.spyOn(String.prototype, 'normalize');
+    expect(matchExpressions('Art gallery. ' + 'art '.repeat(20_000), index, 1)).toEqual([{entryId: 'art gallery', start: 0, end: 11}]);
+    expect(normalize.mock.calls.length).toBeLessThanOrEqual(16);
+  });
+  it('preserves stable raw-coordinate ties and case expansion at a limited longest match', () => {
+    const index = createExpressionIndex([saved('中\u0301', 'accent'), saved('中', 'plain'), saved('İ'), saved('İ.')]);
+    expect(matchExpressions('中\u0301 İ. 中\u0301', index, Infinity)).toEqual([
+      {entryId: 'plain', start: 0, end: 2}, {entryId: 'İ.', start: 3, end: 5}, {entryId: 'plain', start: 6, end: 8},
+    ]);
+    expect(matchExpressions('中\u0301 İ.', index, 1)).toEqual([{entryId: 'plain', start: 0, end: 2}]);
+  });
+  it('settles expressions sharing a grapheme start by original end and discovery order', () => {
+    expect(find('中\u0301文', ['中', '\u0301文'])).toEqual([{entryId: '\u0301文', start: 0, end: 3}]);
+    expect(find('文\u0301a', ['文\u0301a', '\u0301a'])).toEqual([{entryId: '文\u0301a', start: 0, end: 3}]);
+    expect(find('中\u0301文\u0301', ['中\u0301文\u0301', '\u0301文'])).toEqual([{entryId: '\u0301文', start: 0, end: 4}]);
+    expect(find('中\u0301文\u0301', ['中\u0301文\u0301', '\u0301文\u0301'])).toEqual([{entryId: '中\u0301文\u0301', start: 0, end: 4}]);
+  });
+  it('allows independent work iterators to pause and close without consuming the remaining source', () => {
+    expect([...iterateExpressionMatches('art', createExpressionIndex([]))]).toEqual([]);
+    const index = createExpressionIndex([saved('中'), saved('文')]);
+    const first = iterateExpressionMatches('中文中', index); const second = iterateExpressionMatches('文中', index);
+    const normalize = vi.spyOn(String.prototype, 'normalize');
+    let step = first.next(); while (!step.done && !step.value) step = first.next();
+    expect(step.value).toEqual({entryId: '中', start: 0, end: 1});
+    first.return(undefined); const reads = normalize.mock.calls.length;
+    expect(first.next().done).toBe(true); expect(normalize).toHaveBeenCalledTimes(reads);
+    expect([...second].filter(Boolean)).toEqual([{entryId: '文', start: 0, end: 1}, {entryId: '中', start: 1, end: 2}]);
+  });
+  it('caps visible occurrences after geometry filtering, so an offscreen inline prefix cannot hide later visible hits', () => {
+    const {document} = dom('<p>' + '<span data-range-far>art </span>'.repeat(350) + '<em>art art</em></p>');
+    const terms = [saved('art')]; const native = document.querySelector('em')!.firstChild; const before = document.body.innerHTML;
+    const result = scanReadingExpressions(document, terms, createExpressionIndex(terms));
+    expect(result.occurrences.map(hit => hit.ranges.map(range => range.toString()))).toEqual([['art'], ['art']]);
+    expect(result.occurrences.every(hit => hit.ranges[0].startContainer === native)).toBe(true);
+    expect(document.body.innerHTML).toBe(before);
+  });
+  it('does not build and sort all candidate records for a long reading with a one-result limit', () => {
+    const index = createExpressionIndex([saved('art')]); const sort = Array.prototype.sort; const sizes: number[] = [];
+    vi.spyOn(Array.prototype, 'sort').mockImplementation(function (this: any[], compare) {
+      if (this[0]?.entryId === 'art') sizes.push(this.length);
+      return sort.call(this, compare);
+    });
+    expect(matchExpressions('art '.repeat(20_000), index, 1)).toEqual([{entryId: 'art', start: 0, end: 3}]);
+    expect(sizes).toEqual([]);
+  });
+  function sliced(html = '<p id="owner">art</p><section>' + '<span></span>'.repeat(10_000) + '</section><p id="dynamic">art.</p>') {
+    vi.useFakeTimers(); const {document, window} = dom(html); let clock = 0; let id = 0;
+    vi.spyOn(window.performance, 'now').mockImplementation(() => ++clock);
+    const frames = new Map<number, FrameRequestCallback>();
+    Object.assign(window, {requestAnimationFrame: vi.fn((callback: FrameRequestCallback) => {frames.set(++id, callback); return id;}),
+      cancelAnimationFrame: vi.fn((frame: number) => frames.delete(frame))});
+    const style = vi.spyOn(window, 'getComputedStyle'); const changed = vi.fn();
+    const scanner = installReencounterScanner(document, {changed, open: vi.fn()});
+    const finish = () => {let turns = 0; while (frames.size && turns++ < 1200) {
+      const [key, callback] = frames.entries().next().value!; frames.delete(key); callback(clock);
+    } expect(turns).toBeLessThan(1200);};
+    return {document, window, frames, style, changed, scanner, finish};
+  }
+  it('yields a large native-node scan, keeps original text and only publishes completed results', async () => {
+    const f = sliced(); const native = f.document.getElementById('owner')!.firstChild;
+    f.scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180);
+    expect(f.frames.size).toBe(1); expect(f.style.mock.calls.length).toBeLessThan(1000);
+    expect(f.changed.mock.calls.at(-1)![0]).toEqual([]);
+    f.finish(); expect(f.changed.mock.calls.at(-1)![0]).toHaveLength(2);
+    expect(f.document.getElementById('owner')!.firstChild).toBe(native);
+    expect(f.window.CSS.highlights.get(REENCOUNTER_HIGHLIGHT)?.size).toBe(2); f.scanner.dispose();
+  });
+  it('cancels a pending frame on disposal and a held old callback cannot read or paint a closed document', async () => {
+    const f = sliced(); f.scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180);
+    expect(f.frames.size).toBe(1); const callback = f.frames.values().next().value!;
+    const reads = f.style.mock.calls.length; f.scanner.dispose(); expect(f.frames.size).toBe(0);
+    callback(0); expect(f.style).toHaveBeenCalledTimes(reads); expect(f.window.CSS.highlights.has(REENCOUNTER_HIGHLIGHT)).toBe(false);
+    await vi.runAllTimersAsync(); expect(f.frames.size).toBe(0);
+  });
+  it('rejects a held old frame after entries change and paints only the newest book', async () => {
+    const f = sliced(); f.scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180);
+    expect(f.frames.size).toBe(1); const callback = f.frames.values().next().value!;
+    f.scanner.setEntries([saved('other')]); expect(f.frames.size).toBe(0); await vi.advanceTimersByTimeAsync(180);
+    const reads = f.style.mock.calls.length; callback(0); expect(f.style).toHaveBeenCalledTimes(reads);
+    f.finish(); expect(f.changed.mock.calls.at(-1)![0]).toEqual([]); f.scanner.dispose();
+  });
+  it('cancels obsolete DOM work, closes an old card immediately and resumes the latest text', async () => {
+    const f = sliced('<p id="owner">art</p><section id="wide"></section><p id="dynamic">art.</p>');
+    f.scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180); f.finish();
+    expect(f.changed.mock.calls.at(-1)![0]).toHaveLength(2);
+    f.document.getElementById('wide')!.innerHTML = '<span></span>'.repeat(10_000);
+    await Promise.resolve(); await vi.advanceTimersByTimeAsync(180); expect(f.frames.size).toBe(1);
+    const callback = f.frames.values().next().value!;
+    f.document.getElementById('dynamic')!.textContent = 'A different art sentence.';
+    await Promise.resolve(); expect(f.frames.size).toBe(0); expect(f.changed.mock.calls.at(-1)![0]).toEqual([]);
+    await vi.advanceTimersByTimeAsync(180); const reads = f.style.mock.calls.length;
+    callback(0); expect(f.style).toHaveBeenCalledTimes(reads); f.finish();
+    expect(f.changed.mock.calls.at(-1)![0].map((hit: {sentence: string}) => hit.sentence)).toEqual(['art', 'A different art sentence.']); f.scanner.dispose();
+  });
+  it('owns a stable book snapshot while page work is paused', async () => {
+    const f = sliced(); const entry = saved('art'); const entries = [entry];
+    f.scanner.setEntries(entries); await vi.advanceTimersByTimeAsync(180); expect(f.frames.size).toBe(1);
+    entry.term = 'changed'; entry.id = 'changed'; entries.length = 0;
+    f.finish(); const hits = f.changed.mock.calls.at(-1)![0];
+    expect(hits).toHaveLength(2); expect(hits[0].entry).toEqual(saved('art')); expect(hits[0].entry).not.toBe(entry);
+    f.scanner.dispose();
+  });
+  it('yields while folding a huge whitespace span before a later real expression', async () => {
+    const source = 'nothing' + ' '.repeat(50_000) + 'art'; const f = sliced('<p>' + source + '</p>');
+    f.scanner.setEntries([saved('art')]); const normalize = vi.spyOn(String.prototype, 'normalize');
+    await vi.advanceTimersByTimeAsync(180); expect(f.frames.size).toBe(1);
+    expect(normalize.mock.calls.length).toBeLessThan(1000); expect(f.changed.mock.calls.at(-1)![0]).toEqual([]);
+    f.finish(); expect(f.changed.mock.calls.at(-1)![0]).toHaveLength(1);
+    expect(f.changed.mock.calls.at(-1)![0][0].ranges[0].toString()).toBe('art'); expect(f.document.querySelector('p')!.textContent).toBe(source);
+    f.scanner.dispose();
+  });
+  it('keeps completed paint during attribute and scroll rescans, then replaces it when new work completes', async () => {
+    const f = sliced(); f.scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180); f.finish();
+    const paint = f.window.CSS.highlights.get(REENCOUNTER_HIGHLIGHT)!; const notifications = f.changed.mock.calls.length;
+    f.document.getElementById('owner')!.setAttribute('class', 'updated-layout'); await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(180); expect(f.frames.size).toBe(1); expect(paint.size).toBe(2);
+    expect(f.changed).toHaveBeenCalledTimes(notifications);
+    f.document.dispatchEvent(new f.window.Event('scroll')); expect(f.frames.size).toBe(0); expect(paint.size).toBe(2);
+    await vi.advanceTimersByTimeAsync(180); f.finish(); expect(paint.size).toBe(2);
+    expect(f.changed.mock.calls.at(-1)![0]).toHaveLength(2); f.scanner.dispose();
+  });
+  it('observes a discovered shadow root before yielding and cancels a paused scan when its text changes', async () => {
+    const f = sliced('<div id="host"></div>'); const root = f.document.getElementById('host')!.attachShadow({mode: 'open'});
+    root.innerHTML = '<p>art</p>' + '<span></span>'.repeat(10_000);
+    f.scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180); expect(f.frames.size).toBe(1);
+    root.querySelector('p')!.textContent = 'No saved expression.'; await Promise.resolve(); expect(f.frames.size).toBe(0);
+    await vi.advanceTimersByTimeAsync(180); f.finish(); expect(f.changed.mock.calls.at(-1)![0]).toEqual([]);
+    f.scanner.dispose(); f.scanner.refresh(); await vi.runAllTimersAsync(); expect(f.frames.size).toBe(0);
   });
 });

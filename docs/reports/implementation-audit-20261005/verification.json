@@ -8878,6 +8878,952 @@
         "anchors": 741,
         "images": 154
       }
+    },
+    {
+      "name": "sixteenth-streaming-matching-and-cooperative-reading",
+      "batch": "sixteenth",
+      "goalStatus": "active",
+      "newExecutedUnitCases": 16,
+      "newTestsBeforeProductionChanges": 9,
+      "oldSourceRun": {
+        "passed": 29,
+        "failed": 8,
+        "total": 37,
+        "scope": "37 cases on unchanged saved source. One new coordinate-tie case passed; eight new workload/cooperative cases failed. Seven further cases added after changes have no old-source test-run result."
+      },
+      "implementation": {
+        "matching": "Streaming NFC/lowercase/typography spans and Aho suffix links with bounded longest-term ring window; settled earliest/longest matches preserve stable UTF16 ties. Stop at requested result limit; no full candidate sort. Collapsed whitespace supplies work checkpoints.",
+        "reading": "Collection/matching/range geometry work iterator shared by synchronous public APIs and frame-owned scanner. Binary search finds overlapping Text runs. First300visible hits cap remains after geometry filtering, as in baseline.",
+        "lifecycle": "4ms sampled every64checkpoints or16384step cap; close obsolete jobs and cancel frames with generation guard. Entry array/fields snapshotted; observe Shadow roots before yielding. Retain prior completed painting for attribute/scroll rescans; changed source immediately clears/notifies stale card.",
+        "boundary": "Single normalization/native DOM call, initial5000-entry index, all-group storage and final painting/notification have no hard time bound. Public synchronous APIs intentionally complete whole requested work."
+      },
+      "strictCoverage": {
+        "files": 2,
+        "executedCases": 53,
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "modules": {
+          "features/vocabulary/content/readingText.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/content/reencounter.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/content/scanner.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/domain/reencounter.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "newIgnores": 0,
+        "thresholdChanges": false
+      },
+      "affectedTests": {
+        "files": 5,
+        "executedCases": 173,
+        "passed": true,
+        "components": "53reencounter/lifecycle,13background handler,11learning model,96browser focus contracts"
+      },
+      "architecture": {
+        "affectedFiles": 3,
+        "executedCases": 815,
+        "passed": true,
+        "ownership": {
+          "passed": 7,
+          "failed": 2,
+          "remainingExecutableOmissions": 15,
+          "unownedDocumentationTools": 3,
+          "wholeGatePassed": false
+        }
+      },
+      "checks": {
+        "typecheck": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed; no Firefox runtime claim",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testSuiteAudit": {
+          "files": 466,
+          "staticRegisteredDefinitions": 6139,
+          "passed": true
+        },
+        "docsBuild": "passed",
+        "docsCheck": {
+          "passed": true,
+          "pages": 77,
+          "links": 3955,
+          "anchors": 741,
+          "images": 154
+        }
+      },
+      "differentialAndWork": {
+        "runtime": "v20.11.1",
+        "scope": "Compiled unchanged public exports with deterministic seeded inputs. Work counters are separate from uninstrumented function timing; no whole-page performance claim.",
+        "differentialChecks": 36000,
+        "limits": [
+          0,
+          1,
+          2,
+          3.5,
+          300,
+          "Infinity"
+        ],
+        "work": [
+          {
+            "id": "limited-repeated-reading",
+            "name": "baseline",
+            "normalizations": 80000,
+            "candidateSortSizes": [
+              20000
+            ],
+            "hits": 1
+          },
+          {
+            "id": "limited-repeated-reading",
+            "name": "final",
+            "normalizations": 4,
+            "candidateSortSizes": [],
+            "hits": 1
+          },
+          {
+            "id": "limited-longest-reading",
+            "name": "baseline",
+            "normalizations": 80013,
+            "candidateSortSizes": [
+              20003
+            ],
+            "hits": 1
+          },
+          {
+            "id": "limited-longest-reading",
+            "name": "final",
+            "normalizations": 12,
+            "candidateSortSizes": [],
+            "hits": 1
+          },
+          {
+            "id": "first-300-visible-candidates",
+            "name": "baseline",
+            "normalizations": 80000,
+            "candidateSortSizes": [
+              20000
+            ],
+            "hits": 300
+          },
+          {
+            "id": "first-300-visible-candidates",
+            "name": "final",
+            "normalizations": 1200,
+            "candidateSortSizes": [],
+            "hits": 300
+          },
+          {
+            "id": "full-5000-entry-index",
+            "name": "baseline",
+            "normalizations": 43,
+            "candidateSortSizes": [
+              2
+            ],
+            "hits": 2
+          },
+          {
+            "id": "full-5000-entry-index",
+            "name": "final",
+            "normalizations": 43,
+            "candidateSortSizes": [],
+            "hits": 2
+          }
+        ],
+        "timing": [
+          {
+            "id": "limited-repeated-reading",
+            "samplesMs": {
+              "baseline": [
+                21.909999999999854,
+                25.798000000000002,
+                21.603250000000116,
+                26.24095800000009,
+                23.971958000000086,
+                23.43683299999998,
+                24.033457999999882,
+                22.9227920000003,
+                32.7222499999998,
+                22.219125000000076,
+                24.515041999999994
+              ],
+              "final": [
+                0.033749999999827196,
+                0.005750000000034561,
+                0.03895800000009331,
+                0.011166000000002896,
+                0.0361249999998563,
+                0.0038329999999859865,
+                0.036458999999922526,
+                0.003749999999854481,
+                0.3074579999997695,
+                0.007791999999881227,
+                0.0424580000003516
+              ]
+            },
+            "medianMs": {
+              "baseline": 23.971958000000086,
+              "final": 0.033749999999827196
+            }
+          },
+          {
+            "id": "limited-longest-reading",
+            "samplesMs": {
+              "baseline": [
+                22.305041999999958,
+                22.699208999999883,
+                26.781417000000147,
+                21.398916999999983,
+                27.1540829999999,
+                26.863749999999982,
+                25.02041700000018,
+                24.136708999999883,
+                21.431084000000283,
+                31.67233299999998,
+                21.637874999999894
+              ],
+              "final": [
+                0.04966699999977209,
+                0.008790999999746418,
+                0.051291000000219356,
+                0.013792000000194093,
+                0.04991700000027777,
+                0.008542000000034022,
+                0.049624999999650754,
+                0.013707999999951426,
+                0.04362500000024738,
+                0.008542000000034022,
+                0.05179200000020501
+              ]
+            },
+            "medianMs": {
+              "baseline": 24.136708999999883,
+              "final": 0.04362500000024738
+            }
+          },
+          {
+            "id": "first-300-visible-candidates",
+            "samplesMs": {
+              "baseline": [
+                23.25087500000018,
+                22.06558300000006,
+                24.9050000000002,
+                24.952458999999635,
+                20.57712500000025,
+                22.600750000000062,
+                20.155291999999918,
+                24.159208000000035,
+                20.02458400000023,
+                19.91283300000032,
+                22.406041000000187
+              ],
+              "final": [
+                0.39016700000001947,
+                0.37525000000005093,
+                0.4563749999997526,
+                0.4032910000000811,
+                0.39191600000003746,
+                0.37483400000019174,
+                3.201458999999886,
+                2.1722500000000764,
+                3.915624999999636,
+                0.37941600000021936,
+                0.3956670000002305
+              ]
+            },
+            "medianMs": {
+              "baseline": 22.406041000000187,
+              "final": 0.3956670000002305
+            }
+          },
+          {
+            "id": "full-5000-entry-index",
+            "samplesMs": {
+              "baseline": [
+                0.012166999999863037,
+                0.007792000000335975,
+                0.007375000000138243,
+                0.007540999999946507,
+                0.009082999999918684,
+                0.01095900000018446,
+                0.007459000000380911,
+                0.007542000000285043,
+                0.00741699999980483,
+                0.0075419999998302956,
+                0.007749999999759893
+              ],
+              "final": [
+                0.013875000000098225,
+                0.015874999999596184,
+                0.01275000000032378,
+                0.012375000000247383,
+                0.012959000000137166,
+                0.012416999999913969,
+                0.012707999999747699,
+                0.012374999999792635,
+                0.012499999999818101,
+                0.012457999999696767,
+                0.01587500000005093
+              ]
+            },
+            "medianMs": {
+              "baseline": 0.007542000000285043,
+              "final": 0.012707999999747699
+            }
+          }
+        ],
+        "groupDifferentials": 400,
+        "offscreenPrefix": {
+          "offscreenHits": 350,
+          "baselineVisibleHits": 2,
+          "finalVisibleHits": 2,
+          "sourcePreserved": true
+        }
+      },
+      "browser": {
+        "baseline": {
+          "passed": true,
+          "phaseCases": 18,
+          "cases": [
+            {
+              "id": "default-off-with-existing-saved-entries",
+              "status": "passed"
+            },
+            {
+              "id": "setting-label-follows-cross-page-interface-language",
+              "status": "passed"
+            },
+            {
+              "id": "inline-matching-protected-content-original-text-and-geometry",
+              "status": "passed"
+            },
+            {
+              "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+              "status": "passed"
+            },
+            {
+              "id": "keyboard-entry-and-escape-without-model-request",
+              "status": "passed"
+            },
+            {
+              "id": "unapproved-sentence-context-disables-explanation",
+              "status": "passed"
+            },
+            {
+              "id": "explicit-current-context-only-and-unchanged-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dark-and-mobile-clamped-layout",
+              "status": "passed"
+            },
+            {
+              "id": "close-cancels-delayed-stream-without-resurrection",
+              "status": "passed"
+            },
+            {
+              "id": "model-failure-and-explicit-retry",
+              "status": "passed"
+            },
+            {
+              "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dynamic-text-stale-card-and-late-shadow-root",
+              "status": "passed"
+            },
+            {
+              "id": "scroll-discovers-later-reading",
+              "status": "passed"
+            },
+            {
+              "id": "visit-pause-keeps-global-preference",
+              "status": "passed"
+            },
+            {
+              "id": "cross-page-delete-removes-all-corresponding-marks",
+              "status": "passed"
+            },
+            {
+              "id": "master-toggle-and-site-disable-clear-and-restore",
+              "status": "passed"
+            },
+            {
+              "id": "permanent-disable-persists-across-reload",
+              "status": "passed"
+            },
+            {
+              "id": "large-nonempty-reading-host-response-and-source-preservation",
+              "status": "passed"
+            }
+          ],
+          "pageErrors": [],
+          "contentSha256": "56619f90d8d65a05e13a1e3ca785c2d47c7771504b6a6bc30756eb087bbe771e",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 5,
+          "readingPerformance": {
+            "shallowEmptyElements": 30000,
+            "sourceCharacters": 100000,
+            "repeatedExpressions": 20000,
+            "samples": [
+              {
+                "paintAtMs": 302.5,
+                "heartbeatSamples": [
+                  11.700000286102295,
+                  9.400000095367432,
+                  9.699999809265137,
+                  9.900000095367432,
+                  10.199999809265137,
+                  10.800000190734863,
+                  9.299999713897705,
+                  9.600000381469727,
+                  9.699999809265137,
+                  10.599999904632568,
+                  10.700000286102295,
+                  9.399999618530273,
+                  9.900000095367432,
+                  9.599999904632568,
+                  11.100000381469727,
+                  9.899999618530273,
+                  10.200000286102295,
+                  8.900000095367432,
+                  10.199999809265137,
+                  10.599999904632568,
+                  10.099999904632568,
+                  9.700000286102295,
+                  144.69999980926514,
+                  39.90000009536743,
+                  5.400000095367432,
+                  9.799999713897705,
+                  11,
+                  10.200000286102295,
+                  9.799999713897705,
+                  10.100000381469727,
+                  10.099999904632568
+                ],
+                "maxHeartbeatGapMs": 144.69999980926514,
+                "hostFramesBeforePaint": 28,
+                "longTasks": [
+                  {
+                    "start": 221.2000002861023,
+                    "duration": 81
+                  },
+                  {
+                    "start": 302.40000009536743,
+                    "duration": 63
+                  }
+                ],
+                "paintedRanges": 300,
+                "allPaintedOriginal": true,
+                "sourcePreserved": true
+              },
+              {
+                "paintAtMs": 316.69999980926514,
+                "heartbeatSamples": [
+                  11.5,
+                  9.400000095367432,
+                  10.199999809265137,
+                  10.300000190734863,
+                  9.5,
+                  10.299999713897705,
+                  9,
+                  10.800000190734863,
+                  10.400000095367432,
+                  9.599999904632568,
+                  10.400000095367432,
+                  8.799999713897705,
+                  10.599999904632568,
+                  10.700000286102295,
+                  9.799999713897705,
+                  10,
+                  8.900000095367432,
+                  10.5,
+                  10.300000190734863,
+                  9.699999809265137,
+                  10.700000286102295,
+                  9.099999904632568,
+                  10.599999904632568,
+                  154.5,
+                  34.40000009536743,
+                  10.400000095367432,
+                  11.099999904632568,
+                  9.699999809265137,
+                  10.099999904632568,
+                  9.900000095367432,
+                  10,
+                  10.099999904632568,
+                  9.900000095367432,
+                  10.300000190734863,
+                  9.5
+                ],
+                "maxHeartbeatGapMs": 154.5,
+                "hostFramesBeforePaint": 29,
+                "longTasks": [
+                  {
+                    "start": 231.09999990463257,
+                    "duration": 85
+                  },
+                  {
+                    "start": 316.69999980926514,
+                    "duration": 65
+                  }
+                ],
+                "paintedRanges": 300,
+                "allPaintedOriginal": true,
+                "sourcePreserved": true
+              },
+              {
+                "paintAtMs": 307.30000019073486,
+                "heartbeatSamples": [
+                  11.400000095367432,
+                  8.699999809265137,
+                  10,
+                  12,
+                  8.600000381469727,
+                  10.699999809265137,
+                  8.800000190734863,
+                  10.599999904632568,
+                  10.599999904632568,
+                  9.5,
+                  10.199999809265137,
+                  9,
+                  10.600000381469727,
+                  10.699999809265137,
+                  9.800000190734863,
+                  10.299999713897705,
+                  8.599999904632568,
+                  10.700000286102295,
+                  9.799999713897705,
+                  10.300000190734863,
+                  10.800000190734863,
+                  9.399999618530273,
+                  10.200000286102295,
+                  149.69999980926514,
+                  34,
+                  7.900000095367432,
+                  9.099999904632568,
+                  9.099999904632568,
+                  9.800000190734863,
+                  11.099999904632568,
+                  9.099999904632568,
+                  9.800000190734863
+                ],
+                "maxHeartbeatGapMs": 149.69999980926514,
+                "hostFramesBeforePaint": 30,
+                "longTasks": [
+                  {
+                    "start": 231.30000019073486,
+                    "duration": 76
+                  },
+                  {
+                    "start": 307.30000019073486,
+                    "duration": 68
+                  }
+                ],
+                "paintedRanges": 300,
+                "allPaintedOriginal": true,
+                "sourcePreserved": true
+              }
+            ],
+            "evidence": "Uninstrumented production reading; only host heartbeat, rAF and PerformanceObserver. Enable-to-paint includes config delivery and 180ms debounce. Sequential run after this audit build/test jobs ended; no machine-wide idle or hard latency claim."
+          }
+        },
+        "final": {
+          "passed": true,
+          "phaseCases": 19,
+          "cases": [
+            {
+              "id": "default-off-with-existing-saved-entries",
+              "status": "passed"
+            },
+            {
+              "id": "setting-label-follows-cross-page-interface-language",
+              "status": "passed"
+            },
+            {
+              "id": "inline-matching-protected-content-original-text-and-geometry",
+              "status": "passed"
+            },
+            {
+              "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+              "status": "passed"
+            },
+            {
+              "id": "keyboard-entry-and-escape-without-model-request",
+              "status": "passed"
+            },
+            {
+              "id": "unapproved-sentence-context-disables-explanation",
+              "status": "passed"
+            },
+            {
+              "id": "explicit-current-context-only-and-unchanged-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dark-and-mobile-clamped-layout",
+              "status": "passed"
+            },
+            {
+              "id": "close-cancels-delayed-stream-without-resurrection",
+              "status": "passed"
+            },
+            {
+              "id": "model-failure-and-explicit-retry",
+              "status": "passed"
+            },
+            {
+              "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dynamic-text-stale-card-and-late-shadow-root",
+              "status": "passed"
+            },
+            {
+              "id": "scroll-discovers-later-reading",
+              "status": "passed"
+            },
+            {
+              "id": "visit-pause-keeps-global-preference",
+              "status": "passed"
+            },
+            {
+              "id": "cross-page-delete-removes-all-corresponding-marks",
+              "status": "passed"
+            },
+            {
+              "id": "master-toggle-and-site-disable-clear-and-restore",
+              "status": "passed"
+            },
+            {
+              "id": "permanent-disable-persists-across-reload",
+              "status": "passed"
+            },
+            {
+              "id": "large-nonempty-reading-host-response-and-source-preservation",
+              "status": "passed"
+            },
+            {
+              "id": "empty-book-page-work-and-later-native-deep-shadow-matching",
+              "status": "passed"
+            }
+          ],
+          "pageErrors": [],
+          "contentSha256": "f31c471561d1602502ba322454da5a67af525aba78aaff2f160996c64ab43d08",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 6,
+          "readingPerformance": {
+            "shallowEmptyElements": 30000,
+            "sourceCharacters": 100000,
+            "repeatedExpressions": 20000,
+            "samples": [
+              {
+                "paintAtMs": 386.80000019073486,
+                "heartbeatSamples": [
+                  10.700000286102295,
+                  10.599999904632568,
+                  10.099999904632568,
+                  9,
+                  10,
+                  10.5,
+                  10.199999809265137,
+                  10,
+                  9.400000095367432,
+                  9.900000095367432,
+                  10.300000190734863,
+                  11,
+                  9.5,
+                  9.699999809265137,
+                  9.400000095367432,
+                  10.699999809265137,
+                  10.5,
+                  9.400000095367432,
+                  10,
+                  9.5,
+                  10.599999904632568,
+                  10,
+                  9.5,
+                  13.400000095367432,
+                  8.300000190734863,
+                  8.199999809265137,
+                  10.199999809265137,
+                  14.800000190734863,
+                  9.099999904632568,
+                  7.300000190734863,
+                  8.599999904632568,
+                  10.5,
+                  67.5,
+                  2.4000000953674316,
+                  40.299999713897705,
+                  9.300000190734863,
+                  11,
+                  10,
+                  10.099999904632568,
+                  9.099999904632568,
+                  10.400000095367432,
+                  10.099999904632568,
+                  10.100000381469727,
+                  10.299999713897705,
+                  9.599999904632568,
+                  10,
+                  10.300000190734863,
+                  9.300000190734863,
+                  11.099999904632568
+                ],
+                "maxHeartbeatGapMs": 67.5,
+                "hostFramesBeforePaint": 41,
+                "longTasks": [
+                  {
+                    "start": 322.90000009536743,
+                    "duration": 63
+                  }
+                ],
+                "paintedRanges": 300,
+                "allPaintedOriginal": true,
+                "sourcePreserved": true
+              },
+              {
+                "paintAtMs": 400.69999980926514,
+                "heartbeatSamples": [
+                  11.199999809265137,
+                  9.199999809265137,
+                  10.300000190734863,
+                  9.400000095367432,
+                  11.299999713897705,
+                  8.800000190734863,
+                  10.900000095367432,
+                  10.099999904632568,
+                  10.400000095367432,
+                  9.599999904632568,
+                  9.900000095367432,
+                  9.400000095367432,
+                  10.599999904632568,
+                  9.699999809265137,
+                  10.300000190734863,
+                  9.900000095367432,
+                  9.899999618530273,
+                  9.900000095367432,
+                  10.900000095367432,
+                  9.400000095367432,
+                  9.799999713897705,
+                  10.100000381469727,
+                  10.099999904632568,
+                  11.299999713897705,
+                  7.700000286102295,
+                  14.099999904632568,
+                  7.900000095367432,
+                  8.400000095367432,
+                  10.699999809265137,
+                  9.599999904632568,
+                  13,
+                  8.300000190734863,
+                  78.90000009536743,
+                  32.09999990463257,
+                  7.699999809265137,
+                  10.200000286102295,
+                  10.099999904632568,
+                  9.199999809265137,
+                  11.099999904632568,
+                  9.800000190734863,
+                  10,
+                  10.199999809265137,
+                  9.5,
+                  11,
+                  10.100000381469727,
+                  10,
+                  8.699999809265137,
+                  11,
+                  9.599999904632568
+                ],
+                "maxHeartbeatGapMs": 78.90000009536743,
+                "hostFramesBeforePaint": 41,
+                "longTasks": [
+                  {
+                    "start": 327.19999980926514,
+                    "duration": 67
+                  }
+                ],
+                "paintedRanges": 300,
+                "allPaintedOriginal": true,
+                "sourcePreserved": true
+              },
+              {
+                "paintAtMs": 411.80000019073486,
+                "heartbeatSamples": [
+                  11.099999904632568,
+                  9.400000095367432,
+                  10.200000286102295,
+                  9.599999904632568,
+                  10.199999809265137,
+                  10.5,
+                  9.5,
+                  10.599999904632568,
+                  9.900000095367432,
+                  9.700000286102295,
+                  10.399999618530273,
+                  9.600000381469727,
+                  10.299999713897705,
+                  10.599999904632568,
+                  9,
+                  9.600000381469727,
+                  11.199999809265137,
+                  9,
+                  11,
+                  9.5,
+                  9.900000095367432,
+                  10.599999904632568,
+                  9.599999904632568,
+                  9.800000190734863,
+                  13.699999809265137,
+                  8.300000190734863,
+                  8.5,
+                  9.5,
+                  10.599999904632568,
+                  13.099999904632568,
+                  9.300000190734863,
+                  9.400000095367432,
+                  9.099999904632568,
+                  79.69999980926514,
+                  33.200000286102295,
+                  5.099999904632568,
+                  11.5,
+                  10.099999904632568,
+                  10,
+                  9.199999809265137,
+                  9,
+                  11.200000286102295,
+                  10
+                ],
+                "maxHeartbeatGapMs": 79.69999980926514,
+                "hostFramesBeforePaint": 42,
+                "longTasks": [
+                  {
+                    "start": 333.80000019073486,
+                    "duration": 72
+                  }
+                ],
+                "paintedRanges": 300,
+                "allPaintedOriginal": true,
+                "sourcePreserved": true
+              }
+            ],
+            "evidence": "Uninstrumented production reading; only host heartbeat, rAF and PerformanceObserver. Enable-to-paint includes config delivery and 180ms debounce. Sequential run after this audit build/test jobs ended; no machine-wide idle or hard latency claim."
+          }
+        },
+        "verifiedReadingWork": {
+          "emptyInitial": {
+            "style": 0,
+            "box": 0
+          },
+          "emptyMutation": {
+            "style": 0,
+            "box": 0
+          },
+          "nonempty": {
+            "style": 4805,
+            "box": 3
+          },
+          "drawingStylesAfterLastEntry": 0,
+          "nativeDepth": 1500,
+          "shallowEmptyElements": 3300,
+          "originalTextAndMarkupPreserved": true,
+          "shadowAndDeepMarksRestored": true,
+          "evidence": "Verified isolated-world wrappers count actual native style and box reads. Instrumented timing excluded."
+        },
+        "ownTemporaryProcessesAfterFinal": 0,
+        "representativeScreenshotsInspected": 5,
+        "instrumentedTimingExcluded": true,
+        "remainingLongTasks": "Final three runs have63/67/72ms long tasks. Uninstrumented heartbeat68-80ms versus145-155ms; enable-to-paint387-412ms versus303-317ms includes config/debounce. First paint still preserves source and300ranges. No complete responsiveness or proven final-task attribution claim.",
+        "scope": "Isolated native Edge and local HTML/SSE. Actual pointer,Enter/Escape and reading/learning/toggle contracts. Full-page translate/restore via content messages, not actual hotkey. Review data and model request count preserved. No live provider/account/Firefox/device/store/deployment proof."
+      },
+      "excludedDiagnostics": [
+        "First private differential attempt expected an offscreen-prefix baseline failure, but immutable source already handles it; corrected comparison2->2, so this is preserved behavior. That attempt aborted before timings.",
+        "Separate CPU/time-line trace run is diagnostic; its times are excluded from uninstrumented comparisons."
+      ],
+      "sourceReviewProgress": {
+        "files": 147,
+        "functionBodies": 2236,
+        "pendingFiles": 670,
+        "inventoryFiles": 817,
+        "inventoryFunctionBodies": 14585,
+        "newReadFiles": [
+          "src/features/vocabulary/learningModel.ts",
+          "src/features/vocabulary/background/handler.ts"
+        ],
+        "newReadBodies": 54
+      },
+      "integrationDebt": "Cached origin/main d0dbcad7 has19post-baseline commits; snapshot not incorporated or reviewed. No remote freshness claim.",
+      "delivery": {
+        "pushed": false,
+        "merged": false,
+        "referenceRepositoriesUsed": false
+      },
+      "open": [
+        "Residual nonempty native long task attribution and fix, synchronous index compilation and single large-grapheme normalization, full-group memory, delayed callback/mutation feedback.",
+        "Learning cloze CJK/normalization context candidate needs public reproduction; repository and Book review remain pending.",
+        "Highlight deep DOM long tasks/Range/geometry/wide owner, ancestor mutations, scroll/pointer order,123-151ms remount,section preview/restore.",
+        "670pending source files,15+3ownership debt and19cached-main commits."
+      ],
+      "diagnosticTrace": {
+        "passed": true,
+        "phaseCases": 18,
+        "pageErrors": 0,
+        "temporaryProcessesAfterTrace": 0,
+        "contentSha256": "f31c471561d1602502ba322454da5a67af525aba78aaff2f160996c64ab43d08",
+        "scope": "Separate CPU/timeline diagnostic on same final production artifact; trace times excluded from all uninstrumented comparisons.",
+        "pageRenderingTasksMs": [
+          71.619,
+          74.847,
+          78.883
+        ],
+        "matchingUpdateLayoutTree": {
+          "elements": 30013,
+          "durationsMs": [
+            44.836,
+            46.084,
+            51.126
+          ]
+        },
+        "matchingPaintMs": [
+          17.965,
+          18.458,
+          19.384
+        ],
+        "inference": "Residual page tasks align with native style/layout-tree update and painting after marking; specific trigger among stylesheet insertion/highlight registry/UI still requires controlled isolation. No proven causal attribution to one API and no profiler time used as speedup evidence."
+      },
+      "buildSha256": {
+        "content-scripts/content.js": "f31c471561d1602502ba322454da5a67af525aba78aaff2f160996c64ab43d08",
+        "background.js": "7c654174cd98da4ea72f6e1ea79f5752e0fa5c536e1d439e6e652bc6cd3cd0e6",
+        "manifest.json": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844"
+      },
+      "newOptionalNativePhaseCases": 1
     }
   ]
 }
