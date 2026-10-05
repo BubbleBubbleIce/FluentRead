@@ -23,6 +23,8 @@ const nestedOnly = process.argv.includes('--nested-only');
 if(nestedOnly && !nestedViewport)throw new Error('--nested-only requires --nested-viewport');
 const nestedCycles = Number(arg('nested-cycles','5'));
 assert.ok(Number.isInteger(nestedCycles) && nestedCycles>0 && nestedCycles<=20,'Nested cycles must be an integer from 1 to 20');
+const nestedScale = Number(arg('nested-scale','1'));
+assert.ok(Number.isFinite(nestedScale) && nestedScale>=0.25 && nestedScale<=2,'Nested scale must be from 0.25 to 2');
 const cpuSessions = new WeakMap();
 const {chromium} = require(path.join(arg('playwright-root', path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules')), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(arg('focus-safe-helper', path.join(os.homedir(), '.codex/skills/fluentread-extension-ui-test/scripts/focus-safe-browser.cjs')));
@@ -123,7 +125,7 @@ async function runNestedViewport(context, setup, provider, port) {
   await page.goto(`http://127.0.0.1:${port}/nested-viewport`,{waitUntil:'domcontentloaded'});
   await page.locator('#fluent-read-page-styles').waitFor({state:'attached'});
   const value='This paragraph above the reading position gains a bilingual translation while its scroll container keeps the reader steady. '.repeat(8);
-  await page.evaluate(value=>{
+  await page.evaluate(({value,nestedScale})=>{
     const target=document.getElementById('target');
     target.innerHTML='<div id="scroller" style="height:650px;overflow-y:auto;overflow-anchor:none;border:3px solid #555">'+
       '<p id="above"></p><div id="reading-gap" translate="no" style="height:500px"></div>'+
@@ -132,11 +134,13 @@ async function runNestedViewport(context, setup, provider, port) {
       '<div translate="no" style="height:700px"></div></div>';
     document.getElementById('above').textContent=value;
     const scroller=document.getElementById('scroller'),reading=document.getElementById('reading');
-    scroller.scrollTop=reading.getBoundingClientRect().top-420;
+    if(nestedScale!==1){scroller.style.transform=`scale(${nestedScale})`;scroller.style.transformOrigin='top left';}
+    const readingTarget=nestedScale<0.6?scroller.getBoundingClientRect().top+nestedScale*scroller.clientHeight*0.65:420;
+    scroller.scrollTop=(reading.getBoundingClientRect().top-readingTarget)/nestedScale;
     window.scrollTo(0,0);
-  },value);
+  },{value,nestedScale});
   await activateExtensionTabWithoutForeground(context,page);await page.waitForTimeout(500);
-  const result={cycles:nestedCycles,phases:[]};report.nestedViewportChecks=result;
+  const result={cycles:nestedCycles,scale:nestedScale,phases:[]};report.nestedViewportChecks=result;
   const requestStart=provider.requestCount();
   const before=await page.evaluate(()=>({top:document.getElementById('reading').getBoundingClientRect().top,
     scrollTop:document.getElementById('scroller').scrollTop,windowY:scrollY,

@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14585,
+    "functions": 14584,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -153,8 +153,8 @@
       },
       "src/features/full-page-translation": {
         "files": 50,
-        "functions": 913,
-        "lines": 11322
+        "functions": 912,
+        "lines": 11314
       },
       "src/features/glossary": {
         "files": 3,
@@ -687,6 +687,24 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/eagerTranslation.ts",
+      "sha256": "275e36c1a48db2c5542438093f6e1250c5da5c0a5806d2b061e153d8b96383e4",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/excerpt.ts",
+      "sha256": "e31dad2710e8da060c4fc07adab9db9692b565832348df759972360797912d7b",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/frameSession.ts",
+      "sha256": "87a7978648cde76d13459be7f85570efc5fac3de880143e7275ba8df67062993",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/full-page-translation/content/fullPagePriority.ts",
       "sha256": "5a331fb6756da8d6f4dc4badcfc9070f86f662c2895aaac586b51bff8f0711ad",
       "functionBodies": 4,
@@ -741,6 +759,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/orphanArtifacts.ts",
+      "sha256": "5ea20a4596fca36e12cff86835aca25f83d128ec73090ebdf0a44f26f3e9deb9",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/progressPanel.ts",
+      "sha256": "94416c7dced0d776123bf410f16a8fd3ec44782a4288212823cee1a0b9660edd",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/full-page-translation/content/renderer.ts",
       "sha256": "0204610bb2b035ec85fd5bb422505139f22ae12c266c1b01587cf7d6f5a04d49",
       "functionBodies": 22,
@@ -777,6 +807,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/stateNotification.ts",
+      "sha256": "bc75d0ccd57c2aabab7f4670a41002fca57ebc919f743644f228b69c91dd0a20",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/syntheticRemount.ts",
+      "sha256": "6c75c87c9535585832d13149db4eeeb33115ad09f0e20722be83bb21fd6eb10d",
+      "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/full-page-translation/content/titleTranslation.ts",
       "sha256": "89c668c185f7d252099b1e57fa781a8eae111c6301824e31dc292089e8a29ae4",
       "functionBodies": 8,
@@ -802,8 +844,20 @@
     },
     {
       "file": "src/features/full-page-translation/content/viewportStability.ts",
-      "sha256": "9b36f5ea3dc34416595d6310801fa9f11598641d3cece260330cf4fc0b24ee11",
-      "functionBodies": 28,
+      "sha256": "e3c474f9a1a76f0c3dea95b13aaba0059d8a62df94574e3b39a38e6123e07894",
+      "functionBodies": 27,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/progress.ts",
+      "sha256": "e0080105b045f353001e2761971a23dc599dd977a5f7557f57a0bb24bd9e0fb5",
+      "functionBodies": 12,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/toolbarStatus.ts",
+      "sha256": "a3b436d26de5aaddf12bb72ec20a865ffa0775e009877f74ed43d2170b9ee2be",
+      "functionBodies": 3,
       "status": "source-read-and-traced"
     },
     {
@@ -1262,24 +1316,15 @@
     "src/features/full-page-translation/background/neteaseMailFrameHandlers.ts",
     "src/features/full-page-translation/background/qqMailFrameHandlers.ts",
     "src/features/full-page-translation/background/stateHandlers.ts",
-    "src/features/full-page-translation/content/eagerTranslation.ts",
-    "src/features/full-page-translation/content/excerpt.ts",
-    "src/features/full-page-translation/content/frameSession.ts",
-    "src/features/full-page-translation/content/orphanArtifacts.ts",
-    "src/features/full-page-translation/content/progressPanel.ts",
     "src/features/full-page-translation/content/sectionTranslation.ts",
     "src/features/full-page-translation/content/sentenceHighlight.ts",
-    "src/features/full-page-translation/content/stateNotification.ts",
-    "src/features/full-page-translation/content/syntheticRemount.ts",
     "src/features/full-page-translation/core/errorMessage.ts",
     "src/features/full-page-translation/core/hostMarkers.ts",
     "src/features/full-page-translation/embeddedFrames.ts",
     "src/features/full-page-translation/highlight/public.ts",
     "src/features/full-page-translation/neteaseMailFrames.ts",
-    "src/features/full-page-translation/progress.ts",
     "src/features/full-page-translation/public.ts",
     "src/features/full-page-translation/qqMailFrames.ts",
-    "src/features/full-page-translation/toolbarStatus.ts",
     "src/features/full-page-translation/ui/TranslationProgressPanel.vue",
     "src/features/full-page-translation/ui/modalProgressHint.ts",
     "src/features/full-page-translation/ui/progressPanelVisibility.ts",
@@ -1742,19 +1787,20 @@
   "priorities": [
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
-    "Validate transformed/scaled scrolling compensation units and within-element reading-line anchors with native reproductions; neither risk is currently a verified fix.",
+    "Scaled narrow-scroll reading anchors now have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces, within-element text-line anchors, and source-level notification reentrancy failures.",
     "Selection/hover/input translation lifecycle",
     "Image/area/document/video pipelines",
     "Config persistence, synchronization and providers",
     "Learning features, UI and build entrypoints"
   ],
   "verificationDebt": [
-    "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence."
+    "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence.",
+    "Local origin/main tracking ref f94225c3 includes six post-baseline image/docs commits. Reconcile and re-review that source before full-goal completion; the current audit inventory remains based on fd4fac88. No remote freshness or release claim."
   ],
   "progress": {
-    "sourceReadFiles": 91,
-    "sourceReadFunctionBodies": 1757,
-    "pendingFiles": 726,
+    "sourceReadFiles": 100,
+    "sourceReadFunctionBodies": 1841,
+    "pendingFiles": 717,
     "goalComplete": false
   },
   "observations": [
@@ -1817,6 +1863,26 @@
       "file": "src/features/full-page-translation/content/runtime.ts",
       "status": "whole-root-functional-verified; synchronous-performance-open",
       "issue": "Final tenth production build: 500 independent/before-source and repeated/after-source fixtures each remount the whole root three times with 500 exact outputs, original position, zero reading/scroll shift, no nesting or extra upstream work, and successful restore/cache retranslation. CPU sampling is enabled by the existing responsiveness runner; no paired old-build performance comparison in this batch. Remount long tasks remain 129-157ms. Unprofiled giant hover also records a 57ms long task and 80.6ms heartbeat gap; overall performance goal is unfinished."
+    },
+    {
+      "file": "src/features/full-page-translation/content/viewportStability.ts",
+      "status": "narrow-scaled-surfaces-and-hit-test-exception-fixed-and-verified; whole-chain-performance-open",
+      "issue": "Unmodified tenth production snapshot reproduces 230.361328125px drift at scale 0.75: document midpoint hit tests miss the narrow surface. Local anchors now hit each eligible scroll surface in its clipped visible area, sharing capture measurements; duplicated eligibility wrappers are removed. Units then reproduce 57/96/615px drift at scales 0.75/1.25/2. Actual post-write scroll response supplies a conversion with at most one extra compensation, preserving bounded rounding correction and relative surface coordinates. Native 0.75/1/1.25 each run five translate/restore cycles: maximum drift 0.111328125/0.1484375/0.185546875px, document remains still, exact source and cache reuse hold. Global hit-test exceptions previously prevented the callback; now both local/global failures preserve writes. Style work-count bound remains at most two for the 500-change/foreign-anchor fixture. Actual successful compensation intentionally re-reads fresh geometry after DOM and scroll writes. No global transform cache, persistent residual, or compensation loop."
+    },
+    {
+      "file": "src/features/full-page-translation/content/syntheticRemount.ts",
+      "status": "source-read-and-callers-traced; workload-risk-pending-reproduction",
+      "issue": "Reviewed bounded host candidates, path mapping, positional/unique equivalence, artifact trust, ownership budget, state migration and rollback. Unlike the ordinary remount path, candidate/path helpers still repeat child-list conversion and resolution for synthetic owners. Confirm workload with representative inline-root fixtures before restructuring; this is not yet a measured regression."
+    },
+    {
+      "file": "src/features/full-page-translation/content/stateNotification.ts",
+      "status": "source-level-exception-reproduced; production-reachability-and-fix-pending",
+      "issue": "Isolated current-source Node fixtures inject throwing document CustomEvent constructor or dispatchEvent. Both make notifyFullPageTranslationState throw before sending background state; each has zero background messages. Normal browser transport failures are already guarded. Add committed lifecycle regressions and DOM-notification isolation; current fixture is not a real-page reproduction."
+    },
+    {
+      "file": "src/features/full-page-translation/progress.ts",
+      "status": "source-level-reentrant-notification-reproduced; ownership-and-fix-pending",
+      "issue": "An isolated current-source subscriber starts a new progress session while notified. With an external 25-reentry stop, 26 starts produce synchronous callback depth 26. This demonstrates recursive notification shape, not production UI reachability or an unbounded browser run. Review real subscribers/session ownership and preserve latest-state semantics before fixing notification reentrancy."
     }
   ]
 }

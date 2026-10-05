@@ -322,7 +322,7 @@ describe('全文翻译视口稳定性', () => {
         expect(scrollBy).not.toHaveBeenCalled();
     });
 
-    it('变化节点几何读取异常时回到完整锚点路径，且不阻断写入', () => {
+    it('变化节点几何读取异常时放弃推测补偿，且不阻断写入', () => {
         const changed = document.createElement('p');
         const anchor = document.createElement('p');
         document.body.append(changed, anchor);
@@ -334,7 +334,7 @@ describe('全文翻译视口稳定性', () => {
         const scrollBy = vi.fn();
         Object.defineProperty(window, 'scrollBy', {configurable: true, value: scrollBy});
         expect(withFullPageViewportAnchor(() => 'written', [changed])).toBe('written');
-        expect(hitTest).toHaveBeenCalled();
+        expect(hitTest).not.toHaveBeenCalled();
         expect(scrollBy).not.toHaveBeenCalled();
     });
 
@@ -427,7 +427,7 @@ describe('全文翻译视口稳定性', () => {
         withFullPageViewportAnchor(() => 'written', changed);
         expect(hitTest).toHaveBeenCalledTimes(3);
         expect(styles.mock.calls.length).toBeLessThanOrEqual(2);
-        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(1);
+        expect(anchor.getBoundingClientRect).not.toHaveBeenCalled();
         expect(changedScroller.scrollTop).toBe(100);
         expect(anchorScroller.scrollTop).toBe(100);
         expect(scrollBy).not.toHaveBeenCalled();
@@ -450,33 +450,35 @@ describe('全文翻译视口稳定性', () => {
         let overflowY = 'auto';
         const styles = vi.fn(() => ({overflowY}));
         Object.defineProperty(window, 'getComputedStyle', {configurable: true, value: styles});
-        Object.defineProperty(window, 'scrollY', {configurable: true, value: 250});
+        let windowY = 250;
+        Object.defineProperty(window, 'scrollY', {configurable: true, get: () => windowY});
         Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => anchor});
         const changedRect = vi.fn(() => ({width: 200, height: 40, bottom: 60} as DOMRect));
         changed.getBoundingClientRect = changedRect;
         let after = false;
-        anchor.getBoundingClientRect = vi.fn(() => ({width: 200, height: 40, top: after ? 195 : 150} as DOMRect));
+        anchor.getBoundingClientRect = vi.fn(() => ({width: 200, height: 40,
+            top: (after ? 195 : 150) - (overflowY === 'auto' ? scroller.scrollTop - 100 : windowY - 250)} as DOMRect));
         withFullPageViewportAnchor(() => {after = true;}, [changed]);
         expect(scroller.scrollTop).toBe(145);
-        expect(styles).toHaveBeenCalledTimes(1);
-        expect(readScrollHeight).toHaveBeenCalledTimes(1);
-        expect(readClientHeight).toHaveBeenCalledTimes(1);
-        expect(readScrollerRect).toHaveBeenCalledTimes(1);
+        expect(styles).toHaveBeenCalledTimes(2);
+        expect(readScrollHeight).toHaveBeenCalledTimes(2);
+        expect(readClientHeight).toHaveBeenCalledTimes(2);
+        expect(readScrollerRect).toHaveBeenCalledTimes(3);
         expect(changedRect).toHaveBeenCalledTimes(1);
-        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(2);
+        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(3);
 
         // 下轮宿主解除内层滚动，按文档滚动面重新判断，不能沿用上一轮祖先缓存。
         overflowY = 'visible';
         changedRect.mockReturnValue({width: 200, height: 40, bottom: -10} as DOMRect);
         after = false;
-        const scrollBy = vi.fn();
+        const scrollBy = vi.fn((_x: number, offset: number) => {windowY += offset;});
         Object.defineProperty(window, 'scrollBy', {configurable: true, value: scrollBy});
         withFullPageViewportAnchor(() => {after = true;}, [changed]);
         expect(scrollBy).toHaveBeenCalledWith(0, 45);
         expect(scroller.scrollTop).toBe(145);
-        expect(styles).toHaveBeenCalledTimes(2);
+        expect(styles).toHaveBeenCalledTimes(4);
         expect(changedRect).toHaveBeenCalledTimes(2);
-        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(4);
+        expect(anchor.getBoundingClientRect).toHaveBeenCalledTimes(6);
     });
 
     it.each([
@@ -701,6 +703,88 @@ describe('全文翻译视口稳定性', () => {
             expect(scrollPosition).toBe(426.5);
             expect(anchor.getBoundingClientRect().top).toBe(150);
         }
+    });
+
+    it.each([0.75, 1, 1.25, 2])('窄容器缩放 %s 时在本面命中，并按实际滚动响应连续十轮补偿', scale => {
+        const scroller = document.createElement('div');
+        const changed = document.createElement('p');
+        const anchor = document.createElement('p');
+        scroller.append(changed, anchor);document.body.append(scroller);
+        let scrollPosition = 100, height = 0;
+        Object.defineProperties(scroller, {
+            scrollTop: {get: () => scrollPosition, set: value => {scrollPosition = Math.floor(value * 2) / 2;}},
+            scrollHeight: {value: 2000}, clientHeight: {value: 650}, clientTop: {value: 3},
+            getBoundingClientRect: {value: () => ({left: 50, right: 350, top: 100, bottom: 750})},
+        });
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: 0});
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true,
+            value: (element: HTMLElement) => ({overflowY: element === scroller ? 'auto' : 'visible'})});
+        const hit = vi.fn((x: number) => x >= 50 && x <= 350 ? anchor : document.body);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: hit});
+        anchor.getBoundingClientRect = () => ({width: 200, height: 40,
+            top: 200 + scale * (height - (scrollPosition - 100))} as DOMRect);
+        changed.getBoundingClientRect = () => ({width: 200, height: 40, bottom: 80} as DOMRect);
+        for (let cycle = 0; cycle < 10; cycle++) {
+            withFullPageViewportAnchor(() => {height = 307.1484375;}, [changed]);
+            expect(Math.abs(anchor.getBoundingClientRect().top - 200)).toBeLessThanOrEqual(0.5);
+            withFullPageRestorationAnchors(() => {height = 0;}, [changed]);
+            expect(scrollPosition).toBe(100);
+            expect(anchor.getBoundingClientRect().top).toBe(200);
+        }
+        expect(hit.mock.calls.every(([x]) => x >= 50 && x <= 350)).toBe(true);
+    });
+
+    it.each([0, 100])('文档滚动量为 %s 且滚动 API 不可用时仍执行写入，页首不会被补偿', initial => {
+        const anchor = document.createElement('p');document.body.append(anchor);
+        let top = 100;
+        anchor.getBoundingClientRect = () => ({width: 200, height: 40, top} as DOMRect);
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: initial});
+        Object.defineProperty(window, 'scrollBy', {configurable: true, value: undefined});
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => anchor});
+        expect(withFullPageViewportAnchor(() => {top += 40;return 'written';})).toBe('written');
+        expect(window.scrollY).toBe(initial);
+    });
+
+    it('一次局部写入同时影响文档和内层上方时，面内补偿不重复抵消文档位移', () => {
+        const rootChanged = document.createElement('p'), rootAnchor = document.createElement('p');
+        const scroller = document.createElement('div');
+        const innerChanged = document.createElement('p'), innerAnchor = document.createElement('p');
+        scroller.append(innerChanged, innerAnchor);document.body.append(rootChanged, rootAnchor, scroller);
+        let windowY = 100, after = false;
+        scroller.scrollTop = 100;
+        const documentShift = () => (after ? 40 : 0) - (windowY - 100);
+        Object.defineProperty(window, 'scrollY', {configurable: true, get: () => windowY});
+        Object.defineProperty(window, 'scrollBy', {configurable: true, value: (_x: number, delta: number) => {windowY += delta;}});
+        Object.defineProperty(window, 'getComputedStyle', {configurable: true,
+            value: (element: HTMLElement) => ({overflowY: element === scroller ? 'auto' : 'visible'})});
+        Object.defineProperties(scroller, {scrollHeight: {value: 2000}, clientHeight: {value: 200}, clientTop: {value: 0}});
+        scroller.getBoundingClientRect = () => ({left: 0, right: 700,
+            top: 100 + documentShift(), bottom: 300 + documentShift()} as DOMRect);
+        rootChanged.getBoundingClientRect = () => ({width: 200, height: 40, bottom: -50} as DOMRect);
+        innerChanged.getBoundingClientRect = () => ({width: 200, height: 40, bottom: 70} as DOMRect);
+        rootAnchor.getBoundingClientRect = () => ({width: 200, height: 40, top: 450 + documentShift()} as DOMRect);
+        innerAnchor.getBoundingClientRect = () => ({width: 200, height: 40,
+            top: 150 + documentShift() + (after ? 50 : 0) - (scroller.scrollTop - 100)} as DOMRect);
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true,
+            value: (_x: number, y: number) => y < 300 ? innerAnchor : rootAnchor});
+        withFullPageViewportAnchor(() => {after = true;}, [innerChanged, rootChanged]);
+        expect(scroller.scrollTop).toBe(150);
+        expect(windowY).toBe(140);
+        expect(innerAnchor.getBoundingClientRect().top).toBe(150);
+        expect(rootAnchor.getBoundingClientRect().top).toBe(450);
+    });
+
+    it('宿主命中测试抛错时无论显式来源还是全局锚点都继续执行写入', () => {
+        const changed = document.createElement('p');document.body.append(changed);
+        changed.getBoundingClientRect = () => ({width: 200, height: 40, bottom: -50} as DOMRect);
+        Object.defineProperty(window, 'scrollY', {configurable: true, value: 100});
+        Object.defineProperty(document, 'elementFromPoint', {configurable: true,
+            value: () => {throw new Error('Host hit-test unavailable');}});
+        const written = vi.fn(() => 'written');
+        expect(() => withFullPageViewportAnchor(written)).not.toThrow();
+        expect(withFullPageViewportAnchor(written, [changed])).toBe('written');
+        expect(withFullPageRestorationAnchors(written, [changed])).toBe('written');
+        expect(written).toHaveBeenCalledTimes(3);
     });
 
     it('滚动控制器只在活动会话中延迟目标，并在空闲时释放', async () => {
