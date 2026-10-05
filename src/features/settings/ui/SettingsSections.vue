@@ -433,7 +433,7 @@
 
     <section v-if="hasVisitedSection('settings-translation')" v-show="props.activeSection === 'settings-translation'" class="settings-section settings-section-continuation">
 <SettingsPanel name="paragraph-copy" id="paragraph-copy-settings" :active="props.activePanel">
-      <ParagraphCopySettings :config="config" />
+      <ParagraphCopySettings :config="config" :active="viewActive && props.activeSection === 'settings-translation'" />
     </SettingsPanel>
     <SettingsPanel name="section-translation" id="section-translation-settings" :active="props.activePanel">
       <SectionTranslationSettings :config="config" />
@@ -483,13 +483,13 @@
 
     <div v-if="hasVisitedSection('settings-translation-stats')" v-show="props.activeSection === 'settings-translation-stats'">
       <SettingsPanel name="overview" :active="props.activePanel">
-        <TranslationStatsDashboard :active="props.activeSection === 'settings-translation-stats' && props.activePanel !== 'usage'" />
+        <TranslationStatsDashboard :active="viewActive && props.activeSection === 'settings-translation-stats' && props.activePanel !== 'usage'" />
       </SettingsPanel>
       <SettingsPanel name="usage" :active="props.activePanel">
-        <ModelUsageDashboard :active="props.activeSection === 'settings-translation-stats' && props.activePanel === 'usage'" :query-root="props.queryRoot" />
+        <ModelUsageDashboard :active="viewActive && props.activeSection === 'settings-translation-stats' && props.activePanel === 'usage'" :query-root="props.queryRoot" />
       </SettingsPanel>
     </div>
-    <ConfigManagement v-if="hasVisitedSection('settings-data')" v-show="props.activeSection === 'settings-data'" id="settings-data" :config="config" :active="props.activeSection === 'settings-data'" :active-panel="props.activePanel" />
+    <ConfigManagement v-if="hasVisitedSection('settings-data')" v-show="props.activeSection === 'settings-data'" id="settings-data" :config="config" :active="viewActive && props.activeSection === 'settings-data'" :active-panel="props.activePanel" />
   </div>
 
   <!-- 自定义快捷键对话框 -->
@@ -527,7 +527,7 @@ import SettingsPanel from './components/SettingsPanel.vue';
 import FeatureEnableCard from '@/src/ui/components/FeatureEnableCard.vue';
 
 // Main 处理配置信息
-import { computed, defineAsyncComponent, nextTick, ref, watch, onUnmounted } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch, onActivated, onBeforeUnmount, onDeactivated, onUnmounted } from 'vue'
 
 import {isValidAzureEndpoint} from '@/src/core/config/azure';
 import { cloudRegionOptions, customModelString, defaultOption, getCloudCredentialLabels, getDefaultCloudRegion, getMultilingualTargetLanguageLabel, models, options, resolveConfiguredModel, services, servicesType } from '@/src/core/config/catalog';
@@ -602,7 +602,11 @@ const SiteRulePreview = defineAsyncComponent(() => import('./SiteRulePreview.vue
 const siteRuleInspectId = ref('');
 async function inspectSiteRule(id: string) {
   siteRuleInspectId.value = '';
+  const revision = navigationRevision;
   await nextTick();
+  // 清空可能没有触发更新；再等待同一轮父导航，避免恢复已离开的规则预览。
+  await nextTick();
+  if (disposed || !viewActive.value || revision !== navigationRevision) return;
   siteRuleInspectId.value = id;
   openSettingsSection('settings-sites', 'adaptation');
 }
@@ -677,9 +681,34 @@ watch(() => props.activeSection, (section) => {
   visitedSections.value = new Set([...visitedSections.value, section])
 }, {immediate: true})
 const {language, t, translateLegacy} = useUiI18n();
+const viewActive = ref(true);
+let disposed = false;
+let navigationRevision = 0;
+let pendingScroll: number | undefined;
+let scrollDestination: string | undefined;
+
+function cancelPendingScroll(): void {
+  navigationRevision += 1;
+  if (pendingScroll !== undefined) window.cancelAnimationFrame(pendingScroll);
+  pendingScroll = undefined;
+  scrollDestination = undefined;
+}
+onActivated(() => {viewActive.value = true;});
+onDeactivated(() => {
+  viewActive.value = false;
+  customProviderDialogOpen.value = false;
+  cancelPendingScroll();
+});
+onBeforeUnmount(() => {disposed = true;viewActive.value = false;cancelPendingScroll();});
+watch(() => props.activeSection, (section) => {
+  if (section !== scrollDestination) cancelPendingScroll();
+});
 
 function openSettingsSection(section: string, targetId?: string): void {
-  if (props.onNavigateSection) props.onNavigateSection(section, targetId);
+  if (disposed || !viewActive.value) return;
+  cancelPendingScroll();
+  // 根组件已有带取消和布局观察的定位链，不能再启动第二条逐帧滚动。
+  if (props.onNavigateSection) {props.onNavigateSection(section, targetId);return;}
   else {
     const nextHash = props.settingsHashPrefix
       ? `${props.settingsHashPrefix}/${section}`
@@ -687,23 +716,28 @@ function openSettingsSection(section: string, targetId?: string): void {
     if (window.location.hash !== nextHash) window.location.hash = nextHash;
   }
   if (!targetId) return;
+  scrollDestination = section;
+  const revision = navigationRevision;
   let attempts = 0;
   const scrollWhenMounted = () => {
+    if (disposed || !viewActive.value || revision !== navigationRevision) return;
+    pendingScroll = undefined;
     const target = (props.queryRoot || document).querySelector<HTMLElement>(`#${targetId}`);
     if (target) {
       target.scrollIntoView({block: 'start'});
       return;
     }
     attempts += 1;
-    if (attempts < 20) window.requestAnimationFrame(scrollWhenMounted);
+    if (attempts < 20) pendingScroll = window.requestAnimationFrame(scrollWhenMounted);
   };
-  window.requestAnimationFrame(scrollWhenMounted);
+  pendingScroll = window.requestAnimationFrame(scrollWhenMounted);
 }
 
 // 初始化深色模式媒体查询
 const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 // 更新主题函数
 function updateTheme(theme: string) {
+  if (disposed) return;
   if (theme === 'auto') {
     // 自动模式下，直接使用系统主题
     applyInterfaceTheme(darkModeMediaQuery.matches, props.appearanceRoot);
@@ -738,7 +772,7 @@ const {
   validateCustomFullPageHotkey,
   validateCustomMouseHotkey,
   validateCustomSelectionHotkey,
-} = useTranslationShortcutSettings(config, kind => props.activeSection === (kind === 'selection' ? 'settings-selection' : 'settings-translation'));
+} = useTranslationShortcutSettings(config, kind => viewActive.value && props.activeSection === (kind === 'selection' ? 'settings-selection' : 'settings-translation'));
 const customProviderDialogOpen = ref(false);
 const sendConfigMessage = browser.runtime.sendMessage.bind(browser.runtime);
 const persistConfigPatch = (value: unknown) => requestConfigPatch(value, sendConfigMessage);
@@ -750,6 +784,7 @@ let hydrated = false;
 let applyingExternalConfig = false;
 let pageExitSaveStarted = false;
 const unsubscribeConfig = subscribeConfig((nextConfig) => {
+  if (disposed) return;
   const serialized = JSON.stringify(nextConfig);
   if (serialized === lastSerialized) return;
   lastSerialized = serialized;
@@ -762,6 +797,7 @@ const unsubscribeConfig = subscribeConfig((nextConfig) => {
 });
 void configReady
   .then(() => {
+    if (disposed) return;
     // 编辑副本不能共享嵌套对象，否则修改 Harness 等字段会先污染 patch 的比较基线。
     Object.assign(config.value, normalizeConfig(runtimeConfig));
     lastSerialized = JSON.stringify(config.value);
@@ -771,7 +807,7 @@ void configReady
   .catch((error) => console.warn('[FluentRead] 无法读取本地配置', error));
 
 watch(() => JSON.stringify(config.value), (serialized) => {
-  if (!hydrated || applyingExternalConfig) return;
+  if (disposed || !hydrated || applyingExternalConfig) return;
   if (serialized === lastSerialized) return;
   // 若关闭被外部原因取消，后续真实编辑应能再次交接；外部水合不会重置退出去重。
   pageExitSaveStarted = false;
@@ -890,11 +926,6 @@ const selectionTranslatorModeOptions = [
   {value: 'bilingual', label: '双语'},
   {value: 'translation-only', label: '仅译文'},
 ];
-const filteredServices = computed(() =>
-  availableServiceOptions.value.filter((item: any) =>
-    !([item.google].includes(item.value) && config.value.display !== 1),
-  ),
-);
 
 interface CustomProviderDraft {
   name: string
@@ -924,10 +955,12 @@ const {
 } = useServiceModelOptions(config, selectedConfigurationService);
 
 function openCustomProviderDialog(): void {
+  if (disposed || !viewActive.value) return;
   customProviderDialogOpen.value = true;
 }
 
 function createCustomProvider(draft: CustomProviderDraft): void {
+  if (disposed || !viewActive.value) return;
   const id = createNextCustomOpenAIProviderId(config.value.customOpenAIProviders);
   const provider: CustomOpenAIProvider = {
     id,
@@ -1147,7 +1180,7 @@ const createServiceCompute = (serviceSource: ServiceSource) => ({
       servicesType.isAI(serviceSource.value) &&
       config.value.model[serviceSource.value] === customModelString,
   ),
-  filteredServices,
+  filteredServices: availableServiceOptions,
   showNewAPI: computed(() => servicesType.isNewApi(serviceSource.value)),
   showAzureOpenaiEndpoint: computed(() => servicesType.isAzureOpenai(serviceSource.value)),
   showDeepseekApiType: computed(() => serviceSource.value === 'deepseek'),
@@ -1174,126 +1207,79 @@ onUnmounted(() => {
   unsubscribeConfig();
 });
 
-// 悬浮球开关的计算属性
+// 一次待完成查询复用当前编辑状态，避免快速切换向页面发送过时的开关值。
+// 查询失败只影响即时通知；持久化仍由统一配置链路负责。
+type SettingsBroadcastType = 'toggleFloatingBall' | 'toggleImageTranslator' | 'toggleSelectionAreaTranslator'
+  | 'toggleTranslationProgressPanel' | 'updateSelectionTranslatorMode';
+const pendingBroadcasts = new Set<SettingsBroadcastType>();
+let pendingTabsQuery: ReturnType<typeof browser.tabs.query> | undefined;
+function broadcastFeatureState(types: readonly SettingsBroadcastType[]): void {
+  if (disposed) return;
+  for (const type of types) pendingBroadcasts.add(type);
+  if (pendingTabsQuery) return;
+  const query = Promise.resolve().then(() => browser.tabs.query({}));
+  pendingTabsQuery = query;
+  void query.then(tabs => {
+    if (pendingTabsQuery !== query) return;
+    pendingTabsQuery = undefined;
+    const requested = [...pendingBroadcasts];
+    pendingBroadcasts.clear();
+    if (disposed) return;
+    const current = config.value;
+    const messages = requested.map(type => type === 'updateSelectionTranslatorMode'
+      ? {type, mode: current.on ? current.selectionTranslatorMode : 'disabled'}
+      : {type, isEnabled: type === 'toggleTranslationProgressPanel'
+        ? current.translationProgressPanelEnabled
+        : current.on && (type === 'toggleFloatingBall' ? !current.disableFloatingBall
+          : type === 'toggleImageTranslator' ? !current.disableImageTranslator : current.selectionAreaEnabled)});
+    for (const tab of tabs) {
+      if (!isBrowserTabId(tab.id)) continue;
+      for (const message of messages) {
+        try {void browser.tabs.sendMessage(tab.id, message).catch(() => undefined);} catch { /* 当前标签页没有可用消息通道。 */ }
+      }
+    }
+  }).catch(() => {
+    if (pendingTabsQuery !== query) return;
+    pendingTabsQuery = undefined;
+    pendingBroadcasts.clear();
+  });
+}
+
 const floatingBallEnabled = computed({
   get: () => !config.value.disableFloatingBall,
   set: (value) => {
     config.value.disableFloatingBall = !value;
-    // 向所有激活的标签页发送消息
-    browser.tabs.query({}).then(tabs => {
-      tabs.forEach(tab => {
-        if (isBrowserTabId(tab.id)) {
-          browser.tabs.sendMessage(tab.id, {
-            type: 'toggleFloatingBall',
-            isEnabled: value && config.value.on,
-          }).catch(() => {
-            // 忽略发送失败的错误（可能是页面未加载内容脚本）
-          });
-        }
-      });
-    });
-  }
+    broadcastFeatureState(['toggleFloatingBall']);
+  },
 });
-
 const imageTranslationEnabled = computed({
   get: () => !config.value.disableImageTranslator,
   set: (value) => {
     config.value.disableImageTranslator = !value;
-    browser.tabs.query({}).then(tabs => {
-      tabs.forEach(tab => {
-        if (!isBrowserTabId(tab.id)) return;
-        browser.tabs.sendMessage(tab.id, {
-          type: 'toggleImageTranslator',
-          isEnabled: value && config.value.on,
-        }).catch(() => undefined);
-      });
-    }).catch(() => undefined);
+    broadcastFeatureState(['toggleImageTranslator']);
   },
 });
-
 const selectionAreaTranslationEnabled = computed({
   get: () => config.value.selectionAreaEnabled,
   set: (value) => {
     const conflictMessage = value
       ? quickTranslationConflictMessage(resolveAreaTranslationHotkey(config.value.selectionAreaHotkey, config.value.customSelectionAreaHotkey))
       : '';
-    if (conflictMessage) {
-      ElMessage.warning(conflictMessage);
-      return;
-    }
+    if (conflictMessage) {ElMessage.warning(conflictMessage);return;}
     config.value.selectionAreaEnabled = value;
-    browser.tabs.query({}).then(tabs => {
-      tabs.forEach(tab => {
-        if (!isBrowserTabId(tab.id)) return;
-        browser.tabs.sendMessage(tab.id, {
-          type: 'toggleSelectionAreaTranslator',
-          isEnabled: value && config.value.on,
-        }).catch(() => undefined);
-      });
-    }).catch(() => undefined);
+    broadcastFeatureState(['toggleSelectionAreaTranslator']);
   },
 });
-
-const handleTranslationProgressPanelChange = (isEnabled: boolean) => {
-  browser.tabs.query({}).then(tabs => {
-    tabs.forEach(tab => {
-      if (!isBrowserTabId(tab.id)) return;
-      browser.tabs.sendMessage(tab.id, {
-        type: 'toggleTranslationProgressPanel',
-        isEnabled,
-      }).catch(() => {
-        // 忽略发送失败的错误（可能是页面未加载内容脚本）
-      });
-    });
-  }).catch(() => {
-    // 忽略无法查询标签页的错误，配置仍会通过统一存储链路保存
-  });
+const handleTranslationProgressPanelChange = (_isEnabled: boolean) => {
+  broadcastFeatureState(['toggleTranslationProgressPanel']);
 };
-
-// 监听划词翻译模式变化
 watch(() => config.value.selectionTranslatorMode, (newMode) => {
   config.value.disableSelectionTranslator = newMode === 'disabled';
-  // 向所有激活的标签页发送消息
-  browser.tabs.query({}).then(tabs => {
-    tabs.forEach(tab => {
-      if (isBrowserTabId(tab.id)) {
-        browser.tabs.sendMessage(tab.id, {
-        type: 'updateSelectionTranslatorMode',
-        mode: config.value.on ? newMode : 'disabled',
-        }).catch(() => {
-          // 忽略发送失败的错误（可能是页面未加载内容脚本）
-        });
-      }
-    });
-  });
+  broadcastFeatureState(['updateSelectionTranslatorMode']);
 });
-
-// 处理插件状态变化
-const handlePluginStateChange = (val: boolean) => {
-  // 总开关只控制当前运行状态，不覆盖用户对悬浮球和划词翻译的偏好。
-  browser.tabs.query({}).then(tabs => {
-    tabs.forEach(tab => {
-      if (!isBrowserTabId(tab.id)) return;
-      browser.tabs.sendMessage(tab.id, {
-        type: 'toggleFloatingBall',
-        isEnabled: val && !config.value.disableFloatingBall,
-      }).catch(() => {
-        // 忽略发送失败的错误（可能是页面未加载内容脚本）
-      });
-      browser.tabs.sendMessage(tab.id, {
-        type: 'updateSelectionTranslatorMode',
-        mode: val ? config.value.selectionTranslatorMode : 'disabled',
-      }).catch(() => {
-        // 忽略发送失败的错误（可能是页面未加载内容脚本）
-      });
-      browser.tabs.sendMessage(tab.id, {
-        type: 'toggleSelectionAreaTranslator',
-        isEnabled: val && config.value.selectionAreaEnabled,
-      }).catch(() => {
-        // 忽略发送失败的错误（可能是页面未加载内容脚本）
-      });
-    });
-  });
+const handlePluginStateChange = (_isEnabled: boolean) => {
+  // 总开关只控制当前运行状态，不覆盖各功能的已保存偏好。
+  broadcastFeatureState(['toggleFloatingBall', 'updateSelectionTranslatorMode', 'toggleSelectionAreaTranslator']);
 };
 
 const handleMouseHoverTranslationDelayChange = (value: number | undefined) => {

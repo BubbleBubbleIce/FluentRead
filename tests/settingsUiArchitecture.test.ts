@@ -185,7 +185,8 @@ describe('options UI composition architecture', () => {
     expect(sections).toContain('const hasVisitedSection = (section: string): boolean => visitedSections.value.has(section)')
     expect(sections).toContain("watch(() => props.activeSection, (section) => {")
     expect(sections).toContain('const scrollWhenMounted = () => {')
-    expect(sections).toContain('if (attempts < 20) window.requestAnimationFrame(scrollWhenMounted)')
+    expect(sections).toContain('if (attempts < 20) pendingScroll = window.requestAnimationFrame(scrollWhenMounted)')
+    expect(sections).toContain('window.cancelAnimationFrame(pendingScroll)')
     for (const component of [
       'ServiceCatalog', 'ServiceConfiguration', 'InterfaceSettings', 'VideoLocalModelSettings',
       'LocalTtsSettings', 'ModelUsageDashboard', 'TranslationStatsDashboard', 'ConfigManagement', 'TranslationCenter',
@@ -228,7 +229,7 @@ describe('options UI composition architecture', () => {
 
     expect(settingsSections).toContain("const TranslationStatsDashboard = defineAsyncComponent(() => import('@/src/features/translation-stats/public').then(module => module.TranslationStatsDashboard))")
     expect(settingsSections).toContain("v-if=\"hasVisitedSection('settings-translation-stats')\"")
-    expect(settingsSections).toContain(":active=\"props.activeSection === 'settings-translation-stats' && props.activePanel !== 'usage'\"")
+    expect(settingsSections).toContain(":active=\"viewActive && props.activeSection === 'settings-translation-stats' && props.activePanel !== 'usage'\"")
     expect(statsPublic).toContain("from './ui/TranslationStatsDashboard.vue'")
     expect(dashboard).toContain('id="settings-translation-stats"')
     expect(dashboard).toContain("type: 'translationStats'")
@@ -430,7 +431,7 @@ describe('options UI composition architecture', () => {
     expect(sharedOcrSettings).not.toContain('id="image-ocr-pack-title"')
     expect(settingsSections).toContain("const ModelUsageDashboard = defineAsyncComponent(() => import('@/src/features/model-usage/public').then(module => module.ModelUsageDashboard))")
     expect(settingsSections).toContain('<SettingsPanel name="usage" :active="props.activePanel">')
-    expect(settingsSections).toContain(":active=\"props.activeSection === 'settings-translation-stats' && props.activePanel === 'usage'\"")
+    expect(settingsSections).toContain(":active=\"viewActive && props.activeSection === 'settings-translation-stats' && props.activePanel === 'usage'\"")
     expect(modelUsagePublic).toContain("from './ui/ModelUsageDashboard.vue'")
     expect(modelUsageDashboard).toContain('id="settings-model-usage"')
     expect(modelUsageDashboard).toContain("type: 'modelUsage'")
@@ -531,7 +532,7 @@ describe('options UI composition architecture', () => {
     // 圈选快捷键可自定义；启用开关的冲突检查必须读取已解析的快捷键，不能写死 Shift+Z。
     expect(settingsSections).toContain('quickTranslationConflictMessage(resolveAreaTranslationHotkey(config.value.selectionAreaHotkey, config.value.customSelectionAreaHotkey))')
     expect(settingsSections).not.toContain("'Shift+Z'")
-    expect(settingsSections).toContain("useTranslationShortcutSettings(config, kind => props.activeSection")
+    expect(settingsSections).toContain("useTranslationShortcutSettings(config, kind => viewActive.value && props.activeSection")
     expect(translationShortcutSettings).toContain('inputBoxTranslationTriggerHotkey(value)')
     expect(quickTranslationProfiles).toContain('inputBoxTranslationTriggerHotkey(props.config.inputBoxTranslationTrigger)')
     expect(translationShortcutSettings).toContain('previousFullPageHotkey')
@@ -1176,7 +1177,7 @@ describe('options UI composition architecture', () => {
     expect(translation.match(/@update:profiles="config\.quickTranslationProfiles = \$event"/gu)).toHaveLength(2)
 
     // 悬浮球详细设置属于全文翻译入口，段落复制紧随其后，形成翻译设置的末尾操作区。
-    expect(translation).toContain('<ParagraphCopySettings :config="config" />')
+    expect(translation).toContain("<ParagraphCopySettings :config=\"config\" :active=\"viewActive && props.activeSection === 'settings-translation'\" />")
     expect(translation).toContain('<FloatingBallSettings :config="config" />')
     expect(translation).toContain('id="floating-ball-settings"')
     expect(settingsGroupTitles(paragraphCopySettings)).toEqual(["t('paragraphCopy.settings.title')"])

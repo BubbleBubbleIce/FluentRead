@@ -5,3 +5,4 @@
  * 模块边界：该 barrel 不创建 DOM、不解析消息也不打开设置；所有副作用发生在调用函数时，通知样式与节点所有权仍封装在 content 子模块。
  */
 export {sendErrorMessage, showPageNotice} from './content/notice';
+export type {PageNoticeOptions} from './content/notice';

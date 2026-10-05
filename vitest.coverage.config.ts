@@ -29,6 +29,7 @@ export default defineConfig({
         // 按真实规则内容验证共享词书样式，与普通测试配置一致。
         css: {include: [/vocabulary-reencounter\.css/]},
         include: [
+            'tests/pageNotice.test.ts',
             'tests/translationShortcutSettings.test.ts',
             'tests/customHotkeyInputLifecycle.test.ts',
             'tests/webDavBackup.test.ts',
@@ -430,6 +431,7 @@ export default defineConfig({
             reportsDirectory: 'coverage/core',
             reporter: ['text', 'json-summary', 'html'],
             include: [
+                'src/features/page-notice/content/notice.ts',
                 'src/features/settings/ui/useTranslationShortcutSettings.ts',
                 'src/ui/components/CustomHotkeyInput.vue',
                 'src/core/config/cloudSync.ts',

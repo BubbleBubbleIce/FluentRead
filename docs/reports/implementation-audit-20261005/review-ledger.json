@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 824,
-    "functions": 14786,
+    "functions": 14782,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -84,7 +84,7 @@
       "src/app": {
         "files": 101,
         "functions": 1169,
-        "lines": 11461
+        "lines": 11476
       },
       "src/core/config": {
         "files": 52,
@@ -193,13 +193,13 @@
       },
       "src/features/page-notice": {
         "files": 2,
-        "functions": 18,
-        "lines": 253
+        "functions": 24,
+        "lines": 351
       },
       "src/features/paragraph-copy": {
         "files": 3,
         "functions": 22,
-        "lines": 411
+        "lines": 410
       },
       "src/features/quick-translation": {
         "files": 3,
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 80,
-        "functions": 1429,
-        "lines": 19073
+        "functions": 1419,
+        "lines": 19062
       },
       "src/features/share-card": {
         "files": 7,
@@ -612,6 +612,12 @@
       "file": "src/app/offscreen/runtime.ts",
       "sha256": "148e45eb6ff5b79606ce72d44016cb0ff7b88af7e659d9c999b1f5eb694f92f8",
       "functionBodies": 22,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/options/OptionsApp.vue",
+      "sha256": "a790044c3061fdedf360a137e07cb471a92d3d10e2f662ba7ee64441eb280e4f",
+      "functionBodies": 51,
       "status": "source-read-and-traced"
     },
     {
@@ -1329,8 +1335,20 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/page-notice/content/notice.ts",
+      "sha256": "5487f44b4ec1228826f65de7e4da243f53704bd2e0389d05fd226bcf2a57cb26",
+      "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/page-notice/public.ts",
+      "sha256": "cf7944c07199c9a4a9c30c6599fb5bb12724829d3dc5aee2908c831ea9f08152",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/paragraph-copy/content/index.ts",
-      "sha256": "603cbd8e4dcc5ec0d0fe2de60a3d334dbb7fb5129975c83a5395bef1acc98fe7",
+      "sha256": "6436a6365e0deeff7d5cca0ee78296ae7330e7fee72253381f5b44609cbc5041",
       "functionBodies": 10,
       "status": "source-read-and-traced"
     },
@@ -1396,8 +1414,14 @@
     },
     {
       "file": "src/features/settings/ui/ParagraphCopySettings.vue",
-      "sha256": "e50e80deee6d708e5e55140b020e6b815db526f468855c236b97547ab84cbec2",
-      "functionBodies": 13,
+      "sha256": "9465ea8ab6e4145e41d816773382b3bfef4ba6631ee610fc9a5733d990d7b629",
+      "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/SettingsSections.vue",
+      "sha256": "295746ad83afe4aeeee5fa759d427b0abd5baae8028f5c5a2655dd488769eaf2",
+      "functionBodies": 166,
       "status": "source-read-and-traced"
     },
     {
@@ -1416,6 +1440,12 @@
       "file": "src/features/settings/ui/services/ServiceNatureBadge.vue",
       "sha256": "58dbb6df16d83f4de81855208741f10162dcbbe81589eb37af7e1924f17c7554",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/modelOptions.ts",
+      "sha256": "bd33a14292ef2cbf38ffdce4ea5efb2f0c4da57a1931ca690984f28e433c0d04",
+      "functionBodies": 15,
       "status": "source-read-and-traced"
     },
     {
@@ -1928,7 +1958,6 @@
     "src/app/offscreen/translation.ts",
     "src/app/offscreen/ttsPlayback.ts",
     "src/app/offscreen/videoTranscriptionWorker.ts",
-    "src/app/options/OptionsApp.vue",
     "src/app/options/index.ts",
     "src/app/popup/PopupApp.vue",
     "src/app/popup/PopupDrawer.ts",
@@ -2109,8 +2138,6 @@
     "src/features/local-tts/offscreen/tts.ts",
     "src/features/local-tts/offscreen/tts.worker.ts",
     "src/features/local-tts/protocol.ts",
-    "src/features/page-notice/content/notice.ts",
-    "src/features/page-notice/public.ts",
     "src/features/quick-translation/core.ts",
     "src/features/quick-translation/public.ts",
     "src/features/reading-assistant/answerFormat.ts",
@@ -2183,7 +2210,6 @@
     "src/features/settings/ui/SelectionSettings.vue",
     "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
     "src/features/settings/ui/SettingsNavigationIcon.vue",
-    "src/features/settings/ui/SettingsSections.vue",
     "src/features/settings/ui/SiteAdaptationSettings.vue",
     "src/features/settings/ui/SitePreferencesSettings.vue",
     "src/features/settings/ui/SiteRulePreview.vue",
@@ -2218,7 +2244,6 @@
     "src/features/settings/ui/services/ServiceConfiguration.vue",
     "src/features/settings/ui/services/apiKeyTypes.ts",
     "src/features/settings/ui/services/freeTranslationChecks.ts",
-    "src/features/settings/ui/services/modelOptions.ts",
     "src/features/settings/ui/services/useVisionProbeStatus.ts",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
     "src/features/share-card/content/runtime.ts",
@@ -2442,7 +2467,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue594pending source/function chains. Next inspect page-notice lifecycle/stacking: rapid production copy fixture accumulated visible notices obscuring content. Also trace paragraph settings active-section ownership across retained forms/Teleport, pending external source reconciliation and image runtime strict100/performance debt. Native Clipboard API writes already submitted cannot be canceled; stale fallback/notices are guarded. No whole-goal completion.",
+    "Continue589pending source/function chains, including other retained settings dialogs and polling plus shared appearance-root ownership, settings deferred callbacks, input/area/section and config UI. Pending external source reconciliation and image runtime strict100/performance debt remain. Notice/copy feedback and this batch settings scopes are verified, not a whole-goal completion.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2466,12 +2491,13 @@
     "Thirty-first: imported44main source changes through63819aac and fully reviewed6new/3changed files,205files3527bodies617pending. Client revoked-port cleanup could strand Promise;9old-source regressions fail, fixed completion keeps registered ownership. Background consumed cancellation history could delete fresh cancellation;2old-source regressions fail, redundant array removed. Native recovery9cases and client6diagnostic comparisons pass with bounded evidence; retained listener when deregistration itself throws is suppressed, not falsely claimed removed.35module coverage gate still fails runtime;14architecture/3documentation ownership debts remain. Cachedf7f00e0380laterchanges unintegrated. Local20ef5b65language pin bytes verified only, not publicly published.",
     "Thirty-second: 133main changes reconciled, section picker/core/public fully read. New dynamic nested shadow roots are observed with150-element scan batches, insertion scans only new subtrees, and stop/selection changes cancel queued work. UI exclusion crosses ShadowRoot hosts; layout ancestor traversal stops at512 and redundant ancestor UI checks removed. Old-source7regressions fail;12files308cases and9modules four100 pass.23files883integration cases pass separately with overlap. Native production16cases pass;two dynamic-shadow paragraphs preserve source and requests remain stable for1000ms. Existing14executable/3documentation ownership debts and previously measured image-runtime strict-100 gap remain. Shadow-host text preview still uses light DOM and may be blank; no whole-goal completion or live-provider claim. Local1c4482cc language pin verified but unpublished.",
     "Thirty-third:18new full source reviews424function bodies;225reviewed/599pending. Fixed stats clear-vs-queued-flush new-generation loss and coalesced pending flush work; indexed model usage retention avoids full-row hydration; bounded8locale caches replace repeated Intl constructors, eliminating formatUnit wrapper. Both Vue dashboard resets ignore late completion after unmount and release only owned inert state.12modules four100/111cases,6integration files138cases,27production UI assertion flows and native old/new source work-count comparisons pass. Initial stats browser pagination fixture could inherit partial-cache source from random first row; new53rows explicitly network. Architecture gate still has14executable/3documentation ownership debts; unrelated image-runtime strict gap remains. Userscript resource pin1c4482cc remains local/unpublished. Date/time/remaining UI formatting, active-panel handoff, closed-shadow statistics dialog/query root, huge-import validation and duplicate stats event contracts remain separate review/validation work; no whole-goal or provider-quality guarantee.",
-    "Thirty-fourth: five new full reviews43function bodies;230reviewed/594pending. Paragraph DOM recursion removed,500sibling translation ownership probes124750to499, duplicate reader wrappers consolidated. Clipboard late fallback/notices stop after abort/disable/newer request; native focus/backward selection and owned cleanup verified. Multiple ranges checked through Selection port, not live Firefox. Settings provisional mutation/rollback replaced by owned draft; both reserved entries and quick profiles check default fallback conflicts. Five strict modules four100/65cases; actual compiled settings9cases; six related files96cases;13production native flows. Two existing architecture failures remain13executable/3doc tools without ownership. Native fixture uses controlled Microsoft/clipboard ports, no OS clipboard writes or provider quality proof. Rapid-copy notice stacking is observed and next priority; active-section ownership still needs parent-chain tracing. Language resource pin unchanged local/unpublished."
+    "Thirty-fourth: five new full reviews43function bodies;230reviewed/594pending. Paragraph DOM recursion removed,500sibling translation ownership probes124750to499, duplicate reader wrappers consolidated. Clipboard late fallback/notices stop after abort/disable/newer request; native focus/backward selection and owned cleanup verified. Multiple ranges checked through Selection port, not live Firefox. Settings provisional mutation/rollback replaced by owned draft; both reserved entries and quick profiles check default fallback conflicts. Five strict modules four100/65cases; actual compiled settings9cases; six related files96cases;13production native flows. Two existing architecture failures remain13executable/3doc tools without ownership. Native fixture uses controlled Microsoft/clipboard ports, no OS clipboard writes or provider quality proof. Rapid-copy notice stacking is observed and next priority; active-section ownership still needs parent-chain tracing. Language resource pin unchanged local/unpublished.",
+    "Thirty-fifth: five new complete reviews256function bodies;235reviewed4287bodies589pending. Bounded three-notice queue, keyed copy feedback, signal cleanup, pending reveal coalescing and unchanged-DOM update; native500notices/RAFs/timers500to1,500identical feedback mutations0. Settings KeepAlive/active props close recording and suspend active-dependent children; canceled duplicate/late navigation and hydration, coalesced latest-state tab broadcast with rejection handling, removed no-op service filter. New34executed cases29static definitions;11affected files241cases; five strict modules four100/121cases, new permanent notice owner. Actual compiled SFC lifecycle tests plus19production and7native flows. Two existing architecture failures remain13unowned executable/3doc tools. Controlled Microsoft/clipboard ports, native Edge only; builds do not prove live Firefox or provider/OS clipboard behavior. Language resource pin unchanged local/unpublished."
   ],
   "progress": {
-    "sourceReadFiles": 230,
-    "sourceReadFunctionBodies": 4028,
-    "pendingFiles": 594,
+    "sourceReadFiles": 235,
+    "sourceReadFunctionBodies": 4287,
+    "pendingFiles": 589,
     "goalComplete": false
   },
   "observations": [
@@ -3022,6 +3048,31 @@
       "file": "src/features/settings/ui/ParagraphCopySettings.vue",
       "status": "fixed-or-reviewed-and-verified-thirty-fourth",
       "issue": "Keep stored shortcut until confirmed. Draft owns config identity and initial values; close on replacement/disable/field change/unmount; delayed confirm/cancel cannot restore stale values. Clearing already normalized to default previously; new conflict check resolves default for both reserved feature keys and quick profiles."
+    },
+    {
+      "file": "src/features/page-notice/content/notice.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-fifth",
+      "issue": "Bounded three entries and owned tasks. Same feature key or identical unkeyed message updates in place; abort clears its own entry, old signal cannot dispose a transferred entry. Detached host/stack/entries released, stale actions inert, focused entries retained during eviction. Roles and text change only when needed. Native500burst node/RAF/timer counts500to1,500identical visible feedback mutations0; no whole-page time ratio claim."
+    },
+    {
+      "file": "src/features/settings/ui/SettingsSections.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-fifth",
+      "issue": "KeepAlive active flag controls shortcut drafts and active-dependent stats/config children. Parent navigation delegates to root without another RAF loop; standalone loops cancel by revision, section, deactivation and unmount. Late inspection/hydration does not revive closed views. Shared pending-type broadcast makes one tab query per pending burst and reads latest config, filters valid ids and isolates query/send failures. Removed redundant service filter whose item.google is absent; directly reuse capability-filtered list."
+    },
+    {
+      "file": "src/app/options/OptionsApp.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-fifth",
+      "issue": "Disposed guard protects config success/failure, subscriptions, focus and navigation. Deferred reset/reveal uses generation; late callbacks cannot affect an unmounted options root. Global appearance-root replacement ownership is next lifecycle audit scope, not claimed solved here."
+    },
+    {
+      "file": "src/features/settings/ui/ParagraphCopySettings.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-fifth",
+      "issue": "Explicit active prop plus own KeepAlive lifecycle close draft and guard all late open/confirm/preset operations. Returning permits new recording without reopening discarded draft."
+    },
+    {
+      "file": "src/features/settings/ui/services/modelOptions.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-fifth",
+      "issue": "Read and traced all fifteen bodies; existing three behavioral tests verify active/custom/built-in model dedupe, provider switch, thinking and counts; four-dimensional strict coverage100. No changes needed to this source."
     }
   ]
 }

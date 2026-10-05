@@ -22,6 +22,9 @@
     z-index: 2147483647;
     display: flex;
     width: min(480px, calc(100vw - 32px));
+    max-height: calc(100dvh - 36px);
+    overflow: auto;
+    overscroll-behavior: contain;
     flex-direction: column;
     gap: 10px;
     pointer-events: none;
@@ -30,6 +33,7 @@
 
 .page-notice {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     width: 100%;
     min-height: 58px;

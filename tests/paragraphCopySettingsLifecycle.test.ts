@@ -7,7 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 // 执行实际 SFC setup/watch；原生录制模板与设置交互另由生产浏览器验证。
 const key = '__fluentReadParagraphCopySettingsLifecycle';
 const runtime = createRequire(import.meta.url)('vue') as typeof import('vue');
-let server: ViteDevServer, app: import('vue').App, state: Record<string, any>, props: {config: Record<string, any>};
+let server: ViteDevServer, app: import('vue').App, state: Record<string, any>, props: {config: Record<string, any>; active: boolean};
+let visible: import('vue').Ref<boolean>;
 const feedback = vi.fn();
 function mocks(): Plugin {
     return {name: 'paragraph-copy-settings-mocks', enforce: 'pre', resolveId(id) {
@@ -36,19 +37,37 @@ beforeEach(async () => {
         remove: () => {}, createElement: () => ({}), createText: () => ({}), createComment: () => ({}), setText: () => {},
         setElementText: () => {}, parentNode: () => null, nextSibling: () => null, querySelector: () => null,
         setScopeId: () => {}, cloneNode: () => ({}), insertStaticContent: () => [{}, {}]});
-    props = runtime.reactive({config: {paragraphCopyEnabled: true, paragraphCopyHotkey: 'Shift+D', customParagraphCopyHotkey: '',
+    props = runtime.reactive({active: true, config: {paragraphCopyEnabled: true, paragraphCopyHotkey: 'Shift+D', customParagraphCopyHotkey: '',
         hotkey: 'Control', floatingBallHotkey: 'Alt+T', selectionTranslatorMode: 'disabled', inputBoxTranslationTrigger: 'none',
         selectionAreaEnabled: false, sectionTranslationHotkeyEnabled: false, quickTranslationProfiles: []}});
-    app = renderer.createApp({setup: () => () => runtime.h(component, props)});
+    visible = runtime.ref(true);
+    app = renderer.createApp({setup: () => () => runtime.h(runtime.KeepAlive, null, {default: () => visible.value
+        ? runtime.h(component, {...props, ref: (vm: any) => {if (vm) state = vm.$.setupState;}})
+        : runtime.h({render: () => null}, {key: 'other'})})});
     app.provide(runtime.ssrContextKey, {modules: new Set<string>()});
     app.config.warnHandler = () => {};
-    const vm = app.mount({});
-    state = (vm.$.subTree.component as unknown as {setupState: Record<string, any>}).setupState;
+    app.mount({});
     await settle();
 });
 afterEach(async () => {app?.unmount(); await server?.close(); delete (globalThis as any)[key]; vi.unstubAllGlobals();});
 
 describe('段落复制设置实际组件草稿归属', () => {
+    it('KeepAlive 离开后关闭录制，迟到动作不能修改配置，返回后可重新录制', async () => {
+        state.handleHotkeyChange('custom');visible.value = false;await settle();
+        expect(state.showCustomHotkeyDialog).toBe(false);
+        state.handleCustomHotkeyConfirm('Alt+K');state.openCustomHotkeyDialog();state.handleHotkeyChange('Alt+D');
+        expect(props.config.paragraphCopyHotkey).toBe('Shift+D');expect(state.showCustomHotkeyDialog).toBe(false);
+        visible.value = true;await settle();state.handleHotkeyChange('custom');
+        expect(state.showCustomHotkeyDialog).toBe(true);
+    });
+    it('保留挂载但离开翻译分区时关闭录制，迟到确认不得保存或重开', async () => {
+        state.handleHotkeyChange('custom');props.active = false;await settle();
+        expect(state.showCustomHotkeyDialog).toBe(false);
+        state.handleCustomHotkeyConfirm('Alt+K');state.openCustomHotkeyDialog();state.handleHotkeyChange('Alt+D');
+        expect(state.showCustomHotkeyDialog).toBe(false);expect(props.config.paragraphCopyHotkey).toBe('Shift+D');
+        props.active = true;await settle();state.handleHotkeyChange('custom');
+        expect(state.showCustomHotkeyDialog).toBe(true);
+    });
     it('重复选择自定义后取消，仍保留进入录制前的快捷键', () => {
         state.handleHotkeyChange('custom'); state.handleHotkeyChange('custom'); state.handleCustomHotkeyCancel();
         expect(props.config.paragraphCopyHotkey).toBe('Shift+D');

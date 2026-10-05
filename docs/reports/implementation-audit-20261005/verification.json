@@ -23085,6 +23085,599 @@
         "Five strict modules excludes actual settings SFC which has separate setup/watch and native browser tests",
         "Source read and tested scopes do not establish whole-goal bug-free performance"
       ]
+    },
+    {
+      "batch": "thirty-fifth",
+      "name": "bounded-page-notices-and-retained-settings-lifecycle-latest-state-broadcast",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 235,
+        "sourceReadFunctionBodies": 4287,
+        "pendingFiles": 589,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/page-notice/content/notice.ts",
+          "src/features/page-notice/public.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/app/options/OptionsApp.vue",
+          "src/features/settings/ui/services/modelOptions.ts"
+        ],
+        "newFunctionBodies": 256,
+        "rereadFiles": [
+          "src/features/paragraph-copy/content/index.ts",
+          "src/features/settings/ui/ParagraphCopySettings.vue",
+          "src/shared/dom/editingTarget.ts",
+          "src/shared/function/throttle.ts"
+        ],
+        "supplementalStyles": "src/features/page-notice/content/notice.css",
+        "sourceProof": {
+          "src/features/page-notice/content/notice.ts": {
+            "sha256": "5487f44b4ec1228826f65de7e4da243f53704bd2e0389d05fd226bcf2a57cb26",
+            "fullyRead": true
+          },
+          "src/features/page-notice/public.ts": {
+            "sha256": "cf7944c07199c9a4a9c30c6599fb5bb12724829d3dc5aee2908c831ea9f08152",
+            "fullyRead": true
+          },
+          "src/features/settings/ui/SettingsSections.vue": {
+            "sha256": "295746ad83afe4aeeee5fa759d427b0abd5baae8028f5c5a2655dd488769eaf2",
+            "fullyRead": true
+          },
+          "src/app/options/OptionsApp.vue": {
+            "sha256": "a790044c3061fdedf360a137e07cb471a92d3d10e2f662ba7ee64441eb280e4f",
+            "fullyRead": true
+          },
+          "src/features/settings/ui/services/modelOptions.ts": {
+            "sha256": "bd33a14292ef2cbf38ffdce4ea5efb2f0c4da57a1931ca690984f28e433c0d04",
+            "fullyRead": true
+          },
+          "src/features/page-notice/content/notice.css": {
+            "sha256": "fe009c700a2bd2a1b07f45cc99a33127add987b55cc590c56ab3a39d3259bde7",
+            "fullyRead": true
+          },
+          "src/features/paragraph-copy/content/index.ts": {
+            "sha256": "6436a6365e0deeff7d5cca0ee78296ae7330e7fee72253381f5b44609cbc5041",
+            "fullyRead": true
+          },
+          "src/features/settings/ui/ParagraphCopySettings.vue": {
+            "sha256": "9465ea8ab6e4145e41d816773382b3bfef4ba6631ee610fc9a5733d990d7b629",
+            "fullyRead": true
+          },
+          "src/shared/dom/editingTarget.ts": {
+            "sha256": "ff1506ef269776ad7ce0b2afaa25fc1417b153990e2bc66fae7ad2896f685e84",
+            "fullyRead": true
+          },
+          "src/shared/function/throttle.ts": {
+            "sha256": "025292ebfffb6e97d2a6bab30d528eb81c6d5541d6350b40154c5460c2643af5",
+            "fullyRead": true
+          }
+        }
+      },
+      "implementation": {
+        "changes": [
+          "Bounded three entries and owned tasks. Same feature key or identical unkeyed message updates in place; abort clears its own entry, old signal cannot dispose a transferred entry. Detached host/stack/entries released, stale actions inert, focused entries retained during eviction. Roles and text change only when needed. Native500burst node/RAF/timer counts500to1,500identical visible feedback mutations0; no whole-page time ratio claim.",
+          "KeepAlive active flag controls shortcut drafts and active-dependent stats/config children. Parent navigation delegates to root without another RAF loop; standalone loops cancel by revision, section, deactivation and unmount. Late inspection/hydration does not revive closed views. Shared pending-type broadcast makes one tab query per pending burst and reads latest config, filters valid ids and isolates query/send failures. Removed redundant service filter whose item.google is absent; directly reuse capability-filtered list.",
+          "Disposed guard protects config success/failure, subscriptions, focus and navigation. Deferred reset/reveal uses generation; late callbacks cannot affect an unmounted options root. Global appearance-root replacement ownership is next lifecycle audit scope, not claimed solved here.",
+          "Explicit active prop plus own KeepAlive lifecycle close draft and guard all late open/confirm/preset operations. Returning permits new recording without reopening discarded draft.",
+          "Read and traced all fifteen bodies; existing three behavioral tests verify active/custom/built-in model dedupe, provider switch, thinking and counts; four-dimensional strict coverage100. No changes needed to this source."
+        ],
+        "languageResourcePin": "1c4482cc43d3c5ca79cf8aa8ca0973319920a9c1",
+        "published": false
+      },
+      "newTests": {
+        "executedCases": 34,
+        "staticDefinitions": 29,
+        "baselineHead": "5caed3a768e72cf1431ced4e461ba23cac7d7f0d",
+        "oldSourceFailures": {
+          "correctedFixtures": {
+            "files": 4,
+            "failed": 24,
+            "passed": 31,
+            "cases": 55,
+            "unhandledRejections": 1
+          },
+          "initialFixtureFailuresNotCounted": [
+            "linkedom global RAF leak",
+            "Element Plus SSR package externalization missing mocks",
+            "direct stale props without Vue flush",
+            "ShadowRoot textContent unsupported by linkedom"
+          ]
+        },
+        "compiledSfcCases": 29
+      },
+      "strictCoverage": {
+        "passed": true,
+        "testFiles": 4,
+        "cases": 121,
+        "modules": {
+          "src/features/page-notice/content/notice.ts": {
+            "lines": {
+              "total": 263,
+              "covered": 263,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 18,
+              "covered": 18,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 263,
+              "covered": 263,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 128,
+              "covered": 128,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/paragraph-copy/content/index.ts": {
+            "lines": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 66,
+              "covered": 66,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/settings/ui/services/modelOptions.ts": {
+            "lines": {
+              "total": 50,
+              "covered": 50,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 2,
+              "covered": 2,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 50,
+              "covered": 50,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/shared/dom/editingTarget.ts": {
+            "lines": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 4,
+              "covered": 4,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/shared/function/throttle.ts": {
+            "lines": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 2,
+              "covered": 2,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 6,
+              "covered": 6,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "newPermanentModule": "src/features/page-notice/content/notice.ts"
+      },
+      "integration": {
+        "passed": true,
+        "files": 11,
+        "cases": 241,
+        "overlapsStrictAndSfc": true,
+        "architectureSourceContractsUpdated": "Retain section and cancellation assertions with new active bindings; actual component tests also execute lifecycle."
+      },
+      "nativeSourceComparison": {
+        "passed": true,
+        "results": {
+          "before": {
+            "atBurst": {
+              "nodes": 500,
+              "requests": 500,
+              "frames": 500,
+              "timers": 500,
+              "last": "已复制第 499 段"
+            },
+            "afterAbort": {
+              "nodes": 500,
+              "timers": 500,
+              "frames": 500,
+              "hostConnected": true
+            },
+            "hostStyles": {
+              "display": "block",
+              "position": "fixed",
+              "opacity": "1",
+              "transform": "none"
+            },
+            "heightUnchanged": true
+          },
+          "after": {
+            "atBurst": {
+              "nodes": 1,
+              "requests": 1,
+              "frames": 1,
+              "timers": 1,
+              "last": "已复制第 499 段"
+            },
+            "afterAbort": {
+              "nodes": 0,
+              "timers": 0,
+              "frames": 0,
+              "hostConnected": false
+            },
+            "hostStyles": {
+              "display": "",
+              "position": "",
+              "opacity": "",
+              "transform": ""
+            },
+            "heightUnchanged": true
+          }
+        },
+        "layout": {
+          "nodes": 3,
+          "rect": {
+            "left": 16,
+            "right": 374,
+            "top": 18,
+            "bottom": 242
+          },
+          "scrollHeight": 450,
+          "clientHeight": 224,
+          "overflow": "auto",
+          "transition": "0s",
+          "title": "Translation notice",
+          "hostStyles": {
+            "display": "block",
+            "position": "fixed",
+            "opacity": "1",
+            "transform": "none"
+          }
+        },
+        "assertions": [
+          "500 identical visible feedback updates create zero DOM mutation records",
+          "native deep shadow focus survives queue eviction",
+          "credential transition moves owned focus to close and removes stale CTA",
+          "390x260 long stack stays inside viewport and scrolls without host scroll",
+          "actual locale, hostile host CSS and reduced-motion styles checked",
+          "500 repeated copy feedback nodes, RAF requests and timers reduced from 500 to 1",
+          "feature abort leaves zero owned nodes and tasks"
+        ],
+        "oldNewBundleSha256": {
+          "notice-before-thirty-fifth.js": "534a99bddaf584f2d5d2c6e303c607da625b0cb81cf904dd138776c936bde09e",
+          "notice-after-thirty-fifth.js": "8329a1ad9f3ef316be075474d9dd68d5e9893b91200407da9a6eaa9ce3771a9f"
+        },
+        "browserClosed": true,
+        "profileRemoved": true,
+        "scope": "Actual old/new notice source and CSS in native Edge, actual i18n bundles; controlled config and runtime ports; no provider or OS clipboard claim"
+      },
+      "browser": {
+        "passed": true,
+        "assertionFlows": 19,
+        "assertions": [
+          "untranslated paragraph follows original display",
+          "production trusted rapid copy20 retains one success notice",
+          "production config disables copying and immediately removes owned feedback",
+          "actual full-page renderer bilingual output is copied once",
+          "restore-copy leaves original and neighbor intact",
+          "translate-restore-retranslate does not duplicate copied translation",
+          "configured translation-only copy",
+          "configured translated-before-original ordering",
+          "editing input passes shortcut through without clipboard writes",
+          "production fallback preserves button focus, backward selection, and removes owned textarea",
+          "production recording closes across settings-general and returning does not reopen",
+          "production recording closes across settings-about and returning does not reopen",
+          "production recording closes across settings-vocabulary and returning does not reopen",
+          "production KeepAlive full-page recording closes and restores provisional mode",
+          "native settings custom draft and cancel preserve saved preset",
+          "trusted native recording confirms and persists custom combination",
+          "native clear recording persists default copy shortcut",
+          "external preset change closes native recording without restoring old config",
+          "paragraph-copy settings fit desktop and 390px width"
+        ],
+        "scope": "production Chrome extension on isolated Edge; actual candidate/renderer/config/hotkeys and settings; deterministic Microsoft protocol and clipboard ports; no OS clipboard writes",
+        "screenshotsGenerated": 4,
+        "screenshotsInspected": [
+          "rapid-copy-single-notice.png",
+          "copy-settings-390.png"
+        ],
+        "errors": [],
+        "browserClosed": true,
+        "profileRemoved": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "productionJavascriptSha256": "3def84b94cf5ae6c807cd9bfa0b555da39727a713fd74200c3608b21f4265b66",
+        "fixtureCorrections": [
+          "Click ElSelect container instead of covered readonly input",
+          "Select current aria-controls popup rather than global same-name options; all assertions retained"
+        ],
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-notice-audit-native-": 0,
+            "fluentread-notice-audit-production-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        }
+      },
+      "architecture": {
+        "files": 3,
+        "cases": 910,
+        "passed": 908,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3
+      },
+      "externalMain": {
+        "primaryHead": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "primaryClean": true,
+        "cachedOrigin": "510683f2d60985bb4494d6a9cf9ada2bb3b83acf",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/i18n.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts"
+        ]
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 474,
+          "staticDefinitions": 6470
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Five strict source modules do not include compiled SFCs, which have separate actual setup/watch and native verification",
+        "Native Chromium only; Firefox/userscript builds are not actual corresponding browser/manager UI proof",
+        "No OS clipboard writes or real provider quality claim; Microsoft/clipboard ports controlled",
+        "Work counts and zero identical-feedback DOM mutations are not whole-page speedup ratios",
+        "Other retained settings children and shared root ownership remain pending full audit",
+        "Source read/tested scopes do not establish whole-goal bug-free performance"
+      ]
     }
   ]
 }

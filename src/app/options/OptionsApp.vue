@@ -210,6 +210,7 @@ const props = defineProps<{
   locationRouting?: 'internal'
   onClose?: () => void
 }>()
+let disposed = false
 const version = process.env.VUE_APP_VERSION
 const websiteUrl = 'https://read.thinkstu.com'
 const iconUrl = globalThis.__FLUENTREAD_ICON_DATA__ || '/icon/128.png'
@@ -223,7 +224,7 @@ function openQrPreview(kind: 'contact' | 'support') {
   approvePreviewVisible.value = true
 }
 function restoreApprovePreviewFocus() {
-  if (activeSection.value !== 'settings-about') return
+  if (disposed || activeSection.value !== 'settings-about') return
   const trigger = qrPreviewKind.value === 'contact' ? wechatContactTrigger : approvePreviewTrigger
   trigger.value?.focus({preventScroll: true})
 }
@@ -280,6 +281,7 @@ const sectionNavigationElement = ref<{cancelPendingAnchor: () => void; highlight
 const mobileNavigationMedia = window.matchMedia('(max-width: 700px)')
 const systemThemeMedia = window.matchMedia('(prefers-color-scheme: dark)')
 function syncInterfaceTheme(theme: string | undefined): void {
+  if (disposed) return
   applyInterfaceTheme(theme === 'dark' || ((!theme || theme === 'auto') && systemThemeMedia.matches), props.appearanceRoot)
 }
 function handleSystemThemeChange(): void {
@@ -328,6 +330,7 @@ const localizedSearchTargets = computed(() => settingsSearchTargets.map((target)
 const activeItem = computed(() => localizedNavigationItems.value.find((item) => item.id === resolveNavigationItem(activeSection.value).id)
   || localizedNavigationItems.value[0])
 const unsubscribeInterfaceConfig = subscribeConfig((nextConfig) => {
+  if (disposed) return
   syncInterfaceTheme(nextConfig.theme)
   applyInterfaceSkin(nextConfig.interfaceSkin, props.appearanceRoot)
   applyInterfaceFont(nextConfig.interfaceFont, props.appearanceRoot)
@@ -335,11 +338,13 @@ const unsubscribeInterfaceConfig = subscribeConfig((nextConfig) => {
 
 void configReady
   .then(() => {
+    if (disposed) return
     syncInterfaceTheme(runtimeConfig.theme)
     applyInterfaceSkin(runtimeConfig.interfaceSkin, props.appearanceRoot)
     applyInterfaceFont(runtimeConfig.interfaceFont, props.appearanceRoot)
   })
   .catch(() => {
+    if (disposed) return
     syncInterfaceTheme('auto')
     applyInterfaceSkin('default', props.appearanceRoot)
     applyInterfaceFont('system', props.appearanceRoot)
@@ -370,6 +375,7 @@ const filteredResults = computed<SearchResult[]>(() => [
 ])
 
 function selectSection(requestedId: string, panelOrTargetId?: string) {
+  if (disposed) return
   const id = resolveRequestedSection(requestedId)
   if (requestedId === 'settings-model-usage') panelOrTargetId = 'usage'
   if (requestedId === 'settings-area-translation') panelOrTargetId = 'area'
@@ -388,7 +394,10 @@ function selectSection(requestedId: string, panelOrTargetId?: string) {
     }
   }
   // 分区 DOM 更新后归零真正的内容滚动区，避免切换菜单仍停留在上个长表单的底部。
-  void nextTick(() => settingsContentElement.value?.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+  const generation = searchRevealGeneration
+  void nextTick(() => {
+    if (!disposed && generation === searchRevealGeneration) settingsContentElement.value?.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  })
   if (panelOrTargetId && !SETTINGS_TABBED_SECTION_IDS.has(id)) {
     void revealSettingsTarget({id, sectionId: id, targetId: settingsPagePanels[id]?.some(panel => panel.id === panelOrTargetId) ? undefined : panelOrTargetId, panelId: selectedPanels.value[id], label: '', searchDescription: ''})
   }
@@ -399,7 +408,7 @@ async function revealSettingsTarget(result: SearchResult) {
   if (result.targetId || result.panelId) {
     const generation = searchRevealGeneration
     await nextTick()
-    if (generation !== searchRevealGeneration) return
+    if (disposed || generation !== searchRevealGeneration) return
     const content = settingsContentElement.value
     if (!content) return
     let timeoutId: number | undefined
@@ -413,7 +422,7 @@ async function revealSettingsTarget(result: SearchResult) {
       if (cancelPendingSearchReveal === stop) cancelPendingSearchReveal = null
     }
     const revealTarget = () => {
-      if (generation !== searchRevealGeneration || query.value || activeSection.value !== result.sectionId) {
+      if (disposed || generation !== searchRevealGeneration || query.value || activeSection.value !== result.sectionId) {
         stop()
         return
       }
@@ -449,8 +458,10 @@ async function revealSettingsTarget(result: SearchResult) {
 async function selectResult(result: SearchResult) {
   const revealLanguage = result.id === 'settings-general' && isUiLanguageSearch(query.value)
   selectSection(result.sectionId, result.targetId || result.panelId)
+  const generation = searchRevealGeneration
   if (revealLanguage) {
     await nextTick()
+    if (disposed || generation !== searchRevealGeneration) return
     const control = (props.queryRoot || document).querySelector<HTMLElement>('[data-testid="ui-language-select"] input')
     control?.scrollIntoView({block: 'center'})
     control?.focus()
@@ -458,7 +469,9 @@ async function selectResult(result: SearchResult) {
 }
 
 async function revealActiveNavigation() {
+  const section = activeSection.value
   await nextTick()
+  if (disposed || section !== activeSection.value) return
   navigationElement.value
     ?.querySelector<HTMLElement>(`button[data-section="${activeSection.value}"]`)
     ?.scrollIntoView({
@@ -491,6 +504,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  disposed = true
+  searchRevealGeneration += 1
   if (props.appearanceRoot) setInterfaceAppearanceRoot(null)
   cancelPendingSearchReveal?.()
   unsubscribeInterfaceConfig()

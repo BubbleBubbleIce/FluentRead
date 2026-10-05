@@ -8,6 +8,7 @@ import {throttle} from '@/src/shared/function/throttle';
 import {config} from '@/src/services/config/store';
 import {normalizeUiLanguage, translate, translateLegacyText} from '@/src/core/i18n';
 import noticeStyles from './notice.css?inline';
+import {deepActiveElement} from '@/src/shared/dom/editingTarget';
 
 type NoticeType = 'error' | 'success';
 
@@ -18,6 +19,36 @@ interface MissingCredentialNotice {
 
 const PAGE_NOTICE_HOST_ID = 'fluent-read-page-notice-host';
 const NOTICE_EXIT_DURATION = 180;
+const MAX_PAGE_NOTICES = 3;
+
+export interface PageNoticeOptions {
+    /** 同一功能的反馈原地更新；独立提示仍保留自己的内容。 */
+    key?: string;
+    /** 功能结束时立即撤销它拥有的反馈。 */
+    signal?: AbortSignal;
+}
+interface NoticeEntry {
+    node: HTMLElement;
+    stack: HTMLElement;
+    key?: string;
+    message: string;
+    type: NoticeType;
+    language: Parameters<typeof translate>[1];
+    brand: HTMLElement;
+    title: HTMLElement;
+    detail: HTMLElement;
+    body: HTMLElement;
+    mark: HTMLElement;
+    close: HTMLButtonElement;
+    action?: HTMLButtonElement;
+    dismissTimer?: number;
+    exitTimer?: number;
+    revealFrame?: number;
+    reveal?: () => void;
+    signal?: AbortSignal;
+    abort?: () => void;
+}
+const entries = new Map<HTMLElement, NoticeEntry>();
 let noticeHost: HTMLElement | null = null;
 let noticeStack: HTMLElement | null = null;
 
@@ -109,16 +140,22 @@ function applyHostStyles(host: HTMLElement): void {
 }
 
 function getNoticeStack(): HTMLElement {
-    if (noticeHost?.isConnected && noticeHost.ownerDocument === document && noticeStack) {
-        return noticeStack;
+    if (noticeHost?.isConnected && noticeHost.ownerDocument === document && noticeStack?.isConnected && noticeStack.parentNode === noticeHost.shadowRoot) {
+        for (const entry of entries.values()) {
+            if (entry.node.parentElement !== noticeStack) disposeNotice(entry);
+        }
+        if (noticeStack) return noticeStack;
     }
 
+    // 宿主移除 host、内部堆栈或更换文档后，先释放旧实例持有的任务和 signal。
+    for (const entry of entries.values()) disposeNotice(entry);
+    noticeHost = null;
+    noticeStack = null;
     const host = document.createElement('fluent-read-page-notice');
     host.id = PAGE_NOTICE_HOST_ID;
     host.setAttribute('data-fr-page-notice-host', 'true');
     host.setAttribute('data-fluent-read-ui', '');
     host.setAttribute('translate', 'no');
-    host.setAttribute('aria-live', 'assertive');
     applyHostStyles(host);
 
     const shadow = host.attachShadow({mode: 'open'});
@@ -147,92 +184,152 @@ function appendTextElement(
     return element;
 }
 
-function removeNotice(notice: HTMLElement): void {
-    if (!notice.isConnected || notice.classList.contains('is-leaving')) return;
-    notice.classList.remove('is-visible');
-    notice.classList.add('is-leaving');
-
-    window.setTimeout(() => {
-        const stack = notice.parentElement;
-        notice.remove();
-        if (stack?.childElementCount === 0 && stack === noticeStack && noticeHost?.ownerDocument === document) {
-            noticeHost.remove();
-            noticeHost = null;
-            noticeStack = null;
-        }
-    }, NOTICE_EXIT_DURATION);
+function clearNoticeTasks(entry: NoticeEntry): void {
+    if (entry.dismissTimer !== undefined) window.clearTimeout(entry.dismissTimer);
+    if (entry.exitTimer !== undefined) window.clearTimeout(entry.exitTimer);
+    if (entry.revealFrame !== undefined) window.cancelAnimationFrame(entry.revealFrame);
+    entry.dismissTimer = entry.exitTimer = entry.revealFrame = undefined;
+    entry.reveal = undefined;
 }
 
-/**
- * 在隔离的 Shadow Root 中显示页面通知。返回通知节点便于浏览器回归断言；
- * 调用方不应依赖其内部结构。
- */
-export function showPageNotice(message: string, type: NoticeType): HTMLElement {
+function disposeNotice(entry: NoticeEntry): void {
+    if (entries.get(entry.node) !== entry) return;
+    clearNoticeTasks(entry);
+    if (entry.abort) entry.signal?.removeEventListener('abort', entry.abort);
+    entries.delete(entry.node);
+    entry.node.remove();
+    if (entries.size === 0 && entry.stack === noticeStack) {
+        noticeHost?.remove();
+        noticeHost = null;
+        noticeStack = null;
+    }
+}
+
+function removeNotice(entry: NoticeEntry): void {
+    if (entries.get(entry.node) !== entry || entry.exitTimer !== undefined) return;
+    clearNoticeTasks(entry);
+    entry.node.classList.remove('is-visible');
+    entry.node.classList.add('is-leaving');
+    entry.exitTimer = window.setTimeout(() => disposeNotice(entry), NOTICE_EXIT_DURATION);
+}
+
+function bindNoticeSignal(entry: NoticeEntry, signal?: AbortSignal): void {
+    if (entry.signal === signal) return;
+    if (entry.abort) entry.signal?.removeEventListener('abort', entry.abort);
+    entry.signal = signal;
+    entry.abort = signal ? () => {
+        if (entry.signal === signal) disposeNotice(entry);
+    } : undefined;
+    if (entry.abort) signal!.addEventListener('abort', entry.abort, {once: true});
+}
+
+function paintNotice(entry: NoticeEntry, message: string, type: NoticeType): void {
     const language = normalizeUiLanguage(config.uiLanguage);
     const missingCredential = getMissingCredentialNotice(message);
     const credential = missingCredential !== null;
     const tone = credential ? 'warning' : type;
-    const stack = getNoticeStack();
-    const notice = document.createElement('section');
-    notice.className = `page-notice page-notice-${tone}`;
-    notice.setAttribute('role', 'alert');
-    notice.setAttribute('aria-atomic', 'true');
-
-    const mark = createNoticeMark(language);
-
-    const copy = document.createElement('span');
-    copy.className = 'notice-copy';
-    const heading = document.createElement('span');
-    heading.className = 'notice-heading';
-    appendTextElement(heading, 'strong', 'notice-brand', translate('common.brand', language));
-    appendTextElement(heading, 'span', 'notice-divider', '·');
-    appendTextElement(heading, 'span', 'notice-title', getNoticeTitle(type, credential, language));
-
-    const body = document.createElement('span');
-    body.className = 'notice-body';
-    appendTextElement(body, 'span', 'notice-detail', getNoticeDetail(message, missingCredential, language));
-    if (credential) {
-        const action = document.createElement('button');
-        action.className = 'notice-action';
-        action.type = 'button';
-        action.textContent = translate('notice.openSettings', language);
-        action.addEventListener('click', () => {
-            const reportFailure = (error: unknown) => {
-                console.error('[FluentRead] 打开设置页失败', error);
-            };
-            try {
-                void Promise.resolve(browser.runtime.sendMessage({type: 'openOptionsPage'}))
-                    .catch(reportFailure);
-            } catch (error) {
-                reportFailure(error);
-            }
-        });
-        body.appendChild(action);
+    const node = entry.node;
+    const visible = node.classList.contains('is-visible');
+    const className = `page-notice page-notice-${tone}${visible ? ' is-visible' : ''}`;
+    if (node.className !== className) node.className = className;
+    const role = tone === 'success' ? 'status' : 'alert';
+    if (node.getAttribute('role') !== role) node.setAttribute('role', role);
+    const brand = translate('common.brand', language);
+    for (const [element, text] of [
+        [entry.brand, brand],
+        [entry.title, getNoticeTitle(type, credential, language)],
+        [entry.detail, getNoticeDetail(message, missingCredential, language)],
+    ] as const) {
+        if (element.textContent !== text) element.textContent = text;
     }
-    copy.append(heading, body);
-
-    const close = document.createElement('button');
-    close.className = 'notice-close';
-    close.type = 'button';
-    close.setAttribute('aria-label', translate('notice.close', language));
-    close.textContent = '×';
-
-    notice.append(mark, copy, close);
-    stack.appendChild(notice);
-
-    const duration = credential ? 6500 : 3500;
-    const dismissTimer = window.setTimeout(() => removeNotice(notice), duration);
-    close.addEventListener('click', () => {
-        window.clearTimeout(dismissTimer);
-        removeNotice(notice);
-    });
-
+    if (entry.mark.tagName === 'IMG' && (entry.mark as HTMLImageElement).alt !== brand) (entry.mark as HTMLImageElement).alt = brand;
+    const closeLabel = translate('notice.close', language);
+    if (entry.close.getAttribute('aria-label') !== closeLabel) entry.close.setAttribute('aria-label', closeLabel);
+    if (credential) {
+        if (!entry.action) {
+            const action = document.createElement('button');
+            action.className = 'notice-action';
+            action.type = 'button';
+            action.addEventListener('click', () => {
+                if (entries.get(node) !== entry || entry.action !== action || !action.isConnected) return;
+                const reportFailure = (error: unknown) => console.error('[FluentRead] 打开设置页失败', error);
+                try {
+                    void Promise.resolve(browser.runtime.sendMessage({type: 'openOptionsPage'})).catch(reportFailure);
+                } catch (error) {
+                    reportFailure(error);
+                }
+            });
+            entry.body.appendChild(action);
+            entry.action = action;
+        }
+        const actionLabel = translate('notice.openSettings', language);
+        if (entry.action.textContent !== actionLabel) entry.action.textContent = actionLabel;
+    } else if (entry.action) {
+        const ownedFocus = deepActiveElement(document) === entry.action;
+        entry.action.remove();
+        entry.action = undefined;
+        if (ownedFocus) entry.close.focus({preventScroll: true});
+    }
+    entry.message = message;
+    entry.type = type;
+    entry.language = language;
+    if (entry.dismissTimer !== undefined) window.clearTimeout(entry.dismissTimer);
+    if (entry.exitTimer !== undefined) window.clearTimeout(entry.exitTimer);
+    entry.exitTimer = undefined;
+    entry.dismissTimer = window.setTimeout(() => removeNotice(entry), credential ? 6500 : 3500);
+    if (visible || entry.reveal) return;
     const reveal = () => {
-        if (notice.isConnected) notice.classList.add('is-visible');
+        if (entry.reveal !== reveal) return;
+        entry.reveal = undefined;
+        entry.revealFrame = undefined;
+        if (entries.get(node) === entry && entry.dismissTimer !== undefined && node.isConnected) node.classList.add('is-visible');
     };
-    if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(reveal);
+    entry.reveal = reveal;
+    if (typeof window.requestAnimationFrame === 'function') entry.revealFrame = window.requestAnimationFrame(reveal);
     else void Promise.resolve().then(reveal);
+}
 
+/**
+ * 最多显示三条隔离通知；同 key 或相同文案原地更新并重新计时。
+ * 返回本次反馈节点；signal 已结束时只返回未挂载节点，不产生页面副作用。
+ */
+export function showPageNotice(message: string, type: NoticeType, options: PageNoticeOptions = {}): HTMLElement {
+    if (options.signal?.aborted) return document.createElement('section');
+    const stack = getNoticeStack();
+    const language = normalizeUiLanguage(config.uiLanguage);
+    for (const entry of entries.values()) {
+        // getNoticeStack 已清除脱离当前堆栈的条目。
+        const sameFeedback = options.key
+            ? entry.key === options.key
+            : !entry.key && entry.message === message && entry.type === type && entry.language === language;
+        if (!sameFeedback) continue;
+        bindNoticeSignal(entry, options.signal);
+        paintNotice(entry, message, type);
+        return entry.node;
+    }
+    if (entries.size >= MAX_PAGE_NOTICES) {
+        const focused = deepActiveElement(document);
+        const oldest = [...entries.values()].find(entry => !entry.node.contains(focused))!;
+        disposeNotice(oldest);
+    }
+    const notice = document.createElement('section');
+    notice.setAttribute('aria-atomic', 'true');
+    const mark = createNoticeMark(language);
+    const copy = document.createElement('span');copy.className = 'notice-copy';
+    const heading = document.createElement('span');heading.className = 'notice-heading';
+    const brand = appendTextElement(heading, 'strong', 'notice-brand', '');
+    appendTextElement(heading, 'span', 'notice-divider', '·');
+    const title = appendTextElement(heading, 'span', 'notice-title', '');
+    const body = document.createElement('span');body.className = 'notice-body';
+    const detail = appendTextElement(body, 'span', 'notice-detail', '');
+    copy.append(heading, body);
+    const close = document.createElement('button');close.className = 'notice-close';close.type = 'button';close.textContent = '×';
+    notice.append(mark, copy, close);stack.appendChild(notice);
+    const entry: NoticeEntry = {node: notice, stack, key: options.key, message, type, language, brand, title, detail, body, mark, close};
+    entries.set(notice, entry);
+    close.addEventListener('click', () => removeNotice(entry));
+    bindNoticeSignal(entry, options.signal);
+    paintNotice(entry, message, type);
     return notice;
 }
 

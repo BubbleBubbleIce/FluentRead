@@ -18,7 +18,7 @@ afterEach(async () => {
   delete (globalThis as Record<string, unknown>)[TEST_KEY];
 });
 
-async function mountOptions(hash = '#settings-selection') {
+async function mountOptions(hash = '#settings-selection', ready = Promise.resolve()) {
   const location = {hash};
   const windowEvents = new EventTarget();
   const mediaAdd = vi.fn();
@@ -26,6 +26,7 @@ async function mountOptions(hash = '#settings-selection') {
   const scrollTo = vi.fn();
   const windowScrollTo = vi.fn();
   const unsubscribeConfig = vi.fn();
+  const theme = vi.fn(), skin = vi.fn(), font = vi.fn();
   const replaceState = vi.fn((_state: unknown, _unused: string, nextHash: string) => {
     location.hash = nextHash;
   });
@@ -39,8 +40,9 @@ async function mountOptions(hash = '#settings-selection') {
   vi.stubGlobal('history', {replaceState});
   (globalThis as Record<string, unknown>)[TEST_KEY] = {
     config: {interfaceSkin: 'default'},
-    configReady: Promise.resolve(),
+    configReady: ready,
     subscribeConfig: () => unsubscribeConfig,
+    theme, skin, font,
   };
   const mocks: Plugin = {
     name: 'options-navigation-lifecycle-mocks',
@@ -56,7 +58,7 @@ async function mountOptions(hash = '#settings-selection') {
       if (id === '\0options-child-component') return 'export default {render: () => null};';
       if (id === '\0options-i18n') return 'export const useUiI18n = () => ({t: key => key, translateLegacy: text => text});';
       if (id === '\0options-config') return `export const {config, configReady, subscribeConfig} = globalThis.${TEST_KEY};`;
-      if (id === '\0options-appearance') return 'export const applyInterfaceSkin = () => {}; export const applyInterfaceFont = () => {}; export const applyInterfaceTheme = () => {}; export const setInterfaceAppearanceRoot = () => {};';
+      if (id === '\0options-appearance') return `export const {theme: applyInterfaceTheme, skin: applyInterfaceSkin, font: applyInterfaceFont} = globalThis.${TEST_KEY};export const setInterfaceAppearanceRoot = () => {};`;
       return null;
     },
   };
@@ -92,10 +94,25 @@ async function mountOptions(hash = '#settings-selection') {
     windowEvents.dispatchEvent(new Event('hashchange'));
     await runtime.nextTick();
   };
-  return {state, location, navigateHash, replaceState, scrollTo, windowScrollTo, addEventListener, removeEventListener, mediaAdd, mediaRemove, unsubscribeConfig};
+  return {state, location, navigateHash, replaceState, scrollTo, windowScrollTo, addEventListener, removeEventListener, mediaAdd, mediaRemove, unsubscribeConfig, theme, skin, font};
 }
 
 describe('OptionsApp mounted hash navigation', () => {
+  it.each(['resolve', 'reject'] as const)('ignores configReady %s after unmount instead of changing a subsequent appearance owner', async outcome => {
+    let resolveReady!: () => void, rejectReady!: (error: unknown) => void;
+    const ready = new Promise<void>((resolve, reject) => {resolveReady = resolve;rejectReady = reject;});
+    const {theme, skin, font} = await mountOptions('#settings-selection', ready);
+    unmount?.();unmount = undefined;
+    if (outcome === 'resolve') resolveReady();else rejectReady(new Error('closed config'));
+    await runtime.nextTick();await runtime.nextTick();
+    expect(theme).not.toHaveBeenCalled();expect(skin).not.toHaveBeenCalled();expect(font).not.toHaveBeenCalled();
+  });
+  it('cancels deferred scrolling and rejects stale navigation after unmount', async () => {
+    const {state, scrollTo, location} = await mountOptions();scrollTo.mockClear();
+    state.selectSection('settings-general');unmount?.();unmount = undefined;
+    await runtime.nextTick();expect(scrollTo).not.toHaveBeenCalled();
+    state.selectSection('settings-about');expect(location.hash).toBe('#settings-general');
+  });
   it('keeps website rules continuous and uses panel metadata only to locate destinations', async () => {
     const {state} = await mountOptions('#settings-sites');
     expect(state.activePanels).toEqual([]);

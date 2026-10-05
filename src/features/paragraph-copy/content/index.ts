@@ -94,10 +94,6 @@ async function writeClipboardText(text: string, isCurrent: () => boolean): Promi
     return isCurrent() && copyWithExecCommand(text);
 }
 
-function notice(key: string, tone: 'success' | 'error', params?: Record<string, string | number>): void {
-    showPageNotice(translate(key, normalizeUiLanguage(config.uiLanguage), params), tone);
-}
-
 /**
  * 挂载段落复制手势。指针位置由 pointermove 记录，快捷键按下时才解析段落，
  * 因此不会在浏览过程中持续做 DOM 查询。
@@ -111,6 +107,9 @@ export function mountParagraphCopyContentFeature(
     let copyRevision = 0;
     const isEnabled = (): boolean => !signal.aborted && config.on === true
         && config.paragraphCopyEnabled === true && !options.isSiteDisabled();
+    const notice = (key: string, tone: 'success' | 'error', params?: Record<string, string | number>): void => {
+        showPageNotice(translate(key, normalizeUiLanguage(config.uiLanguage), params), tone, {key: 'paragraph-copy', signal});
+    };
 
     document.addEventListener('pointermove', (event) => {
         pointerX = event.clientX;

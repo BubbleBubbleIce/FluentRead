@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, onBeforeUnmount, ref, watch} from 'vue';
+import {computed, defineAsyncComponent, onActivated, onBeforeUnmount, onDeactivated, ref, watch} from 'vue';
 import {Edit} from '@element-plus/icons-vue';
 import {ElMessage} from 'element-plus';
 import type {Config} from '@/src/core/config/model';
@@ -64,9 +64,10 @@ import SettingsItem from './components/SettingsItem.vue';
 
 const CustomHotkeyInput = defineAsyncComponent(() => import('@/src/ui/components/CustomHotkeyInput.vue'));
 
-const props = defineProps<{config: Config}>();
+const props = withDefaults(defineProps<{config: Config; active?: boolean}>(), {active: true});
 const {t, translateLegacy} = useUiI18n();
 const showCustomHotkeyDialog = ref(false);
+let viewActive = true;
 let draft: {config: Config; hotkey: string; customHotkey: string} | null = null;
 const hotkeyDisplayName = computed(() => paragraphCopyHotkeyDisplayName(
     props.config.paragraphCopyHotkey,
@@ -74,7 +75,7 @@ const hotkeyDisplayName = computed(() => paragraphCopyHotkeyDisplayName(
 ));
 
 function isCurrentDraft(): boolean {
-    return draft !== null && draft.config === props.config && props.config.paragraphCopyEnabled
+    return viewActive && props.active && draft !== null && draft.config === props.config && props.config.paragraphCopyEnabled
         && draft.hotkey === props.config.paragraphCopyHotkey && draft.customHotkey === props.config.customParagraphCopyHotkey;
 }
 
@@ -84,15 +85,17 @@ function closeCustomHotkeyDialog(): void {
 }
 
 function openCustomHotkeyDialog(): void {
-    if (!props.config.paragraphCopyEnabled || isCurrentDraft()) return;
+    if (!viewActive || !props.active || !props.config.paragraphCopyEnabled || isCurrentDraft()) return;
     draft = {config: props.config, hotkey: props.config.paragraphCopyHotkey, customHotkey: props.config.customParagraphCopyHotkey};
     showCustomHotkeyDialog.value = true;
 }
 
-watch(() => [props.config, props.config.paragraphCopyEnabled, props.config.paragraphCopyHotkey, props.config.customParagraphCopyHotkey], () => {
+watch(() => [props.active, props.config, props.config.paragraphCopyEnabled, props.config.paragraphCopyHotkey, props.config.customParagraphCopyHotkey], () => {
     if (draft && !isCurrentDraft()) closeCustomHotkeyDialog();
 });
-onBeforeUnmount(closeCustomHotkeyDialog);
+onActivated(() => {viewActive = true;});
+onDeactivated(() => {viewActive = false;closeCustomHotkeyDialog();});
+onBeforeUnmount(() => {viewActive = false;closeCustomHotkeyDialog();});
 
 /** 列出已被其他功能占用的快捷键，避免一次按键同时触发复制和翻译。 */
 function reservedHotkeyOwners(): {hotkey: string; feature: string}[] {
@@ -137,7 +140,7 @@ function findHotkeyConflict(hotkey: string): string {
 }
 
 function handleHotkeyChange(value: string): void {
-    if (!props.config.paragraphCopyEnabled) return;
+    if (!viewActive || !props.active || !props.config.paragraphCopyEnabled) return;
     if (value !== 'custom') {
         const conflict = findHotkeyConflict(value);
         if (conflict) {
