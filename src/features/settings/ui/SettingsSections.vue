@@ -178,6 +178,7 @@
       >
         <template #configuration="{ connectionActionTarget }">
           <ServiceConfiguration
+            :active="viewActive && props.activeSection === 'settings-services'"
             :connection-action-target="connectionActionTarget"
             :config="config"
             :service="selectedConfigurationService"

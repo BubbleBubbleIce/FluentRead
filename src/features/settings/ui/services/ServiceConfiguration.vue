@@ -1,7 +1,7 @@
 <!--
  * @file src/features/settings/ui/services/ServiceConfiguration.vue
  * 文件职责：渲染当前翻译服务的详细连接配置：连接字段（密钥、区域、端点等）直接排在服务标题下方、不再单设“连接与密钥”标题，输入下方是添加密钥与密钥使用方式；其后用模型偏好、提示词、请求限制、接口兼容几个页签显示代理、密钥要求、提示词、自定义请求体与请求头、按域名移除来源头等字段，以及服务和模型的独立请求限制；只有一个页签的服务改用小节标题。
- * 主要内容：组件派生字段可见性与连接示例，密钥列表始终展示全部已保存的密钥并区分参与请求与备用的行，密钥要求放在接口兼容页签，提示词可在确认后一键同步到所有 AI 服务；将成对密钥 ID 同步到 apiKeys 和兼容 token，区分缺少必填 Key 与允许匿名的连接检查并管理等待超时；免费翻译检查完整目录并逐服务展示结果，Chrome 在点击时准备当前语言对并用进度条显示模型下载比例，通过配置 store 提交修改。
+ * 主要内容：组件派生字段可见性与连接示例，密钥列表始终展示全部已保存的密钥并区分参与请求与备用的行，密钥要求放在接口兼容页签，提示词可在确认后一键同步到所有 AI 服务；将成对密钥 ID 同步到 apiKeys 和兼容 token，区分缺少必填 Key 与允许匿名的连接检查并管理等待超时；免费翻译检查完整目录并逐服务展示结果，Chrome 在点击时准备当前语言对并用进度条显示模型下载比例，通过配置 store 提交修改；隐藏、缓存停用或配置变化取消所属等待，Chrome 状态只在活跃服务订阅，恢复模板和删除确认绑定当前操作。
  * 模块边界：本组件不执行网页正文翻译或保存公开配置中的明文凭据；Chrome 内置翻译仅在当前点击页完成模型自检，其他连接测试经后台消息，字段规则来自 core/config，服务切换由 ServiceCatalog 和 SettingsSections 负责。
  -->
 <template>
@@ -354,7 +354,7 @@
                 </template>
               </FieldHelp>
             </div>
-            <ModelVisionSettings :config="config" :service="service" :model="effectiveModelLabel" />
+            <ModelVisionSettings :config="config" :service="service" :model="effectiveModelLabel" :active="active && activeSettingsTab === 'translation'" />
           </div>
 
       </section>
@@ -427,10 +427,17 @@
       <button type="button" class="delete-service-button" data-testid="custom-service-delete" @click="confirmDeleteProvider"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7" /></svg>删除服务</button>
     </div>
   </section>
+  <el-dialog v-model="serviceActionOpen" :title="serviceActionTitle" width="min(460px, calc(100vw - 32px))" append-to-body destroy-on-close>
+    <p>{{ serviceActionMessage }}</p>
+    <template #footer>
+      <el-button @click="serviceActionButtons.cancel">{{ t('common.cancel') }}</el-button>
+      <el-button :type="pendingServiceAction?.kind === 'delete' ? 'danger' : 'primary'" @click="serviceActionButtons.confirm">{{ t('common.confirm') }}</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue'
+import { computed, onActivated, onBeforeUnmount, onDeactivated, ref, shallowRef, toRef, watch } from 'vue'
 import type { Config } from '@/src/core/config/model'
 import type { TranslationParams } from '@/src/core/i18n'
 import { defaultOption, options as optionConfig, resolveConfiguredModel, services } from '@/src/core/config/catalog'
@@ -449,7 +456,7 @@ import browser from 'webextension-polyfill'
 import { requestConfigSave, waitForConfigPersistenceQueue } from '@/src/services/config/store'
 import { CONNECTION_TEST_MESSAGE, DEFAULT_OLLAMA_ENDPOINT, getAliyunTranslationEndpoint, getMimoEndpoint, MINIMAX_ENDPOINTS } from '@/src/core/config/constants'
 import { chromeTranslationPreparationStore } from '@/src/platform/browser/chromeTranslationPreparationRequest'
-import { ElMessage, ElMessageBox, ElTabs, ElTabPane } from 'element-plus'
+import { ElMessage, ElTabs, ElTabPane } from 'element-plus'
 import 'element-plus/es/components/tabs/style/css'
 import FieldHelp from '../components/FieldHelp.vue'
 import SegmentedControl from '../components/SegmentedControl.vue'
@@ -474,8 +481,9 @@ import RequestLimitSettings from './RequestLimitSettings.vue'
 import RequestHeaderSettings from './RequestHeaderSettings.vue'
 import { checkAllFreeTranslationProviders, type FreeTranslationChecks } from './freeTranslationChecks'
 import { listPromptTemplateSyncTargets, syncPromptTemplates as applyPromptTemplateSync } from './promptTemplateSync'
+import {waitForSettingsTask} from '../../model/taskWait'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   config: Config
   service: string
   selectedModelThinking: boolean
@@ -484,7 +492,8 @@ const props = defineProps<{
   isValidAzureEndpoint: (endpoint: string) => boolean
   customProvider?: CustomOpenAIProvider
   connectionActionTarget?: HTMLElement | null
-}>()
+  active?: boolean
+}>(), {active: true})
 
 const emit = defineEmits<{
   'update:model-thinking': [value: boolean]
@@ -499,6 +508,8 @@ const options = toRef(props, 'options')
 const isValidAzureEndpoint = toRef(props, 'isValidAzureEndpoint')
 const customProvider = toRef(props, 'customProvider')
 const { language, t, translateLegacy } = useUiI18n()
+const viewActive = ref(true)
+const active = computed(() => viewActive.value && props.active)
 const activeSettingsTab = ref('requests')
 watch(() => [service.value, Boolean(compute.value.showAI), Boolean(compute.value.showModel)], () => {
   activeSettingsTab.value = compute.value.showAI && compute.value.showModel ? 'translation' : compute.value.showAI ? 'prompts' : 'requests'
@@ -526,7 +537,7 @@ const myMemoryEmailInvalid = computed(() => Boolean(myMemoryEmailDraft.value.tri
 watch(() => config.value.myMemoryEmail, value => { myMemoryEmailDraft.value = value })
 
 function commitMyMemoryEmail(): void {
-  if (myMemoryEmailInvalid.value) return
+  if (!active.value || myMemoryEmailInvalid.value) return
   config.value.myMemoryEmail = normalizeMyMemoryEmail(myMemoryEmailDraft.value)
 }
 
@@ -535,14 +546,8 @@ const deepLXRequiresToken = computed(() => requiresDeepLXToken(config.value.deep
 const deeplEndpoint = computed(() => config.value.proxy[service.value]?.trim() || getDeepLEndpoint(config.value.deeplApiPlan))
 const pendingChromePreparation = ref<Awaited<ReturnType<typeof chromeTranslationPreparationStore.get>>>(null)
 let pendingChromePreparationRevision = 0
-let chromePreparationMounted = true
-void chromeTranslationPreparationStore.get().then((request) => {
-  if (chromePreparationMounted && pendingChromePreparationRevision === 0) pendingChromePreparation.value = request
-})
-const stopChromePreparationPendingWatch = chromeTranslationPreparationStore.subscribe((request) => {
-  pendingChromePreparationRevision += 1
-  pendingChromePreparation.value = request
-})
+let chromePreparationGeneration = 0
+let stopChromePreparationPendingWatch: (() => void) | undefined
 const effectiveModelLabel = computed(() => resolveConfiguredModel(
   config.value.model[service.value],
   config.value.customModel[service.value],
@@ -558,17 +563,18 @@ const apiKeyRotationEnabled = computed<boolean>({
     return explicit === true || (explicit === undefined && apiKeys.value.filter(Boolean).length > 1)
   },
   set: (value) => {
+    if (!active.value) return
     config.value.apiKeyRotationEnabled = {
       ...(config.value.apiKeyRotationEnabled || {}),
       [service.value]: value,
     }
-    invalidateConnectionTest()
   },
 })
 function setApiKeyRotationEnabled(value: boolean): void {
   apiKeyRotationEnabled.value = value
 }
 function setApiKeyRequirement(value: string | number): void {
+  if (!active.value) return
   compute.value.requireApiKey = value === 'required'
 }
 const apiKeyRequirementOptions = computed(() => [
@@ -586,14 +592,15 @@ const apiKeySummary = ref<ApiKeySummary | null>(null)
 const apiKeyCheckMode = ref<'single' | 'all'>('all')
 
 function syncApiKeys(next: string[]): void {
+  if (!active.value) return
   const storedValue = next.length > 0 ? next : ['']
   if (!config.value.apiKeys) config.value.apiKeys = {}
   config.value.apiKeys[service.value] = storedValue
   config.value.token[service.value] = storedValue.find(key => key.trim()) || ''
-  invalidateConnectionTest()
 }
 
 function addApiKey(): void {
+  if (!active.value) return
   // 可用密钥不足两个时看不到使用方式，此前留下的“仅用首个”已无意义：清除它，新添加的密钥按默认轮换使用。
   // 已有多个密钥并明确选了“仅用首个”时保留该选择，新密钥作为备用。
   if (usableApiKeyCount.value < 2 && config.value.apiKeyRotationEnabled?.[service.value] === false) {
@@ -604,11 +611,13 @@ function addApiKey(): void {
   syncApiKeys([...apiKeys.value, ''])
 }
 function updateApiKey(index: number, value: string): void {
+  if (!active.value || !Number.isInteger(index) || index < 0 || index >= apiKeys.value.length) return
   const next = [...apiKeys.value]
   next[index] = value
   syncApiKeys(next)
 }
 function removeApiKey(index: number): void {
+  if (!active.value || !Number.isInteger(index) || index < 0 || index >= apiKeys.value.length) return
   syncApiKeys(apiKeys.value.filter((_, itemIndex) => itemIndex !== index))
 }
 
@@ -626,6 +635,7 @@ function updateApiKeySummary(): void {
 }
 
 function updateCustomProvider(field: 'name' | 'endpoint', value: string): void {
+  if (!active.value) return
   emit('update:custom-provider', {[field]: value})
 }
 
@@ -704,10 +714,10 @@ const CHROME_PREPARATION_ERROR_KEYS: Readonly<Record<ChromeTranslationPreparatio
   'model-unavailable': 'settings.services.chromePreparation.error.modelUnavailable',
 }
 const connectionTestBusy = ref(false)
-const connectionTestDisabled = computed(() => connectionTestBusy.value
+const connectionTestDisabled = computed(() => !active.value || (connectionTestBusy.value
   ? !usesApiKeyList.value
   : usesApiKeyList.value && apiKeyIndexes.value.length === 0
-    && (service.value === services.deeplx ? deepLXRequiresToken.value : compute.value.requireApiKey))
+    && (service.value === services.deeplx ? deepLXRequiresToken.value : compute.value.requireApiKey)))
 const freeProviderChecks = ref<FreeTranslationChecks>({})
 const connectionTestState = ref<ConnectionTestState>('idle')
 const connectionTestMessageState = ref<LocalizedConnectionTestMessage | string | null>(null)
@@ -754,28 +764,10 @@ const currentChromePreparationPairLabel = computed(() => {
   return `${getChromeTranslationPreparationLanguageLabel(pair.sourceLanguage, language.value)}（${pair.sourceLanguage}） → ${getChromeTranslationPreparationLanguageLabel(pair.targetLanguage, language.value)}（${pair.targetLanguage}）`
 })
 let connectionTestGeneration = 0
-let activeChromePreparation: AbortController | undefined
-const activeConnectionWaits = new Set<() => void>()
+let activeConnection: AbortController | undefined
 
-async function waitForConnectionStep<T>(operation: Promise<T>, timeoutMs: number, timeoutKey: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  let cancel: () => void = () => undefined
-  const interruption = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => reject(new Error(t(timeoutKey))), timeoutMs)
-    cancel = () => reject(new Error('Connection check cancelled'))
-    activeConnectionWaits.add(cancel)
-  })
-  try {
-    return await Promise.race([operation, interruption])
-  } finally {
-    clearTimeout(timer)
-    activeConnectionWaits.delete(cancel)
-  }
-}
-
-function cancelConnectionWaits(): void {
-  for (const cancel of activeConnectionWaits) cancel()
-  activeConnectionWaits.clear()
+function waitForConnectionStep<T>(operation: Promise<T>, timeoutMs: number, timeoutKey: string, signal: AbortSignal): Promise<T> {
+  return waitForSettingsTask(operation, signal, timeoutMs, t(timeoutKey))
 }
 const connectionTestTitle = computed(() => {
   if (service.value === services.freeTranslation && Object.keys(freeProviderChecks.value).length) {
@@ -809,9 +801,8 @@ function resetConnectionTest(): void {
 
 function invalidateConnectionTest(): void {
   connectionTestGeneration += 1
-  cancelConnectionWaits()
-  activeChromePreparation?.abort()
-  activeChromePreparation = undefined
+  activeConnection?.abort()
+  activeConnection = undefined
   connectionTestBusy.value = false
   resetConnectionTest()
 }
@@ -856,7 +847,8 @@ function formatChromePreparationError(error: unknown): LocalizedConnectionTestMe
   return error instanceof Error ? error.message : String(error)
 }
 
-async function runApiKeyCheck(index: number, generation: number): Promise<boolean> {
+async function runApiKeyCheck(index: number, generation: number, signal: AbortSignal): Promise<boolean> {
+  if (!active.value || generation !== connectionTestGeneration || signal.aborted) return false
   const key = apiKeys.value[index]?.trim() || ''
   if (!key) {
     return false
@@ -868,7 +860,7 @@ async function runApiKeyCheck(index: number, generation: number): Promise<boolea
       service: service.value,
       keyIndex: index,
       keyRevision: createApiKeyCheckRevision(config.value, service.value),
-    }), CONNECTION_RESPONSE_WAIT_TIMEOUT_MS, 'settings.services.keys.responseTimeout') as {success?: boolean; durationMs?: number; error?: string} | undefined
+    }), CONNECTION_RESPONSE_WAIT_TIMEOUT_MS, 'settings.services.keys.responseTimeout', signal) as {success?: boolean; durationMs?: number; error?: string} | undefined
     if (generation !== connectionTestGeneration) return false
     if (!response?.success) throw new Error(response?.error || '连接测试失败')
     setApiKeyState(index, {status: 'success', durationMs: response.durationMs})
@@ -884,7 +876,8 @@ async function runApiKeyCheck(index: number, generation: number): Promise<boolea
 
 function stopApiKeyChecks(): void {
   connectionTestGeneration += 1
-  cancelConnectionWaits()
+  activeConnection?.abort()
+  activeConnection = undefined
   connectionTestBusy.value = false
   connectionTestState.value = 'idle'
   connectionTestMessageState.value = null
@@ -895,20 +888,22 @@ function stopApiKeyChecks(): void {
 
 async function testSingleApiKey(index: number): Promise<void> {
   // 备用密钥不参与全量检查，但仍可逐个验证。
-  if (connectionTestBusy.value || !usableApiKeys.value.includes(index)) return
+  if (!active.value || connectionTestBusy.value || !usableApiKeys.value.includes(index)) return
   apiKeyCheckMode.value = 'single'
   const generation = ++connectionTestGeneration
+  const controller = new AbortController()
+  activeConnection = controller
   connectionTestBusy.value = true
   connectionTestState.value = 'testing'
   connectionTestMessageState.value = t('settings.services.keys.checking')
   setApiKeyState(index, {status: 'checking'})
   updateApiKeySummary()
   try {
-    await waitForConnectionStep(waitForConfigPersistenceQueue(), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout')
+    await waitForConnectionStep(waitForConfigPersistenceQueue(), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout', controller.signal)
     if (generation !== connectionTestGeneration) return
-    await waitForConnectionStep(requestConfigSave(config.value, browser.runtime.sendMessage.bind(browser.runtime)), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout')
+    await waitForConnectionStep(requestConfigSave(config.value, browser.runtime.sendMessage.bind(browser.runtime)), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout', controller.signal)
     if (generation !== connectionTestGeneration) return
-    const success = await runApiKeyCheck(index, generation)
+    const success = await runApiKeyCheck(index, generation, controller.signal)
     if (generation !== connectionTestGeneration) return
     connectionTestState.value = success ? 'success' : 'error'
     connectionTestMessageState.value = success ? t('settings.services.keys.passed') : t('settings.services.keys.failed')
@@ -920,25 +915,23 @@ async function testSingleApiKey(index: number): Promise<void> {
       updateApiKeySummary()
     }
   } finally {
+    controller.abort()
+    if (activeConnection === controller) activeConnection = undefined
     if (generation === connectionTestGeneration) connectionTestBusy.value = false
   }
 }
 
 async function testConnection(): Promise<void> {
-  if (connectionTestBusy.value) return
+  if (!active.value || connectionTestBusy.value || connectionTestDisabled.value) return
   apiKeyCheckMode.value = 'all'
 
   const testedService = service.value
   if (testedService === services.freeTranslation) freeProviderChecks.value = {}
   const generation = ++connectionTestGeneration
-  const chromeController = testedService === services.chromeTranslator ? new AbortController() : undefined
-  if (chromeController) activeChromePreparation = chromeController
-  let chromePreparationTimedOut = false
-  const chromePreparationTimer = chromeController ? window.setTimeout(() => {
-    chromePreparationTimedOut = true
-    chromeController.abort()
-  }, CHROME_PREPARATION_TIMEOUT_MS) : undefined
-  const isCurrent = () => generation === connectionTestGeneration
+  const controller = new AbortController()
+  activeConnection = controller
+  const chromePreparationDeadline = testedService === services.chromeTranslator ? Date.now() + CHROME_PREPARATION_TIMEOUT_MS : undefined
+  const isCurrent = () => active.value && generation === connectionTestGeneration
   let acceptChromePreparationStatus = true
   connectionTestBusy.value = true
   connectionTestState.value = 'testing'
@@ -958,7 +951,7 @@ async function testConnection(): Promise<void> {
       chromePreparation = prepareChromeTranslationInPage({
         from: pair.sourceLanguage,
         to: pair.targetLanguage,
-        signal: chromeController?.signal,
+        signal: controller.signal,
         onStatus(status) {
           if (acceptChromePreparationStatus && isCurrent()) {
             connectionTestMessageState.value = formatChromePreparationStatus(status)
@@ -970,18 +963,18 @@ async function testConnection(): Promise<void> {
         (error) => ({ok: false as const, error}),
       )
     }
-    await waitForConnectionStep(waitForConfigPersistenceQueue(), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout')
+    await waitForConnectionStep(waitForConfigPersistenceQueue(), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout', controller.signal)
     if (!isCurrent()) return
-    await waitForConnectionStep(requestConfigSave(config.value, browser.runtime.sendMessage.bind(browser.runtime)), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout')
+    await waitForConnectionStep(requestConfigSave(config.value, browser.runtime.sendMessage.bind(browser.runtime)), CONNECTION_CONFIG_WAIT_TIMEOUT_MS, 'settings.services.keys.configTimeout', controller.signal)
     if (!isCurrent()) return
     if (chromePreparation) {
-      const outcome = await chromePreparation
+      const outcome = await waitForConnectionStep(chromePreparation, Math.max(1, chromePreparationDeadline! - Date.now()), 'settings.services.chromePreparation.error.timeout', controller.signal)
       if (!isCurrent()) return
       if (!outcome.ok) throw outcome.error
-      await chromeTranslationPreparationStore.clear({
+      void chromeTranslationPreparationStore.clear({
         sourceLanguage: outcome.result.sourceLanguage,
         targetLanguage: outcome.result.targetLanguage,
-      })
+      }).catch(() => undefined)
       if (!isCurrent()) return
       connectionTestState.value = 'success'
       connectionTestMessageState.value = localizedConnectionTestMessage(
@@ -997,8 +990,8 @@ async function testConnection(): Promise<void> {
           type: CONNECTION_TEST_MESSAGE,
           service: testedService,
           freeProviderId,
-        }), CONNECTION_RESPONSE_WAIT_TIMEOUT_MS, 'settings.services.keys.responseTimeout'),
-        update: (providerId, state) => { freeProviderChecks.value = {...freeProviderChecks.value, [providerId]: state} },
+        }), CONNECTION_RESPONSE_WAIT_TIMEOUT_MS, 'settings.services.keys.responseTimeout', controller.signal),
+        update: (providerId, state) => { if (isCurrent()) freeProviderChecks.value = {...freeProviderChecks.value, [providerId]: state} },
         isCurrent,
         failureMessage: t('settings.services.keys.failed'),
       })
@@ -1014,7 +1007,7 @@ async function testConnection(): Promise<void> {
       let successes = 0
       for (const index of checks) {
         if (!isCurrent()) return
-        if (await runApiKeyCheck(index, generation)) successes += 1
+        if (await runApiKeyCheck(index, generation, controller.signal)) successes += 1
       }
       if (!isCurrent()) return
       const failures = checks.length - successes
@@ -1024,7 +1017,7 @@ async function testConnection(): Promise<void> {
       const response = await waitForConnectionStep(browser.runtime.sendMessage({
         type: CONNECTION_TEST_MESSAGE,
         service: testedService,
-      }), CONNECTION_RESPONSE_WAIT_TIMEOUT_MS, 'settings.services.keys.responseTimeout') as {success?: boolean; durationMs?: number; error?: string} | undefined
+      }), CONNECTION_RESPONSE_WAIT_TIMEOUT_MS, 'settings.services.keys.responseTimeout', controller.signal) as {success?: boolean; durationMs?: number; error?: string} | undefined
       if (!isCurrent()) return
       if (!response?.success) throw new Error(response?.error || '连接测试失败')
       connectionTestState.value = 'success'
@@ -1033,36 +1026,55 @@ async function testConnection(): Promise<void> {
   } catch (error) {
     if (!isCurrent()) return
     connectionTestState.value = 'error'
-    connectionTestMessageState.value = chromePreparationTimedOut
+    connectionTestMessageState.value = chromePreparationDeadline !== undefined && Date.now() >= chromePreparationDeadline
       ? localizedConnectionTestMessage('settings.services.chromePreparation.error.timeout')
       : formatChromePreparationError(error)
   } finally {
     acceptChromePreparationStatus = false
-    if (chromePreparationTimer !== undefined) window.clearTimeout(chromePreparationTimer)
-    chromeController?.abort()
+    controller.abort()
     if (isCurrent()) {
-      if (activeChromePreparation === chromeController) activeChromePreparation = undefined
+      if (activeConnection === controller) activeConnection = undefined
       connectionTestBusy.value = false
     }
   }
 }
 
+type ServiceAction = {kind: 'reset' | 'delete'; config: Config; service: string; provider: CustomOpenAIProvider | undefined; system: string; user: string; name: string}
+const pendingServiceAction = shallowRef<ServiceAction | null>(null)
+const serviceActionOpen = ref(false)
+const serviceActionTitle = computed(() => translateLegacy(pendingServiceAction.value?.kind === 'delete' ? '删除自定义服务' : '恢复默认模板'))
+const serviceActionMessage = computed(() => pendingServiceAction.value?.kind === 'delete'
+  ? `确定要删除“${pendingServiceAction.value.name}”吗？相关模型和连接配置也会一并清理。`
+  : '确定要恢复当前 AI 服务的默认 system 和 user 模板吗？此操作会覆盖当前模板。')
+const serviceActionButtons = computed(() => {
+  const action = pendingServiceAction.value
+  return {confirm: () => performServiceAction(action), cancel: () => {if (pendingServiceAction.value === action) closeServiceAction()}}
+})
+function closeServiceAction(): void {pendingServiceAction.value = null;serviceActionOpen.value = false}
+function isCurrentServiceAction(action: ServiceAction): boolean {
+  return active.value && action.config === config.value && action.service === service.value && action.provider === customProvider.value
+    && (action.kind === 'delete' ? Boolean(compute.value.showCustomOpenAI && customProvider.value?.id === service.value && customProvider.value.name === action.name)
+      : Boolean(compute.value.showAI && activeSettingsTab.value === 'prompts'
+        && action.system === config.value.system_role[service.value] && action.user === config.value.user_role[service.value]))
+}
+function openServiceAction(kind: ServiceAction['kind']): void {
+  if (serviceActionOpen.value || !active.value) return
+  const action: ServiceAction = {kind, config: config.value, service: service.value, provider: customProvider.value,
+    system: config.value.system_role[service.value], user: config.value.user_role[service.value], name: customProvider.value?.name || '此自定义服务'}
+  if (!isCurrentServiceAction(action)) return
+  pendingServiceAction.value = action;serviceActionOpen.value = true
+}
+function performServiceAction(action: ServiceAction | null): void {
+  if (!action || action !== pendingServiceAction.value || !serviceActionOpen.value || !isCurrentServiceAction(action)) return
+  closeServiceAction()
+  if (action.kind === 'reset') {
+    action.config.system_role[action.service] = defaultOption.system_role
+    action.config.user_role[action.service] = defaultOption.user_role
+    ElMessage.success(translateLegacy('已恢复当前 AI 服务默认模板'))
+  } else emit('delete:custom-provider')
+}
 function resetCustomTemplate(): void {
-  void ElMessageBox.confirm(
-    '确定要恢复当前 AI 服务的默认 system 和 user 模板吗？此操作会覆盖当前模板。',
-    '恢复默认模板',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    },
-  ).then(() => {
-    config.value.system_role[service.value] = defaultOption.system_role
-    config.value.user_role[service.value] = defaultOption.user_role
-    ElMessage.success('已恢复当前 AI 服务默认模板')
-  }).catch(() => {
-    // 用户取消操作，不做任何处理。
-  })
+  openServiceAction('reset')
 }
 
 const promptSyncTargets = computed(() => listPromptTemplateSyncTargets(config.value, service.value))
@@ -1090,40 +1102,33 @@ function syncPromptTemplates(): void {
 }
 
 function confirmDeleteProvider(): void {
-  const providerName = customProvider.value?.name || '此自定义服务'
-  void ElMessageBox.confirm(
-    `确定要删除“${providerName}”吗？相关模型和连接配置也会一并清理。`,
-    '删除自定义服务',
-    {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      confirmButtonClass: 'el-button--danger',
-      type: 'warning',
-    },
-  ).then(() => emit('delete:custom-provider')).catch(() => {
-    // 用户取消删除，不修改配置。
-  })
+  openServiceAction('delete')
 }
 
-watch(service, invalidateConnectionTest)
-watch(() => [config.value.from, config.value.to], invalidateConnectionTest)
-watch(() => createApiKeyCheckRevision(config.value, service.value), invalidateConnectionTest)
-watch(() => JSON.stringify({
-  ak: config.value.ak,
-  sk: config.value.sk,
-  appid: config.value.appid,
-  key: config.value.key,
-  secret: config.value.secret?.[service.value],
-  freeConnection: service.value === services.freeTranslation ? [config.value.myMemoryEmail, config.value.freeTranslationTimeoutMs] : undefined,
-}), invalidateConnectionTest)
-onBeforeUnmount(() => {
-  chromePreparationMounted = false
-  connectionTestGeneration += 1
-  cancelConnectionWaits()
-  activeChromePreparation?.abort()
-  activeChromePreparation = undefined
-  stopChromePreparationPendingWatch()
-})
+watch(() => active.value ? [config.value, service.value, config.value.from, config.value.to, createApiKeyCheckRevision(config.value, service.value),
+  config.value.ak, config.value.sk, config.value.appid, config.value.key, config.value.secret?.[service.value],
+  config.value.apiKeyRotationEnabled?.[service.value], compute.value.requireApiKey,
+  ...(service.value === services.freeTranslation ? [config.value.myMemoryEmail, config.value.freeTranslationTimeoutMs] : [])] : null,
+  invalidateConnectionTest, {flush: 'sync'})
+watch(() => active.value && isChromeConnectionTest.value, enabled => {
+  const generation = ++chromePreparationGeneration
+  const revision = ++pendingChromePreparationRevision
+  stopChromePreparationPendingWatch?.();stopChromePreparationPendingWatch = undefined
+  pendingChromePreparation.value = null
+  if (!enabled) return
+  stopChromePreparationPendingWatch = chromeTranslationPreparationStore.subscribe(request => {
+    if (!active.value || !isChromeConnectionTest.value || generation !== chromePreparationGeneration) return
+    pendingChromePreparationRevision++;pendingChromePreparation.value = request
+  })
+  void chromeTranslationPreparationStore.get().then(request => {
+    if (active.value && isChromeConnectionTest.value && generation === chromePreparationGeneration && revision === pendingChromePreparationRevision) pendingChromePreparation.value = request
+  }).catch(() => undefined)
+}, {immediate: true, flush: 'sync'})
+watch(() => pendingServiceAction.value && !isCurrentServiceAction(pendingServiceAction.value), invalid => {if (invalid) closeServiceAction()}, {flush: 'sync'})
+watch(serviceActionOpen, open => {if (!open) pendingServiceAction.value = null}, {flush: 'sync'})
+onActivated(() => {viewActive.value = true})
+onDeactivated(() => {viewActive.value = false})
+onBeforeUnmount(() => {viewActive.value = false})
 </script>
 
 <style scoped>

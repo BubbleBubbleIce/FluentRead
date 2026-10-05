@@ -1,7 +1,7 @@
 /**
  * @file src/app/background/handlers/visionProbe.ts
  * 文件职责：为扩展设置页提供可取消的模型识图测试消息契约。
- * 主要内容：限制真实设置页来源，验证服务、模型及配置版本，冻结请求快照，通过注入的探测端口执行；沿用图片操作注册表处理取消、重复编号和超时。
+ * 主要内容：限制真实设置页来源，首次等待前捕获消息字段，将配置就绪也纳入操作的取消、重复编号和总预算；就绪后验证当前配置身份并冻结快照，通过注入的探测端口执行。
  * 模块边界：不接收图片、凭据、提示词或任意地址，不实现网络与存储，只有应用组合根可选择测试配置。
  */
 import type {BackgroundMessageHandler} from '../messageRouter';
@@ -24,13 +24,15 @@ export function createVisionProbeHandlers(deps: {
     }
     return [{type: VISION_PROBE_MESSAGE, async handle(message, context) {
         assertSender(context);
-        const input = message as typeof message & {service?: unknown; model?: unknown; identity?: unknown; requestId?: unknown};
-        if (typeof input.service !== 'string' || !input.service.trim() || typeof input.model !== 'string' || !input.model.trim()) throw new Error('识图检测服务或模型无效');
-        await deps.ready;
-        const source = freezeVisionProbeConfig(deps.getConfig());
-        if (input.identity !== createVisionProbeIdentity(source, input.service, input.model)) throw new Error('服务配置已更改，请重新检测');
-        const result = await operations.run({requestId: input.requestId, timeoutMs: 30_000}, options => deps.resolve(source, input.service as string, input.model as string,
-            {force: true, signal: options.signal, timeoutMs: options.timeoutMs}));
+        const {service, model, identity, requestId} = message;
+        if (typeof service !== 'string' || !service.trim() || typeof model !== 'string' || !model.trim()) throw new Error('识图检测服务或模型无效');
+        const result = await operations.run({requestId, timeoutMs: 30_000}, async options => {
+            await deps.ready;
+            options.signal.throwIfAborted();
+            const source = freezeVisionProbeConfig(deps.getConfig());
+            if (identity !== createVisionProbeIdentity(source, service, model)) throw new Error('服务配置已更改，请重新检测');
+            return deps.resolve(source, service, model, {force: true, signal: options.signal, timeoutMs: options.timeoutMs});
+        });
         return {success: true, ...result};
     }}, {type: VISION_PROBE_CANCEL_MESSAGE, handle(message, context) {
         assertSender(context);

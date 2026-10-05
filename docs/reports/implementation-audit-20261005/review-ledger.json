@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 825,
-    "functions": 14837,
+    "files": 826,
+    "functions": 14859,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -84,12 +84,12 @@
       "src/app": {
         "files": 101,
         "functions": 1170,
-        "lines": 11476
+        "lines": 11478
       },
       "src/core/config": {
         "files": 52,
-        "functions": 704,
-        "lines": 9067
+        "functions": 703,
+        "lines": 9065
       },
       "src/core/context-menu": {
         "files": 2,
@@ -222,9 +222,9 @@
         "lines": 5248
       },
       "src/features/settings": {
-        "files": 81,
-        "functions": 1455,
-        "lines": 19137
+        "files": 82,
+        "functions": 1478,
+        "lines": 19194
       },
       "src/features/share-card": {
         "files": 7,
@@ -495,6 +495,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/handlers/visionProbe.ts",
+      "sha256": "19147c70b6ec540fb2eda9f4b28bc741b7ba9ee91be2baf5618edb5e714d38e2",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/maintenanceRuntime.ts",
       "sha256": "1ddb0cdac471ef0b07b7ee9c3fcba96071a26a7dc4bf49eaa85859228686e4f3",
       "functionBodies": 5,
@@ -645,6 +651,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/apiKeyCheckIdentity.ts",
+      "sha256": "6d2ed08d6b926ce0524c00d216fe4aaae505e061bf27e7e8a93907700da6dec8",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/interfaceAppearance.ts",
       "sha256": "69da4d75e54c7d5606181868d5f96232213afe284d38aee513d1f318931db54f",
       "functionBodies": 24,
@@ -678,6 +690,18 @@
       "file": "src/core/config/quickTranslation.ts",
       "sha256": "85f2ba91d66eb1c7095739af304cce8cd3ccdc6c602f447b1072b8e689c28a6a",
       "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/vision.ts",
+      "sha256": "3dcc75e2e3e31620a3aa1f730f4d32082b4bfb841600d995e0ab3871e1d0bbb9",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/visionProbe.ts",
+      "sha256": "9a9032f1a989463bd7131f47eadda27a7b26530384277dc49c1920217008e157",
+      "functionBodies": 9,
       "status": "source-read-and-traced"
     },
     {
@@ -780,6 +804,12 @@
       "file": "src/core/translation/text.ts",
       "sha256": "a2ae6662ff5078e9d9000f4a4a01135a243d0bd9fb09b0dbf4f52ca4c02650ba",
       "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/visionProbeImage.ts",
+      "sha256": "b7843ed8740d0af1f6ccc693940abc2afc5785beaf2c2c27a656dd7e36a68da0",
+      "functionBodies": 5,
       "status": "source-read-and-traced"
     },
     {
@@ -1413,9 +1443,21 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/model/chromeTranslationPreparation.ts",
+      "sha256": "c82bbd3827bcb569abfeaf5be1c55325e0a6b54dfbfce268c0f4e9bc3530b332",
+      "functionBodies": 29,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/model/navigation.ts",
       "sha256": "e9e22cf7cb1bd476c826f5909053e277f8207f010377529324d71c65bc4c56a0",
       "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/model/taskWait.ts",
+      "sha256": "99f7867d7cccc4d1793532c19df90414832e2f6d978153411e56e56a4a80278b",
+      "functionBodies": 5,
       "status": "source-read-and-traced"
     },
     {
@@ -1456,7 +1498,7 @@
     },
     {
       "file": "src/features/settings/ui/SettingsSections.vue",
-      "sha256": "91fd623ab2ff87cd903d0a39a7cdad7c69dd4f16a5b3d0b8447c34f1967e9926",
+      "sha256": "d67c910778120c3aa5d530d2d478a9e95a232c72e36e20ade438a86616795916",
       "functionBodies": 166,
       "status": "source-read-and-traced"
     },
@@ -1479,9 +1521,33 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/services/ModelVisionSettings.vue",
+      "sha256": "e3797ab40ce814085876007603e679b7743f48e4e564cf0c9c98a4e53de1b08c",
+      "functionBodies": 22,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/ServiceCatalogItem.vue",
+      "sha256": "bab522b190ccf83c91c284c581b0c61ec3dff20333367ee6595cb7e0edd9acb7",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/ServiceConfiguration.vue",
+      "sha256": "8ebfbdd480496e12f57b884f2a3ff0b3780bed98a9480fdb2e6a799a863b80ea",
+      "functionBodies": 91,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/services/ServiceNatureBadge.vue",
       "sha256": "58dbb6df16d83f4de81855208741f10162dcbbe81589eb37af7e1924f17c7554",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/freeTranslationChecks.ts",
+      "sha256": "28ce156667100ad7d5899e702957850b0db784c883092321003c9d8451729c51",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -1656,6 +1722,12 @@
       "file": "src/platform/browser/actionIcon.ts",
       "sha256": "4d0a83e2be918ef6a47837364051bf85b33d3de0eb7d18cf4849f7c3cdbd6643",
       "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/browser/chromeTranslationPreparationRequest.ts",
+      "sha256": "32a4fc57bb1dbe6c152b7a8b3a5fcf4300d4197fe25798351c6d6a10048a5c9a",
+      "functionBodies": 18,
       "status": "source-read-and-traced"
     },
     {
@@ -1989,7 +2061,6 @@
     "src/app/background/handlers/selectionWordLookup.ts",
     "src/app/background/handlers/translation.ts",
     "src/app/background/handlers/translationCache.ts",
-    "src/app/background/handlers/visionProbe.ts",
     "src/app/background/handlers/vocabulary.ts",
     "src/app/background/handlers/webDavBackup.ts",
     "src/app/background/harnessRuntime.ts",
@@ -2034,7 +2105,6 @@
     "src/app/popup/cache.ts",
     "src/app/popup/index.ts",
     "src/app/popup/mount.ts",
-    "src/core/config/apiKeyCheckIdentity.ts",
     "src/core/config/apiKeys.ts",
     "src/core/config/areaTranslation.ts",
     "src/core/config/azure.ts",
@@ -2075,8 +2145,6 @@
     "src/core/config/translationLoadingStyle.ts",
     "src/core/config/validation.ts",
     "src/core/config/videoSubtitleAppearance.ts",
-    "src/core/config/vision.ts",
-    "src/core/config/visionProbe.ts",
     "src/core/config/writing.ts",
     "src/core/config/writingPreview.ts",
     "src/core/config/writingReadiness.ts",
@@ -2140,7 +2208,6 @@
     "src/core/translation/prompts.ts",
     "src/core/translation/registry.ts",
     "src/core/translation/types.ts",
-    "src/core/translation/visionProbeImage.ts",
     "src/features/area-translation/background/handlers.ts",
     "src/features/area-translation/background/index.ts",
     "src/features/area-translation/background/offscreenAdapter.ts",
@@ -2241,7 +2308,6 @@
     "src/features/selection-translation/speech/public.ts",
     "src/features/selection-translation/ui/SelectionTranslator.vue",
     "src/features/settings/background/index.ts",
-    "src/features/settings/model/chromeTranslationPreparation.ts",
     "src/features/settings/model/configHistory.ts",
     "src/features/settings/model/credentialPreview.ts",
     "src/features/settings/model/dataBackup.ts",
@@ -2293,16 +2359,12 @@
     "src/features/settings/ui/services/CustomOpenAIProviderDialog.vue",
     "src/features/settings/ui/services/FreeTranslationSettings.vue",
     "src/features/settings/ui/services/ModelPicker.vue",
-    "src/features/settings/ui/services/ModelVisionSettings.vue",
     "src/features/settings/ui/services/PromptTemplateEditor.vue",
     "src/features/settings/ui/services/RequestHeaderSettings.vue",
     "src/features/settings/ui/services/RequestLimitFields.vue",
     "src/features/settings/ui/services/RequestLimitSettings.vue",
     "src/features/settings/ui/services/ServiceCatalog.vue",
-    "src/features/settings/ui/services/ServiceCatalogItem.vue",
-    "src/features/settings/ui/services/ServiceConfiguration.vue",
     "src/features/settings/ui/services/apiKeyTypes.ts",
-    "src/features/settings/ui/services/freeTranslationChecks.ts",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
     "src/features/share-card/content/runtime.ts",
     "src/features/share-card/core.ts",
@@ -2379,7 +2441,6 @@
     "src/features/writing-assistant/ui/WritingStyleEditor.vue",
     "src/features/writing-assistant/ui/WritingSurface.vue",
     "src/platform/browser/capabilities.ts",
-    "src/platform/browser/chromeTranslationPreparationRequest.ts",
     "src/platform/browser/ids.ts",
     "src/platform/browser/localTranslationSupport.ts",
     "src/platform/browser/requestHeaderRules.ts",
@@ -2523,7 +2584,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue579pending source/function chains; next inspect active model-vision requests and hidden service settings, then remaining settings/input/area/section/config UI and existing image runtime strict/performance debt. Font task/cache-clear/root/dialog ownership audited in37; validate any further partial cache failure or oversized cached-body concerns before treating them as findings. After every source/function is reviewed and related issues resolved, rebase onto freshly verified latest main, review whole resulting code chains again, resolve resulting findings, verify and merge the exact reviewed head. Goal active; final integration not started.",
+    "Continue568pending source/function chains, settings child editors/resources and remaining translation/input/area/section/provider/config/learning UI plus existing image runtime strict/performance debt. Active service/probe/prompt/delete/Chrome lifetimes audited38; do not infer every child editor inactive. After complete scope, refresh then-latest main, safely rebase across rewritten history, whole-chain review/resolve/verify and merge exact reviewed head. Goal active; final integration pending.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2550,12 +2611,13 @@
     "Thirty-fourth: five new full reviews43function bodies;230reviewed/594pending. Paragraph DOM recursion removed,500sibling translation ownership probes124750to499, duplicate reader wrappers consolidated. Clipboard late fallback/notices stop after abort/disable/newer request; native focus/backward selection and owned cleanup verified. Multiple ranges checked through Selection port, not live Firefox. Settings provisional mutation/rollback replaced by owned draft; both reserved entries and quick profiles check default fallback conflicts. Five strict modules four100/65cases; actual compiled settings9cases; six related files96cases;13production native flows. Two existing architecture failures remain13executable/3doc tools without ownership. Native fixture uses controlled Microsoft/clipboard ports, no OS clipboard writes or provider quality proof. Rapid-copy notice stacking is observed and next priority; active-section ownership still needs parent-chain tracing. Language resource pin unchanged local/unpublished.",
     "Thirty-fifth: five new complete reviews256function bodies;235reviewed4287bodies589pending. Bounded three-notice queue, keyed copy feedback, signal cleanup, pending reveal coalescing and unchanged-DOM update; native500notices/RAFs/timers500to1,500identical feedback mutations0. Settings KeepAlive/active props close recording and suspend active-dependent children; canceled duplicate/late navigation and hydration, coalesced latest-state tab broadcast with rejection handling, removed no-op service filter. New34executed cases29static definitions;11affected files241cases; five strict modules four100/121cases, new permanent notice owner. Actual compiled SFC lifecycle tests plus19production and7native flows. Two existing architecture failures remain13unowned executable/3doc tools. Controlled Microsoft/clipboard ports, native Edge only; builds do not prove live Firefox or provider/OS clipboard behavior. Language resource pin unchanged local/unpublished.",
     "Thirty-sixth:6new complete source reviews73function bodies;241files4354bodies584pending. New66executed cases42static definitions,16affected files472cases. Actual old-head leaf/subscription52cases44fail8pass and dialog17cases4fail13pass, immutable baselines/restoration retained. Three strict modules all4dimensions100/38cases; new permanent draft/subscription owners, old subscription exemption removed. Native actual Vue strategy work1000to0, production recorder/prompt20flows including immediate close persistence; initial focus guard stopped/cleaned profile, first config poll caught intermediate mode ACK, native dialog clear and recording-before100ms exposed actual bugs and were repaired. ModelVisionSettings active request/hidden service subscriptions and shared appearance/font/clear lifecycle remain pending. Final latest-main rebase, whole-chain review/fixes and merge explicitly requested, deferred until whole audit complete.",
-    "Thirty-seventh:5new complete source reviews153function bodies plus existing Options callback+1;246files4508bodies579pending. New61executed cases45static definitions,9affected files392cases. Immutable original3source comparison90cases44fail46pass before final added keyboard guard; that guard separately passed final integration. Four strict modules all4dimensions100/74cases; permanent appearance bridge owner added and build-only exemption removed. Native6flows show10concurrent warm jobs reads/digests/installs20to2 without HTTP, distinct clears/race/root/prepare/owned FontFace behavior. Production15flows/5inspected screenshots, actual cache/crypto/FontFace/config; all font HTTP locally fixed assets. First production detected retained FontFace2to3 and was repaired/rebuilt/reverified2to2; preserved failed report/screens/source/build evidence. Existing architecture debt13executables/3docs and image runtime gaps persist. Final latest-main rebase, whole-chain review/fixes/verification and merge still pending whole audit."
+    "Thirty-seventh:5new complete source reviews153function bodies plus existing Options callback+1;246files4508bodies579pending. New61executed cases45static definitions,9affected files392cases. Immutable original3source comparison90cases44fail46pass before final added keyboard guard; that guard separately passed final integration. Four strict modules all4dimensions100/74cases; permanent appearance bridge owner added and build-only exemption removed. Native6flows show10concurrent warm jobs reads/digests/installs20to2 without HTTP, distinct clears/race/root/prepare/owned FontFace behavior. Production15flows/5inspected screenshots, actual cache/crypto/FontFace/config; all font HTTP locally fixed assets. First production detected retained FontFace2to3 and was repaired/rebuilt/reverified2to2; preserved failed report/screens/source/build evidence. Existing architecture debt13executables/3docs and image runtime gaps persist. Final latest-main rebase, whole-chain review/fixes/verification and merge still pending whole audit.",
+    "Thirty-eighth:12new complete source reviews199bodies;258files4707bodies568pending. New71executed cases47static definitions;13related files202pass;9strict modules100cases all4dimensions100. Original6source comparison106cases50fail56pass plus1known unhandled late Chrome factory rejection; current integration/strict none. Production17flows/4inspected screenshots actual config/backend cancellation with local synthetic image HTTP:2held requests cancelled and unknown retry. Modal catalog target invalidation uses programmatically queued DOM event, normal clicks otherwise. Unit SFC setup/watch/KeepAlive null-render58cases not template proof. Existing13executable/3docs ownership debt and image runtime gaps persist. All-scope final latest-main rebase/review/fix/verify/merge still pending."
   ],
   "progress": {
-    "sourceReadFiles": 246,
-    "sourceReadFunctionBodies": 4508,
-    "pendingFiles": 579,
+    "sourceReadFiles": 258,
+    "sourceReadFunctionBodies": 4707,
+    "pendingFiles": 568,
     "goalComplete": false
   },
   "observations": [
@@ -3176,6 +3238,31 @@
       "file": "src/core/config/interfaceFontAssets.ts",
       "status": "fixed-or-reviewed-and-verified-thirty-seventh",
       "issue": "Production clear/reselect exposed retained FontFace registrations2to3. Track actual owned faces by file and delete only successful-clear exclusive faces, preserving shared and foreign faces. Reverified native old/new owned release0to1 and production clear/reselect remains2. Asset manifest/source/shared fallback policy fully traced unchanged; corrected outdated system-font fallback comment."
+    },
+    {
+      "file": "src/features/settings/ui/services/ModelVisionSettings.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-eighth",
+      "issue": "Model vision is active only in owned settings/model tab. Capture configuration object/service/model/identity before waiting; queue/save10s and response45s budgets via shared owned wait. Hide/cache/unmount/config/model/key/service changes end local waiting and send backend cancel. Late old finally cannot reset a new operation; successful best-effort cache refresh does not block or fail the probe."
+    },
+    {
+      "file": "src/app/background/handlers/visionProbe.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-eighth",
+      "issue": "Background vision operation registration precedes config readiness, so30s budget/cancel/duplicate-id rejection cover readiness too. Message fields captured before await and aborted state checked before config read/identity/resolve. Existing bounded pending-cancel registry retained; no claim old cancellation always started HTTP after ready."
+    },
+    {
+      "file": "src/features/settings/ui/services/ServiceConfiguration.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-eighth",
+      "issue": "Service connection waits use one operation-owned AbortController/shared taskWait instead of global wait callback set and duplicated timers. One active-only identity watcher replaces redundant watchers/JSON extra credentials serialization and repeated explicit invalidation; hidden setters and invalid key rows rejected. Free checks preserve complete catalog, including disabled entries, with early current checks before queued/checking callbacks start more work. Replace async global confirmation with component-owned action capturing config/service/provider/template/name and buttons. Hide/cache/unmount/context/template/name/tab invalidation closes it; only captured current action can reset or delete. Action token uses shallowRef to preserve raw Config/provider identity; the initial deep ref incorrectly converted identities and prevented confirmation. Existing Chinese body copy retained; title/buttons use existing i18n keys, no new language resources."
+    },
+    {
+      "file": "src/features/settings/model/chromeTranslationPreparation.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-eighth",
+      "issue": "Chrome hint read/subscription active only for Chrome service; generation and revision prevent old notification/read after hide/reopen. Preparation remains synchronous before first click await, total5minute deadline includes config waiting, and uncooperative preparation/hint clear cannot keep UI waiting. Status callback cancellation prevents create/detect/translate, preaborted await consumes late factory rejection."
+    },
+    {
+      "file": "src/core/config/apiKeyCheckIdentity.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-eighth",
+      "issue": "Hoist route fields to Map to avoid prototype-name service TypeError; choose first provider with find rather than filter/map every provider. Actual original/current500provider work501to2 identity reads, same digest. Hidden1000config mutations perform0 vision identity reads; bounded work counts, not whole-page CPU or latency ratios."
     }
   ],
   "finalDelivery": {

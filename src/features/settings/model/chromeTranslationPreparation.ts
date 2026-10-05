@@ -1,7 +1,7 @@
 /**
  * @file src/features/settings/model/chromeTranslationPreparation.ts
  * 文件职责：在扩展设置页的用户点击上下文中直接准备 Chrome 语言检测与本地翻译模型，并执行一轮确定性的语言识别和翻译自检。
- * 主要内容：根据配置或待准备请求自动解析保持目标语言不变的自检语言对，同步启动两个现代 API 的 create、转发 downloadprogress，并区分浏览器模型不可用与语言错误，使用置信度和 AbortSignal 校验及释放资源。
+ * 主要内容：解析自检语言对，首次等待前同步启动两个现代 API；转发有界进度，状态回调取消后停止后续操作，消费取消时的迟到拒绝；验证置信度、语言与翻译并释放资源。
  * 模块边界：本模块只服务设置页的主动连接检查，不读写配置、不发送 runtime 消息、不兼容 legacy translation API，也不参与网页正文的正式翻译链路。
  */
 
@@ -298,7 +298,10 @@ function throwIfAborted(signal?: AbortSignal): void {
 
 function awaitWithAbort<T>(operation: Promise<T>, signal?: AbortSignal): Promise<T> {
     if (!signal) return operation;
-    throwIfAborted(signal);
+    if (signal.aborted) {
+        void operation.catch(() => undefined);
+        return Promise.reject(createAbortError());
+    }
     return new Promise<T>((resolve, reject) => {
         const onAbort = () => {
             signal.removeEventListener('abort', onAbort);
@@ -388,6 +391,7 @@ export async function prepareChromeTranslationInPage(
         sourceLanguage: pair.sourceLanguage,
         targetLanguage: pair.targetLanguage,
     });
+    throwIfAborted(options.signal);
 
     let cleanupRequested = false;
     let detector: ChromePreparationDetector | undefined;
@@ -439,6 +443,7 @@ export async function prepareChromeTranslationInPage(
             sourceLanguage: pair.sourceLanguage,
             targetLanguage: pair.targetLanguage,
         });
+        throwIfAborted(options.signal);
         const [detectedValue, translatedValue] = await awaitWithAbort(Promise.all([
             options.signal
                 ? detector.detect(pair.sampleText, {signal: options.signal})

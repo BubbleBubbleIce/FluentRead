@@ -44,6 +44,26 @@ function readyEnvironment(
 }
 
 describe('Chrome 设置页本地模型准备', () => {
+    it.each(['initializing', 'verifying'] as const)('状态%s回调取消后不再启动后续API操作', async phase => {
+        const controller = new AbortController(), environment = readyEnvironment();
+        const detector = {detect: vi.fn(async () => [{detectedLanguage: 'fr', confidence: 0.99}]), destroy: vi.fn()};
+        const translator = {translate: vi.fn(async () => 'Ready'), destroy: vi.fn()};
+        vi.mocked(environment.LanguageDetector!.create).mockResolvedValue(detector);
+        vi.mocked(environment.Translator!.create).mockResolvedValue(translator);
+        await expect(prepareChromeTranslationInPage({from: 'fr', to: 'en', signal: controller.signal,
+            onStatus: status => {if (status.phase === phase) controller.abort();}}, environment)).rejects.toMatchObject({name: 'AbortError'});
+        expect(detector.detect).not.toHaveBeenCalled();expect(translator.translate).not.toHaveBeenCalled();
+        expect(environment.LanguageDetector!.create).toHaveBeenCalledTimes(phase === 'initializing' ? 0 : 1);
+        expect(environment.Translator!.create).toHaveBeenCalledTimes(phase === 'initializing' ? 0 : 1);
+        if (phase === 'verifying') {expect(detector.destroy).toHaveBeenCalledOnce();expect(translator.destroy).toHaveBeenCalledOnce();}
+    });
+    it('创建API同步触发取消且随后拒绝时，取消结果保持并消费迟到拒绝', async () => {
+        const controller = new AbortController(), environment = readyEnvironment(), destroy = vi.fn();
+        vi.mocked(environment.LanguageDetector!.create).mockImplementation(() => {controller.abort();return Promise.reject(new Error('late factory rejection'));});
+        vi.mocked(environment.Translator!.create).mockResolvedValue({translate: async () => 'Ready', destroy});
+        await expect(prepareChromeTranslationInPage({from: 'fr', to: 'en', signal: controller.signal}, environment)).rejects.toMatchObject({name: 'AbortError'});
+        for (let i = 0; i < 12; i++) await Promise.resolve();expect(destroy).toHaveBeenCalledOnce();
+    });
     it('自动源语言只准备一个与目标不同的确定性语言对', () => {
         const toEnglish = resolveChromeTranslationPreparationPair(' auto ', ' en ');
         expect(toEnglish).toEqual({

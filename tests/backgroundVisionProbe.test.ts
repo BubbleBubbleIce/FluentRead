@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {Config} from '@/src/core/config/model';
 import {createVisionProbeHandlers, VISION_PROBE_MESSAGE, VISION_PROBE_CANCEL_MESSAGE} from '@/src/app/background/handlers/visionProbe';
 import {createVisionProbeIdentity} from '@/src/core/config/visionProbe';
@@ -7,7 +7,49 @@ import {createAreaTranslationBackgroundHandlers, AREA_TRANSLATE_CAPTURE_MESSAGE_
 
 const context = {sender:{url:'chrome-extension://fixture/options.html'}};
 const config = () => { const c=new Config();c.service='deepseek';c.model.deepseek='future-vision'; return c; };
+afterEach(() => vi.useRealTimers());
 describe('识图测试后台契约与圈选路由',()=>{
+    it('等待后台配置就绪也属于可取消操作，取消立即结束消息且迟到就绪不启动探测', async () => {
+        let ready!: () => void;const waiting = new Promise<void>(resolve => {ready = resolve;});const source = config();
+        const resolve = vi.fn(async () => ({capability: 'supported' as const, source: 'probe' as const}));const getConfig = vi.fn(() => source);
+        const [test, cancel] = createVisionProbeHandlers({ready: waiting, getConfig, isSettingsUrl: () => true, resolve});
+        const job = test.handle({type: VISION_PROBE_MESSAGE, service: 'deepseek', model: 'future-vision', requestId: 'ready-cancel',
+            identity: createVisionProbeIdentity(source, 'deepseek', 'future-vision')}, context);
+        let ended = false;void Promise.resolve(job).catch(() => {ended = true;});await Promise.resolve();
+        const cancellation = cancel.handle({type: VISION_PROBE_CANCEL_MESSAGE, requestId: 'ready-cancel'}, context);
+        for (let i = 0; i < 12; i++) await Promise.resolve();
+        try {expect(cancellation).toMatchObject({cancelled: true});expect(ended).toBe(true);}
+        finally {ready();await Promise.allSettled([job]);}
+        expect(getConfig).not.toHaveBeenCalled();expect(resolve).not.toHaveBeenCalled();
+    });
+    it('挂起的后台配置在30秒总预算结束，迟到就绪不计算配置或请求', async () => {
+        vi.useFakeTimers();let ready!: () => void;const waiting = new Promise<void>(resolve => {ready = resolve;});const source = config();
+        const resolve = vi.fn(async () => ({capability: 'supported' as const, source: 'probe' as const}));const getConfig = vi.fn(() => source);
+        const [test] = createVisionProbeHandlers({ready: waiting, getConfig, isSettingsUrl: () => true, resolve});
+        const job = test.handle({type: VISION_PROBE_MESSAGE, service: 'deepseek', model: 'future-vision', requestId: 'ready-timeout',
+            identity: createVisionProbeIdentity(source, 'deepseek', 'future-vision')}, context);
+        let error: any;void Promise.resolve(job).catch(value => {error = value;});await vi.advanceTimersByTimeAsync(30000);
+        try {expect(error?.name).toBe('TimeoutError');expect(vi.getTimerCount()).toBe(0);}
+        finally {ready();await Promise.allSettled([job]);}
+        expect(getConfig).not.toHaveBeenCalled();expect(resolve).not.toHaveBeenCalled();
+    });
+    it('消息字段在首次等待前冻结，调用者后续修改不替换受测服务和模型', async () => {
+        let ready!: () => void;const waiting = new Promise<void>(resolve => {ready = resolve;});const source = config();
+        const resolve = vi.fn(async () => ({capability: 'supported' as const, source: 'probe' as const}));
+        const [test] = createVisionProbeHandlers({ready: waiting, getConfig: () => source, isSettingsUrl: () => true, resolve});
+        const message = {type: VISION_PROBE_MESSAGE, service: 'deepseek', model: 'future-vision', requestId: 'snapshot', identity: createVisionProbeIdentity(source, 'deepseek', 'future-vision')};
+        const job = test.handle(message, context);message.service = 'openai';message.model = 'another';message.identity = 'stale';message.requestId = 'replaced';ready();
+        await expect(job).resolves.toMatchObject({success: true});expect(resolve.mock.calls[0]).toMatchObject([{}, 'deepseek', 'future-vision', {force: true}]);
+    });
+    it('等待就绪期间同一编号只能归属一个操作，结束后该编号可以重新使用', async () => {
+        let ready!: () => void;const waiting = new Promise<void>(resolve => {ready = resolve;});const source = config();
+        const resolve = vi.fn(async () => ({capability: 'supported' as const, source: 'probe' as const}));
+        const [test] = createVisionProbeHandlers({ready: waiting, getConfig: () => source, isSettingsUrl: () => true, resolve});
+        const message = {type: VISION_PROBE_MESSAGE, service: 'deepseek', model: 'future-vision', requestId: 'ready-duplicate', identity: createVisionProbeIdentity(source, 'deepseek', 'future-vision')};
+        const first = test.handle(message, context), second = test.handle(message, context);let rejected = false;void Promise.resolve(second).catch(() => {rejected = true;});
+        for (let i = 0; i < 12; i++) await Promise.resolve();try {expect(rejected).toBe(true);} finally {ready();await Promise.allSettled([first, second]);}
+        await expect(test.handle(message, context)).resolves.toMatchObject({success: true});expect(resolve).toHaveBeenCalledTimes(2);
+    });
     it('圈选使用异步能力判断，支持时跳过 OCR，未知时标明回退，检测错误不触发 OCR',async()=>{
         const resolve=vi.fn<any>().mockResolvedValueOnce({mode:'vision'}).mockResolvedValueOnce({mode:'ocr',fallback:'unknown'}).mockRejectedValueOnce(new Error('HTTP 401'));
         const ocr=vi.fn(async()=>({image:'cropped',lines:[]})), vision=vi.fn(async()=>({image:'cropped',lines:[],recognitionMethod:'vision'}));

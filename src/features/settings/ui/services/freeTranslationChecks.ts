@@ -22,12 +22,16 @@ export async function checkAllFreeTranslationProviders(options: {
 }): Promise<void> {
     let next = 0;
     const now = options.now ?? (() => performance.now());
-    for (const provider of FREE_TRANSLATION_PROVIDERS) options.update(provider.id, {status: 'queued'});
+    for (const provider of FREE_TRANSLATION_PROVIDERS) {
+        if (!options.isCurrent()) return;
+        options.update(provider.id, {status: 'queued'});
+    }
     async function worker(): Promise<void> {
         while (options.isCurrent()) {
             const provider = FREE_TRANSLATION_PROVIDERS[next++];
             if (!provider) return;
             options.update(provider.id, {status: 'checking'});
+            if (!options.isCurrent()) return;
             const startedAt = now();
             const elapsed = () => Math.max(0, Math.round(now() - startedAt));
             try {

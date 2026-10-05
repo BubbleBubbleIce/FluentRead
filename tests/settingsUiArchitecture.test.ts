@@ -884,7 +884,7 @@ describe('options UI composition architecture', () => {
     expect(serviceConfiguration).toContain('helpSummary')
     expect(serviceConfiguration).toContain("t('settings.services.chromePreparation.sourceDescription')")
     expect(serviceConfiguration).toContain('CHROME_PREPARATION_TIMEOUT_MS = 300_000')
-    expect(serviceConfiguration).toContain('activeChromePreparation?.abort()')
+    expect(serviceConfiguration).toContain('activeConnection?.abort()')
     expect(serviceConfiguration).toContain("'settings.services.chromePreparation.success'")
     expect(serviceConfiguration).toContain('ChromeTranslationPreparationError')
     expect(serviceConfiguration).toContain('CHROME_PREPARATION_ERROR_KEYS[error.code]')

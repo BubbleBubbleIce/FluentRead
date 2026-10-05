@@ -20,6 +20,17 @@ const source = {
 };
 
 describe('API key check identity', () => {
+    it.each(['toString', 'constructor', '__proto__'])('未知服务%s也生成稳定身份，不把原型成员当作路由字段', service => {
+        expect(createApiKeyCheckRevision(source, service)).toMatch(/^[a-f0-9]{64}$/u);
+        expect(createApiKeyCheckRevision(source, service)).toBe(createApiKeyCheckRevision({...source}, service));
+    });
+    it('首个匹配自定义服务确定身份后停止扫描，忽略其余不相关目录工作', () => {
+        let identityReads = 0;
+        const providers = Array.from({length: 500}, (_, index) => ({get id() {identityReads++;return index === 0 ? 'custom:one' : `custom:other-${index}`;},
+            endpoint: 'https://one.example', models: ['m']}));
+        const revision = createApiKeyCheckRevision({...source, customOpenAIProviders: providers}, 'custom:one');
+        expect(revision).toBe(createApiKeyCheckRevision(source, 'custom:one'));expect(identityReads).toBeLessThanOrEqual(2);
+    });
     it('creates deterministic opaque service and key-row fingerprints', () => {
         const revision = createApiKeyCheckRevision(source, 'openai');
         expect(revision).toMatch(/^[a-f0-9]{64}$/u);

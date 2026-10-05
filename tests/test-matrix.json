@@ -340,7 +340,8 @@
       "tests/freeOfficialWebProviders.test.ts",
       "tests/translationShortcutSettings.test.ts",
       "tests/numberFormat.test.ts",
-      "tests/hotkeyDraft.test.ts"
+      "tests/hotkeyDraft.test.ts",
+      "tests/settingsTaskWait.test.ts"
     ],
     "functional": [
       "tests/translationCenterComponent.test.ts",
@@ -465,7 +466,9 @@
       "tests/translationRecorderLifecycle.test.ts",
       "tests/visionProbeStatusLifecycle.test.ts",
       "tests/interfaceAppearanceLifecycle.test.ts",
-      "tests/interfaceSettingsLifecycle.test.ts"
+      "tests/interfaceSettingsLifecycle.test.ts",
+      "tests/modelVisionSettingsLifecycle.test.ts",
+      "tests/serviceConfigurationLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",
