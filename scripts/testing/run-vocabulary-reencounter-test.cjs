@@ -6,10 +6,13 @@ const path = require('node:path');
 const os = require('node:os');
 const http = require('node:http');
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const arg = (name, fallback) => {const i = process.argv.indexOf(`--${name}`); return i < 0 ? fallback : process.argv[i + 1];};
 const extensionDir = path.resolve(arg('extension-dir', '.output/chrome-mv3'));
 const artifacts = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-vocabulary-reencounter'));
 const packages = arg('playwright-root'); const helperPath = arg('focus-safe-helper');
+const readingStress = process.argv.includes('--reading-stress');
+const readingBaseline = process.argv.includes('--reading-baseline');
 if (!packages || !helperPath) throw new Error('Provide --playwright-root and --focus-safe-helper');
 const {chromium} = require(path.join(path.resolve(packages), 'playwright'));
 const helper = require(path.resolve(helperPath));
@@ -23,7 +26,12 @@ async function read(page) {
 }
 async function persist(page, patch) {
   const current = await read(page);
-  const result = await send(page, {type: 'persistConfig', config: {...current, ...patch}, clientId: `reencounter-${process.pid}`, sequence: Date.now(), baseRevision: current.__fluentConfigRevision});
+  const initialCredentials = Object.hasOwn(patch, 'token');
+  if (initialCredentials) assert.equal(current.customOpenAIProviders?.length, 0, 'Synthetic credentials require an empty temporary profile');
+  const expected = Object.fromEntries(Object.keys(patch).map(key => [key, current[key]]));
+  const result = await send(page, {type: 'persistConfig', mode: initialCredentials ? 'replace' : 'patch',
+    config: initialCredentials ? {...current, ...patch} : patch, expected,
+    clientId: `reencounter-${process.pid}`, sequence: Date.now(), baseRevision: initialCredentials ? current.__fluentConfigRevision : undefined});
   assert.equal(result.success, true, result.error); await wait(300);
 }
 async function until(check, message) {for (let i = 0; i < 180; i++) {if (await check()) return; await wait(80);} throw new Error(message);}
@@ -57,7 +65,9 @@ async function main() {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const report = {ok: false, cases: [], screenshots: [], consoleErrors: [], evidenceBoundary: 'Production extension and real Edge with local HTML and synthetic model responses; no live model or Firefox runtime quality claim.'};
+  const report = {ok: false, readingStress, readingBaseline, cases: [], screenshots: [], consoleErrors: [],
+    buildSha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex'),
+    evidenceBoundary: 'Production extension and real Edge with local HTML and synthetic model responses; optional verified isolated-world reading counters are work evidence, not timing. No live model or Firefox runtime quality claim.'};
   let session; let page;
   try {
     session = await helper.launchFocusSafePersistentContext({chromium, profileDir: profile, browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', background: true, headless: false,
@@ -170,6 +180,76 @@ async function main() {
     await ui.locator('.reencounter-entry').click(); await ui.getByText('标记选项',{exact:true}).click(); await ui.getByRole('button',{name:'关闭所有网页标记',exact:true}).click();
     await until(async()=>(await read(options)).vocabularyReencounterEnabled===false,'Permanent disable not saved'); await until(async()=>await ui.count()===0,'Permanent disable left UI'); assert.deepEqual(await marks(),[]);
     await page.reload(); await wait(400); assert.deepEqual(await marks(),[]); assert.equal(await ui.count(),0); record('permanent-disable-persists-across-reload');
+    if (readingStress) {
+      // 在完整阅读/学习链路之后，只操作本次临时 profile 中的合成收藏。
+      for (const entry of (await snapshot()).data) assert.equal((await send(options, {type:'fluentReadVocabularyBook', action:'remove', entryId:entry.id})).success, true);
+      await page.evaluate(() => {
+        const root = document.createElement('div'); root.id = 'reading-stress';
+        const direct = document.createElement('p'); direct.textContent = 'A quiet river bank.'; root.append(direct);
+        window.stressNativeText = direct.firstChild;
+        const deep = document.createElement('span'); let leaf = deep;
+        for (let i = 0; i < 1500; i++) {const child = document.createElement('span'); leaf.append(child); leaf = child;}
+        leaf.textContent = ' Another river bank.'; direct.append(deep);
+        for (let i = 0; i < 2500; i++) root.append(document.createElement('span'));
+        const host = document.createElement('div'); root.append(host);
+        const shadow = host.attachShadow({mode:'open'}); shadow.append(document.createTextNode('A river bank in a shadow.'));
+        for (let i = 0; i < 800; i++) shadow.append(document.createElement('span'));
+        document.querySelector('main').prepend(root); window.stressMarkup = root.innerHTML;
+      });
+      const cdp = await context.newCDPSession(page); const worlds = [];
+      cdp.on('Runtime.executionContextCreated', event => worlds.push(event.context.id)); await cdp.send('Runtime.enable');
+      let isolated;
+      for (const contextId of worlds) {
+        const result = await cdp.send('Runtime.evaluate', {contextId, returnByValue:true, expression:'typeof chrome !== "undefined" && chrome.runtime?.id'});
+        if (result.result?.value === new URL(origin).host) {isolated = contextId; break;}
+      }
+      assert(isolated, 'Reading counters require the verified extension isolated world');
+      try {
+        const installed = await cdp.send('Runtime.evaluate', {contextId:isolated, returnByValue:true, expression:'(' + function () {
+          globalThis.__frReadingWork = {style:0, box:0};
+          const belongs = element => element.closest('#reading-stress') || element.getRootNode().host?.closest('#reading-stress');
+          const style = window.getComputedStyle; const box = Element.prototype.getBoundingClientRect;
+          window.getComputedStyle = function (element, ...args) {if (belongs(element)) globalThis.__frReadingWork.style++; return style.call(this, element, ...args);};
+          Element.prototype.getBoundingClientRect = function (...args) {if (belongs(this)) globalThis.__frReadingWork.box++; return box.apply(this, args);};
+          return true;
+        }.toString() + ')()'}); assert.equal(installed.result?.value, true);
+        const work = async () => (await cdp.send('Runtime.evaluate', {contextId:isolated, returnByValue:true, expression:'globalThis.__frReadingWork'})).result.value;
+        const reset = () => cdp.send('Runtime.evaluate', {contextId:isolated, expression:'globalThis.__frReadingWork = {style:0, box:0}'});
+        await persist(options, {vocabularyReencounterEnabled:true}); await wait(600);
+        const emptyInitial = await work(); assert.deepEqual(await marks(), []);
+        await reset(); await page.evaluate(() => document.querySelector('#reading-stress').append(document.createElement('span'))); await wait(500);
+        const emptyMutation = await work(); assert.deepEqual(await marks(), []);
+        for (const count of [emptyInitial, emptyMutation]) {
+          if (readingBaseline) assert(count.style > 4800, 'Baseline must actually traverse empty-book reading');
+          else assert.deepEqual(count, {style:0, box:0});
+        }
+        await reset();
+        const saved = await send(options, {type:'fluentReadVocabularyBook', action:'upsert', input:{term:'bank', translation:'合成河岸', sourceLanguage:'en', targetLanguage:'zh-CN'}});
+        assert.equal(saved.success, true); await until(async()=>(await marks()).includes('bank'), 'Later nonempty book must restore marking');
+        const nonempty = await work(); assert(nonempty.style > 4800, 'Counter must reach actual production reading after entries arrive');
+        assert(await page.evaluate(() => {
+          const root = document.querySelector('#reading-stress'); const shadow = root.querySelector('div').shadowRoot;
+          return root.innerHTML === window.stressMarkup + '<span></span>' && window.stressNativeText === root.querySelector('p').firstChild
+            && [...CSS.highlights.get('fluentread-vocabulary-reencounter')].some(range => range.startContainer.getRootNode() === shadow)
+            && [...CSS.highlights.get('fluentread-vocabulary-reencounter')].some(range => range.startContainer.data === ' Another river bank.');
+        }), 'Native source identity, markup, deep inline hit and shadow hit must survive');
+        await shot('reading-stress-restored');
+        assert.equal((await send(options, {type:'fluentReadVocabularyBook', action:'remove', entryId:saved.data.id})).success, true);
+        await until(async()=>(await marks()).length===0,'Removing last entry must clear painting'); await wait(300);
+        const drawingStyles = await page.evaluate(() => {
+          const shadow = document.querySelector('#reading-stress div').shadowRoot;
+          return document.querySelectorAll('[data-fr-reencounter-style]').length + shadow.querySelectorAll('[data-fr-reencounter-style]').length;
+        });
+        if (!readingBaseline) assert.equal(drawingStyles, 0);
+        await persist(options, {vocabularyReencounterEnabled:false}); await until(async()=>await ui.count()===0, 'Stress marking disable must clear UI');
+        assert.deepEqual(await marks(), []);
+        assert.equal(await page.evaluate(() => document.querySelectorAll('[data-fr-reencounter-style]').length + document.querySelector('#reading-stress div').shadowRoot.querySelectorAll('[data-fr-reencounter-style]').length), 0);
+        report.readingWork = {emptyInitial, emptyMutation, nonempty, drawingStylesAfterLastEntry:drawingStyles,
+          nativeDepth:1500, shallowEmptyElements:3300, originalTextAndMarkupPreserved:true, shadowAndDeepMarksRestored:true,
+          evidence:'Verified isolated-world wrappers count actual native style and box reads. Instrumented timing excluded.'};
+        record('empty-book-page-work-and-later-native-deep-shadow-matching');
+      } finally {await cdp.detach();}
+    }
     assert.equal(report.consoleErrors.length,0); report.ok=true;
   } catch(error) {report.error=error.stack; if(page){report.uiDiagnostics=await page.evaluate(()=>{const host=document.getElementById('fluent-read-vocabulary-reencounter');const panel=host?.shadowRoot?.querySelector('.reencounter-ui');return {host:host?.outerHTML,content:panel?.outerHTML,roots:host?.shadowRoot?.innerHTML.slice(-5000),paint:[...(CSS.highlights.get('fluentread-vocabulary-reencounter')||[])].map(r=>r.toString())};}).catch(()=>null);await page.screenshot({path:path.join(artifacts,'failure.png')}).catch(()=>{});}throw error;}
   finally {fs.writeFileSync(path.join(artifacts,'report.json'),JSON.stringify(report,null,2));if(session)await session.close().catch(()=>{});server.closeAllConnections();await new Promise(resolve=>server.close(resolve));fs.rmSync(profile,{recursive:true,force:true});}

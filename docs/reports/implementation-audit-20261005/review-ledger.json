@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14580,
+    "functions": 14578,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -253,8 +253,8 @@
       },
       "src/features/vocabulary": {
         "files": 20,
-        "functions": 387,
-        "lines": 3970
+        "functions": 385,
+        "lines": 4006
       },
       "src/features/writing-assistant": {
         "files": 17,
@@ -1048,8 +1048,8 @@
     },
     {
       "file": "src/features/vocabulary/content/readingText.ts",
-      "sha256": "3f325fba6ec0ba902ee59a1003e444769c336a5c2f0df9c4702e1ff2c24743c1",
-      "functionBodies": 6,
+      "sha256": "9ad08f5ac149aa839c3fc5cf230dec7fe9cf3cdbe45434888e4a95d7c27ac766",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -1066,7 +1066,7 @@
     },
     {
       "file": "src/features/vocabulary/content/scanner.ts",
-      "sha256": "af3a894e57e29088c1a57c83a41b98b2bfff91f34541325a5402c7872ac6ac3e",
+      "sha256": "d615d976b79dd86d874c028788a784c494b00dca9a89f9bf67d4609c02e6a709",
       "functionBodies": 18,
       "status": "source-read-and-traced"
     },
@@ -1089,9 +1089,33 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/vocabulary/ui/CollectionEntry.vue",
+      "sha256": "242da538afd58083b351d7fed12771eb48858fbdbf590b062fe2b10f4c953225",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/ui/ReencounterPanel.vue",
+      "sha256": "17e58ece1cb458351ce21a94804b71c53d41f34a05fbf3d40b215ad70c13979e",
+      "functionBodies": 26,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/ui/SavedExplanation.vue",
+      "sha256": "fd0a8a90b2748e190fffedca71167cf038a23289df1529e3371befe5f1ff7166",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/vocabulary/ui/SentenceActions.vue",
       "sha256": "cf3b9887f0f675a861def4621bbd7af217ef8a595d894f2d4ce7881de7d13cc5",
       "functionBodies": 26,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/ui/VocabularyStudy.vue",
+      "sha256": "fc26baafd449decd69e048025aadc3dd6a1af7c4f049ef602f271a1703c01c28",
+      "functionBodies": 18,
       "status": "source-read-and-traced"
     },
     {
@@ -1810,11 +1834,7 @@
     "src/features/vocabulary/background/index.ts",
     "src/features/vocabulary/learningModel.ts",
     "src/features/vocabulary/repository.ts",
-    "src/features/vocabulary/ui/CollectionEntry.vue",
-    "src/features/vocabulary/ui/ReencounterPanel.vue",
-    "src/features/vocabulary/ui/SavedExplanation.vue",
     "src/features/vocabulary/ui/VocabularyBook.vue",
-    "src/features/vocabulary/ui/VocabularyStudy.vue",
     "src/features/writing-assistant/background.ts",
     "src/features/writing-assistant/client.ts",
     "src/features/writing-assistant/content.ts",
@@ -2000,13 +2020,13 @@
     "Learning features, UI and build entrypoints"
   ],
   "verificationDebt": [
-    "Architecture verification ownership has 19 existing executable-module coverage omissions and 3 unowned documentation tooling files; preserve the gate while repairing its ownership and evidence.",
+    "Architecture ownership now has15existing executable-module coverage omissions and3unowned documentation tools. Four actually100%-covered reencounter modules are registered; removed redundant strict entry for layout.ts pure barrel, with zero executable bodies. Preserve thresholds; whole repository gate still fails.",
     "Local origin/main tracking ref f94225c3 includes six post-baseline image/docs commits. Reconcile and re-review that source before full-goal completion; the current audit inventory remains based on fd4fac88. No remote freshness or release claim."
   ],
   "progress": {
-    "sourceReadFiles": 141,
-    "sourceReadFunctionBodies": 2124,
-    "pendingFiles": 676,
+    "sourceReadFiles": 145,
+    "sourceReadFunctionBodies": 2175,
+    "pendingFiles": 672,
     "goalComplete": false
   },
   "observations": [
@@ -2102,13 +2122,23 @@
     },
     {
       "file": "src/features/vocabulary/content/readingText.ts",
-      "status": "public-entry-reproduced-fix-pending",
-      "issue": "Unchanged public collectReadingGroups with20,000real nested elements throws RangeError under linkedom style/geometry mocks; original Text identity preserved. No native browser reproduction yet. Recursive DOM/shadow/slot traversal and eager group/range work require a cancellation-aware fix and validation."
+      "status": "fixed-and-verified-with-nonempty-scan-performance-debt",
+      "issue": "Public20,000depth overflow fixed by iterative sibling frames, preserving native Text, block/shadow/slot grouping. Empty/unusable indexes skip page/style/box/range work; native verified isolated-world empty work4804/4805style+3boxes becomes0. Nonempty native1500depth+3300shallow nodes still reads4805styles+3boxes; whole collection, candidate normalization and Range mapping remain synchronous and unbounded."
     },
     {
       "file": "src/features/vocabulary/content/scanner.ts",
-      "status": "source-read-performance-and-lifecycle-investigation-pending",
-      "issue": "Scanning still collects page groups with an empty index; investigate avoidable work, callback errors, post-dispose setEntries and geometry copies. These are source candidates, not reproduced production failures."
+      "status": "fixed-and-strict-unit-and-native-lifecycle-verified",
+      "issue": "Post-dispose updates no longer compile or notify. Canonical empty state and iterative per-wave identities prevent synchronous callback recursion; thrown UI callbacks do not abort owned-resource cleanup or host click. Notification arrays copied; geometry exits at first hit; styles only on matched roots and empty-book scan frees old shadows. Real consumer is read-only. This does not prove all potential delayed publisher feedback loops cannot occur; async scheduling and mutation work remain to audit."
+    },
+    {
+      "file": "src/features/vocabulary/domain/reencounter.ts",
+      "status": "public-workload-reproduced-optimization-pending",
+      "issue": "Unmodified public matchExpressions on80,000characters with requested limit1 returns1 but materializes/sorts20,000candidates. Wrapper delegates actual native Array.sort; controlled Node work evidence, no native timing. Preserve normalization, longest-overlap, whole-word and UTF16 semantics when limiting work."
+    },
+    {
+      "file": "src/features/vocabulary/ui/ReencounterPanel.vue",
+      "status": "source-read; queued-focus-candidate-unreproduced",
+      "issue": "Reviewed template, stream generation, close/config invalidation, viewport placement, focus restoration and full listener teardown. Watcher awaits nextTick with a captured current value and active guard; rapid close/reopen focus ordering needs actual reproduction before changing behavior."
     }
   ]
 }

@@ -8474,6 +8474,410 @@
         "anchors": 741,
         "images": 154
       }
+    },
+    {
+      "name": "fifteenth-iterative-reading-and-scanner-disposal",
+      "batch": "fifteenth",
+      "scope": "Iterative paint-only vocabulary reading, empty-book work, callback/disposal safety and real reading/learning contracts; whole goal remains active.",
+      "baseCommit": "6d5d72a199192dc254a2be997076d77b383a907e",
+      "sourceReview": {
+        "newFiles": 4,
+        "newFunctionBodies": 53,
+        "removedProductionFunctionBodies": 2,
+        "sourceReadFiles": 145,
+        "sourceReadFunctionBodies": 2175,
+        "pendingFiles": 672,
+        "goalComplete": false
+      },
+      "controlledBaseline": {
+        "testCases": 27,
+        "passed": 18,
+        "failed": 9,
+        "newCasesInBaseline": 10,
+        "laterGeometryCaseWasNotRunOnOldSource": true,
+        "scope": "Public exports with linkedom geometry/visibility; callback errors, reentry and caller-array corruption are defensive API cases, not known live-UI feedback failures."
+      },
+      "newExecutedCases": 14,
+      "newRegisteredDefinitions": 11,
+      "affectedTests": {
+        "strictFiles": 2,
+        "strictCases": 37,
+        "browserContracts": 96,
+        "affectedArchitectureFiles": 3,
+        "affectedArchitectureCases": 815,
+        "allPassed": true,
+        "wholeRegressionRun": false
+      },
+      "strictCoverage": {
+        "src/features/vocabulary/content/readingText.ts": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "src/features/vocabulary/content/reencounter.ts": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "src/features/vocabulary/content/scanner.ts": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "src/features/vocabulary/domain/reencounter.ts": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        }
+      },
+      "coverageRegistry": {
+        "newActualStrictModules": 4,
+        "removedPureBarrel": "src/features/full-page-translation/content/layout.ts",
+        "removedExecutableFunctions": 0,
+        "thresholdsUnchanged": true,
+        "ignoresAdded": false
+      },
+      "architectureOwnership": {
+        "tests": 9,
+        "passed": 7,
+        "failed": 2,
+        "remainingExecutableOmissions": 15,
+        "unownedDocsTools": 3,
+        "wholeGatePassed": false,
+        "earlierPureBarrelFailureResolved": true
+      },
+      "functionWork": {
+        "runtime": "v20.11.1",
+        "differentialChecks": 400,
+        "work": [
+          {
+            "id": "empty",
+            "name": "baseline",
+            "style": 5003,
+            "box": 2,
+            "range": 0,
+            "hits": 0
+          },
+          {
+            "id": "empty",
+            "name": "final",
+            "style": 0,
+            "box": 0,
+            "range": 0,
+            "hits": 0
+          },
+          {
+            "id": "unusable",
+            "name": "baseline",
+            "style": 5003,
+            "box": 2,
+            "range": 0,
+            "hits": 0
+          },
+          {
+            "id": "unusable",
+            "name": "final",
+            "style": 0,
+            "box": 0,
+            "range": 0,
+            "hits": 0
+          },
+          {
+            "id": "nonempty",
+            "name": "baseline",
+            "style": 5003,
+            "box": 2,
+            "range": 1,
+            "hits": 1
+          },
+          {
+            "id": "nonempty",
+            "name": "final",
+            "style": 5003,
+            "box": 2,
+            "range": 1,
+            "hits": 1
+          }
+        ],
+        "medianTimingMs": [
+          {
+            "id": "empty",
+            "baseline": 75.31112499999995,
+            "final": 0.0036250000000563887
+          },
+          {
+            "id": "unusable",
+            "baseline": 79.37004200000001,
+            "final": 0.008457999999791355
+          },
+          {
+            "id": "nonempty",
+            "baseline": 71.26008300000012,
+            "final": 66.85387499999979
+          }
+        ],
+        "scope": "Unchanged public exports compiled with TypeScript, controlled linkedom visibility/geometry. Function-level measurements, no native timing or total-chain budget claim.",
+        "measurement": "Final timing rerun sequentially after own build/test jobs terminated; initial run overlapped Firefox build and its timing is excluded. No machine-wide idle/CPU attribution proof."
+      },
+      "native": {
+        "browser": "Edge",
+        "profileMode": "new-temporary-profile",
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "baselineBuildHash": "0eb9d25121bee88a5812eea2321aa65ee0bd1f1b08dddd025eee77b9343368b3",
+        "finalBuildHash": "56619f90d8d65a05e13a1e3ca785c2d47c7771504b6a6bc30756eb087bbe771e",
+        "baselinePassed": true,
+        "finalPassed": true,
+        "cases": [
+          {
+            "id": "default-off-with-existing-saved-entries",
+            "status": "passed"
+          },
+          {
+            "id": "setting-label-follows-cross-page-interface-language",
+            "status": "passed"
+          },
+          {
+            "id": "inline-matching-protected-content-original-text-and-geometry",
+            "status": "passed"
+          },
+          {
+            "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+            "status": "passed"
+          },
+          {
+            "id": "keyboard-entry-and-escape-without-model-request",
+            "status": "passed"
+          },
+          {
+            "id": "unapproved-sentence-context-disables-explanation",
+            "status": "passed"
+          },
+          {
+            "id": "explicit-current-context-only-and-unchanged-review-data",
+            "status": "passed"
+          },
+          {
+            "id": "dark-and-mobile-clamped-layout",
+            "status": "passed"
+          },
+          {
+            "id": "close-cancels-delayed-stream-without-resurrection",
+            "status": "passed"
+          },
+          {
+            "id": "model-failure-and-explicit-retry",
+            "status": "passed"
+          },
+          {
+            "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+            "status": "passed"
+          },
+          {
+            "id": "dynamic-text-stale-card-and-late-shadow-root",
+            "status": "passed"
+          },
+          {
+            "id": "scroll-discovers-later-reading",
+            "status": "passed"
+          },
+          {
+            "id": "visit-pause-keeps-global-preference",
+            "status": "passed"
+          },
+          {
+            "id": "cross-page-delete-removes-all-corresponding-marks",
+            "status": "passed"
+          },
+          {
+            "id": "master-toggle-and-site-disable-clear-and-restore",
+            "status": "passed"
+          },
+          {
+            "id": "permanent-disable-persists-across-reload",
+            "status": "passed"
+          },
+          {
+            "id": "empty-book-page-work-and-later-native-deep-shadow-matching",
+            "status": "passed"
+          }
+        ],
+        "baselineReadingWork": {
+          "emptyInitial": {
+            "style": 4804,
+            "box": 3
+          },
+          "emptyMutation": {
+            "style": 4805,
+            "box": 3
+          },
+          "nonempty": {
+            "style": 4805,
+            "box": 3
+          },
+          "drawingStylesAfterLastEntry": 2,
+          "nativeDepth": 1500,
+          "shallowEmptyElements": 3300,
+          "originalTextAndMarkupPreserved": true,
+          "shadowAndDeepMarksRestored": true,
+          "evidence": "Verified isolated-world wrappers count actual native style and box reads. Instrumented timing excluded."
+        },
+        "finalReadingWork": {
+          "emptyInitial": {
+            "style": 0,
+            "box": 0
+          },
+          "emptyMutation": {
+            "style": 0,
+            "box": 0
+          },
+          "nonempty": {
+            "style": 4805,
+            "box": 3
+          },
+          "drawingStylesAfterLastEntry": 0,
+          "nativeDepth": 1500,
+          "shallowEmptyElements": 3300,
+          "originalTextAndMarkupPreserved": true,
+          "shadowAndDeepMarksRestored": true,
+          "evidence": "Verified isolated-world wrappers count actual native style and box reads. Instrumented timing excluded."
+        },
+        "consoleErrors": [],
+        "screenshotStates": [
+          {
+            "name": "new-and-saved-sentences",
+            "config": {
+              "on": true,
+              "marking": true
+            },
+            "marks": [
+              "bank",
+              "take for",
+              " granted",
+              "bank"
+            ]
+          },
+          {
+            "name": "current-context-explanation",
+            "config": {
+              "on": true,
+              "marking": true
+            },
+            "marks": [
+              "bank",
+              "take for",
+              " granted",
+              "bank"
+            ]
+          },
+          {
+            "name": "comparison-dark",
+            "config": {
+              "on": true,
+              "marking": true
+            },
+            "marks": [
+              "bank",
+              "take for",
+              " granted",
+              "bank"
+            ]
+          },
+          {
+            "name": "comparison-mobile",
+            "config": {
+              "on": true,
+              "marking": true
+            },
+            "marks": [
+              "bank",
+              "take for",
+              " granted",
+              "bank"
+            ]
+          },
+          {
+            "name": "reading-stress-restored",
+            "config": {
+              "on": true,
+              "marking": true
+            },
+            "marks": [
+              "bank",
+              "bank",
+              "bank",
+              "bank",
+              "bank"
+            ]
+          }
+        ],
+        "representativeScreenshotsInspected": {
+          "baseline": 2,
+          "final": 4
+        },
+        "fixtureRepair": "Initial legacy full-config update conflicts with settings revision; naive patch conflicts with normalized token. Synthetic credentials only replace an explicitly empty temporary profile; ordinary fields use current-field expected patches. Two diagnostics excluded; same final helper passes unchanged full baseline and final.",
+        "functionalScope": "17full reading/learning cases run before optional counters: native pointer/Enter/Escape, protected text, geometry/identity, current/saved context, explicit SSE/tool context, delayed-close, retry, translation/restore twice, scroll/shadows, cross-page delete and toggles. Translation invoked through background content messages, not native full-page shortcut.",
+        "workScope": "Optional wrappers in verified extension isolated world prove empty-book style/box reads become zero, positive nonempty reachability and1500native-depth+3300shallow elements, text/markup identity, deep/shadow hits and cleanup. Instrumented timing excluded;20,000depth is controlled unit evidence only.",
+        "remainingPerformance": "Nonempty scanning still reads4805styles+3boxes synchronously. No native timing or browser-jank-removal claim. Full collection/candidates/ranges and delayed callback/mutation feedback remain to audit."
+      },
+      "nextChainReproduction": {
+        "publicEntry": "matchExpressions",
+        "characters": 80000,
+        "requestedLimit": 1,
+        "returnedMatches": 1,
+        "candidatesSorted": 20000,
+        "sourceUnmodified": true,
+        "evidence": "Public export compiled unchanged. Wrapper delegates to native Array.sort and counts candidate-array length; controlled Node work evidence, no native timing.",
+        "fixed": false
+      },
+      "typeCheck": "passed",
+      "chromeBuild": "passed",
+      "firefoxBuild": "passed; build-only evidence",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "ok",
+        "files": 466,
+        "registeredCases": 6123,
+        "parameterExpansionsIncluded": false
+      },
+      "artifactHashes": {
+        "content": "56619f90d8d65a05e13a1e3ca785c2d47c7771504b6a6bc30756eb087bbe771e",
+        "background": "3d7ae0a538d574bfe7ffbc59f89b0285b496e66407cb16a313cca75f04fcafb9",
+        "manifest": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844"
+      },
+      "openPerformanceIssues": [
+        "Nonempty vocabulary traversal, candidate sorting, all-run range mapping and180ms callback/mutation scheduling need cancellation/cooperative-work review.",
+        "Thirteenth deep-DOM50ms tasks/64-68.1ms heartbeat, highlighter Range/geometry/wide-owner/ancestor-mutation and rapid scroll/pointer ordering not remeasured.",
+        "Twelfth123-151ms synchronous remount and section preview/restore remain open."
+      ],
+      "integrationDebt": "Six cached post-baseline main image/docs commits require integration and re-review; no remote freshness/release evidence.",
+      "referenceRepositoriesUsed": false,
+      "liveProviderValidated": false,
+      "firefoxRuntimeValidated": false,
+      "touchDeviceValidated": false,
+      "goalComplete": false,
+      "temporaryBrowserCleanup": {
+        "ownedNativeBrowserProcesses": 0,
+        "passed": true,
+        "method": "Full launcher session.close and exact dedicated-profile process check."
+      },
+      "docsBuild": "passed",
+      "docsCheck": {
+        "status": "passed",
+        "pages": 77,
+        "links": 3955,
+        "anchors": 741,
+        "images": 154
+      }
     }
   ]
 }

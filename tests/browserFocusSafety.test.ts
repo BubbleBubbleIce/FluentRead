@@ -38,6 +38,7 @@ describe('后台翻译夹具资源隔离', () => {
 const FOCUS_SAFE_SCRIPTS = [
     'scripts/testing/run-manga-entry-ui-test.cjs',
     'scripts/testing/run-manga-translation-test.cjs',
+    'scripts/testing/run-vocabulary-reencounter-test.cjs',
     'scripts/testing/run-sentence-highlight-responsiveness.cjs',
     'scripts/run-cache-settings-test.cjs',
     'scripts/run-selection-trigger-test.cjs',
@@ -63,6 +64,7 @@ const FOCUS_SAFE_SCRIPTS = [
 
 const ACTIVATED_EXTENSION_TAB_SCRIPTS = FOCUS_SAFE_SCRIPTS.filter(
     (path) => ![
+        'scripts/testing/run-vocabulary-reencounter-test.cjs',
         'scripts/run-document-translation-test.cjs',
         'scripts/testing/run-settings-center-ui-test.cjs',
         'scripts/testing/run-lazy-options-ui-test.cjs',
