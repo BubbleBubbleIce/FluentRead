@@ -219,7 +219,15 @@ async function patch(patch) {
     if (page) await shot('failure').catch(() => {});
     save(); console.error(report.error); process.exitCode = 1;
   } finally {
-    if (session) await session.close().catch(() => {});
-    fs.rmSync(profile, {recursive: true, force: true});
+    try {
+      if (session) {await session.close(); report.browserClosed = true;}
+      fs.rmSync(profile, {recursive: true, force: true});
+      report.profileRemoved = true;
+    } catch (error) {
+      report.ok = false;
+      report.cleanupError = String(error);
+      process.exitCode = 1;
+    }
+    save();
   }
 })();

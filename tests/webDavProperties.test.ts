@@ -6,6 +6,9 @@ const url='https://dav.fixture.invalid/base/';
 const response=(prop='<d:resourcetype><d:collection/></d:resourcetype>',status='HTTP/1.1 200 OK')=>`<d:response><d:href>/base/</d:href><d:propstat><d:prop>${prop}</d:prop><d:status>${status}</d:status></d:propstat></d:response>`;
 const wrap=(body:string)=>`<?xml version="1.0"?><d:multistatus xmlns:d = "DAV:">${body}</d:multistatus>`;
 describe('WebDAV Depth:0 XML 属性识别',()=>{
+    it.each(['', 'not a URL', '/base/', 'http://['])('无效目标 %j 返回未识别结果，不向调用链抛出 URL 异常', target => {
+        expect(parseWebDavProperties(wrap(response()), target)).toBeUndefined();
+    });
     it('默认、局部及重新绑定的命名空间按元素作用域解释，支持字符引用与 CDATA',()=>{
         const base=wrap(response('<d:getetag>&#34;one&#x22;</d:getetag>'));
         expect(parseWebDavProperties(base,url)).toEqual({collection:false,etag:'"one"'});

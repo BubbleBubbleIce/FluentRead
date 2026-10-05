@@ -669,6 +669,10 @@ node scripts/testing/run-popup-startup-ui-test.cjs \
 
 加载动画另由 `scripts/testing/run-loading-motion-ui-test.cjs` 验证，使用相同的扩展目录、Playwright 与 focus-safe helper 参数。它在测试页面保留 closed ShadowRoot 句柄，检查 15 种动画的真实运动、关闭与系统减少动态效果后的静态反馈，并验证同一文档只解析一份共享样式表。采样窗口覆盖包含停顿的完整动画周期，避免把沙漏停顿误判为失效；跨文档样式隔离与旧浏览器的安全回退也有独立断言。
 
+## WebDAV 属性响应边界
+
+`tests/webDavProperties.test.ts` 直接验证实际 Saxes XML 解析器的命名空间、字符引用、CDATA、资源唯一性、属性状态、强 ETag、DTD 拒绝及长度/深度/元素数量限制。目标 URL 必须为可解析的绝对 URL；无效目标返回未识别结果，避免解析函数向调用方抛出 URL 异常。属性模块进入永久四维 100% 清单，和 `webDavApi`、`webDavConnection`、`webDavHttpIntegration` 联合验证；HTTP 用例只对临时本地服务完成首次/再次保存与版本冲突，不代表用户真实 WebDAV 账号。沙箱若禁止本地 listen，需在允许 127.0.0.1 的环境运行相同测试，不跳过或模拟这组三种 ETag 来源的协议链路。
+
 ## 快捷键草稿与录制弹窗
 
 `tests/translationShortcutSettings.test.ts` 使用真实 Vue effectScope 验证三种快捷键的重复选择、延迟打开、取消、确认、清除、配置替换、分区离开和卸载，并检查划词触发字段同步及额外方案冲突。`tests/customHotkeyInputLifecycle.test.ts` 执行实际客户端 SFC 模板、Teleport、按钮事件和 Vue 卸载；DOM 与焦点端口由 Linkedom 提供，检查录制只有一个完成计时器、旧录制不能结束新录制、当前值变化取消旧录制、确认前冲突重验、焦点循环和关闭后不抢走新控件焦点。两模块进入永久四维 100% 覆盖率清单，不使用覆盖率忽略。

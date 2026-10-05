@@ -1,7 +1,7 @@
 /**
  * @file src/platform/webdav/properties.ts
  * 文件职责：解析有界的 WebDAV Depth:0 属性响应，按实际 XML 命名空间和目标资源提取目录能力及文件版本。
- * 主要内容：支持默认或局部命名空间、XML 字符引用与 CDATA；拒绝外部实体、异常层级、歧义资源和非成功属性。
+ * 主要内容：先校验绝对目标 URL，再解析默认或局部命名空间、XML 字符引用与 CDATA；无效 URL 与 XML 都返回未识别，拒绝外部实体、异常层级、歧义资源和非成功属性。
  * 模块边界：只处理 XML 与固定目标 URL，不发起请求、不跟随 href，不读取配置或连接凭据。
  */
 import {SaxesParser} from 'saxes';
@@ -18,7 +18,9 @@ export function parseWebDavProperties(xml: string, url: string): {collection: bo
     let root: Element | undefined;
     let count = 0;
     const stack: Element[] = [];
+    let targetPath: string;
     try {
+        targetPath = new URL(url).pathname;
         const parser = new SaxesParser({xmlns: true});
         parser.on('error', error => {throw error;});
         parser.on('doctype', () => {throw new Error('DTD is unsupported');});
@@ -41,7 +43,7 @@ export function parseWebDavProperties(xml: string, url: string): {collection: bo
     if (responses.length !== 1) return undefined;
     const response = responses[0];
     const href = scalar(response, 'href');
-    if (href !== url && href !== new URL(url).pathname) return undefined;
+    if (href !== url && href !== targetPath) return undefined;
     let collection = false;
     const etags: string[] = [];
     for (const propstat of children(response, 'propstat')) {

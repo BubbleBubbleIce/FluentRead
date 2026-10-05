@@ -19179,6 +19179,425 @@
         "documentationTools": 3,
         "wholeRepositoryGatePassed": false
       }
+    },
+    {
+      "batch": "thirtieth",
+      "name": "current-main-row-ocr-reconciliation-webdav-url-boundary-and-navigation-validation",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 199,
+        "sourceReadFunctionBodies": 3388,
+        "pendingFiles": 622,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/platform/webdav/properties.ts"
+        ],
+        "newFunctionBodies": 10,
+        "recheckedFiles": [
+          "src/features/settings/ui/components/SettingsSectionNavigation.vue"
+        ],
+        "recheckedFunctionBodies": 18,
+        "mainChangedSourceFiles": 27,
+        "mainChangedSourcesStillPending": [
+          "src/core/config/diff.ts",
+          "src/core/config/model.ts",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/CloudConfigBackup.vue",
+          "src/features/settings/ui/ConfigManagement.vue",
+          "src/features/settings/ui/ContextMenuSettings.vue",
+          "src/features/settings/ui/InterfaceSettings.vue",
+          "src/features/settings/ui/PopupLayoutEditor.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/SiteRulePreview.vue",
+          "src/features/settings/ui/components/InterfaceSkinPreview.vue",
+          "src/features/settings/ui/components/SettingsGroup.vue"
+        ],
+        "sourceIntegrationIsFullReview": false,
+        "sourceHashes": {
+          "src/platform/webdav/properties.ts": {
+            "baseline": "7f6deebf9c1205361eabeec4d0700e5f9b11f96b8ad04de6f309f227ab693148",
+            "current": "426b1d2c217364fcd4f6f91f108252a72d62cc43fb8346238cb284908f9f3a2e"
+          },
+          "src/features/settings/ui/components/SettingsSectionNavigation.vue": {
+            "baseline": "482c1567154fd5b04b670eaffc1ec80eed0e8c70292b29df5b84917ffb8d9d1d",
+            "current": "b595238b605d924d8e3ee08c1b799fc4b88a1f9aa739a72f2335eed9bd931fa9"
+          }
+        }
+      },
+      "mainIntegration": {
+        "snapshot": "581aec1862884c037e94d8db0cb5c0162a0c0b74",
+        "base": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "files": 68,
+        "initialSnapshotExactFiles": 63,
+        "initialMergedFiles": [
+          "docs/testing.md",
+          "src/core/i18n/messages/manga.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "tests/i18n.test.ts",
+          "tests/settingsUiArchitecture.test.ts"
+        ],
+        "finalSnapshotExactFiles": 62,
+        "finalMergedOrAuditedFiles": [
+          "docs/testing.md",
+          "scripts/testing/run-settings-section-navigation-test.cjs",
+          "src/core/i18n/messages/manga.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "tests/i18n.test.ts",
+          "tests/settingsUiArchitecture.test.ts"
+        ],
+        "threeWayApplyClean": true,
+        "rewrittenHistoryMerged": false,
+        "primaryModified": false,
+        "sourceTreeOnly": true
+      },
+      "externalMain": {
+        "integratedSnapshot": "581aec1862884c037e94d8db0cb5c0162a0c0b74",
+        "snapshot": "63819aac16b66e22385c1a2a35bcae0f0e657b68",
+        "pendingFiles": [
+          "docs/en/guide/image-translation.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/support.md",
+          "docs/maintainers/product-reference/writing-assistant-20261003.md",
+          "docs/testing.md",
+          "scripts/testing/run-image-translation-flow-test.cjs",
+          "scripts/testing/run-settings-center-ui-test.cjs",
+          "scripts/testing/run-settings-preview-about-test.cjs",
+          "scripts/testing/run-writing-assistant-test.cjs",
+          "src/app/background/messageRuntime.ts",
+          "src/app/offscreen/messageRouter.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/background/handlers.ts",
+          "src/features/image-translation/background/offscreenAdapter.ts",
+          "src/features/image-translation/content/controls.ts",
+          "src/features/image-translation/content/runtime.ts",
+          "src/features/image-translation/failure.ts",
+          "src/features/image-translation/services/client.ts",
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/providers/translation/local-translation.ts",
+          "tests/imageTranslationClientRecovery.test.ts",
+          "tests/imageTranslationFlow.test.ts",
+          "tests/imageTranslationOffscreenRuntime.test.ts",
+          "tests/imageTranslationRuntime.test.ts",
+          "tests/localTranslationProvider.test.ts",
+          "tests/offscreenAdapters.test.ts",
+          "tests/offscreenMessageRouter.test.ts",
+          "userscript/languages/es-ES.2516d5c4450948ce.json",
+          "userscript/languages/fr-FR.d554e9cf424059a8.json",
+          "userscript/languages/ja-JP.591822cfe81b881d.json",
+          "userscript/languages/ko-KR.0b558154cba9c52c.json",
+          "userscript/languages/ru-RU.31f0ee3ed26870b6.json"
+        ],
+        "primaryClean": true,
+        "primaryHead": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "primaryModifiedByTask": false
+      },
+      "oldSourceRun": {
+        "baseline": "2026b20bbd3b0e7726d583a4866dad6b5ca10205",
+        "files": 1,
+        "cases": 8,
+        "failed": 4,
+        "passed": 4,
+        "unhandledErrors": 0,
+        "throws": 3,
+        "relativeTargetAccepted": 1
+      },
+      "newExecutedUnitCases": 4,
+      "newStaticTestDefinitions": 1,
+      "implementation": {
+        "targetValidation": "Resolve the absolute URL before XML parsing inside existing error boundary; compare already validated path, return undefined on invalid input.",
+        "callerBoundary": "Raw parser robustness edge. Normal WebDAV API builds URLs from validated session connection; no claim that live validated user backups hit invalid URL.",
+        "navigationRunnerCleanup": "Await full session close, only then remove owned profile; capture cleanup failure, mark report not-ok and exit nonzero. Cleanup success flags persisted.",
+        "performance": "Earlier duplicate shortcut timer bound retained through main integration. Invalid targets now rejected before XML. No new timing benchmark or navigation callback/long-task budget claim.",
+        "resourcePin": {
+          "commit": "04bd18209d47f55437b8300d97f5ac86ff446951",
+          "files": [
+            "userscript/languages/ja-JP.5c6f9c705b82421d.json",
+            "userscript/languages/ko-KR.703ffa8015207e71.json",
+            "userscript/languages/fr-FR.a7a5d65329652a72.json",
+            "userscript/languages/ru-RU.709ccdeb7eb42c88.json",
+            "userscript/languages/es-ES.d0471fe0b4887d1b.json"
+          ],
+          "bytesVerifiedInCommit": true,
+          "remotePublished": false
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "integration": {
+          "files": 8,
+          "cases": 342,
+          "passed": true
+        },
+        "strict": {
+          "files": 8,
+          "cases": 99,
+          "passed": true
+        },
+        "unhandledErrors": 0,
+        "countsAreSeparateOverlappingRuns": true
+      },
+      "strictCoverage": {
+        "testFiles": 8,
+        "cases": 99,
+        "modules": {
+          "src/features/settings/ui/useTranslationShortcutSettings.ts": {
+            "lines": {
+              "total": 139,
+              "covered": 139,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 32,
+              "covered": 32,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 139,
+              "covered": 139,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 107,
+              "covered": 107,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/platform/webdav/properties.ts": {
+            "lines": {
+              "total": 48,
+              "covered": 48,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 4,
+              "covered": 4,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 48,
+              "covered": 48,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 51,
+              "covered": 51,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/ui/components/CustomHotkeyInput.vue": {
+            "lines": {
+              "total": 313,
+              "covered": 313,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 14,
+              "covered": 14,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 313,
+              "covered": 313,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 157,
+              "covered": 157,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "totals": {
+          "lines": {
+            "total": 500,
+            "covered": 500,
+            "skipped": 0,
+            "pct": 100
+          },
+          "statements": {
+            "total": 500,
+            "covered": 500,
+            "skipped": 0,
+            "pct": 100
+          },
+          "functions": {
+            "total": 50,
+            "covered": 50,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branches": {
+            "total": 315,
+            "covered": 315,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branchesTrue": {
+            "total": 0,
+            "covered": 0,
+            "skipped": 0,
+            "pct": 100
+          }
+        },
+        "newRegisteredModule": "src/platform/webdav/properties.ts",
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        }
+      },
+      "browser": {
+        "shortcutLifecycle": {
+          "passed": true,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "displayTarget": "secondary",
+            "visible": true,
+            "browserFrontmost": false
+          },
+          "errors": 0,
+          "browserClosed": true,
+          "profileRemoved": true,
+          "screenshotsCaptured": 2,
+          "screenshotsInspected": [
+            "02-selection-narrow-reduced.png"
+          ],
+          "cases": [
+            "first-selection-visit-dialog-confirms-and-persists",
+            "trusted-recording-cancel-preserves-saved-shortcut",
+            "clear-selection-shortcut-restores-icon-trigger",
+            "leaving-before-auto-open-restores-draft",
+            "narrow-reduced-motion-dialog-and-escape",
+            "traditional-full-page-dialog-confirms-and-persists"
+          ]
+        },
+        "sharedCallers": {
+          "passed": true,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "displayTarget": "secondary",
+            "visible": true,
+            "browserFrontmost": false
+          },
+          "errors": 0,
+          "browserClosed": true,
+          "profileRemoved": true,
+          "screenshotsCaptured": 1,
+          "screenshotsInspected": [
+            "lazy-hotkeys.png"
+          ],
+          "cases": [
+            "lazy-paragraph-copy-hotkey-dialog-confirms-and-persists",
+            "lazy-quick-profile-hotkey-dialog-confirms-and-persists",
+            "lazy-area-hotkey-trusted-recording-confirms-and-persists"
+          ]
+        },
+        "navigation": {
+          "passed": true,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "displayTarget": "secondary",
+            "visible": true,
+            "browserFrontmost": false
+          },
+          "errors": 0,
+          "browserClosed": true,
+          "profileRemoved": true,
+          "screenshotsCaptured": 6,
+          "screenshotsInspected": [
+            "interface-mobile-dark.png",
+            "interface-mobile-english.png"
+          ],
+          "cases": [],
+          "anchorVisits": 55,
+          "longForms": 9,
+          "layouts": 13,
+          "englishSections": 9,
+          "navigationPreservesConfig": true,
+          "conditionalAnchors": true,
+          "keyboardNavigation": true,
+          "scrollHighlight": true,
+          "searchAndCrossPageLinks": true,
+          "existingViewTabsPreserved": true
+        },
+        "remainingTaskBrowserProcesses": 0,
+        "scope": "Production Chrome on isolated background Edge using actual Options UI/storage, trusted keyboard/pointer navigation and recording. The100ms leave-before-open case alone uses DOM click. Navigation explicit app-dark and English390theme verified; no live-provider/realFirefox/device/account/store proof or navigation performance benchmark."
+      },
+      "checks": {
+        "compile": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "manifestVerifier": "passed",
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "testAudit": "passed-469-files-6325-static-definitions",
+        "affectedArchitecture": "70-passed-two-existing-ownership-failures-72-cases",
+        "scriptSyntax": "passed",
+        "internalReportValidation": "passed"
+      },
+      "verificationRepairs": [
+        "First strict run hit sandbox EPERM on127.0.0.1listen; same99case group rerun with permitted loopback, no skip/mocking or scope reduction.",
+        "Regenerated5language snapshots after merged main/audit wording; resource-only local commit verified before pin. Remote publication remains false."
+      ],
+      "architectureDebt": {
+        "executableModules": 14,
+        "documentationTools": 3,
+        "wholeRepositoryGatePassed": false
+      },
+      "remainingDebt": [
+        "622source files await complete source/function chain review.",
+        "26of27main-changed source files remain fully unreviewed.",
+        "44cached63819aac changes remain unintegrated.",
+        "Image runtime strict coverage/native decode-draw-mutation budgets remain pending.",
+        "Local resource URLs are not publicly available proof."
+      ]
     }
   ]
 }
