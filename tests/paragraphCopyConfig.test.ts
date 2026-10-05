@@ -49,12 +49,14 @@ describe('段落复制快捷键配置', () => {
         expect(normalizeCustomParagraphCopyHotkey('')).toBe('');
         expect(normalizeCustomParagraphCopyHotkey(undefined)).toBe('');
         expect(normalizeCustomParagraphCopyHotkey(7)).toBe('');
+        expect(normalizeCustomParagraphCopyHotkey('none')).toBe('');
     });
 
     it('选择自定义却没有录制成功时回到默认值，功能不会失去入口', () => {
         expect(resolveParagraphCopyHotkey('Shift+D', 'Alt+K')).toBe('Shift+D');
         expect(resolveParagraphCopyHotkey('custom', 'alt+k')).toBe('Alt+K');
         expect(resolveParagraphCopyHotkey('custom', '')).toBe(DEFAULT_PARAGRAPH_COPY_HOTKEY);
+        expect(resolveParagraphCopyHotkey('custom', 'none')).toBe(DEFAULT_PARAGRAPH_COPY_HOTKEY);
         // Mac 上 Alt 显示为 Option；展示名称跟随平台，组合结构保持一致。
         expect(paragraphCopyHotkeyDisplayName('custom', 'alt+k')).toMatch(/^(?:Alt|Option)\+K$/u);
         expect(paragraphCopyHotkeyDisplayName('Alt+C', '')).toMatch(/^(?:Alt|Option)\+C$/u);

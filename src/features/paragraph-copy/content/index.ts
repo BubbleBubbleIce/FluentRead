@@ -12,7 +12,7 @@ import {
 } from '@/src/core/config/paragraphCopy';
 import {resolveTranslationCandidateAtPoint} from '@/src/core/translation/public';
 import {showPageNotice} from '@/src/features/page-notice/public';
-import {isEditingInPage} from '@/src/shared/dom/editingTarget';
+import {deepActiveElement, isEditingInPage} from '@/src/shared/dom/editingTarget';
 import {composeParagraphCopyText, findCopyableBlock, readParagraphTexts} from '../core';
 
 export interface ParagraphCopyContentOptions {
@@ -21,31 +21,68 @@ export interface ParagraphCopyContentOptions {
 
 /** http 页面没有 Clipboard API，快捷键仍是可信手势，因此保留 execCommand 回退。 */
 function copyWithExecCommand(text: string): boolean {
-    if (typeof document.execCommand !== 'function') return false;
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('data-fluent-read-ui', 'paragraph-copy');
-    textarea.setAttribute('aria-hidden', 'true');
-    textarea.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;';
-    document.body.appendChild(textarea);
-    const selection = document.getSelection();
-    const preserved = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-    textarea.select();
+    let textarea: HTMLTextAreaElement | null = null;
+    let focused: Element | null = null;
+    let selection: Selection | null = null;
+    const ranges: Range[] = [];
+    let anchorNode: Node | null = null;
+    let focusNode: Node | null = null;
+    let anchorOffset = 0;
+    let focusOffset = 0;
     let copied = false;
     try {
+        const body = document.body;
+        if (!body || typeof document.execCommand !== 'function') return false;
+        focused = deepActiveElement(document);
+        selection = document.getSelection();
+        if (selection) {
+            for (let index = 0; index < selection.rangeCount; index++) ranges.push(selection.getRangeAt(index).cloneRange());
+            anchorNode = selection.anchorNode;
+            focusNode = selection.focusNode;
+            anchorOffset = selection.anchorOffset;
+            focusOffset = selection.focusOffset;
+        }
+        textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('data-fluent-read-ui', 'paragraph-copy');
+        textarea.setAttribute('aria-hidden', 'true');
+        textarea.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+        body.appendChild(textarea);
+        textarea.select();
         copied = document.execCommand('copy');
     } catch {
-        copied = false;
-    }
-    textarea.remove();
-    if (preserved && selection) {
-        selection.removeAllRanges();
-        selection.addRange(preserved);
+        // 复制未完成时保持 false，临时节点与页面状态由 finally 清理。
+    } finally {
+        if (textarea) {
+            // 页面 copy 处理器可能主动换焦点；只恢复我们临时占用的焦点和选区。
+            const ownsFocus = deepActiveElement(document) === textarea;
+            textarea.remove();
+            if (ownsFocus) {
+                try {
+                    if (focused?.isConnected && typeof (focused as HTMLElement).focus === 'function') {
+                        (focused as HTMLElement).focus({preventScroll: true});
+                    }
+                } catch {
+                    // 宿主节点已变化或不允许聚焦，不影响复制结果和临时节点清理。
+                }
+                try {
+                    if (selection) {
+                        selection.removeAllRanges();
+                        for (const range of ranges) selection.addRange(range);
+                        if (ranges.length === 1 && anchorNode && focusNode && typeof selection.setBaseAndExtent === 'function') {
+                            selection.setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset);
+                        }
+                    }
+                } catch {
+                    // 页面在 copy 事件中移除了原选区，不让恢复失败泄漏未处理的 rejection。
+                }
+            }
+        }
     }
     return copied;
 }
 
-async function writeClipboardText(text: string): Promise<boolean> {
+async function writeClipboardText(text: string, isCurrent: () => boolean): Promise<boolean> {
     try {
         if (navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(text);
@@ -54,7 +91,7 @@ async function writeClipboardText(text: string): Promise<boolean> {
     } catch {
         // 权限被拒或页面失焦时继续尝试同步回退。
     }
-    return copyWithExecCommand(text);
+    return isCurrent() && copyWithExecCommand(text);
 }
 
 function notice(key: string, tone: 'success' | 'error', params?: Record<string, string | number>): void {
@@ -71,6 +108,9 @@ export function mountParagraphCopyContentFeature(
 ): void {
     let pointerX = Number.NaN;
     let pointerY = Number.NaN;
+    let copyRevision = 0;
+    const isEnabled = (): boolean => !signal.aborted && config.on === true
+        && config.paragraphCopyEnabled === true && !options.isSiteDisabled();
 
     document.addEventListener('pointermove', (event) => {
         pointerX = event.clientX;
@@ -84,35 +124,43 @@ export function mountParagraphCopyContentFeature(
     };
 
     const copyParagraphAtPointer = async (): Promise<void> => {
-        if (!Number.isFinite(pointerX) || !Number.isFinite(pointerY)) {
-            notice('paragraphCopy.notice.noPointer', 'error');
-            return;
+        const revision = ++copyRevision;
+        const isCurrent = (): boolean => revision === copyRevision && isEnabled();
+        try {
+            if (!Number.isFinite(pointerX) || !Number.isFinite(pointerY)) {
+                notice('paragraphCopy.notice.noPointer', 'error');
+                return;
+            }
+            const paragraph = resolveParagraph();
+            const payload = paragraph
+                ? composeParagraphCopyText(
+                    readParagraphTexts(paragraph),
+                    normalizeParagraphCopyContentMode(config.paragraphCopyContent),
+                    config.translationBeforeOriginal === true,
+                )
+                : null;
+            if (!payload) {
+                notice('paragraphCopy.notice.empty', 'error');
+                return;
+            }
+            const copied = await writeClipboardText(payload.text, isCurrent);
+            if (!isCurrent()) return;
+            if (!copied) {
+                notice('paragraphCopy.notice.failed', 'error');
+                return;
+            }
+            const key = payload.missingTranslation
+                ? 'paragraphCopy.notice.copiedWithoutTranslation'
+                : `paragraphCopy.notice.copied${payload.kind.charAt(0).toUpperCase()}${payload.kind.slice(1)}`;
+            notice(key, 'success', {count: payload.text.length});
+        } catch {
+            if (isCurrent()) notice('paragraphCopy.notice.failed', 'error');
         }
-        const paragraph = resolveParagraph();
-        const payload = paragraph
-            ? composeParagraphCopyText(
-                readParagraphTexts(paragraph),
-                normalizeParagraphCopyContentMode(config.paragraphCopyContent),
-                config.translationBeforeOriginal === true,
-            )
-            : null;
-        if (!payload) {
-            notice('paragraphCopy.notice.empty', 'error');
-            return;
-        }
-        if (!await writeClipboardText(payload.text)) {
-            notice('paragraphCopy.notice.failed', 'error');
-            return;
-        }
-        const key = payload.missingTranslation
-            ? 'paragraphCopy.notice.copiedWithoutTranslation'
-            : `paragraphCopy.notice.copied${payload.kind.charAt(0).toUpperCase()}${payload.kind.slice(1)}`;
-        notice(key, 'success', {count: payload.text.length});
     };
 
     document.addEventListener('keydown', (event) => {
         if (!event.isTrusted || event.repeat) return;
-        if (options.isSiteDisabled() || config.on !== true || config.paragraphCopyEnabled !== true) return;
+        if (!isEnabled()) return;
         if (!matchesParagraphCopyHotkey(event, config.paragraphCopyHotkey, config.customParagraphCopyHotkey)) return;
         if (isEditingInPage(event)) return;
         event.preventDefault();

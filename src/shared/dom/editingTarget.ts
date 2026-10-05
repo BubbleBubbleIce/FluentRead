@@ -1,7 +1,7 @@
 /**
  * @file src/shared/dom/editingTarget.ts
  * 文件职责：判断一次键盘事件是否发生在用户正在输入文字的场景，让网页快捷键在输入框、可编辑区域和无法读取的封闭组件里自动让行。
- * 主要内容：导出 isEditingInPage；内部识别原生表单控件、contenteditable、ARIA 输入角色，逐层穿过可读取的 ShadowRoot 找到真实焦点，并把无法读取内部状态的自定义元素或非原生可聚焦宿主保守视为输入场景。
+ * 主要内容：导出 isEditingInPage 和 deepActiveElement；识别原生表单控件、contenteditable、ARIA 输入角色，逐层穿过可读取的 ShadowRoot 找到真实焦点，并把无法读取内部状态的自定义元素或非原生可聚焦宿主保守视为输入场景。
  * 模块边界：本文件只读取事件路径与 document 焦点，不注册监听、不解析快捷键，也不阻止事件；是否响应按键由调用方的 feature 决定。
  */
 
@@ -20,7 +20,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 /** 逐层穿过可读取的 ShadowRoot，找到真正持有焦点的元素。 */
-function deepActiveElement(pageDocument: Document): Element | null {
+export function deepActiveElement(pageDocument: Document): Element | null {
     let focused = pageDocument.activeElement;
     while (focused?.shadowRoot?.activeElement) focused = focused.shadowRoot.activeElement;
     return focused;

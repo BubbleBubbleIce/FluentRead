@@ -32,34 +32,66 @@ interface Harness {
     clipboard: {writeText: ReturnType<typeof vi.fn>};
     execCommand: ReturnType<typeof vi.fn>;
     focus: (element: unknown) => void;
+    selection: {
+        ranges: Range[];
+        readonly rangeCount: number;
+        getRangeAt: ReturnType<typeof vi.fn>;
+        removeAllRanges: ReturnType<typeof vi.fn>;
+        addRange: ReturnType<typeof vi.fn>;
+        setBaseAndExtent: ReturnType<typeof vi.fn>;
+        anchorNode: Node | null;
+        focusNode: Node | null;
+        anchorOffset: number;
+        focusOffset: number;
+    };
 }
 
 let controller: AbortController;
 
-function mount(options: {hit?: unknown; clipboardFails?: boolean; withoutClipboard?: boolean} = {}): Harness {
+function mount(options: {hit?: unknown; clipboardFails?: boolean; withoutClipboard?: boolean; selectThrows?: boolean} = {}): Harness {
     const {window, document} = parseHTML(`<html><body>${PAGE}</body></html>`);
     const listeners = new Map<string, ((event: any) => void)[]>();
     const documentTarget = document as unknown as Document & Record<string, unknown>;
-    documentTarget.addEventListener = ((type: string, listener: (event: any) => void) => {
+    documentTarget.addEventListener = ((type: string, listener: (event: any) => void, options?: AddEventListenerOptions) => {
+        if (options?.signal?.aborted) return;
         listeners.set(type, [...(listeners.get(type) ?? []), listener]);
+        options?.signal?.addEventListener('abort', () => {
+            listeners.set(type, (listeners.get(type) ?? []).filter((current) => current !== listener));
+        }, {once: true});
     }) as Document['addEventListener'];
     let focused: unknown = document.body;
     Object.defineProperty(document, 'activeElement', {configurable: true, get: () => focused});
+    for (const element of document.querySelectorAll<HTMLElement>('body, button, input, my-widget')) {
+        element.focus = vi.fn(() => {focused = element;});
+    }
     const hit = 'hit' in options ? options.hit : document.getElementById('para');
     documentTarget.elementFromPoint = vi.fn(() => hit) as unknown as Document['elementFromPoint'];
-    // linkedom 的 textarea 没有 select()，真实浏览器中由原生实现提供。
+    const range = document.createRange();
+    const selection: Harness['selection'] = {
+        ranges: [range],
+        get rangeCount() {return this.ranges.length;},
+        getRangeAt: vi.fn((index: number) => selection.ranges[index]),
+        removeAllRanges: vi.fn(() => {selection.ranges = [];}),
+        addRange: vi.fn((current: Range) => {selection.ranges.push(current);}),
+        setBaseAndExtent: vi.fn(),
+        anchorNode: document.getElementById('para')!.firstChild,
+        focusNode: document.getElementById('para')!.firstChild,
+        anchorOffset: 11,
+        focusOffset: 0,
+    };
+    // linkedom 没有原生焦点/Selection；模拟 select 对焦点和选区的影响，另由原生浏览器验证。
     const createElement = document.createElement.bind(document);
     documentTarget.createElement = ((tag: string) => {
         const element = createElement(tag) as HTMLTextAreaElement;
-        if (typeof element.select !== 'function') element.select = vi.fn();
+        if (tag === 'textarea') {
+            element.select = vi.fn(() => {
+                focused = element;
+                selection.ranges = [document.createRange()];
+                if (options.selectThrows) throw new Error('select failed');
+            });
+        }
         return element;
     }) as Document['createElement'];
-    const selection = {
-        rangeCount: 1,
-        getRangeAt: vi.fn(() => 'range'),
-        removeAllRanges: vi.fn(),
-        addRange: vi.fn(),
-    };
     documentTarget.getSelection = vi.fn(() => selection) as unknown as Document['getSelection'];
     const execCommand = vi.fn(() => true);
     documentTarget.execCommand = execCommand;
@@ -83,6 +115,7 @@ function mount(options: {hit?: unknown; clipboardFails?: boolean; withoutClipboa
         document,
         clipboard,
         execCommand,
+        selection,
         focus: (element) => {focused = element;},
         pointerTo: (x, y) => emit('pointermove', {clientX: x, clientY: y}),
         keydown: async (event = {}) => {
@@ -131,6 +164,142 @@ afterEach(() => {
 });
 
 describe('段落复制快捷键手势', () => {
+    it('获取原选区失败时不创建临时节点，安全报告复制失败', async () => {
+        const page = mount({withoutClipboard: true});
+        page.selection.getRangeAt.mockImplementation(() => {throw new Error('range detached');});
+        page.pointerTo(5, 5); await page.keydown();
+        expect(page.execCommand).not.toHaveBeenCalled();
+        expect(page.document.querySelector('textarea')).toBeNull();
+        expect(harness.notices).toEqual([{message: '复制失败，请选中文字后手动复制', tone: 'error'}]);
+    });
+    it('读取候选异常时报告失败；指针移动本身不扫描 DOM', async () => {
+        const page = mount();
+        for (let index = 0; index < 1000; index++) page.pointerTo(index, index);
+        expect(harness.resolveCandidate).not.toHaveBeenCalled();
+        expect(page.document.elementFromPoint).not.toHaveBeenCalled();
+        harness.resolveCandidate.mockImplementation(() => {throw new Error('candidate changed');});
+        await page.keydown();
+        expect(harness.notices).toEqual([{message: '复制失败，请选中文字后手动复制', tone: 'error'}]);
+    });
+
+    it('宿主 copy 处理器换焦点和选区时不覆盖宿主新状态', async () => {
+        const page = mount({withoutClipboard: true});
+        const replacement = page.document.getElementById('button')!;
+        page.execCommand.mockImplementation(() => {page.focus(replacement); return true;});
+        page.pointerTo(5, 5); await page.keydown();
+        expect(page.document.activeElement === replacement).toBe(true);
+        expect(page.selection.removeAllRanges).not.toHaveBeenCalled();
+        expect(page.document.querySelector('textarea')).toBeNull();
+    });
+
+    it.each(['focus', 'selection'] as const)('宿主 %s 恢复抛错不泄漏 rejection 或临时节点', async (port) => {
+        const page = mount({withoutClipboard: true});
+        const button = page.document.getElementById('button')!;
+        page.focus(button);
+        if (port === 'focus') (button as HTMLElement).focus = () => {throw new Error('focus unavailable');};
+        else page.selection.addRange.mockImplementation(() => {throw new Error('range unavailable');});
+        page.pointerTo(5, 5); await page.keydown();
+        expect(page.document.querySelector('textarea')).toBeNull();
+        expect(harness.notices[0]?.tone).toBe('success');
+    });
+
+    it.each(['disconnected', 'missing-focus', 'missing-direction', 'empty-range', 'empty-anchor', 'no-body', 'no-focus'] as const)(
+        '回退复制应容忍 %s 的页面状态', async (scenario) => {
+            const page = mount({withoutClipboard: true});
+            const button = page.document.getElementById('button')!;
+            page.focus(button);
+            if (scenario === 'missing-direction') (page.selection as any).setBaseAndExtent = undefined;
+            if (scenario === 'empty-anchor') page.selection.anchorNode = null;
+            if (scenario === 'empty-range') page.selection.ranges = [];
+            if (scenario === 'missing-focus') (button as any).focus = undefined;
+            if (scenario === 'no-focus') page.focus(null);
+            if (scenario === 'no-body') Object.defineProperty(page.document, 'body', {value: null});
+            if (scenario === 'disconnected') page.execCommand.mockImplementation(() => {button.remove(); return true;});
+            page.pointerTo(5, 5); await page.keydown();
+            expect(page.document.querySelector('textarea')).toBeNull();
+            expect(harness.notices[0]?.tone).toBe(scenario === 'no-body' ? 'error' : 'success');
+        },
+    );
+
+    it.each(['resolve', 'reject'] as const)('卸载后忽略 Clipboard API 的迟到 %s，不回退或提示', async (outcome) => {
+        const page = mount();
+        let resolve!: () => void;
+        let reject!: (reason: Error) => void;
+        page.clipboard.writeText.mockImplementation(() => new Promise<void>((ok, no) => {resolve = ok; reject = no;}));
+        page.pointerTo(5, 5);
+        await page.keydown();
+        controller.abort();
+        if (outcome === 'resolve') resolve(); else reject(new Error('late denial'));
+        await page.keydown();
+        expect(page.execCommand).not.toHaveBeenCalled();
+        expect(harness.notices).toEqual([]);
+        expect(page.document.querySelector('textarea')).toBeNull();
+    });
+
+    it.each(['on', 'paragraphCopyEnabled', 'siteDisabled'])('等待权限时关闭 %s，迟到拒绝不再复制', async (key) => {
+        const page = mount();
+        let reject!: (reason: Error) => void;
+        page.clipboard.writeText.mockImplementation(() => new Promise<void>((_, no) => {reject = no;}));
+        page.pointerTo(5, 5);
+        await page.keydown();
+        harness.config[key] = key === 'siteDisabled';
+        reject(new Error('late denial'));
+        await page.keydown();
+        expect(page.execCommand).not.toHaveBeenCalled();
+        expect(harness.notices).toEqual([]);
+    });
+
+    it('较新复制先完成后，旧拒绝不覆盖剪贴板或追加过期提示', async () => {
+        const page = mount();
+        let reject!: (reason: Error) => void;
+        page.clipboard.writeText.mockImplementationOnce(() => new Promise<void>((_, no) => {reject = no;}));
+        page.pointerTo(5, 5);
+        await page.keydown();
+        page.document.getElementById('para')!.textContent = 'New paragraph';
+        await page.keydown();
+        const notices = [...harness.notices];
+        reject(new Error('older permission denied'));
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(page.clipboard.writeText.mock.calls.map(([text]) => text)).toEqual(['Hello world\n你好世界', 'New paragraph']);
+        expect(page.execCommand).not.toHaveBeenCalled();
+        expect(harness.notices).toEqual(notices);
+        expect(notices).toHaveLength(1);
+    });
+
+    it('同步回退恢复普通按钮焦点、完整选区和反向选区端点', async () => {
+        const page = mount({withoutClipboard: true});
+        const button = page.document.getElementById('button')!;
+        page.focus(button);
+        const anchor = page.selection.anchorNode;
+        page.pointerTo(5, 5);
+        await page.keydown();
+        expect(page.document.activeElement === button).toBe(true);
+        expect(page.selection.setBaseAndExtent).toHaveBeenCalledWith(anchor, 11, anchor, 0);
+        expect(page.selection.ranges).toHaveLength(1);
+        expect(page.document.querySelector('textarea')).toBeNull();
+    });
+
+    it('Firefox 多段选区不会在回退后只剩第一段', async () => {
+        const page = mount({withoutClipboard: true});
+        page.selection.ranges.push(page.document.createRange());
+        page.pointerTo(5, 5);
+        await page.keydown();
+        expect(page.selection.ranges).toHaveLength(2);
+    });
+
+    it('select 抛错后移除临时节点、恢复焦点并提示失败', async () => {
+        const page = mount({withoutClipboard: true, selectThrows: true});
+        const button = page.document.getElementById('button')!;
+        page.focus(button);
+        page.pointerTo(5, 5);
+        await page.keydown();
+        expect(page.document.querySelector('textarea')).toBeNull();
+        expect(page.document.activeElement === button).toBe(true);
+        expect(harness.notices).toEqual([{message: '复制失败，请选中文字后手动复制', tone: 'error'}]);
+    });
+
     it('复制悬停段落的原文和译文，并按语言给出提示', async () => {
         const page = mount();
         page.pointerTo(120, 240);

@@ -22439,6 +22439,652 @@
         "Large import byte validation, extreme rollup cardinality and duplicate stats-event ID contracts need further explicit bounded workload/contract validation.",
         "No actual Firefox runtime, user accounts/devices, live-provider quality or deployment/store/CDN proof."
       ]
+    },
+    {
+      "batch": "thirty-fourth",
+      "name": "paragraph-copy-iterative-dom-linear-artifact-ownership-clipboard-lifecycle-and-settings-drafts",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 230,
+        "sourceReadFunctionBodies": 4028,
+        "pendingFiles": 594,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/paragraph-copy/core.ts",
+          "src/features/paragraph-copy/public.ts",
+          "src/features/paragraph-copy/content/index.ts",
+          "src/core/config/paragraphCopy.ts",
+          "src/features/settings/ui/ParagraphCopySettings.vue"
+        ],
+        "newFunctionBodies": 43,
+        "rereadFiles": [
+          "src/shared/dom/editingTarget.ts",
+          "src/features/full-page-translation/content/excerpt.ts"
+        ],
+        "sourceProof": {
+          "src/features/paragraph-copy/core.ts": {
+            "sha256": "3297b0b5283381b5a64a17a3c89453cb5ef7c7fc99a43c245466845f88addd42",
+            "fullyRead": true
+          },
+          "src/features/paragraph-copy/content/index.ts": {
+            "sha256": "603cbd8e4dcc5ec0d0fe2de60a3d334dbb7fb5129975c83a5395bef1acc98fe7",
+            "fullyRead": true
+          },
+          "src/shared/dom/editingTarget.ts": {
+            "sha256": "ff1506ef269776ad7ce0b2afaa25fc1417b153990e2bc66fae7ad2896f685e84",
+            "fullyRead": true
+          },
+          "src/features/settings/ui/ParagraphCopySettings.vue": {
+            "sha256": "e50e80deee6d708e5e55140b020e6b815db526f468855c236b97547ab84cbec2",
+            "fullyRead": true
+          },
+          "src/core/config/paragraphCopy.ts": {
+            "sha256": "a00b1d7d4e7abbf6cfc450d9d0ed7cfb81480cc04d5b85acdcdebae33c09470c",
+            "fullyRead": true
+          },
+          "src/features/paragraph-copy/public.ts": {
+            "sha256": "ede48928de410378e447fc291a7a19bffe66622f60a44da2e604dbe74bacfae5",
+            "fullyRead": true
+          },
+          "src/features/full-page-translation/content/excerpt.ts": {
+            "sha256": "e31dad2710e8da060c4fc07adab9db9692b565832348df759972360797912d7b",
+            "fullyRead": true
+          }
+        }
+      },
+      "implementation": {
+        "changes": [
+          "iterative DOM collector preserves complete text without recursion",
+          "linear document-order translation ownership checks",
+          "consolidated readText wrappers and reused shared deep focus reader",
+          "revision and feature ownership guard late clipboard fallback/feedback",
+          "owned textarea cleanup, focus and full selection snapshots",
+          "settings draft committed only on confirm, stale callbacks ignored",
+          "default shortcut conflict resolution also covers quick profiles"
+        ],
+        "languageResourcePin": "1c4482cc43d3c5ca79cf8aa8ca0973319920a9c1",
+        "published": false
+      },
+      "newTests": {
+        "executedCases": 34,
+        "staticDefinitions": 23,
+        "oldSourceFailures": {
+          "coreAndRuntime": {
+            "failed": 11,
+            "passed": 31,
+            "cases": 42,
+            "unhandledRejections": 1
+          },
+          "settingsFinalFixture": {
+            "failed": 7,
+            "passed": 7,
+            "cases": 14,
+            "initialMissingMethodFixtureNotCounted": true
+          }
+        },
+        "compiledSettingsCases": 9
+      },
+      "strictCoverage": {
+        "passed": true,
+        "testFiles": 4,
+        "cases": 65,
+        "modules": {
+          "src/core/config/paragraphCopy.ts": {
+            "lines": {
+              "total": 40,
+              "covered": 40,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 6,
+              "covered": 6,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 40,
+              "covered": 40,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 20,
+              "covered": 20,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/full-page-translation/content/excerpt.ts": {
+            "lines": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 1,
+              "covered": 1,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 16,
+              "covered": 16,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/paragraph-copy/core.ts": {
+            "lines": {
+              "total": 158,
+              "covered": 158,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 158,
+              "covered": 158,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 95,
+              "covered": 95,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/paragraph-copy/content/index.ts": {
+            "lines": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 66,
+              "covered": 66,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/shared/dom/editingTarget.ts": {
+            "lines": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 4,
+              "covered": 4,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "newPermanentModule": "src/features/full-page-translation/content/excerpt.ts"
+      },
+      "integration": {
+        "passed": true,
+        "files": 6,
+        "cases": 96,
+        "overlapsStrictAndSettings": true
+      },
+      "nativeSourceComparison": {
+        "passed": true,
+        "results": {
+          "before": {
+            "fallback": {
+              "focus": "",
+              "anchor": 0,
+              "focusOffset": 11,
+              "ranges": 1,
+              "writes": [],
+              "fallbacks": [
+                {
+                  "text": "Hello world\n你好世界",
+                  "selectionStart": 0,
+                  "selectionEnd": 16
+                }
+              ],
+              "notices": [
+                {
+                  "message": "已复制原文和译文（16 字）",
+                  "tone": "success"
+                }
+              ],
+              "temporary": 0
+            },
+            "aborted": {
+              "focus": "",
+              "anchor": 0,
+              "focusOffset": 11,
+              "ranges": 1,
+              "writes": [
+                "Hello world\n你好世界"
+              ],
+              "fallbacks": [
+                {
+                  "text": "Hello world\n你好世界",
+                  "selectionStart": 0,
+                  "selectionEnd": 16
+                }
+              ],
+              "notices": [
+                {
+                  "message": "已复制原文和译文（16 字）",
+                  "tone": "success"
+                }
+              ],
+              "temporary": 0
+            },
+            "overlap": {
+              "focus": "",
+              "anchor": 0,
+              "focusOffset": 0,
+              "ranges": 1,
+              "writes": [
+                "Hello world\n你好世界",
+                "New paragraph"
+              ],
+              "fallbacks": [
+                {
+                  "text": "Hello world\n你好世界",
+                  "selectionStart": 0,
+                  "selectionEnd": 16
+                }
+              ],
+              "notices": [
+                {
+                  "message": "已复制原文（13 字）",
+                  "tone": "success"
+                },
+                {
+                  "message": "已复制原文和译文（16 字）",
+                  "tone": "success"
+                }
+              ],
+              "temporary": 0
+            }
+          },
+          "after": {
+            "fallback": {
+              "focus": "button",
+              "anchor": 11,
+              "focusOffset": 0,
+              "ranges": 1,
+              "writes": [],
+              "fallbacks": [
+                {
+                  "text": "Hello world\n你好世界",
+                  "selectionStart": 0,
+                  "selectionEnd": 16
+                }
+              ],
+              "notices": [
+                {
+                  "message": "已复制原文和译文（16 字）",
+                  "tone": "success"
+                }
+              ],
+              "temporary": 0
+            },
+            "aborted": {
+              "focus": "button",
+              "anchor": 11,
+              "focusOffset": 0,
+              "ranges": 1,
+              "writes": [
+                "Hello world\n你好世界"
+              ],
+              "fallbacks": [],
+              "notices": [],
+              "temporary": 0
+            },
+            "overlap": {
+              "focus": "button",
+              "anchor": 0,
+              "focusOffset": 0,
+              "ranges": 1,
+              "writes": [
+                "Hello world\n你好世界",
+                "New paragraph"
+              ],
+              "fallbacks": [],
+              "notices": [
+                {
+                  "message": "已复制原文（13 字）",
+                  "tone": "success"
+                }
+              ],
+              "temporary": 0
+            }
+          }
+        },
+        "dom": {
+          "before": {
+            "deep": {
+              "error": "RangeError"
+            },
+            "containsCalls": 124750,
+            "translationLines": 500,
+            "first": "译文 0",
+            "last": "译文 499"
+          },
+          "after": {
+            "deep": {
+              "original": "Deep text",
+              "translation": "",
+              "display": "original"
+            },
+            "containsCalls": 499,
+            "translationLines": 500,
+            "first": "译文 0",
+            "last": "译文 499"
+          }
+        },
+        "browserClosed": true,
+        "profileRemoved": true,
+        "oldNewBundleSha256": {
+          "copy-before-thirty-fourth.js": "094b2f90494c3555f5b84214bfacc05a38851c009072c6656c98e1deb0da72e0",
+          "copy-after-thirty-fourth.js": "2eb3e67a386694b43bce5ba3b04828e67e97be80a213ba05c730daa07f80df6c"
+        },
+        "scope": "actual old/new core/runtime source; native DOM, trusted keys, focus and Selection; deterministic clipboard ports do not write system clipboard"
+      },
+      "browser": {
+        "passed": true,
+        "assertionFlows": 13,
+        "assertions": [
+          "untranslated paragraph follows original display",
+          "actual full-page renderer bilingual output is copied once",
+          "restore-copy leaves original and neighbor intact",
+          "translate-restore-retranslate does not duplicate copied translation",
+          "configured translation-only copy",
+          "configured translated-before-original ordering",
+          "editing input passes shortcut through without clipboard writes",
+          "production fallback preserves button focus, backward selection, and removes owned textarea",
+          "native settings custom draft and cancel preserve saved preset",
+          "trusted native recording confirms and persists custom combination",
+          "native clear recording persists default copy shortcut",
+          "external preset change closes native recording without restoring old config",
+          "paragraph-copy settings fit desktop and 390px width"
+        ],
+        "scope": "production Chrome extension on isolated Edge; actual candidate/renderer/config/hotkeys and settings; deterministic Microsoft protocol and clipboard ports; no OS clipboard writes",
+        "screenshotsGenerated": 3,
+        "screenshotsInspected": [
+          "copy-settings-390.png",
+          "copy-bilingual-host.png"
+        ],
+        "errors": [],
+        "browserClosed": true,
+        "profileRemoved": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "productionJavascriptSha256": "3f42ab00b4a675a18882f911270dddb3a9dd5a4ef5b2af7c933dfaa5e569e14d",
+        "initialFixtureFailure": "Hidden option selected by last() across persistent sections; changed to visible accessible option, assertions retained. Initial report archived privately.",
+        "observedDebt": "Rapid copy fixture accumulated notices obstructing content; page-notice chain is next priority.",
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-copy-audit-native-": 0,
+            "fluentread-copy-audit-production-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        }
+      },
+      "architecture": {
+        "files": 3,
+        "cases": 910,
+        "passed": 908,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3
+      },
+      "externalMain": {
+        "primaryHead": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "primaryClean": true,
+        "cachedOrigin": "510683f2d60985bb4494d6a9cf9ada2bb3b83acf",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/i18n.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts"
+        ],
+        "paragraphCopyFocusUnchangedBetweenIntegratedAndCachedSource": true
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 473,
+          "staticDefinitions": 6441
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "No real OS clipboard writes; controlled native clipboard ports",
+        "Native Chromium single backward range tested; Firefox multiple ranges through controlled Selection port only",
+        "Already submitted native Clipboard API writes cannot be canceled; late fallback/feedback guarded",
+        "Actual production translation/restore/retranslate uses deterministic Microsoft protocol response, not provider quality proof",
+        "Five strict modules excludes actual settings SFC which has separate setup/watch and native browser tests",
+        "Source read and tested scopes do not establish whole-goal bug-free performance"
+      ]
     }
   ]
 }

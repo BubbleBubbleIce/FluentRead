@@ -28,4 +28,18 @@ describe('精确双语摘录所有权', () => {
         expect(readBilingualExcerpt(document.querySelector('p')!)).toBeNull();
         state.bilingualContentTemplate.textContent = ''; expect(readBilingualExcerpt(artifact)).toBeNull();
     });
+    it('同段旧译文工件不能借用新状态的归属，空原文也不可分享', () => {
+        const {document, state, artifact} = fixture();
+        state.bilingualContent = document.createElement('span');
+        expect(readBilingualExcerpt(artifact)).toBeNull();
+        state.bilingualContent = artifact; state.sourceText = '   ';
+        expect(readBilingualExcerpt(artifact)).toBeNull();
+    });
+    it('没有保存模板时读取本工件，缺失文字仍拒绝快照', () => {
+        const {state, artifact} = fixture();
+        (state as any).bilingualContentTemplate = null;
+        expect(readBilingualExcerpt(artifact)?.translation).toBe('页面被改写的文字');
+        Object.defineProperty(artifact, 'textContent', {value: null});
+        expect(readBilingualExcerpt(artifact)).toBeNull();
+    });
 });

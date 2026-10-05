@@ -1,5 +1,5 @@
 import {parseHTML} from 'linkedom';
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {
     PARAGRAPH_COPY_BLOCK_SELECTOR,
     composeParagraphCopyText,
@@ -13,6 +13,37 @@ function domFrom(html: string) {
 }
 
 describe('段落复制取词', () => {
+    it('极深的行内 DOM 仍完整复制文字，不耗尽调用栈', () => {
+        const document = domFrom('<p id="target"></p>');
+        const root = document.getElementById('target')!;
+        let leaf = root;
+        for (let depth = 0; depth < 12_000; depth++) {
+            const next = document.createElement('span');
+            leaf.appendChild(next);
+            leaf = next;
+        }
+        leaf.textContent = 'Deep text';
+        expect(readParagraphTexts(root)).toEqual({original: 'Deep text', translation: '', display: 'original'});
+    });
+
+    it('大量独立译文保持文档顺序，归属检查工作量随节点数线性增长', () => {
+        const count = 300;
+        const document = domFrom(`<article id="target">${Array.from({length: count}, (_, i) =>
+            `<p>Original ${i}<span class="fluent-read-bilingual-content" data-fr-translation-owned="true">译文 ${i}</span></p>`,
+        ).join('')}</article>`);
+        const root = document.getElementById('target')!;
+        const owners = [...root.querySelectorAll('.fluent-read-bilingual-content')];
+        const probes = owners.map((owner) => vi.spyOn(owner, 'contains'));
+        try {
+            const texts = readParagraphTexts(root);
+            expect(texts.translation).toBe(Array.from({length: count}, (_, i) => `译文 ${i}`).join('\n'));
+            expect(texts.original).toBe(Array.from({length: count}, (_, i) => `Original ${i}`).join('\n'));
+            expect(probes.reduce((total, probe) => total + probe.mock.calls.length, 0)).toBeLessThanOrEqual(count);
+        } finally {
+            for (const probe of probes) probe.mockRestore();
+        }
+    });
+
     it('原文跳过译文包裹层、加载指示器和插件界面', () => {
         const document = domFrom(`<p id="target">Hello <em>world</em>
             <span class="fluent-read-loading">…</span>

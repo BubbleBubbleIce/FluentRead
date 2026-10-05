@@ -458,7 +458,8 @@
       "tests/mangaInferenceClient.test.ts",
       "tests/mangaInferenceWorker.test.ts",
       "tests/customHotkeyInputLifecycle.test.ts",
-      "tests/usageDashboardLifecycle.test.ts"
+      "tests/usageDashboardLifecycle.test.ts",
+      "tests/paragraphCopySettingsLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

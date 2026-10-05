@@ -104,45 +104,53 @@ function pushBreak(segments: TextSegment[]): void {
 
 /** 收集节点的可见文字；skipTranslationArtifacts 决定是否排除 FluentRead 写入的译文。 */
 function collectSegments(node: Node, segments: TextSegment[], skipTranslationArtifacts: boolean): void {
-    if (node.nodeType === 3) {
-        segments.push({value: node.nodeValue ?? '', raw: false});
-        return;
+    type Frame = {node: Node; segments: TextSegment[]} | {segments: TextSegment[]; inner?: TextSegment[]};
+    const pending: Frame[] = [{node, segments}];
+    // 使用显式栈保留进入/退出顺序，页面 DOM 的深度不再消耗 JavaScript 调用栈。
+    while (pending.length) {
+        const frame = pending.pop()!;
+        const output = frame.segments;
+        if (!('node' in frame)) {
+            if (frame.inner) {
+                // 代码块整体按原样保留缩进和换行。
+                const raw = frame.inner.map((segment) => segment.value).join('').replace(/^\n+|\s+$/gu, '');
+                if (raw) output.push({value: raw, raw: true});
+            }
+            pushBreak(output);
+            continue;
+        }
+        const current = frame.node;
+        if (current.nodeType === 3) {
+            output.push({value: current.nodeValue ?? '', raw: false});
+            continue;
+        }
+        if (current.nodeType !== 1) continue;
+        const element = current as Element;
+        const tag = tagNameOf(element);
+        if (SKIPPED_TAGS.has(tag)) continue;
+        if (matchesSelector(element, skipTranslationArtifacts ? TRANSLATION_ARTIFACT_SELECTOR : EXTENSION_UI_SELECTOR)) continue;
+        if (tag === 'br') {
+            pushBreak(output);
+            continue;
+        }
+        const block = BLOCK_TAGS.has(tag);
+        const inner = tag === 'pre' ? [] : undefined;
+        const childOutput = inner ?? output;
+        if (block) {
+            pushBreak(output);
+            pending.push({segments: output, inner});
+        }
+        // 不为每个元素复制 childNodes；逆序入栈仍按文档顺序采集。
+        const children = element.childNodes;
+        for (let index = children.length - 1; index >= 0; index--) {
+            pending.push({node: children[index], segments: childOutput});
+        }
     }
-    if (node.nodeType !== 1) return;
-    const element = node as Element;
-    const tag = tagNameOf(element);
-    if (SKIPPED_TAGS.has(tag)) return;
-    if (skipTranslationArtifacts && matchesSelector(element, TRANSLATION_ARTIFACT_SELECTOR)) return;
-    if (!skipTranslationArtifacts && matchesSelector(element, EXTENSION_UI_SELECTOR)) return;
-    if (tag === 'br') {
-        pushBreak(segments);
-        return;
-    }
-    // 代码块整体按原样保留，复制出来的缩进和换行仍然可以直接粘贴运行。
-    if (tag === 'pre') {
-        pushBreak(segments);
-        const inner: TextSegment[] = [];
-        for (const child of Array.from(element.childNodes)) collectSegments(child, inner, skipTranslationArtifacts);
-        const raw = inner.map((segment) => segment.value).join('').replace(/^\n+|\s+$/gu, '');
-        if (raw) segments.push({value: raw, raw: true});
-        pushBreak(segments);
-        return;
-    }
-    const block = BLOCK_TAGS.has(tag);
-    if (block) pushBreak(segments);
-    for (const child of Array.from(element.childNodes)) collectSegments(child, segments, skipTranslationArtifacts);
-    if (block) pushBreak(segments);
 }
 
-function readOriginalText(element: Element): string {
+function readText(element: Element, skipTranslationArtifacts: boolean): string {
     const segments: TextSegment[] = [];
-    collectSegments(element, segments, true);
-    return renderSegments(segments);
-}
-
-function readArtifactText(element: Element): string {
-    const segments: TextSegment[] = [];
-    collectSegments(element, segments, false);
+    collectSegments(element, segments, skipTranslationArtifacts);
     return renderSegments(segments);
 }
 
@@ -152,11 +160,12 @@ function readTranslationText(element: Element): {text: string; display: 'origina
     const parts: string[] = [];
     let bilingual = false;
     let single = false;
-    const accepted: Element[] = [];
-    for (const artifact of Array.from(element.querySelectorAll(`${BILINGUAL_CONTENT_SELECTOR},${SINGLE_SLOT_SELECTOR}`))) {
-        // 嵌套在已采集译文内部的节点不再重复计入。
-        if (accepted.some((owner) => owner.contains(artifact))) continue;
-        accepted.push(artifact);
+    let accepted: Element | null = null;
+    for (const artifact of element.querySelectorAll(`${BILINGUAL_CONTENT_SELECTOR},${SINGLE_SLOT_SELECTOR}`)) {
+        // querySelectorAll 按先序返回。退出上一个顶层产物后，不会再次进入它的子树，
+        // 因此只需检查最近采集的产物，避免逐个比较所有既有兄弟节点。
+        if (accepted?.contains(artifact)) continue;
+        accepted = artifact;
         if (matchesSelector(artifact, SINGLE_SLOT_SELECTOR)) {
             const value = (artifact.getAttribute('aria-label') ?? '').trim();
             if (value) {
@@ -165,7 +174,7 @@ function readTranslationText(element: Element): {text: string; display: 'origina
             }
             continue;
         }
-        const value = readArtifactText(artifact);
+        const value = readText(artifact, false);
         if (value) {
             bilingual = true;
             parts.push(value);
@@ -180,7 +189,7 @@ function readTranslationText(element: Element): {text: string; display: 'origina
 /** 读取段落的原文与译文；两者都来自当前 DOM，不依赖翻译会话状态。 */
 export function readParagraphTexts(element: Element): ParagraphTexts {
     const {text: translation, display} = readTranslationText(element);
-    return {original: readOriginalText(element), translation, display};
+    return {original: readText(element, true), translation, display};
 }
 
 /**

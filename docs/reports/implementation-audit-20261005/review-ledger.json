@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 824,
-    "functions": 14781,
+    "functions": 14786,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -199,7 +199,7 @@
       "src/features/paragraph-copy": {
         "files": 3,
         "functions": 22,
-        "lines": 354
+        "lines": 411
       },
       "src/features/quick-translation": {
         "files": 3,
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 80,
-        "functions": 1424,
-        "lines": 19046
+        "functions": 1429,
+        "lines": 19073
       },
       "src/features/share-card": {
         "files": 7,
@@ -648,6 +648,12 @@
       "file": "src/core/config/mangaSiteCatalog.ts",
       "sha256": "b83880bb16aad5c5174a0cbe75cdf2cff687ca42016101c46f24226f5943109c",
       "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/paragraphCopy.ts",
+      "sha256": "a00b1d7d4e7abbf6cfc450d9d0ed7cfb81480cc04d5b85acdcdebae33c09470c",
+      "functionBodies": 8,
       "status": "source-read-and-traced"
     },
     {
@@ -1323,6 +1329,24 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/paragraph-copy/content/index.ts",
+      "sha256": "603cbd8e4dcc5ec0d0fe2de60a3d334dbb7fb5129975c83a5395bef1acc98fe7",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/paragraph-copy/core.ts",
+      "sha256": "3297b0b5283381b5a64a17a3c89453cb5ef7c7fc99a43c245466845f88addd42",
+      "functionBodies": 12,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/paragraph-copy/public.ts",
+      "sha256": "ede48928de410378e447fc291a7a19bffe66622f60a44da2e604dbe74bacfae5",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/quick-translation/content/index.ts",
       "sha256": "9991042ab636df44a1c5088de9d8ba444165ced23ffb00d702bc424251b1c825",
       "functionBodies": 22,
@@ -1368,6 +1392,12 @@
       "file": "src/features/settings/ui/LearningCenter.vue",
       "sha256": "33d9429320ccb41c8d9974b3482c547779706fb08a0c2bd999a5cd7134fd0e9c",
       "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/ParagraphCopySettings.vue",
+      "sha256": "e50e80deee6d708e5e55140b020e6b815db526f468855c236b97547ab84cbec2",
+      "functionBodies": 13,
       "status": "source-read-and-traced"
     },
     {
@@ -1780,7 +1810,7 @@
     },
     {
       "file": "src/shared/dom/editingTarget.ts",
-      "sha256": "1dc99495eda40453cb7e7058dcc56f451004582f2085e74eb89a49641a5f9b0c",
+      "sha256": "ff1506ef269776ad7ce0b2afaa25fc1417b153990e2bc66fae7ad2896f685e84",
       "functionBodies": 4,
       "status": "source-read-and-traced"
     },
@@ -1937,7 +1967,6 @@
     "src/core/config/model.ts",
     "src/core/config/modelThinking.ts",
     "src/core/config/pageTranslation.ts",
-    "src/core/config/paragraphCopy.ts",
     "src/core/config/requestHeaders.ts",
     "src/core/config/requestLimits.ts",
     "src/core/config/scheduling.ts",
@@ -2082,9 +2111,6 @@
     "src/features/local-tts/protocol.ts",
     "src/features/page-notice/content/notice.ts",
     "src/features/page-notice/public.ts",
-    "src/features/paragraph-copy/content/index.ts",
-    "src/features/paragraph-copy/core.ts",
-    "src/features/paragraph-copy/public.ts",
     "src/features/quick-translation/core.ts",
     "src/features/quick-translation/public.ts",
     "src/features/reading-assistant/answerFormat.ts",
@@ -2148,7 +2174,6 @@
     "src/features/settings/ui/LocalDataManagement.vue",
     "src/features/settings/ui/LocalTranslationModelSettings.vue",
     "src/features/settings/ui/LocalTtsSettings.vue",
-    "src/features/settings/ui/ParagraphCopySettings.vue",
     "src/features/settings/ui/ParagraphHandlingSettings.vue",
     "src/features/settings/ui/PopupLayoutEditor.vue",
     "src/features/settings/ui/QuickTranslationProfiles.vue",
@@ -2417,7 +2442,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue599pending source/function chains, image runtime strict-100/performance debt and external source reconciliation. Model usage/statistics data repositories, handlers, pure models and actual Vue dashboards fully read this batch. Cached origin/main advanced to510683f2 with165later file changes; these usage/statistics chain files are unchanged between integrated99511e12 and cached source. Navigation has3unrelated later rows pending reconciliation. No new remote fetch or blind rewritten-history merge.",
+    "Continue594pending source/function chains. Next inspect page-notice lifecycle/stacking: rapid production copy fixture accumulated visible notices obscuring content. Also trace paragraph settings active-section ownership across retained forms/Teleport, pending external source reconciliation and image runtime strict100/performance debt. Native Clipboard API writes already submitted cannot be canceled; stale fallback/notices are guarded. No whole-goal completion.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2440,12 +2465,13 @@
     "Thirtieth:68actual main changes through581aec18 reconciled; source integration is not full review.199source-read files/3388bodies,622pending. WebDAV URL edge fixed with4baseline failures and actual XML/parser/API/local-HTTP behavior four100; invalid raw parser inputs are a function-boundary issue, not proof that validated live connections failed. Existing image runtime coverage/CPU budgets remain pending. Main cache moved again to63819aac with44new actual changes, not integrated. Userscript resources pinned to local verified04bd1820only, not published. Primary clean at d5, not modified by task.",
     "Thirty-first: imported44main source changes through63819aac and fully reviewed6new/3changed files,205files3527bodies617pending. Client revoked-port cleanup could strand Promise;9old-source regressions fail, fixed completion keeps registered ownership. Background consumed cancellation history could delete fresh cancellation;2old-source regressions fail, redundant array removed. Native recovery9cases and client6diagnostic comparisons pass with bounded evidence; retained listener when deregistration itself throws is suppressed, not falsely claimed removed.35module coverage gate still fails runtime;14architecture/3documentation ownership debts remain. Cachedf7f00e0380laterchanges unintegrated. Local20ef5b65language pin bytes verified only, not publicly published.",
     "Thirty-second: 133main changes reconciled, section picker/core/public fully read. New dynamic nested shadow roots are observed with150-element scan batches, insertion scans only new subtrees, and stop/selection changes cancel queued work. UI exclusion crosses ShadowRoot hosts; layout ancestor traversal stops at512 and redundant ancestor UI checks removed. Old-source7regressions fail;12files308cases and9modules four100 pass.23files883integration cases pass separately with overlap. Native production16cases pass;two dynamic-shadow paragraphs preserve source and requests remain stable for1000ms. Existing14executable/3documentation ownership debts and previously measured image-runtime strict-100 gap remain. Shadow-host text preview still uses light DOM and may be blank; no whole-goal completion or live-provider claim. Local1c4482cc language pin verified but unpublished.",
-    "Thirty-third:18new full source reviews424function bodies;225reviewed/599pending. Fixed stats clear-vs-queued-flush new-generation loss and coalesced pending flush work; indexed model usage retention avoids full-row hydration; bounded8locale caches replace repeated Intl constructors, eliminating formatUnit wrapper. Both Vue dashboard resets ignore late completion after unmount and release only owned inert state.12modules four100/111cases,6integration files138cases,27production UI assertion flows and native old/new source work-count comparisons pass. Initial stats browser pagination fixture could inherit partial-cache source from random first row; new53rows explicitly network. Architecture gate still has14executable/3documentation ownership debts; unrelated image-runtime strict gap remains. Userscript resource pin1c4482cc remains local/unpublished. Date/time/remaining UI formatting, active-panel handoff, closed-shadow statistics dialog/query root, huge-import validation and duplicate stats event contracts remain separate review/validation work; no whole-goal or provider-quality guarantee."
+    "Thirty-third:18new full source reviews424function bodies;225reviewed/599pending. Fixed stats clear-vs-queued-flush new-generation loss and coalesced pending flush work; indexed model usage retention avoids full-row hydration; bounded8locale caches replace repeated Intl constructors, eliminating formatUnit wrapper. Both Vue dashboard resets ignore late completion after unmount and release only owned inert state.12modules four100/111cases,6integration files138cases,27production UI assertion flows and native old/new source work-count comparisons pass. Initial stats browser pagination fixture could inherit partial-cache source from random first row; new53rows explicitly network. Architecture gate still has14executable/3documentation ownership debts; unrelated image-runtime strict gap remains. Userscript resource pin1c4482cc remains local/unpublished. Date/time/remaining UI formatting, active-panel handoff, closed-shadow statistics dialog/query root, huge-import validation and duplicate stats event contracts remain separate review/validation work; no whole-goal or provider-quality guarantee.",
+    "Thirty-fourth: five new full reviews43function bodies;230reviewed/594pending. Paragraph DOM recursion removed,500sibling translation ownership probes124750to499, duplicate reader wrappers consolidated. Clipboard late fallback/notices stop after abort/disable/newer request; native focus/backward selection and owned cleanup verified. Multiple ranges checked through Selection port, not live Firefox. Settings provisional mutation/rollback replaced by owned draft; both reserved entries and quick profiles check default fallback conflicts. Five strict modules four100/65cases; actual compiled settings9cases; six related files96cases;13production native flows. Two existing architecture failures remain13executable/3doc tools without ownership. Native fixture uses controlled Microsoft/clipboard ports, no OS clipboard writes or provider quality proof. Rapid-copy notice stacking is observed and next priority; active-section ownership still needs parent-chain tracing. Language resource pin unchanged local/unpublished."
   ],
   "progress": {
-    "sourceReadFiles": 225,
-    "sourceReadFunctionBodies": 3985,
-    "pendingFiles": 599,
+    "sourceReadFiles": 230,
+    "sourceReadFunctionBodies": 4028,
+    "pendingFiles": 594,
     "goalComplete": false
   },
   "observations": [
@@ -2981,6 +3007,21 @@
       "file": "src/features/settings/model/navigation.ts",
       "status": "fixed-or-reviewed-and-verified-thirty-third",
       "issue": "Complete16body source review. Stats searchDescription concatenated two known legacy strings without separator, preventing non-Chinese localization. Existing compound separator enables both full translations; source snapshot navigation3later unrelated rows remain pending reconciliation, not silently integrated."
+    },
+    {
+      "file": "src/features/paragraph-copy/core.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-fourth",
+      "issue": "Replace recursive DOM walk by iterative enter/exit frames; preserve blocks/PRE/newlines without depth truncation. Document-order artifact collection compares only most recent top-level owner. Remove two duplicate text-reader wrappers and the all-owner some callback; native12000depth preserved and500siblings124750to499contains probes."
+    },
+    {
+      "file": "src/features/paragraph-copy/content/index.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-fourth",
+      "issue": "Clipboard operation revision and current feature checks guard late fallback and feedback. finally removes owned textarea and restores only held focus, full range snapshots and single-range direction, catches host selection/focus failures. Reuse shared deepActiveElement.1000pointer movements perform no candidate/DOM lookup."
+    },
+    {
+      "file": "src/features/settings/ui/ParagraphCopySettings.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-fourth",
+      "issue": "Keep stored shortcut until confirmed. Draft owns config identity and initial values; close on replacement/disable/field change/unmount; delayed confirm/cancel cannot restore stale values. Clearing already normalized to default previously; new conflict check resolves default for both reserved feature keys and quick profiles."
     }
   ]
 }
