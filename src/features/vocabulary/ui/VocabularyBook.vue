@@ -1,7 +1,7 @@
 <!--
  * @file src/features/vocabulary/ui/VocabularyBook.vue
  * 文件职责：组织内容优先的学习收藏列表与主动复习，协调句子听读、解释保存、筛选与文件操作。
- * 主要内容：相同译文保留原文且不重复展示；把复习作为列表主操作，收藏开关与文件动作收进管理菜单；搜索与类型筛选合为一行，每条收藏直接提供学习入口，配置、数据和朗读沿用已有消息协议。
+ * 主要内容：相同译文保留原文且不重复展示；把复习作为列表主操作，收藏开关与文件动作收进管理菜单；搜索与类型筛选合为一行，每条收藏直接提供学习入口，配置、数据和朗读沿用已有消息协议；确认开始即占用操作状态，等待、菜单让步及响应后校验生命周期，拒绝迟到请求、文件下载和已卸载界面更新。
  * 模块边界：UI 不直接访问 Dexie 或上传学习数据；完整备份进入备份与恢复页，收藏文件只包含本领域数据，数据库操作集中在后台 repository/handler，上下文和来源只有用户明确选择时才导出。
  -->
 <template>
@@ -456,29 +456,31 @@ async function runLoadEntriesLoop(): Promise<void> {
 }
 
 async function setBetaEnabled(enabled: boolean): Promise<void> {
-  if (configBusy.value) return;
+  if (!lifecycle.isActive() || configBusy.value) return;
   configBusy.value = true;
   betaEnabled.value = enabled;
   try {
     await requestConfigPatch({vocabularyBookEnabled: enabled}, browser.runtime.sendMessage.bind(browser.runtime));
     showToast(enabled ? t('learning.collection.enabled') : '收藏入口已关闭，学习数据仍保留');
   } catch (cause) {
+    if (!lifecycle.isActive()) return;
     betaEnabled.value = runtimeConfig.vocabularyBookEnabled === true;
     showToast(cause instanceof Error ? cause.message : '设置保存失败');
   } finally {
-    configBusy.value = false;
+    if (lifecycle.isActive()) configBusy.value = false;
   }
 }
 
 async function setReencounterEnabled(enabled: boolean): Promise<void> {
-  if (configBusy.value) return;
+  if (!lifecycle.isActive() || configBusy.value) return;
   configBusy.value = true; reencounterEnabled.value = enabled;
   try {
     await requestConfigPatch({vocabularyReencounterEnabled: enabled}, browser.runtime.sendMessage.bind(browser.runtime));
   } catch (cause) {
+    if (!lifecycle.isActive()) return;
     reencounterEnabled.value = runtimeConfig.vocabularyReencounterEnabled === true;
     showToast(cause instanceof Error ? cause.message : t('reencounter.settingFailed'));
-  } finally { configBusy.value = false; }
+  } finally { if (lifecycle.isActive()) configBusy.value = false; }
 }
 
 function replaceEntry(next: VocabularyEntry): void {
@@ -524,7 +526,7 @@ function finishReview(): void {
 
 async function rateReview(rating: VocabularyScheduledReviewRating): Promise<void> {
   const entry = currentReview.value;
-  if (!entry || actionBusy.value || !reviewAnswerVisible.value) return;
+  if (!lifecycle.isActive() || !entry || actionBusy.value || !reviewAnswerVisible.value) return;
   actionBusy.value = true;
   try {
     const result = await requestVocabulary<VocabularyReviewResult>({
@@ -533,6 +535,7 @@ async function rateReview(rating: VocabularyScheduledReviewRating): Promise<void
       entryId: entry.id,
       rating,
     });
+    if (!lifecycle.isActive()) return;
     replaceEntry(result.entry);
     reviewStats.value.reviewed += 1;
     reviewStats.value[rating] += 1;
@@ -540,51 +543,58 @@ async function rateReview(rating: VocabularyScheduledReviewRating): Promise<void
   } catch (cause) {
     showToast(cause instanceof Error ? cause.message : '复习记录保存失败');
   } finally {
-    try {
-      await loadEntries();
-    } finally {
-      actionBusy.value = false;
-      reconcileActiveReviewQueue();
+    if (lifecycle.isActive()) {
+      try {
+        await loadEntries();
+      } finally {
+        if (lifecycle.isActive()) {
+          actionBusy.value = false;
+          reconcileActiveReviewQueue();
+        }
+      }
     }
   }
 }
 
 async function setMastered(entry: VocabularyEntry): Promise<void> {
-  if (actionBusy.value) return;
+  if (!lifecycle.isActive() || actionBusy.value) return;
   actionBusy.value = true;
   try {
     const result = await requestVocabulary<VocabularyReviewResult>({ type: VOCABULARY_BOOK_MESSAGE, action: 'setMastery', entryId: entry.id });
+    if (!lifecycle.isActive()) return;
     replaceEntry(result.entry);
     showToast(`${entry.term} 已标记为掌握`);
   } catch (cause) { showToast(cause instanceof Error ? cause.message : '更新失败'); }
-  finally { actionBusy.value = false; }
+  finally { if (lifecycle.isActive()) actionBusy.value = false; }
 }
 
 async function relearn(entry: VocabularyEntry): Promise<void> {
-  if (actionBusy.value) return;
+  if (!lifecycle.isActive() || actionBusy.value) return;
   actionBusy.value = true;
   try {
     const result = await requestVocabulary<VocabularyReviewResult>({ type: VOCABULARY_BOOK_MESSAGE, action: 'relearn', entryId: entry.id });
+    if (!lifecycle.isActive()) return;
     replaceEntry(result.entry);
     showToast(`${entry.term} 已回到学习队列`);
   } catch (cause) { showToast(cause instanceof Error ? cause.message : '更新失败'); }
-  finally { actionBusy.value = false; }
+  finally { if (lifecycle.isActive()) actionBusy.value = false; }
 }
 
 async function removeEntry(entry: VocabularyEntry): Promise<void> {
-  if (actionBusy.value) return;
-  try { await ElMessageBox.confirm(translateLegacyText(
-    `确认删除“${entry.term}”及其复习记录吗？`, normalizeUiLanguage(runtimeConfig.uiLanguage)),
-    translateControlLabel('删除'), {type: 'warning', confirmButtonText: translateControlLabel('删除'), cancelButtonText: translateControlLabel('取消')}); }
-  catch { return; }
-  if (actionBusy.value) return;
+  if (!lifecycle.isActive() || actionBusy.value) return;
   actionBusy.value = true;
   try {
+    try { await ElMessageBox.confirm(translateLegacyText(
+      `确认删除“${entry.term}”及其复习记录吗？`, normalizeUiLanguage(runtimeConfig.uiLanguage)),
+      translateControlLabel('删除'), {type: 'warning', confirmButtonText: translateControlLabel('删除'), cancelButtonText: translateControlLabel('取消')}); }
+    catch { return; }
+    if (!lifecycle.isActive()) return;
     const snapshot = await requestVocabulary<VocabularyRemovalSnapshot | null>({
       type: VOCABULARY_BOOK_MESSAGE,
       action: 'removeWithSnapshot',
       entryId: entry.id,
     });
+    if (!lifecycle.isActive()) return;
     if (!snapshot) throw new Error('词条已不存在');
     entries.value = entries.value.filter(item => item.id !== entry.id);
     undoExport.value = {
@@ -598,20 +608,21 @@ async function removeEntry(entry: VocabularyEntry): Promise<void> {
     scheduleTimeRefresh();
     showToast(`已删除 ${entry.term}`, true);
   } catch (cause) { showToast(cause instanceof Error ? cause.message : '删除失败'); }
-  finally { actionBusy.value = false; }
+  finally { if (lifecycle.isActive()) actionBusy.value = false; }
 }
 
 async function undoRemove(): Promise<void> {
   const data = undoExport.value;
-  if (!data || actionBusy.value) return;
+  if (!lifecycle.isActive() || !data || actionBusy.value) return;
   actionBusy.value = true;
   try {
     await requestVocabulary<VocabularyImportResult>({ type: VOCABULARY_BOOK_MESSAGE, action: 'importData', data });
+    if (!lifecycle.isActive()) return;
     undoExport.value = null;
     await loadEntries();
     showToast('已恢复刚才删除的词条');
   } catch (cause) { showToast(cause instanceof Error ? cause.message : '恢复失败'); }
-  finally { actionBusy.value = false; }
+  finally { if (lifecycle.isActive()) actionBusy.value = false; }
 }
 
 async function chooseAnkiContext(): Promise<boolean | null> {
@@ -633,17 +644,19 @@ async function chooseAnkiContext(): Promise<boolean | null> {
 }
 
 async function exportAnki(): Promise<void> {
-  if (actionBusy.value) return;
-  const includePrivateContext = await chooseAnkiContext();
-  if (includePrivateContext === null) return;
-  await closeMoreMenuAndFocus();
+  if (!lifecycle.isActive() || actionBusy.value) return;
   actionBusy.value = true;
   try {
+    const includePrivateContext = await chooseAnkiContext();
+    if (!lifecycle.isActive() || includePrivateContext === null) return;
+    await closeMoreMenuAndFocus();
+    if (!lifecycle.isActive()) return;
     const data = await requestVocabulary<VocabularyBookExport>({
       type: VOCABULARY_BOOK_MESSAGE,
       action: 'exportData',
       options: {includePrivateContext},
     });
+    if (!lifecycle.isActive()) return;
     const rows = data.entries.map(entry => {
       const context = includePrivateContext ? entry.contexts.at(-1) : undefined;
       return [
@@ -665,11 +678,12 @@ async function exportAnki(): Promise<void> {
   } catch (cause) {
     showToast(cause instanceof Error ? cause.message : 'Anki 导出失败');
   } finally {
-    actionBusy.value = false;
+    if (lifecycle.isActive()) actionBusy.value = false;
   }
 }
 
 async function copyEntry(entry: VocabularyEntry, bilingual: boolean): Promise<void> {
+  if (!lifecycle.isActive()) return;
   const paired = bilingual && hasDistinctTranslation(entry.term, entryTranslation(entry));
   const text = paired ? `${entry.term}\n${entryTranslation(entry)}` : entry.term;
   try {await navigator.clipboard.writeText(text); if (lifecycle.isActive()) showToast(paired ? '已复制原文与译文' : '已复制原文');}
@@ -677,7 +691,7 @@ async function copyEntry(entry: VocabularyEntry, bilingual: boolean): Promise<vo
 }
 
 async function exportCollection(): Promise<void> {
-  if (actionBusy.value) return;
+  if (!lifecycle.isActive() || actionBusy.value) return;
   const ids = new Set(filteredEntries.value.map(entry => entry.id));
   actionBusy.value = true;
   try {
@@ -694,13 +708,13 @@ async function exportCollection(): Promise<void> {
 async function importCollection(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0]; input.value = '';
-  if (!file || actionBusy.value) return;
-  if (vocabularyImportNeedsConfirmation(file.size)) {
-    try {await ElMessageBox.confirm('这个收藏文件较大，读取可能需要一些时间。继续导入吗？', '导入收藏', {confirmButtonText:'继续导入', cancelButtonText:'取消'});} catch {return;}
-  }
-  if (!lifecycle.isActive() || actionBusy.value) return;
+  if (!lifecycle.isActive() || !file || actionBusy.value) return;
   actionBusy.value = true;
   try {
+    if (vocabularyImportNeedsConfirmation(file.size)) {
+      try {await ElMessageBox.confirm('这个收藏文件较大，读取可能需要一些时间。继续导入吗？', '导入收藏', {confirmButtonText:'继续导入', cancelButtonText:'取消'});} catch {return;}
+    }
+    if (!lifecycle.isActive()) return;
     const data = JSON.parse(await file.text());
     if (!lifecycle.isActive()) return;
     const result = await requestVocabulary<VocabularyImportResult>({type:VOCABULARY_BOOK_MESSAGE, action:'importData', data});
@@ -712,20 +726,23 @@ async function importCollection(event: Event): Promise<void> {
 }
 
 async function clearVocabulary(): Promise<void> {
-  if (actionBusy.value || entries.value.length === 0) return;
-  try {
-    await ElMessageBox.confirm(
-      t('learning.collection.clearHelp'),
-      t('learning.collection.clearTitle'),
-      {confirmButtonText: '确认清空', cancelButtonText: '取消', type: 'warning'},
-    );
-  } catch {
-    return;
-  }
-  await closeMoreMenuAndFocus();
+  if (!lifecycle.isActive() || actionBusy.value || entries.value.length === 0) return;
   actionBusy.value = true;
   try {
+    try {
+      await ElMessageBox.confirm(
+        t('learning.collection.clearHelp'),
+        t('learning.collection.clearTitle'),
+        {confirmButtonText: '确认清空', cancelButtonText: '取消', type: 'warning'},
+      );
+    } catch {
+      return;
+    }
+    if (!lifecycle.isActive()) return;
+    await closeMoreMenuAndFocus();
+    if (!lifecycle.isActive()) return;
     await requestVocabulary<boolean>({type: VOCABULARY_BOOK_MESSAGE, action: 'clear'});
+    if (!lifecycle.isActive()) return;
     entries.value = [];
     finishReview();
     scheduleTimeRefresh();
@@ -733,16 +750,16 @@ async function clearVocabulary(): Promise<void> {
   } catch (cause) {
     showToast(cause instanceof Error ? cause.message : '清空失败');
   } finally {
-    actionBusy.value = false;
+    if (lifecycle.isActive()) actionBusy.value = false;
   }
 }
 
 async function closeMoreMenuAndFocus(): Promise<void> {
   const details = moreMenu.value;
-  if (!details) return;
+  if (!lifecycle.isActive() || !details) return;
   details.open = false;
   await nextTick();
-  details.querySelector<HTMLElement>('summary')?.focus();
+  if (lifecycle.isActive() && details.isConnected && moreMenu.value === details) details.querySelector<HTMLElement>('summary')?.focus();
 }
 
 function downloadFile(name: string, body: string, type: string): void {

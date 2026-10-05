@@ -16,6 +16,8 @@ const readingBaseline = process.argv.includes('--reading-baseline');
 const readingPerformance = process.argv.includes('--reading-performance');
 const studyContext = process.argv.includes('--study-context');
 const studyContextBaseline = process.argv.includes('--study-context-baseline');
+const bookActions = process.argv.includes('--book-actions');
+const bookActionsBaseline = process.argv.includes('--book-actions-baseline');
 if (!packages || !helperPath) throw new Error('Provide --playwright-root and --focus-safe-helper');
 const {chromium} = require(path.join(path.resolve(packages), 'playwright'));
 const helper = require(path.resolve(helperPath));
@@ -68,9 +70,18 @@ async function main() {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const report = {ok: false, readingStress, readingBaseline, readingPerformance, studyContext, studyContextBaseline, cases: [], screenshots: [], consoleErrors: [],
+  const report = {ok: false, readingStress, readingBaseline, readingPerformance, studyContext, studyContextBaseline, bookActions, bookActionsBaseline, cases: [], screenshots: [], consoleErrors: [],
     buildSha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex'),
     evidenceBoundary: 'Production extension and real Edge with local HTML and synthetic model responses; optional verified isolated-world reading counters are work evidence, not timing. No live model or Firefox runtime quality claim.'};
+  const javascriptFiles = [];
+  const collectJavaScript = directory => {for (const item of fs.readdirSync(directory,{withFileTypes:true})) {
+    const file = path.join(directory,item.name); if(item.isDirectory()) collectJavaScript(file);
+    else if(file.endsWith('.js')) javascriptFiles.push(file);
+  }};
+  collectJavaScript(extensionDir);
+  const assetHash = crypto.createHash('sha256');
+  for (const file of javascriptFiles.sort()) assetHash.update(path.relative(extensionDir,file)).update('\0').update(fs.readFileSync(file));
+  report.javascriptAssetsSha256 = assetHash.digest('hex');
   let session; let page;
   try {
     session = await helper.launchFocusSafePersistentContext({chromium, profileDir: profile, browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', background: true, headless: false,
@@ -209,6 +220,75 @@ async function main() {
       report.studyContextResult = {displayedContext, displayedCloze, storedDataPreserved:true, additionalModelRequests:0,
         evidence:'Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request.'};
       report.cases.push({id:'continuous-chinese-saved-study-and-review-context', status:studyContextBaseline ? 'reproduced' : 'passed'});
+    }
+    if (bookActions) {
+      // 延迟真实 IPC 响应，保留后台正常完成；不把测试插桩当作性能测量。
+      const stored = await snapshot(); const requestCount = requests.length; const downloads = [];
+      options.on('download', download => downloads.push(download));
+      options.on('pageerror', error => report.consoleErrors.push(error.message));
+      const more = options.locator('.book-more > summary');
+      const openMore = async () => {if (!await options.locator('.book-more').evaluate(element => element.open)) await more.click();};
+      const dialog = options.locator('.el-message-box');
+      await options.evaluate(() => {
+        const original = chrome.runtime.sendMessage.bind(chrome.runtime);
+        window.bookOriginalSend = original; window.holdBookExport = true;
+        chrome.runtime.sendMessage = function (...args) {
+          const message = args[0];
+          if (!window.holdBookExport || message?.type !== 'fluentReadVocabularyBook' || message.action !== 'exportData') return original(...args);
+          const callback = args.at(-1);
+          if (typeof callback === 'function') return original(...args.slice(0,-1), response => {
+            window.heldBookExport = {response, options:message.options, deliver:() => callback(response)};
+          });
+          return original(...args).then(response => new Promise(resolve => {
+            window.heldBookExport = {response, options:message.options, deliver:() => resolve(response)};
+          }));
+        };
+      });
+      await openMore(); await options.getByRole('button',{name:'导出到 Anki',exact:true}).click();
+      const busyDuringConfirmation = await options.getByRole('button',{name:'导出到 Anki',exact:true}).isDisabled();
+      assert.equal(busyDuringConfirmation,!bookActionsBaseline);
+      report.cases.push({id:'anki-reserves-management-action-during-confirmation',status:bookActionsBaseline ? 'reproduced' : 'passed'});
+      await dialog.getByRole('button',{name:'不包含',exact:true}).click();
+      await until(() => options.evaluate(() => Boolean(window.heldBookExport)), 'Real Anki response was not held');
+      const heldResponse = await options.evaluate(() => ({success:window.heldBookExport.response.success, options:window.heldBookExport.options}));
+      assert.equal(heldResponse.success,true); assert.deepEqual(heldResponse.options,{includePrivateContext:false});
+      await options.getByRole('radio',{name:'阅读记录',exact:true}).click();
+      await options.locator('.vocabulary-book').waitFor({state:'detached'});
+      await options.evaluate(() => {window.holdBookExport=false;window.heldBookExport.deliver();}); await wait(700);
+      assert.equal(downloads.length,bookActionsBaseline ? 1 : 0);
+      record('learning-tab-unmounts-collection-before-real-export-response');
+      report.cases.push({id:'closed-book-rejects-late-anki-download',status:bookActionsBaseline ? 'reproduced' : 'passed'});
+      report.bookActionResult = {lateDownloads:downloads.length, busyDuringConfirmation, backendExportSucceeded:true, actualBookUnmounted:true,
+        evidence:'Native buttons and learning-center tab, real export IPC held until after unmount; callback/Promise delivery instrumentation, not timing.'};
+      await options.getByRole('radio',{name:'收藏',exact:true}).click(); await options.locator('.vocabulary-book').waitFor();
+      await until(async () => await options.locator('.entry-open').count() === stored.data.length,'Remounted collection did not reload');
+      for (const includePrivateContext of [false,true]) {
+        const previousDownloads = downloads.length;
+        await openMore(); await options.getByRole('button',{name:'导出到 Anki',exact:true}).click();
+        await dialog.getByRole('button',{name:includePrivateContext ? '包含上下文' : '不包含',exact:true}).click();
+        await until(() => downloads.length === previousDownloads+1, 'Normal Anki export did not download');
+        const downloadedPath = await downloads.at(-1).path(); const body = fs.readFileSync(downloadedPath,'utf8');
+        assert(body.includes('Term\tMeaning\tExplanation\tContext\tSource\tTags'));
+        for (const entry of stored.data) {
+          assert(body.includes(entry.term));
+          const source = entry.contexts.at(-1); if (source?.sourceUrl) assert.equal(body.includes(source.sourceUrl),includePrivateContext);
+        }
+      }
+      assert.deepEqual(await snapshot(),stored); assert.equal(requests.length,requestCount);
+      record('remounted-anki-both-privacy-choices-and-persistent-data-preserved');
+      await openMore(); await options.getByRole('button',{name:'清空单词本',exact:true}).click();
+      await dialog.getByRole('button',{name:'取消',exact:true}).click();
+      assert.deepEqual(await snapshot(),stored);
+      await openMore(); await options.getByRole('button',{name:'清空单词本',exact:true}).click();
+      await dialog.getByRole('button',{name:'确认清空',exact:true}).click();
+      await until(async () => (await snapshot()).data.length===0,'Confirmed clear did not persist');
+      await until(async () => await options.locator('.entry-open').count()===0,'Confirmed clear did not refresh collection');
+      await dialog.waitFor({state:'hidden'});
+      await openMore(); assert(await options.getByRole('button',{name:'清空单词本',exact:true}).isDisabled());
+      await more.click(); assert.equal(await options.locator('.book-more').evaluate(element=>element.open),false);
+      assert.equal(requests.length,requestCount); record('cancel-then-confirm-clear-on-temporary-collection');
+      const file = path.join(artifacts,'book-after-confirmed-clear.png'); await options.screenshot({path:file}); report.screenshots.push(file);
+      await options.evaluate(() => {chrome.runtime.sendMessage=window.bookOriginalSend;delete window.bookOriginalSend;delete window.heldBookExport;delete window.holdBookExport;});
     }
     if (readingPerformance) {
       for (const entry of (await snapshot()).data) assert.equal((await send(options, {type:'fluentReadVocabularyBook', action:'remove', entryId:entry.id})).success, true);

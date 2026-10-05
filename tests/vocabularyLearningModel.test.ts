@@ -14,6 +14,7 @@ import {
   vocabularyImportNeedsConfirmation,
   vocabularyReviewSessionProgress,
   normalizeLearningSourceText,
+  latestVocabularyEntry,
   isVocabularySentence,
   mergeVocabularyNotes,
   type VocabularyEntry,
@@ -48,6 +49,15 @@ function entry(id: string, overrides: Partial<VocabularyEntry> = {}): Vocabulary
 }
 
 describe('vocabulary learning model edge cases', () => {
+  it('selects the same newest entry and stable id tie as the previous sorted order without changing any input', () => {
+    expect(latestVocabularyEntry([])).toBeUndefined();
+    const same = entry('é', {lastSeenAt:10});
+    const entries = Object.freeze([Object.freeze(entry('older',{lastSeenAt:1})),Object.freeze(same),Object.freeze({...same}),
+      Object.freeze(entry('newer',{lastSeenAt:20})),Object.freeze(entry('a',{lastSeenAt:20})),Object.freeze(entry('中',{lastSeenAt:20}))]);
+    const before = entries.map(item=>item.id); const expected = [...entries].sort((a,b)=>b.lastSeenAt-a.lastSeenAt || a.id.localeCompare(b.id))[0];
+    expect(latestVocabularyEntry(entries)).toBe(expected); expect(entries.map(item=>item.id)).toEqual(before);
+    expect(latestVocabularyEntry([same,{...same}])).toBe(same);
+  });
   it('finds explicit and legacy sentences without classifying words or explicit expressions as sentences', () => {
     expect(isVocabularySentence(entry('sentence', {kind:'sentence'}))).toBe(true);
     expect(isVocabularySentence(entry('A full sentence.', {kind:'expression'}))).toBe(false);

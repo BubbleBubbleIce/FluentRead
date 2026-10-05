@@ -10979,6 +10979,822 @@
         "src/app/content/pageStyles.ts": "74129728cc068e9774116f1b89b4bfc50b879e21430cb599ee9fd7aeb29a3b89",
         "src/ui/styles/vocabulary-reencounter.css": "2d511e2d81c876b32edfea07ad4d6f4b369e0bdc78c15815f0b9a817613ebd13"
       }
+    },
+    {
+      "name": "eighteenth-vocabulary-management-action-lifetime-and-linear-latest-entry",
+      "batch": "eighteenth",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 152,
+        "sourceReadFunctionBodies": 2441,
+        "pendingFiles": 666,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 25,
+      "newStaticTestDefinitions": 15,
+      "newOptionalNativePhases": 5,
+      "oldSourceRun": {
+        "executedCases": 15,
+        "passed": 2,
+        "failed": 13,
+        "scope": "Actual Vue setup with real source and lifecycle, controlled confirm/IPC seams. Delayed confirmation, competing actions, menu nextTick, delayed export response and five post-unmount action completions all fail. SSR/custom renderer is not native UI proof. Later normal/retry/undo/import cases were added after patch."
+      },
+      "oldSortWork": {
+        "executedCases": 1,
+        "failed": 1,
+        "scope": "Actual Vue 5000-entry latest computed still unchanged, async fixes already applied.54202locale comparisons exceeds4999linear bound; other15tests filtered in this targeted run. Original sort source independently checked against immutable seventeenth snapshot."
+      },
+      "implementation": {
+        "asyncOwnership": "Reserve actionBusy before confirmation and release on cancellation/failure while active. Check existing lifecycle after confirm,menu tick,response and reload; detached/obsolete menu never focused. Ignore dead-component review/mastery/relearn/remove/undo/clear completions. Background operations already submitted may complete; no rollback claim. Also guard config failure rollback, copy and export/import entry points.",
+        "latestEntry": "Extract single pass selector into already owned learning model; remove full book copy/sort callback. Original time/id/stable tie and input identity preserved. Net production function body change0, not a dead-code removal claim.",
+        "viewLifetime": "Saved/history/memory tabs unmount conditional Book; settings sidebar KeepAlive retains it. Documentation describes actual tab switch, no promise that pending global dialog is forcibly dismissed."
+      },
+      "strictCoverage": {
+        "files": 5,
+        "executedCases": 107,
+        "modules": {
+          "app/content/pageStyles.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/learningModel.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/content/readingText.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/content/reencounter.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/content/scanner.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/domain/expressionMatcher.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          },
+          "features/vocabulary/domain/reencounter.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "files": 5,
+        "executedCases": 54,
+        "passed": true,
+        "scope": "26Book setup/lifecycle,3study lifecycle,4Book static contracts,13background handler,8repository edge tests. Positive remove/undo, malformed import retry, clear retry, both Anki privacy choices, large-import cancellation and late undo snapshot tested.;two late config failures and no stale clipboard/export calls also tested."
+      },
+      "architecture": {
+        "affectedFiles": 3,
+        "executedCases": 817,
+        "passed": true,
+        "ownership": {
+          "executedCases": 9,
+          "passed": 7,
+          "failed": 2,
+          "remainingExecutableOmissions": 15,
+          "unownedDocumentationTools": 3,
+          "wholeGatePassed": false
+        }
+      },
+      "checks": {
+        "typecheck": "passed after correcting initial new-test Blob|MediaSource type mismatch",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed; no Firefox runtime claim",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testSuiteAudit": {
+          "files": 466,
+          "staticRegisteredDefinitions": 6162,
+          "passed": true
+        },
+        "docsBuild": "passed",
+        "docsCheck": {
+          "ok": true,
+          "pages": 77,
+          "links": 3955,
+          "anchors": 741,
+          "images": 154
+        }
+      },
+      "latestEntryDifferentialAndTiming": {
+        "scope": "Unchanged seventeenth Vue computed body extracted with TypeScript AST versus current pure selector. Valid persisted timestamps and strings, immutable inputs. Node timings, no full UI or universal latency claim.",
+        "baselineSourceSha256": "25becc11ba6fbf680225654399121de0f5156dba23ee326950db4de9bbbf7add",
+        "differentialCases": 6000,
+        "work": [
+          {
+            "id": "empty",
+            "entries": 0,
+            "localeComparisons": {
+              "baseline": 0,
+              "final": 0
+            },
+            "inputArrayCopiedAndSorted": {
+              "baseline": true,
+              "final": false
+            }
+          },
+          {
+            "id": "single",
+            "entries": 1,
+            "localeComparisons": {
+              "baseline": 0,
+              "final": 0
+            },
+            "inputArrayCopiedAndSorted": {
+              "baseline": true,
+              "final": false
+            }
+          },
+          {
+            "id": "50-mixed-timestamps",
+            "entries": 50,
+            "localeComparisons": {
+              "baseline": 0,
+              "final": 0
+            },
+            "inputArrayCopiedAndSorted": {
+              "baseline": true,
+              "final": false
+            }
+          },
+          {
+            "id": "50-equal-timestamps",
+            "entries": 50,
+            "localeComparisons": {
+              "baseline": 214,
+              "final": 49
+            },
+            "inputArrayCopiedAndSorted": {
+              "baseline": true,
+              "final": false
+            }
+          },
+          {
+            "id": "5000-mixed-timestamps",
+            "entries": 5000,
+            "localeComparisons": {
+              "baseline": 121,
+              "final": 0
+            },
+            "inputArrayCopiedAndSorted": {
+              "baseline": true,
+              "final": false
+            }
+          },
+          {
+            "id": "5000-equal-timestamps",
+            "entries": 5000,
+            "localeComparisons": {
+              "baseline": 54202,
+              "final": 4999
+            },
+            "inputArrayCopiedAndSorted": {
+              "baseline": true,
+              "final": false
+            }
+          }
+        ],
+        "timing": [
+          {
+            "id": "empty",
+            "medianMs": {
+              "baseline": 0.00012500000002546585,
+              "final": 0.00016699999997626946
+            },
+            "samplesMs": {
+              "baseline": [
+                0.0020830000000273685,
+                0.00020799999998644125,
+                0.00020799999998644125,
+                0.00016599999997879422,
+                0.00012500000002546585,
+                0.00012500000002546585,
+                0.00012500000002546585,
+                0.00012500000002546585,
+                0.00012499999996862243,
+                0.00012499999996862243,
+                0.00016700000003311288,
+                0.00012500000002546585,
+                0.00016599999997879422,
+                0.00020799999998644125,
+                0.00012499999996862243,
+                0.00012500000002546585,
+                0.00012500000002546585,
+                0.00012500000002546585,
+                0.00016700000003311288,
+                0.00012499999996862243,
+                0.00012499999996862243
+              ],
+              "final": [
+                0.001125000000001819,
+                0.0018330000000332802,
+                0.00020800000004328467,
+                0.0006250000000136424,
+                0.00016699999997626946,
+                0.00016700000003311288,
+                0.00012500000002546585,
+                0.00012499999996862243,
+                0.00012499999996862243,
+                0.00016699999997626946,
+                0.00016699999997626946,
+                0.00016600000003563764,
+                0.00012499999996862243,
+                0.00016599999997879422,
+                0.00016699999997626946,
+                0.00012500000002546585,
+                0.00016700000003311288,
+                0.00016699999997626946,
+                0.00016700000003311288,
+                0.00012499999996862243,
+                0.00016699999997626946
+              ]
+            }
+          },
+          {
+            "id": "single",
+            "medianMs": {
+              "baseline": 0.00012500000002546585,
+              "final": 0.00016699999997626946
+            },
+            "samplesMs": {
+              "baseline": [
+                0.0005419999999958236,
+                0.00012500000002546585,
+                0.00012499999996862243,
+                0.00012500000002546585,
+                0.00012499999996862243,
+                0.0006670000000212895,
+                0.00016699999997626946,
+                0.00012499999996862243,
+                0.00012499999996862243,
+                0.00016699999997626946,
+                0.00012500000002546585,
+                0.00012499999996862243,
+                0.00012500000002546585,
+                0.00012499999996862243,
+                0.00012500000002546585,
+                0.00012500000002546585,
+                0.00012500000002546585,
+                0.00012499999996862243,
+                0.00012499999996862243,
+                0.00016699999997626946,
+                0.00016599999997879422
+              ],
+              "final": [
+                0.00020900000004075991,
+                0.00020799999998644125,
+                0.00016600000003563764,
+                0.00016599999997879422,
+                0.005250000000046384,
+                0.003834000000040305,
+                0.0002499999999940883,
+                0.00016599999997879422,
+                0.00016699999997626946,
+                0.00016699999997626946,
+                0.00016699999997626946,
+                0.00016699999997626946,
+                0.00016599999997879422,
+                0.00016700000003311288,
+                0.00016599999997879422,
+                0.00016700000003311288,
+                0.00020800000004328467,
+                0.00016700000003311288,
+                0.00016699999997626946,
+                0.00016699999997626946,
+                0.00016699999997626946
+              ]
+            }
+          },
+          {
+            "id": "50-mixed-timestamps",
+            "medianMs": {
+              "baseline": 0.005625000000009095,
+              "final": 0.0016660000000001673
+            },
+            "samplesMs": {
+              "baseline": [
+                0.005708999999967546,
+                0.005625000000009095,
+                0.0054160000000251785,
+                0.005417000000022654,
+                0.09554199999996627,
+                0.006833000000028733,
+                0.0058339999999930114,
+                0.0055000000000404725,
+                0.00541699999996581,
+                0.0055420000000481195,
+                0.005459000000030301,
+                0.0054160000000251785,
+                0.005667000000016742,
+                0.005375000000015007,
+                0.005709000000024389,
+                0.00591700000001083,
+                0.005499999999983629,
+                0.14258399999999938,
+                0.005875000000003183,
+                0.006500000000016826,
+                0.005374999999958163
+              ],
+              "final": [
+                0.0017920000000231084,
+                0.0017080000000078144,
+                0.0016249999999899956,
+                0.0016249999999899956,
+                0.002124999999978172,
+                0.0016660000000001673,
+                0.0016249999999899956,
+                0.0016660000000001673,
+                0.0037090000000148393,
+                0.0016669999999976426,
+                0.0017090000000052896,
+                0.0016669999999976426,
+                0.001625000000046839,
+                0.0017500000000154614,
+                0.0016249999999899956,
+                0.0016669999999976426,
+                0.0016249999999899956,
+                0.0015839999999798238,
+                0.0020000000000095497,
+                0.0016249999999899956,
+                0.0015839999999798238
+              ]
+            }
+          },
+          {
+            "id": "50-equal-timestamps",
+            "medianMs": {
+              "baseline": 0.017125000000021373,
+              "final": 0.0043330000000310065
+            },
+            "samplesMs": {
+              "baseline": [
+                0.020541999999977634,
+                0.017125000000021373,
+                0.017125000000021373,
+                0.017042000000003554,
+                0.034791999999981726,
+                0.020041000000048825,
+                0.016875000000027285,
+                0.07149999999995771,
+                0.031334000000015294,
+                0.02524999999997135,
+                0.017125000000021373,
+                0.01695900000004258,
+                0.017416000000025633,
+                0.017042000000003554,
+                0.017667000000017197,
+                0.01691699999997809,
+                0.017083000000013726,
+                0.016915999999980613,
+                0.016999999999995907,
+                0.016958999999985735,
+                0.017042000000003554
+              ],
+              "final": [
+                0.004709000000048036,
+                0.004250000000013188,
+                0.0042910000000233595,
+                0.00437499999998181,
+                0.018834000000026663,
+                0.004332999999974163,
+                0.004208000000005541,
+                0.004249999999956344,
+                0.014083000000027823,
+                0.005541999999991276,
+                0.0043750000000386535,
+                0.008874999999989086,
+                0.0043330000000310065,
+                0.004250000000013188,
+                0.00437499999998181,
+                0.004292000000020835,
+                0.009792000000004464,
+                0.004166999999995369,
+                0.004208000000005541,
+                0.004207999999948697,
+                0.004415999999991982
+              ]
+            }
+          },
+          {
+            "id": "5000-mixed-timestamps",
+            "medianMs": {
+              "baseline": 0.9830000000000041,
+              "final": 0.049291000000039276
+            },
+            "samplesMs": {
+              "baseline": [
+                1.2635000000000218,
+                1.0001669999999763,
+                0.9830000000000041,
+                1.091957999999977,
+                0.9938339999999926,
+                0.9502499999999827,
+                0.9953340000000139,
+                0.979959000000008,
+                1.0240419999999517,
+                0.9443329999999719,
+                0.9704590000000053,
+                1.067624999999964,
+                1.5614160000000084,
+                1.161375000000021,
+                0.9708340000000248,
+                1.12662499999999,
+                0.9614159999999856,
+                0.9653749999999945,
+                0.9400829999999587,
+                0.9254170000000386,
+                0.945541999999989
+              ],
+              "final": [
+                0.049291000000039276,
+                0.08962500000001228,
+                0.0605419999999981,
+                0.05983400000002348,
+                0.0614999999999668,
+                0.054916999999989,
+                0.05908300000004374,
+                0.05108300000000554,
+                0.04637500000001182,
+                0.04337499999996908,
+                0.050791000000003805,
+                0.052707999999995536,
+                0.04362500000002001,
+                0.04258300000003601,
+                0.04462499999999636,
+                0.044582999999988715,
+                0.04970800000000963,
+                0.044375000000002274,
+                0.04233399999998255,
+                0.04291599999999107,
+                0.04537500000003547
+              ]
+            }
+          },
+          {
+            "id": "5000-equal-timestamps",
+            "medianMs": {
+              "baseline": 2.927167000000054,
+              "final": 0.23695899999995618
+            },
+            "samplesMs": {
+              "baseline": [
+                3.1457080000000133,
+                2.770042000000103,
+                2.766124999999988,
+                2.9579590000000735,
+                2.927167000000054,
+                3.0467499999999745,
+                3.034417000000076,
+                2.951249999999959,
+                3.0870419999999967,
+                2.7790829999999005,
+                3.066082999999935,
+                2.7375829999999723,
+                2.7540420000000267,
+                3.091874999999959,
+                2.982582999999977,
+                2.7611249999999927,
+                2.92512499999998,
+                2.849542000000042,
+                2.797166000000061,
+                2.8462500000000546,
+                4.276624999999967
+              ],
+              "final": [
+                0.2487909999999829,
+                0.23308399999996254,
+                0.23424999999997453,
+                0.23320799999999053,
+                0.2287499999999909,
+                0.24204099999997197,
+                0.23858399999994617,
+                0.2619590000000471,
+                0.2634579999999005,
+                0.24487499999997908,
+                0.23695899999995618,
+                0.22587499999997362,
+                0.22783300000003237,
+                0.22595799999999144,
+                0.29329200000006495,
+                0.2463750000000573,
+                0.24470899999994344,
+                0.7789589999999862,
+                0.22754199999997127,
+                0.2324590000000626,
+                0.23554200000000947
+              ]
+            }
+          }
+        ]
+      },
+      "browser": {
+        "baseline": {
+          "passed": true,
+          "cases": [
+            {
+              "id": "default-off-with-existing-saved-entries",
+              "status": "passed"
+            },
+            {
+              "id": "setting-label-follows-cross-page-interface-language",
+              "status": "passed"
+            },
+            {
+              "id": "inline-matching-protected-content-original-text-and-geometry",
+              "status": "passed"
+            },
+            {
+              "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+              "status": "passed"
+            },
+            {
+              "id": "keyboard-entry-and-escape-without-model-request",
+              "status": "passed"
+            },
+            {
+              "id": "unapproved-sentence-context-disables-explanation",
+              "status": "passed"
+            },
+            {
+              "id": "explicit-current-context-only-and-unchanged-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dark-and-mobile-clamped-layout",
+              "status": "passed"
+            },
+            {
+              "id": "close-cancels-delayed-stream-without-resurrection",
+              "status": "passed"
+            },
+            {
+              "id": "model-failure-and-explicit-retry",
+              "status": "passed"
+            },
+            {
+              "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dynamic-text-stale-card-and-late-shadow-root",
+              "status": "passed"
+            },
+            {
+              "id": "scroll-discovers-later-reading",
+              "status": "passed"
+            },
+            {
+              "id": "visit-pause-keeps-global-preference",
+              "status": "passed"
+            },
+            {
+              "id": "cross-page-delete-removes-all-corresponding-marks",
+              "status": "passed"
+            },
+            {
+              "id": "master-toggle-and-site-disable-clear-and-restore",
+              "status": "passed"
+            },
+            {
+              "id": "permanent-disable-persists-across-reload",
+              "status": "passed"
+            },
+            {
+              "id": "continuous-chinese-saved-study-and-review-context",
+              "status": "passed"
+            },
+            {
+              "id": "anki-reserves-management-action-during-confirmation",
+              "status": "reproduced"
+            },
+            {
+              "id": "learning-tab-unmounts-collection-before-real-export-response",
+              "status": "passed"
+            },
+            {
+              "id": "closed-book-rejects-late-anki-download",
+              "status": "reproduced"
+            },
+            {
+              "id": "remounted-anki-both-privacy-choices-and-persistent-data-preserved",
+              "status": "passed"
+            },
+            {
+              "id": "cancel-then-confirm-clear-on-temporary-collection",
+              "status": "passed"
+            }
+          ],
+          "passedPhases": 21,
+          "reproducedPhases": 2,
+          "contentSha256": "aa9cbdcb02575299d3c32db1860cc11778ecd4899d3553a4c90d640c8f31b0a8",
+          "javascriptAssetsSha256": "a8cc853f0ccf7f41c314a3209fac3148270655862e56122df703512db0350e44",
+          "pageErrors": [],
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "backgroundWindowVerified": true,
+          "studyContext": {
+            "displayedContext": [
+              "我每天学习中文。"
+            ],
+            "displayedCloze": [
+              "我每天____中文。"
+            ],
+            "storedDataPreserved": true,
+            "additionalModelRequests": 0,
+            "evidence": "Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request."
+          },
+          "bookActions": {
+            "lateDownloads": 1,
+            "busyDuringConfirmation": false,
+            "backendExportSucceeded": true,
+            "actualBookUnmounted": true,
+            "evidence": "Native buttons and learning-center tab, real export IPC held until after unmount; callback/Promise delivery instrumentation, not timing."
+          },
+          "screenshotsGenerated": 7
+        },
+        "final": {
+          "passed": true,
+          "cases": [
+            {
+              "id": "default-off-with-existing-saved-entries",
+              "status": "passed"
+            },
+            {
+              "id": "setting-label-follows-cross-page-interface-language",
+              "status": "passed"
+            },
+            {
+              "id": "inline-matching-protected-content-original-text-and-geometry",
+              "status": "passed"
+            },
+            {
+              "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+              "status": "passed"
+            },
+            {
+              "id": "keyboard-entry-and-escape-without-model-request",
+              "status": "passed"
+            },
+            {
+              "id": "unapproved-sentence-context-disables-explanation",
+              "status": "passed"
+            },
+            {
+              "id": "explicit-current-context-only-and-unchanged-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dark-and-mobile-clamped-layout",
+              "status": "passed"
+            },
+            {
+              "id": "close-cancels-delayed-stream-without-resurrection",
+              "status": "passed"
+            },
+            {
+              "id": "model-failure-and-explicit-retry",
+              "status": "passed"
+            },
+            {
+              "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dynamic-text-stale-card-and-late-shadow-root",
+              "status": "passed"
+            },
+            {
+              "id": "scroll-discovers-later-reading",
+              "status": "passed"
+            },
+            {
+              "id": "visit-pause-keeps-global-preference",
+              "status": "passed"
+            },
+            {
+              "id": "cross-page-delete-removes-all-corresponding-marks",
+              "status": "passed"
+            },
+            {
+              "id": "master-toggle-and-site-disable-clear-and-restore",
+              "status": "passed"
+            },
+            {
+              "id": "permanent-disable-persists-across-reload",
+              "status": "passed"
+            },
+            {
+              "id": "continuous-chinese-saved-study-and-review-context",
+              "status": "passed"
+            },
+            {
+              "id": "anki-reserves-management-action-during-confirmation",
+              "status": "passed"
+            },
+            {
+              "id": "learning-tab-unmounts-collection-before-real-export-response",
+              "status": "passed"
+            },
+            {
+              "id": "closed-book-rejects-late-anki-download",
+              "status": "passed"
+            },
+            {
+              "id": "remounted-anki-both-privacy-choices-and-persistent-data-preserved",
+              "status": "passed"
+            },
+            {
+              "id": "cancel-then-confirm-clear-on-temporary-collection",
+              "status": "passed"
+            }
+          ],
+          "passedPhases": 23,
+          "reproducedPhases": 0,
+          "contentSha256": "aa9cbdcb02575299d3c32db1860cc11778ecd4899d3553a4c90d640c8f31b0a8",
+          "javascriptAssetsSha256": "4143cfaeaaf5914e20788659515ca79065663dea06566b645b3baaf65d7a0b84",
+          "pageErrors": [],
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "backgroundWindowVerified": true,
+          "studyContext": {
+            "displayedContext": [
+              "我每天学习中文。"
+            ],
+            "displayedCloze": [
+              "我每天____中文。"
+            ],
+            "storedDataPreserved": true,
+            "additionalModelRequests": 0,
+            "evidence": "Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request."
+          },
+          "bookActions": {
+            "lateDownloads": 0,
+            "busyDuringConfirmation": true,
+            "backendExportSucceeded": true,
+            "actualBookUnmounted": true,
+            "evidence": "Native buttons and learning-center tab, real export IPC held until after unmount; callback/Promise delivery instrumentation, not timing."
+          },
+          "screenshotsGenerated": 7
+        },
+        "initialFinal": "Same23phases passed; clear screenshot caught dialog exit animation. Final repeat waits until dialog hidden and checks menu still opens/closes, excludes initial screenshot.",
+        "cleanupVerified": true,
+        "temporaryProfileProcessesAfterRun": 0,
+        "screenshotsInspected": [
+          "final settled clear screen"
+        ]
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/components/SegmentedControl.vue",
+          "src/features/vocabulary/repository.ts"
+        ],
+        "newFunctionBodies": 104,
+        "changedFiles": [
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/learningModel.ts"
+        ],
+        "netProductionFunctionBodyChange": 0
+      },
+      "scopeBoundary": "Synthetic HTML and temporary non-frontmost visible Edge with local SSE. Native pointer/radio/Enter/Escape operations, held real IPC export callback/Promise. Work counters separate from21round Node timing after own builds/tests terminal; no fullUI speed ratio, live-provider, actualFirefox, device/store/release or universal latency claim. No full regression.",
+      "cachedIntegrationDebt": {
+        "ref": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "postBaselineCommits": 24,
+        "remoteFreshnessVerified": false
+      },
+      "remaining": [
+        "666pending source files and whole ownership omissions",
+        "Large-import raw context/spread and merge work candidates await reproduction",
+        "Highlighter deep longtasks and Range/geometry/wide-owner/ancestor-mutation/scroll order",
+        "Whole-root remount123–151ms; section preview/restore",
+        "Index5k compilation and single NFC/native DOM calls; reading group memory; possible asynchronous publisher feedback",
+        "Cached main post-baseline commits require integration/re-review"
+      ],
+      "referenceRepositoriesChanged": false,
+      "pushed": false,
+      "merged": false
     }
   ]
 }

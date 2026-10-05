@@ -73,6 +73,8 @@ Collections and review records stay in this browser. Turning off saving or clear
 
 Use **Backup & restore** to move your data. The learning center also offers Anki export, with a choice about including source sentences and source information.
 
+Collection management actions stay busy while awaiting confirmation and become available again after cancellation. If a confirmation or export response arrives after you switch from Saved to another learning-center tab, the closed collection view does not continue the action or start a download. Operations already submitted to the background still finish normally.
+
 </details>
 
 ## Related guides

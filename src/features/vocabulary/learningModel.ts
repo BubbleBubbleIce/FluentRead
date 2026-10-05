@@ -1,7 +1,7 @@
 /**
  * @file src/features/vocabulary/learningModel.ts
  * 文件职责：定义单词与句子学习收藏的完整数据模型与纯状态算法，覆盖多语种原文、上下文、掌握度、复习队列、会话推进、导入导出和错误协议。
- * 主要内容：包含权威收藏与复习类型、导入导出、解释合并及会话 guard；学习语境复用统一表达匹配，用一个索引和挖空结果选择真实原句，不重复扫描已选语境。
+ * 主要内容：包含权威收藏与复习类型、导入导出、解释合并、会话 guard 与最近收藏的单次遍历选择；学习语境复用统一表达匹配，用一个索引和挖空结果选择真实原句，不重复扫描已选语境。
  * 模块边界：此文件不访问 IndexedDB、浏览器消息或 UI；repository 负责持久化和清洗，protocol 提供轻量运行时镜像，VocabularyBook.vue 只调用这些纯函数驱动学习流程。
  */
 import {createExpressionIndex, matchExpressions, type ExpressionIndex} from './domain/expressionMatcher';
@@ -18,6 +18,15 @@ export const VOCABULARY_ENTRY_MAX_CONTEXTS = 8;
 export const VOCABULARY_REVIEW_LOG_MAX_PER_ENTRY = 100;
 export const VOCABULARY_LARGE_IMPORT_WARNING_BYTES = 20 * 1024 * 1024;
 export const VOCABULARY_SOURCE_TEXT_MAX = 4_096;
+
+/** 只选择一个最近收藏，按既有时间和 id 顺序打破并列；不复制或排序整本已清洗收藏。 */
+export function latestVocabularyEntry<T extends Pick<VocabularyEntry, 'id' | 'lastSeenAt'>>(entries: readonly T[]): T | undefined {
+  let latest: T | undefined;
+  for (const entry of entries) {
+    if (!latest || (latest.lastSeenAt - entry.lastSeenAt || entry.id.localeCompare(latest.id)) < 0) latest = entry;
+  }
+  return latest;
+}
 
 /** 保留词或句子的表面文字，拒绝超长及无可学习文字的输入；不截断成另一个收藏身份。 */
 export function normalizeLearningSourceText(value: unknown): string {
