@@ -337,7 +337,8 @@
       "tests/requestHeaderRules.test.ts",
       "tests/vocabularyReencounter.test.ts",
       "tests/sentenceActionsMount.test.ts",
-      "tests/freeOfficialWebProviders.test.ts"
+      "tests/freeOfficialWebProviders.test.ts",
+      "tests/translationShortcutSettings.test.ts"
     ],
     "functional": [
       "tests/translationCenterComponent.test.ts",
@@ -454,7 +455,8 @@
       "tests/localInferenceResources.test.ts",
       "tests/speechProgress.test.ts",
       "tests/mangaInferenceClient.test.ts",
-      "tests/mangaInferenceWorker.test.ts"
+      "tests/mangaInferenceWorker.test.ts",
+      "tests/customHotkeyInputLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

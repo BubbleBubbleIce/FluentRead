@@ -669,6 +669,12 @@ node scripts/testing/run-popup-startup-ui-test.cjs \
 
 加载动画另由 `scripts/testing/run-loading-motion-ui-test.cjs` 验证，使用相同的扩展目录、Playwright 与 focus-safe helper 参数。它在测试页面保留 closed ShadowRoot 句柄，检查 15 种动画的真实运动、关闭与系统减少动态效果后的静态反馈，并验证同一文档只解析一份共享样式表。采样窗口覆盖包含停顿的完整动画周期，避免把沙漏停顿误判为失效；跨文档样式隔离与旧浏览器的安全回退也有独立断言。
 
+## 快捷键草稿与录制弹窗
+
+`tests/translationShortcutSettings.test.ts` 使用真实 Vue effectScope 验证三种快捷键的重复选择、延迟打开、取消、确认、清除、配置替换、分区离开和卸载，并检查划词触发字段同步及额外方案冲突。`tests/customHotkeyInputLifecycle.test.ts` 执行实际客户端 SFC 模板、Teleport、按钮事件和 Vue 卸载；DOM 与焦点端口由 Linkedom 提供，检查录制只有一个完成计时器、旧录制不能结束新录制、当前值变化取消旧录制、确认前冲突重验、焦点循环和关闭后不抢走新控件焦点。两模块进入永久四维 100% 覆盖率清单，不使用覆盖率忽略。
+
+生产 Chrome 构建后运行 `node scripts/testing/run-lazy-options-ui-test.cjs --suite shortcut-lifecycle --extension-dir .output/chrome-mv3 --playwright-root <path> --focus-safe-helper <path> --artifacts-dir <path>`。专项验证首次直达划词设置、真实键盘录制与取消、清除保存、切换分区阻止迟到弹窗、390 像素与减少动态效果、传统全文快捷键保存。为在 100 ms 打开延迟内稳定离开，只有该离开用例使用 DOM 导航点击；录制和其他操作使用可信浏览器输入。此专项验证生产扩展设置和存储，不代表真实翻译供应商或 Firefox 运行时。`--suite hotkeys` 继续验证共享弹窗在段落复制、额外悬浮方案和圈选翻译调用方中的兼容性。
+
 ## 模型用量界面
 
 模型用量的独立生产扩展回归使用临时 Edge profile 和同一套防抢焦点 helper：

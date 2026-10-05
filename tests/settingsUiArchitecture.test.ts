@@ -512,7 +512,7 @@ describe('options UI composition architecture', () => {
     expect(quickTranslationProfiles).not.toContain(':disabled="!profile.service"')
     expect(quickTranslationProfiles).toContain(":placeholder=\"t('quickTranslation.followDefault', {value: languageLabel(config.to)})\"")
     expect(quickTranslationProfiles).toContain('const {language, t, translateLegacy} = useUiI18n()')
-    expect(translationShortcutSettings).toContain("t('quickTranslation.conflictProfile', {group})")
+    expect(translationShortcutSettings).toContain("t('quickTranslation.conflictProfile', {group: t(`quickTranslation.heading.${quickTranslationActionKey(conflict.action)}`)})")
     expect(customHotkeyInput).toContain("if (event.key === 'Escape')")
     expect(customHotkeyInput.indexOf("if (event.key === 'Escape')"))
       .toBeLessThan(customHotkeyInput.indexOf('if (!isRecording.value) return;'))
@@ -530,7 +530,7 @@ describe('options UI composition architecture', () => {
     // 圈选快捷键可自定义；启用开关的冲突检查必须读取已解析的快捷键，不能写死 Shift+Z。
     expect(settingsSections).toContain('quickTranslationConflictMessage(resolveAreaTranslationHotkey(config.value.selectionAreaHotkey, config.value.customSelectionAreaHotkey))')
     expect(settingsSections).not.toContain("'Shift+Z'")
-    expect(settingsSections).toContain("useTranslationShortcutSettings(config)")
+    expect(settingsSections).toContain("useTranslationShortcutSettings(config, kind => props.activeSection")
     expect(translationShortcutSettings).toContain('inputBoxTranslationTriggerHotkey(value)')
     expect(quickTranslationProfiles).toContain('inputBoxTranslationTriggerHotkey(props.config.inputBoxTranslationTrigger)')
     expect(translationShortcutSettings).toContain('previousFullPageHotkey')

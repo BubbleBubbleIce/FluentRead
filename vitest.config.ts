@@ -8,7 +8,7 @@ const maxWorkers = Number.isInteger(configuredMaxWorkers) && configuredMaxWorker
 // 独立的 Vitest 配置（与 wxt 构建配置互不影响）
 export default defineConfig({
     // 漫画入口用真实 SFC 模板执行组件测试，同时让 V8 归因到原始 Vue 源码。
-    plugins: [vue({include: /\/src\/features\/image-translation\/ui\/MangaEntry\.vue$/})],
+    plugins: [vue({include: /\/src\/(?:features\/image-translation\/ui\/MangaEntry|ui\/components\/CustomHotkeyInput)\.vue$/})],
     resolve: {
         alias: {
             // 与 wxt 一致：'@' 指向项目根目录
@@ -17,7 +17,7 @@ export default defineConfig({
     },
     test: {
         environment: 'node',
-        testTransformMode: {web: ['**/tests/mangaEntryComponentLifecycle.test.ts']},
+        testTransformMode: {web: ['**/tests/mangaEntryComponentLifecycle.test.ts', '**/tests/customHotkeyInputLifecycle.test.ts']},
         include: ['tests/**/*.test.ts'],
         globalSetup: ['./scripts/testing/vitest-resource-lock.mjs'],
         maxWorkers,

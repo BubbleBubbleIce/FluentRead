@@ -18837,6 +18837,348 @@
         "unownedDocsTools": 3,
         "thresholdsOrOwnershipExclusionsChanged": false
       }
+    },
+    {
+      "batch": "twenty-ninth",
+      "name": "translation-shortcut-draft-recording-timer-focus-and-first-visit-lifecycle",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 198,
+        "sourceReadFunctionBodies": 3378,
+        "pendingFiles": 623,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/ui/components/CustomHotkeyInput.vue"
+        ],
+        "newFunctionBodies": 26,
+        "recheckedFiles": [
+          "src/features/settings/ui/useTranslationShortcutSettings.ts"
+        ],
+        "recheckedFunctionBodies": 35,
+        "partialFiles": [
+          "src/features/settings/ui/SettingsSections.vue"
+        ],
+        "sourceHashes": {
+          "src/features/settings/ui/useTranslationShortcutSettings.ts": {
+            "baseline": "459eb29f8b617068355ff2ef742e6dbf63d3b9790bf87df646db8106c0beead4",
+            "current": "da10c5dc128b1125ca65b88d92ab3073c6df15c84c121f9c88563f0e7e901cee"
+          },
+          "src/ui/components/CustomHotkeyInput.vue": {
+            "baseline": "128a7cce0133364030466f19f72a6deebf10303c22434fa5ba176cda7582c140",
+            "current": "9093093faadb9eaf4b81318e4519e87cadc93496f5678070943f3083256dabf1"
+          },
+          "src/features/settings/ui/SettingsSections.vue": {
+            "baseline": "550871db6fd98250fc54c62a187ca523ff77106c0917c7e3455aac6fff79ca32",
+            "current": "6064212d67084410911f04d6cd9bf4e8b40872bfaaa7ecb776fbb9f902a3ec19"
+          }
+        }
+      },
+      "oldSourceRun": {
+        "baseline": "1a3fbc5d84188839ba4aa119aeee2fc67ab77cc3",
+        "files": 2,
+        "regressionCases": 22,
+        "failed": 22,
+        "passed": 0,
+        "unhandledErrors": 0,
+        "scope": "Original22regression subset against immutable copied old manager and client SFC; later21compatibility cases were added only to the current full43case suite. Invalid earlier fixtures are not counted."
+      },
+      "newExecutedUnitFunctionalCases": 43,
+      "newStaticTestDefinitions": 25,
+      "performance": {
+        "scope": "Deterministic fake-clock pending-work counts in actual Vue manager/client component, not CPU/wall-clock or end-to-end latency benchmark.",
+        "repeatedCustomChoices": {
+          "iterations": 100,
+          "kinds": 3,
+          "oldPendingTimersPerKind": 100,
+          "currentPendingTimersPerKind": 1
+        },
+        "recordingReleases": {
+          "events": 101,
+          "oldPendingTimers": 101,
+          "currentPendingTimers": 1,
+          "afterUnmount": 0
+        },
+        "idleDialogs": "SettingsSections uses visible-only mounting for each of its three CustomHotkeyInput instances; no claim that other setting owners all unmount idle dialogs."
+      },
+      "implementation": {
+        "sharedLifecycle": "One shared three-kind scheduler/owner/rollback implementation replaces duplicated mode/draft orchestration; public template-facing APIs remain.",
+        "firstVisit": "Selection shortcut dialog can mount without visiting translation settings; inactivity closes/restores owned empty draft.",
+        "recording": "One completion timer, generation-guarded async focus and cleanup on close/current value/unmount, confirmation revalidation.",
+        "retiredFixture": "Remove obsolete independent harness-nav shortcut case; verify current paragraph-copy/extra-hover/area callers instead.",
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "files": 5,
+        "cases": 107,
+        "passed": true,
+        "unhandledErrors": 0
+      },
+      "strictCoverage": {
+        "testFiles": 5,
+        "cases": 107,
+        "modules": {
+          "src/features/settings/ui/useTranslationShortcutSettings.ts": {
+            "lines": {
+              "total": 139,
+              "covered": 139,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 32,
+              "covered": 32,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 139,
+              "covered": 139,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 107,
+              "covered": 107,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/ui/components/CustomHotkeyInput.vue": {
+            "lines": {
+              "total": 313,
+              "covered": 313,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 14,
+              "covered": 14,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 313,
+              "covered": 313,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 157,
+              "covered": 157,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "totals": {
+          "lines": {
+            "total": 452,
+            "covered": 452,
+            "skipped": 0,
+            "pct": 100
+          },
+          "statements": {
+            "total": 452,
+            "covered": 452,
+            "skipped": 0,
+            "pct": 100
+          },
+          "functions": {
+            "total": 46,
+            "covered": 46,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branches": {
+            "total": 264,
+            "covered": 264,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branchesTrue": {
+            "total": 0,
+            "covered": 0,
+            "skipped": 0,
+            "pct": 100
+          }
+        },
+        "permanentConfigValidation": {
+          "testFiles": 2,
+          "cases": 43,
+          "passed": true,
+          "inheritsActualPermanentVuePluginAndWebMode": true
+        },
+        "registeredModules": [
+          "src/features/settings/ui/useTranslationShortcutSettings.ts",
+          "src/ui/components/CustomHotkeyInput.vue"
+        ],
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        }
+      },
+      "browser": {
+        "shortcutLifecycle": {
+          "passed": true,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "displayTarget": "secondary",
+            "visible": true,
+            "browserFrontmost": false
+          },
+          "cases": [
+            "first-selection-visit-dialog-confirms-and-persists",
+            "trusted-recording-cancel-preserves-saved-shortcut",
+            "clear-selection-shortcut-restores-icon-trigger",
+            "leaving-before-auto-open-restores-draft",
+            "narrow-reduced-motion-dialog-and-escape",
+            "traditional-full-page-dialog-confirms-and-persists"
+          ],
+          "errors": 0,
+          "screenshotsInspected": 2,
+          "browserClosed": true,
+          "profileRemoved": true
+        },
+        "sharedCallers": {
+          "passed": true,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "displayTarget": "secondary",
+            "visible": true,
+            "browserFrontmost": false
+          },
+          "cases": [
+            "lazy-paragraph-copy-hotkey-dialog-confirms-and-persists",
+            "lazy-quick-profile-hotkey-dialog-confirms-and-persists",
+            "lazy-area-hotkey-trusted-recording-confirms-and-persists"
+          ],
+          "errors": 0,
+          "screenshotsInspected": 1,
+          "browserClosed": true,
+          "profileRemoved": true
+        },
+        "scope": "Production Chrome extension on isolated Edge: actual Options UI, trusted recording and actual config-storage messages. Only leaving within the 100ms open delay uses a synthetic DOM navigation click. Light desktop/narrow and reduced-motion scope; OS dark media alone is not an explicit app-dark-theme test. Not live-provider, real Firefox/device/account or store-release proof.",
+        "remainingTaskBrowserProcesses": 0
+      },
+      "checks": {
+        "compile": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "manifestVerifier": "passed",
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "testAudit": "passed-469-files-6324-static-definitions",
+        "affectedArchitecture": "70-passed-two-existing-ownership-failures-72-cases",
+        "scriptSyntax": "passed",
+        "internalReportValidation": "passed"
+      },
+      "externalMain": {
+        "snapshot": "581aec1862884c037e94d8db0cb5c0162a0c0b74",
+        "integratedSnapshot": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "pendingFiles": [
+          "docs/config/appearance.md",
+          "docs/config/index.md",
+          "docs/contributing/i18n.md",
+          "docs/en/guide/image-translation.md",
+          "docs/guide/features.md",
+          "docs/guide/image-translation.md",
+          "docs/testing.md",
+          "scripts/testing/run-settings-reading-menu-ui-test.cjs",
+          "scripts/testing/run-settings-section-navigation-test.cjs",
+          "src/core/config/diff.ts",
+          "src/core/config/model.ts",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/settings-copy/en-US.json",
+          "src/core/i18n/messages/settings-copy/es-ES.json",
+          "src/core/i18n/messages/settings-copy/fr-FR.json",
+          "src/core/i18n/messages/settings-copy/ja-JP.json",
+          "src/core/i18n/messages/settings-copy/ko-KR.json",
+          "src/core/i18n/messages/settings-copy/ru-RU.json",
+          "src/core/i18n/messages/settings-copy/zh-CN.json",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/image-translation/ui/image-ocr-settings.css",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/CloudConfigBackup.vue",
+          "src/features/settings/ui/ConfigManagement.vue",
+          "src/features/settings/ui/ContextMenuSettings.vue",
+          "src/features/settings/ui/InterfaceSettings.vue",
+          "src/features/settings/ui/PopupLayoutEditor.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/SiteRulePreview.vue",
+          "src/features/settings/ui/components/InterfaceSkinPreview.vue",
+          "src/features/settings/ui/components/SettingsGroup.vue",
+          "src/features/settings/ui/components/SettingsSectionNavigation.vue",
+          "src/features/settings/ui/components/settings-card-heading.css",
+          "src/features/settings/ui/settings-sections.css",
+          "src/features/settings/ui/site-rule-workspace.css",
+          "tests/config.test.ts",
+          "tests/configDiff.test.ts",
+          "tests/i18n.test.ts",
+          "tests/optionsAppNavigationLifecycle.test.ts",
+          "tests/optionsNavigation.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "userscript/languages/es-ES.2d99b815408915e0.json",
+          "userscript/languages/es-ES.ab696920fb9225e3.json",
+          "userscript/languages/es-ES.f1a7334d539fcdc8.json",
+          "userscript/languages/fr-FR.2cd5c897c94576b9.json",
+          "userscript/languages/fr-FR.626fab9340d41614.json",
+          "userscript/languages/fr-FR.af9bc54691b0d35c.json",
+          "userscript/languages/ja-JP.405d608e5efa68e3.json",
+          "userscript/languages/ja-JP.af4a409caaad740e.json",
+          "userscript/languages/ja-JP.ea61eaee75aa194e.json",
+          "userscript/languages/ko-KR.05e957cb9834138c.json",
+          "userscript/languages/ko-KR.46f92a92e874009c.json",
+          "userscript/languages/ko-KR.ce73b2c2a1c6b5d4.json",
+          "userscript/languages/ru-RU.206e24cbfeaa3805.json",
+          "userscript/languages/ru-RU.73c6fde237b96428.json",
+          "userscript/languages/ru-RU.b4fcc2837910a0d7.json"
+        ],
+        "primaryModified": false
+      },
+      "resourceBoundary": {
+        "commit": "de1267ddef8d0ff1d4d9a837977f828062171e16",
+        "remotePublished": false,
+        "languageBytesChangedThisBatch": false
+      },
+      "verificationRepairs": [
+        "Initial unit table missed group callback argument; corrected fixture, only immutable corrected22case baseline counted.",
+        "Linkedom host refs marked raw and teardown awaits Vue focus ticks before removing document globals; early22pass run with3unhandled fixture errors is not accepted.",
+        "ElementPlus inner input is covered by selection wrapper: use actual clickable wrapper in browser.",
+        "macOS actual display is Option+D; browser assertion accepts platform Alt/Option labels without changing product behavior.",
+        "Static conflict-copy contract updated for inline translated group; behavioral conflict cases remain strict-covered.",
+        "Old shared hotkeys browser route points to removed harness settings; replace retired case with current three callers."
+      ],
+      "remainingDebt": [
+        "623source files await complete reading/tracing; read does not guarantee bug-free behavior.",
+        "Existing image content/runtime strict coverage and native decode/draw/allocation/mutation work remain pending.",
+        "68cached-main changed files since d5 are unintegrated; current evidence describes this isolated audit checkout."
+      ],
+      "architectureDebt": {
+        "executableModules": 15,
+        "documentationTools": 3,
+        "wholeRepositoryGatePassed": false
+      }
     }
   ]
 }

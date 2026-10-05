@@ -1,7 +1,7 @@
 <!--
  @file src/ui/components/CustomHotkeyInput.vue
  文件职责：提供可复用的自定义快捷键对话框，支持键盘录制、预设选择、冲突校验、清除与无障碍确认流程。
- 主要内容：通过 Teleport 渲染模态层，接收 modelValue/currentValue/context props，捕获 keydown/keyup 组合并调用 parseHotkey 与 validateHotkeyConflicts，展示录制、错误、警告和成功状态，发出 update、confirm、cancel。
+ 主要内容：通过 Teleport 渲染模态层，接收显示、当前值与业务校验 props，单计时器完成键盘录制；关闭、重开、配置变化与卸载清理旧录制，确认前重验冲突，异步焦点只归当前弹窗所有，发出 update、confirm、cancel。
  模块边界：组件只产生规范化快捷键值，不持久化配置、不绑定具体悬浮或划词动作，也不注册页面级永久监听；调用方决定上下文和保存策略，解析规则归 core/hotkey。
 -->
 <template>
@@ -173,6 +173,18 @@ const conflictWarning = ref('');
 const inputField = ref<HTMLElement>();
 const dialogRoot = ref<HTMLElement>();
 const previouslyFocusedElement = ref<HTMLElement | null>(null);
+let recordingTimer: ReturnType<typeof setTimeout> | null = null;
+let recordingGeneration = 0;
+let visibilityGeneration = 0;
+let disposed = false;
+
+function stopRecording() {
+  if (recordingTimer !== null) clearTimeout(recordingTimer);
+  recordingTimer = null;
+  recordingGeneration += 1;
+  isRecording.value = false;
+  pressedKeys.value.clear();
+}
 
 // 解析当前快捷键
 const parsedHotkey = computed<ParsedHotkey | null>(() => {
@@ -206,21 +218,24 @@ const recommendedHotkeys = [
 
 // 监听当前值变化
 watch(() => props.currentValue, (newValue) => {
+  stopRecording();
   currentHotkey.value = newValue || '';
 });
 
 watch(dialogVisible, (visible) => {
+  const generation = ++visibilityGeneration;
+  stopRecording();
   if (visible) {
     currentHotkey.value = props.currentValue || '';
-    isRecording.value = false;
-    pressedKeys.value.clear();
     errorMessage.value = '';
     conflictWarning.value = '';
     validateCurrentHotkey(currentHotkey.value);
     previouslyFocusedElement.value = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
-    nextTick(() => dialogRoot.value?.focus({ preventScroll: true }));
+    nextTick(() => {
+      if (!disposed && generation === visibilityGeneration && dialogVisible.value) dialogRoot.value?.focus({preventScroll: true});
+    });
   } else {
     restorePreviousFocus();
   }
@@ -228,10 +243,15 @@ watch(dialogVisible, (visible) => {
 
 function restorePreviousFocus() {
   const previous = previouslyFocusedElement.value;
+  const root = dialogRoot.value;
   previouslyFocusedElement.value = null;
-  nextTick(() => previous?.isConnected && previous.focus({preventScroll: true}));
+  if (!previous) return;
+  nextTick(() => {
+    const current = document.activeElement;
+    if (previous.isConnected && (!current || current === document.body || root?.contains(current))) previous.focus({preventScroll: true});
+  });
 }
-onBeforeUnmount(restorePreviousFocus);
+onBeforeUnmount(() => {disposed = true; visibilityGeneration += 1; stopRecording(); restorePreviousFocus();});
 
 function trapFocus(event: KeyboardEvent) {
   const root = dialogRoot.value;
@@ -289,8 +309,10 @@ function validateCurrentHotkey(hotkeyString: string) {
 
 // 开始录制快捷键
 async function startRecording() {
-  if (isRecording.value) return;
+  if (disposed || !dialogVisible.value || isRecording.value) return;
 
+  stopRecording();
+  const generation = recordingGeneration;
   isRecording.value = true;
   pressedKeys.value.clear();
   errorMessage.value = '';
@@ -298,11 +320,12 @@ async function startRecording() {
 
   // 聚焦输入框
   await nextTick();
-  inputField.value?.focus();
+  if (!disposed && generation === recordingGeneration && dialogVisible.value && isRecording.value) inputField.value?.focus();
 }
 
 // 处理按键按下
 function handleKeyDown(event: KeyboardEvent) {
+  if (disposed || !dialogVisible.value) return;
   if (event.key === 'Escape') {
     event.preventDefault();
     event.stopPropagation();
@@ -334,14 +357,16 @@ function handleKeyDown(event: KeyboardEvent) {
 
 // 处理按键释放
 function handleKeyUp(event: KeyboardEvent) {
-  if (!isRecording.value) return;
+  if (disposed || !dialogVisible.value || !isRecording.value) return;
 
   event.preventDefault();
   event.stopPropagation();
 
   // 延迟一点再生成快捷键，确保所有键都被记录
-  setTimeout(() => {
-    if (pressedKeys.value.size > 0) {
+  if (recordingTimer !== null) clearTimeout(recordingTimer);
+  recordingTimer = setTimeout(() => {
+    recordingTimer = null;
+    if (!disposed && dialogVisible.value && isRecording.value && pressedKeys.value.size > 0) {
       generateHotkeyFromKeys();
     }
   }, 100);
@@ -369,28 +394,27 @@ function generateHotkeyFromKeys() {
     currentHotkey.value = [...modifiers, regularKey].join('+');
   }
 
-  isRecording.value = false;
-  pressedKeys.value.clear();
+  stopRecording();
 }
 
 // 选择预设快捷键
 function selectPreset(value: string) {
   currentHotkey.value = value;
-  isRecording.value = false;
-  pressedKeys.value.clear();
+  stopRecording();
 }
 
 // 清除快捷键
 function clearHotkey() {
   currentHotkey.value = 'none';
-  isRecording.value = false;
-  pressedKeys.value.clear();
+  stopRecording();
   errorMessage.value = '';
   conflictWarning.value = '';
 }
 
 // 确认
 function handleConfirm() {
+  if (disposed || !dialogVisible.value) return;
+  validateCurrentHotkey(currentHotkey.value);
   if (!canConfirm.value) return;
 
   emit('confirm', currentHotkey.value);
@@ -399,8 +423,7 @@ function handleConfirm() {
 // 取消
 function handleCancel() {
   currentHotkey.value = props.currentValue || '';
-  isRecording.value = false;
-  pressedKeys.value.clear();
+  stopRecording();
   errorMessage.value = '';
   conflictWarning.value = '';
   emit('cancel');

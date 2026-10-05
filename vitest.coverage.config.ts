@@ -1,17 +1,19 @@
 import {resolve} from 'node:path';
 import {defineConfig} from 'vitest/config';
+import vue from '@vitejs/plugin-vue';
 
 const configuredMaxWorkers = Number(process.env.FLUENTREAD_TEST_MAX_WORKERS);
 const maxWorkers = Number.isInteger(configuredMaxWorkers) && configuredMaxWorkers > 0 ? configuredMaxWorkers : 2;
 
 /**
- * 严格覆盖率边界只包含已经迁出 WXT/Vue glue 的可执行模块。
+ * 严格覆盖率边界包含有精确行为测试的可执行模块；Vue 弹窗必须执行实际客户端模板。
  *
  * Step 1: 新业务先进入 src，再为行为补齐精确测试。
  * Step 2: 四个维度达到 100% 后才能纳入此清单。
  * Step 3: 架构审计保证未纳入的文件都有其他验证归属，不能靠排除隐藏业务逻辑。
  */
 export default defineConfig({
+    plugins: [vue({include: /\/src\/ui\/components\/CustomHotkeyInput\.vue$/})],
     resolve: {
         alias: {
             '@': resolve(__dirname, '.'),
@@ -19,6 +21,7 @@ export default defineConfig({
     },
     test: {
         environment: 'node',
+        testTransformMode: {web: ['**/tests/customHotkeyInputLifecycle.test.ts']},
         globalSetup: ['./scripts/testing/vitest-resource-lock.mjs'],
         maxWorkers,
         minWorkers: 1,
@@ -26,6 +29,8 @@ export default defineConfig({
         // 按真实规则内容验证共享词书样式，与普通测试配置一致。
         css: {include: [/vocabulary-reencounter\.css/]},
         include: [
+            'tests/translationShortcutSettings.test.ts',
+            'tests/customHotkeyInputLifecycle.test.ts',
             'tests/webDavBackup.test.ts',
             'tests/webDavHttpIntegration.test.ts',
             'tests/webDavConnection.test.ts',
@@ -422,6 +427,8 @@ export default defineConfig({
             reportsDirectory: 'coverage/core',
             reporter: ['text', 'json-summary', 'html'],
             include: [
+                'src/features/settings/ui/useTranslationShortcutSettings.ts',
+                'src/ui/components/CustomHotkeyInput.vue',
                 'src/core/config/cloudSync.ts',
                 'src/platform/webdav/connection.ts',
                 'src/platform/webdav/api.ts',

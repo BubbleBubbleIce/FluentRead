@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 821,
-    "functions": 14703,
+    "functions": 14718,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 79,
-        "functions": 1402,
-        "lines": 19296
+        "functions": 1415,
+        "lines": 19232
       },
       "src/features/share-card": {
         "files": 7,
@@ -283,8 +283,8 @@
       },
       "src/ui": {
         "files": 16,
-        "functions": 143,
-        "lines": 3837
+        "functions": 145,
+        "lines": 3860
       },
       "userscript/SettingsPanel.vue": {
         "files": 1,
@@ -1294,8 +1294,8 @@
     },
     {
       "file": "src/features/settings/ui/useTranslationShortcutSettings.ts",
-      "sha256": "459eb29f8b617068355ff2ef742e6dbf63d3b9790bf87df646db8106c0beead4",
-      "functionBodies": 23,
+      "sha256": "da10c5dc128b1125ca65b88d92ab3073c6df15c84c121f9c88563f0e7e901cee",
+      "functionBodies": 35,
       "status": "source-read-and-traced"
     },
     {
@@ -1638,6 +1638,12 @@
       "file": "src/shared/image/types.ts",
       "sha256": "05f31fb733eccb815f360d37d3b392d659b4a538487d402f9fa7cde97f0be8a6",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/CustomHotkeyInput.vue",
+      "sha256": "9093093faadb9eaf4b81318e4519e87cadc93496f5678070943f3083256dabf1",
+      "functionBodies": 26,
       "status": "source-read-and-traced"
     },
     {
@@ -2221,7 +2227,6 @@
     "src/shared/function/sha256.ts",
     "src/shared/onnx/wasmBinary.ts",
     "src/shared/onnx/webgpu.ts",
-    "src/ui/components/CustomHotkeyInput.vue",
     "src/ui/components/FeatureEnableCard.vue",
     "src/ui/components/GlossaryLibrarySelect.vue",
     "src/ui/components/InterfaceBackdrop.vue",
@@ -2274,7 +2279,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue630pending source/function chains and29module runtime strict100 holes. MangaEntry actual component/template/idle/consent/late responses and compositor total budget now tested; next trace packaged WXT manga mount/resource/persistence and real model boundaries plus native allocation/draw/JSON/base64, host mutation/ancestor clipping/status scans, OCR grouping/inpaint, highlighter/remount/section/vocabulary debt. Preserve23integrated-main pending sources; shared rewritten d5c4b0e8now50unintegrated files (35new after e093shortcut PR829) remain read-only/no blind history merge or publishing.",
+    "Continue623pending source/function chains and existing image runtime strict-100 holes. Reconcile68actual cached-main source/resource changes after integrated d5 through581aec18, without blindly merging rewritten history; re-review changed sources and refresh inventory. Current main snapshot is a local cached ref observation, not remote freshness proof. No publishing authorization.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2292,12 +2297,13 @@
     "Twenty-sixth28module image gate remains failed: runtime statements/lines98.98 branches94.95 functions100;674affected assertions pass,27other modules four100. No ignore/exclusion/threshold changes. Actual MangaEntry.vue consent/reveal/focus/idle/late-persist component behavior remains unverified by mocked wrapper, needs actual Vue/native UI tests. Compositor per-patch15s does not establish total multi-patch budget; continue late compose/ownership and native allocation/draw/base64 workloads.",
     "Twenty-seventh29module gate remains failed only for image runtime statements/lines98.98 branches94.95 functions100;718affected assertions pass,28other modules including actual MangaEntry client setup/template and compositor four100. No ignores/exclusions/threshold changes. Prior26 component behavior and compositor aggregate-budget debts now covered with precise Vue/native diagnostic scope; actual WXT manga mount/resource-message/persistence/model/download/native-input environment and remaining runtime ownership/late guards still need distinct validation. Native synchronous Canvas draw cannot be preempted; allocations/decodes/base64 and host geometry remain performance debt.",
     "Shared origin/main and clean primary externally advanced during final27validation from e093cached/8bccprimary to d5c4b0e8shortcut PR829.50files differ from original imported f776,35new since e093; not integrated. Audit821file inventory and191reviewed hashes cover isolated audit checkout only. Reconcile actual source changes without blindly merging rewritten history, then refresh pending source/function inventory and affected tests.",
-    "Twenty-eighth reconciled all50actual main changes through d5 via clean three-way source patch without merging rewritten history. Other imported source files remain pending function review.9selected modules four100 and256affected cases pass; this does not close image runtime/full repository ownership gaps. Userscript language JSON pinned to a verified local snapshot commit, not remotely published or live-download verified. Settings shortcut dialog delayed opening and deep preview/restore costs remain pending."
+    "Twenty-eighth reconciled all50actual main changes through d5 via clean three-way source patch without merging rewritten history. Other imported source files remain pending function review.9selected modules four100 and256affected cases pass; this does not close image runtime/full repository ownership gaps. Userscript language JSON pinned to a verified local snapshot commit, not remotely published or live-download verified. Settings shortcut dialog delayed opening and deep preview/restore costs remain pending.",
+    "Twenty-ninth: shortcut settings and actual CustomHotkeyInput client SFC are now permanently owned by strict coverage, both four100;43new executed cases and107affected pass. Actual Options storage/9browser flows verified.15existing executable-module and3documentation-tool ownership gaps remain. Source review198files/3378bodies,623pending. Cached main581aec18 contains68changed files after integrated d5, including SettingsSections; not integrated yet. Primary clean at d5 and not modified by this task. Previous image/runtime debt entries are historical measurements with unresolved scope, not latest successful whole-repository coverage. Local userscript resource commit remains unpublished."
   ],
   "progress": {
-    "sourceReadFiles": 197,
-    "sourceReadFunctionBodies": 3340,
-    "pendingFiles": 624,
+    "sourceReadFiles": 198,
+    "sourceReadFunctionBodies": 3378,
+    "pendingFiles": 623,
     "goalComplete": false
   },
   "observations": [
@@ -2744,6 +2750,15 @@
       ],
       "status": "source-read-and-traced-twenty-eighth",
       "issue": "Section old/new mount, async result ownership and source settlement repaired with12old-source failures; lazy preview avoids glossary snapshot/identity/text reads for fresh candidates. Actual bounded glossary/request computation and native DOM measured separately from production13phase flow. Six new files fully read; data catalog cleanup is partial review, not full catalog coverage."
+    },
+    {
+      "files": [
+        "src/features/settings/ui/useTranslationShortcutSettings.ts",
+        "src/ui/components/CustomHotkeyInput.vue",
+        "src/features/settings/ui/SettingsSections.vue"
+      ],
+      "status": "fixed-and-verified-twenty-ninth",
+      "issue": "Shared three-kind draft owner/timer/rollback lifecycle prevents delayed opens after preset changes, inactive sections, config replacement and scope disposal; section shortcut now checks active profiles. Actual recording component uses one completion timer and cleans on close/current-value change/unmount; old sessions cannot finish a new recording, confirmation rechecks conflicts, nextTick focus cannot steal a new control. First direct selection visit no longer depends on the unrelated translation section having mounted; dialogs mount only while visible. Manager re-read and widget complete template/script/CSS read; SettingsSections is only a scoped partial review."
     }
   ]
 }

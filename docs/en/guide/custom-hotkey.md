@@ -17,6 +17,8 @@ Keyboard shortcuts and mouse actions can trigger webpage, selection, and hover t
 
 Open hover, selection, or the relevant feature settings in FluentRead. Choose a trigger or use its custom-shortcut field.
 
+Custom page, hover, and selection shortcuts are saved when you confirm. Canceling or leaving that settings section closes the dialog and keeps the previous trigger. You can record a selection shortcut on your first visit. If an enabled extra translation profile uses the same combination, choose another before confirming.
+
 The area shortcut lives in area translation settings, where you can pick a preset or record your own combination. See [area translation](/en/guide/area-translation).
 
 Paragraph copy lives in **Settings → Translation → Paragraph copy**, where you can change the shortcut and choose what lands on the clipboard:

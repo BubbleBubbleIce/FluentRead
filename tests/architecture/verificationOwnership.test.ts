@@ -79,7 +79,7 @@ function listFiles(directory: string): string[] {
 
 function coverageSourcePaths(): Set<string> {
     const source = readFileSync(projectPath('vitest.coverage.config.ts'), 'utf8');
-    const paths = source.match(/['"]src\/[^'"]+\.ts['"]/gu) ?? [];
+    const paths = source.match(/['"]src\/[^'"]+\.(?:ts|vue)['"]/gu) ?? [];
     return new Set(paths.map((path) => path.slice(1, -1)));
 }
 
@@ -169,8 +169,6 @@ const BUILD_ONLY_SRC_ALLOWLIST = new Set([
     'src/core/i18n/messages/ru-RU.ts',
     'src/core/i18n/messages/zh-CN.ts',
     'src/ui/i18n.ts',
-    // 设置快捷键组合器只协调 Vue ref、Element Plus 消息和 SFC 对话框；纯冲突识别由 strict coverage 验证，交互由隔离浏览器回归验证。
-    'src/features/settings/ui/useTranslationShortcutSettings.ts',
     // WXT ShadowRootUi/Vue 挂载适配器绑定真实 DOM 与组件生命周期；由 shadowUi 单测和双浏览器构建验证。
     'src/platform/shadow-ui/vue.ts',
     // 配置存储运行时只识别 MV3/MV2 背景身份并装配 WXT、IndexedDB 或 runtime 端口；行为由纯端口测试和双浏览器构建验证。

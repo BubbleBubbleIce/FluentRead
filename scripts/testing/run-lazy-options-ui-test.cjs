@@ -3,7 +3,7 @@
 /**
  * @file scripts/testing/run-lazy-options-ui-test.cjs
  * 文件职责：在隔离 Edge 中验证 Options 按需分区挂载、深链接、配置持久化以及 Popup 基础交互。
- * 主要内容：确认首次通用设置不创建未访问的服务、视频、界面、数据和学习组件，依次访问这些分区后返回仍保留实例；验证布尔开关快速关闭、重开和 Popup 跨页面同步，并覆盖服务选择器、抽屉、About 互斥显示与异步深链接。
+ * 主要内容：确认首次通用设置不创建未访问的服务、视频、界面、数据和学习组件，依次访问这些分区后返回仍保留实例；验证布尔开关快速关闭、重开和 Popup 跨页面同步，并覆盖服务选择器、抽屉、About 互斥显示与异步深链接；shortcut-lifecycle 子集单独验证首次划词录制、取消/清除、离开分区与窄屏对话框。
  * 模块边界：只操作本次临时 profile 和真实扩展页面，不请求真实翻译服务，不连接用户浏览器，不替代完整设置中心回归。
  */
 
@@ -24,7 +24,7 @@ const artifactsDir = path.resolve(argument('artifacts-dir', '/private/tmp/fluent
 const browserPath = argument('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge');
 const timeout = Number(argument('timeout', '30000'));
 const suite = argument('suite', 'lazy-sections');
-assert.ok(['lazy-sections', 'hotkeys', 'section-hotkeys'].includes(suite), 'suite 仅支持 lazy-sections、hotkeys 或 section-hotkeys');
+assert.ok(['lazy-sections', 'hotkeys', 'section-hotkeys', 'shortcut-lifecycle'].includes(suite), 'suite 仅支持 lazy-sections、hotkeys、section-hotkeys 或 shortcut-lifecycle');
 
 assert.ok(fs.existsSync(path.join(extensionDir, 'manifest.json')), `扩展产物不存在：${extensionDir}`);
 assert.ok(fs.existsSync(focusHelper), `防抢焦点 helper 不存在：${focusHelper}`);
@@ -170,6 +170,65 @@ async function visible(locator) {
     await page.reload({waitUntil: 'domcontentloaded'});
     await waitForOptionsReady(page);
 
+    if (suite === 'shortcut-lifecycle') {
+      await persistConfig(page, {selectionTranslatorMode: 'bilingual', selectionTranslatorTrigger: 'icon', customSelectionTranslatorHotkey: '',
+        hotkey: 'Control', customHotkey: '', floatingBallHotkey: 'Alt+T', customFloatingBallHotkey: '', quickTranslationProfiles: []}, 'shortcut-lifecycle-seed');
+      await page.goto(`${optionsUrl}#settings-selection`, {waitUntil: 'domcontentloaded'});
+      await page.locator('#settings-selection').waitFor({state: 'visible', timeout});
+      assert.equal(await page.locator('#settings-translation').count(), 0, 'first selection visit does not mount translation settings');
+      const chooseCustom = async name => {
+        await page.getByRole('combobox', {name, exact: true}).locator('xpath=ancestor::*[contains(@class, "el-select__wrapper")][1]').click();
+        await page.getByRole('option', {name: /自定义/}).click();
+      };
+      const dialog = page.getByRole('dialog', {name: '自定义快捷键', exact: true});
+      await chooseCustom('划词翻译触发方式');
+      await dialog.waitFor({state: 'visible', timeout});
+      await screenshot(page, '01-selection-first-dialog');
+      await dialog.getByRole('button', {name: 'F10', exact: true}).click();
+      await dialog.getByRole('button', {name: '确认', exact: true}).click();
+      await dialog.waitFor({state: 'hidden', timeout});
+      await page.waitForFunction(async () => {const r=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});const c=typeof r.value==='string'?JSON.parse(r.value):r.value;return c.customSelectionTranslatorHotkey==='F10' && c.selectionTranslatorTrigger==='custom';});
+      report.cases.push('first-selection-visit-dialog-confirms-and-persists');
+      await page.getByRole('button', {name: '编辑划词翻译快捷键', exact: true}).click();
+      await dialog.waitFor({state: 'visible', timeout});
+      await dialog.getByRole('button', {name: '当前快捷键为 F10', exact: true}).click();
+      await page.keyboard.down('Alt'); await page.keyboard.press('d'); await page.keyboard.up('Alt');
+      await dialog.getByRole('button', {name: /^当前快捷键为 (?:Alt|Option)\+D$/}).waitFor({state:'visible',timeout});
+      await dialog.getByRole('button', {name: '取消', exact: true}).click();
+      await dialog.waitFor({state: 'hidden', timeout});
+      assert.equal((await readConfig(page)).customSelectionTranslatorHotkey, 'F10');
+      report.cases.push('trusted-recording-cancel-preserves-saved-shortcut');
+      await page.getByRole('button', {name: '编辑划词翻译快捷键', exact: true}).click();
+      await dialog.waitFor({state: 'visible', timeout});
+      await dialog.getByRole('button', {name: '清除快捷键', exact: true}).click();
+      await dialog.getByRole('button', {name: '确认', exact: true}).click();
+      await dialog.waitFor({state: 'hidden', timeout});
+      await page.waitForFunction(async () => {const r=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});const c=typeof r.value==='string'?JSON.parse(r.value):r.value;return c.customSelectionTranslatorHotkey==='' && c.selectionTranslatorTrigger==='icon';});
+      report.cases.push('clear-selection-shortcut-restores-icon-trigger');
+      await chooseCustom('划词翻译触发方式');
+      await page.evaluate(() => document.querySelector('nav button[data-section="settings-general"]').click());
+      await page.waitForTimeout(200); assert.equal(await dialog.count(), 0);
+      await navigateOptions(page, 'settings-selection');
+      assert.equal((await readConfig(page)).selectionTranslatorTrigger, 'icon');
+      report.cases.push('leaving-before-auto-open-restores-draft');
+      await chooseCustom('划词翻译触发方式'); await dialog.waitFor({state:'visible',timeout});
+      await dialog.getByRole('button', {name:'关闭自定义快捷键',exact:true}).click();
+      await dialog.waitFor({state:'hidden',timeout});
+      await page.setViewportSize({width:390,height:844}); await page.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});
+      await chooseCustom('划词翻译触发方式'); await dialog.waitFor({state:'visible',timeout});
+      const geometry=await dialog.evaluate(element=>{const r=element.getBoundingClientRect();return {inside:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,overflow:document.documentElement.scrollWidth>innerWidth};});
+      assert.ok(geometry.inside && !geometry.overflow); await screenshot(page,'02-selection-narrow-reduced');
+      await page.keyboard.press('Escape'); await dialog.waitFor({state:'hidden',timeout});
+      report.cases.push('narrow-reduced-motion-dialog-and-escape');
+      await page.setViewportSize({width:1440,height:1000}); await navigateOptions(page, 'settings-translation');
+      await chooseCustom('全文翻译快捷键'); await dialog.waitFor({state:'visible',timeout});
+      await dialog.getByRole('button',{name:'F9',exact:true}).click(); await dialog.getByRole('button',{name:'确认',exact:true}).click();
+      await dialog.waitFor({state:'hidden',timeout});
+      await page.waitForFunction(async()=>{const r=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});const c=typeof r.value==='string'?JSON.parse(r.value):r.value;return c.customFloatingBallHotkey==='F9';});
+      report.cases.push('traditional-full-page-dialog-confirms-and-persists');
+      assert.deepEqual(report.consoleErrors, []); await page.close(); report.ok=true; return;
+    }
+
     if (suite === 'section-hotkeys') {
       await navigateOptions(page, 'settings-translation');
       const section = page.locator('[data-testid="quick-translation-profiles"][data-action="section"]');
@@ -227,18 +286,17 @@ async function visible(locator) {
     }
 
     if (suite === 'hotkeys') {
-      await navigateOptions(page, 'settings-harness');
-      await page.locator('#settings-harness').getByRole('radio', {name: '快捷键', exact: true}).click();
-      await page.locator('.harness-hotkey-button').click();
+      await persistConfig(page, {paragraphCopyEnabled: true, paragraphCopyHotkey: 'custom', customParagraphCopyHotkey: 'F6',
+        selectionAreaEnabled: true, selectionAreaHotkey: 'custom', customSelectionAreaHotkey: 'F7', quickTranslationProfiles: []}, 'shared-hotkey-seed');
+      await navigateOptions(page, 'settings-translation');
       const dialog = page.getByRole('dialog', {name: '自定义快捷键', exact: true});
+      await page.locator('.paragraph-copy-hotkey-custom button').click();
       await dialog.waitFor({state: 'visible', timeout});
       await dialog.getByRole('button', {name: 'F9', exact: true}).click();
       await dialog.getByRole('button', {name: '确认', exact: true}).click();
       await dialog.waitFor({state: 'hidden', timeout});
-      await page.waitForFunction(() => document.querySelector('.harness-hotkey-button')?.textContent?.trim() === 'F9');
-      assert.equal((await readConfig(page)).harness.customHotkey, 'F9');
-      report.cases.push('lazy-harness-hotkey-dialog-confirms-and-persists');
-      await navigateOptions(page, 'settings-translation');
+      await page.waitForFunction(async () => {const r=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});const c=typeof r.value==='string'?JSON.parse(r.value):r.value;return c.customParagraphCopyHotkey==='F9';});
+      report.cases.push('lazy-paragraph-copy-hotkey-dialog-confirms-and-persists');
       await page.getByTestId('quick-profile-add-hover').click();
       await dialog.waitFor({state: 'visible', timeout});
       await dialog.getByRole('button', {name: 'F10', exact: true}).click();
@@ -246,6 +304,18 @@ async function visible(locator) {
       await dialog.waitFor({state: 'hidden', timeout});
       assert.equal((await readConfig(page)).quickTranslationProfiles.some(profile => profile.hotkey === 'F10'), true);
       report.cases.push('lazy-quick-profile-hotkey-dialog-confirms-and-persists');
+      await navigateOptions(page, 'settings-image-translation');
+      const areaDetails = page.locator('.area-translation-details');
+      if (await areaDetails.getAttribute('open') === null) await areaDetails.locator(':scope > summary').click();
+      await page.locator('.area-hotkey-custom button').click();
+      await dialog.waitFor({state: 'visible', timeout});
+      await dialog.locator('.hotkey-input-field').click();
+      await page.keyboard.press('F8');
+      await dialog.getByRole('button', {name: '当前快捷键为 F8', exact: true}).waitFor({state: 'visible', timeout});
+      await dialog.getByRole('button', {name: '确认', exact: true}).click();
+      await dialog.waitFor({state: 'hidden', timeout});
+      await page.waitForFunction(async () => {const r=await chrome.runtime.sendMessage({type:'configStorageRead',key:'local:config'});const c=typeof r.value==='string'?JSON.parse(r.value):r.value;return c.customSelectionAreaHotkey==='F8';});
+      report.cases.push('lazy-area-hotkey-trusted-recording-confirms-and-persists');
       await screenshot(page, 'lazy-hotkeys');
       assert.deepEqual(report.consoleErrors, []);
       report.ok = true;
@@ -457,7 +527,9 @@ async function visible(locator) {
   } finally {
     saveReport();
     await session?.close();
+    report.browserClosed = true;
     fs.rmSync(profileDir, {recursive: true, force: true});
+    report.profileRemoved = true;
     saveReport();
   }
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
