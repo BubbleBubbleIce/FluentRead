@@ -169,7 +169,7 @@
       "src/features/image-translation": {
         "files": 47,
         "functions": 857,
-        "lines": 7026
+        "lines": 7030
       },
       "src/features/input-translation": {
         "files": 6,
@@ -1102,7 +1102,7 @@
     },
     {
       "file": "src/features/image-translation/content/mangaCompositor.ts",
-      "sha256": "f587e51e49128dedaeccb4ce62e58198dd4acc0dcd8ecefe4d603fdf7d70234c",
+      "sha256": "107f358d85f3f48426da9bea4ad4e957de24399d2d72583255775059862bb844",
       "functionBodies": 8,
       "status": "source-read-and-traced"
     },
@@ -2244,7 +2244,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue630pending source/function chains. First test actual19body MangaEntry Vue consent/async generation/idle/focus with real Vue and closed UI, then compositor aggregate budget and runtime warm/late compose/source/disconnect strict100 gaps. Measure native decode/draw, mutation/identity/ancestor clip/status scans and base64/packet cache JSON costs. Preserve OCR punctuation/inpaint/vertical grouping/highlighter/remount/section/vocabulary debt and23integrated-main pending sources. Shared rewritten e093 has15unintegrated files; no blind history merge or publishing.",
+    "Continue630pending source/function chains and29module runtime strict100 holes. MangaEntry actual component/template/idle/consent/late responses and compositor total budget now tested; next trace packaged WXT manga mount/resource/persistence and real model boundaries plus native allocation/draw/JSON/base64, host mutation/ancestor clipping/status scans, OCR grouping/inpaint, highlighter/remount/section/vocabulary debt. Preserve23integrated-main pending sources; shared rewritten d5c4b0e8now50unintegrated files (35new after e093shortcut PR829) remain read-only/no blind history merge or publishing.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2259,7 +2259,9 @@
     "Image content runtime expanded coverage gate remains failed: statements/lines97.48 branches90.25 functions97.77. All495 affected assertions pass;20other modules four100. Preserve21module scope/100thresholds; add actual state-machine tests, no ignores or exclusions to mask missing branches.",
     "Shared cached origin/main moved to e0939fe9f16a125b310f51663fd194bb5c52f2cb during24. Since original imported f776,15files now differ after cloud backup copy commit60a57d79:1already-pending Vue source+7JSON bundles+6docs+1browser fixture; not integrated. Earlier rewritten5de9 tree equivalence proof remains historical only; do not infer current tree equal or current remote freshness.",
     "Twenty-fifth full25module image gate remains failed: runtime statements/lines98.98 branches94.8 functions100;593affected assertions pass,24other modules four100. No ignores, exclusions or threshold changes. Warm queue races, late compose/request/source/disconnect guards and remaining geometry/mutation cases still need meaningful validation.",
-    "Twenty-sixth28module image gate remains failed: runtime statements/lines98.98 branches94.95 functions100;674affected assertions pass,27other modules four100. No ignore/exclusion/threshold changes. Actual MangaEntry.vue consent/reveal/focus/idle/late-persist component behavior remains unverified by mocked wrapper, needs actual Vue/native UI tests. Compositor per-patch15s does not establish total multi-patch budget; continue late compose/ownership and native allocation/draw/base64 workloads."
+    "Twenty-sixth28module image gate remains failed: runtime statements/lines98.98 branches94.95 functions100;674affected assertions pass,27other modules four100. No ignore/exclusion/threshold changes. Actual MangaEntry.vue consent/reveal/focus/idle/late-persist component behavior remains unverified by mocked wrapper, needs actual Vue/native UI tests. Compositor per-patch15s does not establish total multi-patch budget; continue late compose/ownership and native allocation/draw/base64 workloads.",
+    "Twenty-seventh29module gate remains failed only for image runtime statements/lines98.98 branches94.95 functions100;718affected assertions pass,28other modules including actual MangaEntry client setup/template and compositor four100. No ignores/exclusions/threshold changes. Prior26 component behavior and compositor aggregate-budget debts now covered with precise Vue/native diagnostic scope; actual WXT manga mount/resource-message/persistence/model/download/native-input environment and remaining runtime ownership/late guards still need distinct validation. Native synchronous Canvas draw cannot be preempted; allocations/decodes/base64 and host geometry remain performance debt.",
+    "Shared origin/main and clean primary externally advanced during final27validation from e093cached/8bccprimary to d5c4b0e8shortcut PR829.50files differ from original imported f776,35new since e093; not integrated. Audit821file inventory and191reviewed hashes cover isolated audit checkout only. Reconcile actual source changes without blindly merging rewritten history, then refresh pending source/function inventory and affected tests."
   ],
   "progress": {
     "sourceReadFiles": 191,
@@ -2687,6 +2689,16 @@
       "file": "src/features/image-translation/content/runtime.ts",
       "status": "source-read-and-traced-twenty-sixth",
       "issue": "134bodies rechecked after warm ownership correction. Existing warming slot shared only if its AbortController remains live; canceled slot may be overwritten by a fresh task chained after existing warmTail. Existing identity-checked finally preserves replacement slot. Two new actual state-machine cases protect same-checkpoint visible return and repeated nearby reconstruction/late bitmap close. Full native runtime+controls+presentation+reader/session+compositor reproduction uses actual DOM/Canvas/FileReader/bitmap with reactive config/deterministic client ports: old loading row remains, current reconstitutes red patch,4provider calls unchanged, all5/6native bitmaps close after late delivery and repeated scroll adds no decode. Actual RAF callbacks manually flushed to force race, not real input latency/model proof. Functions100, statements/lines98.98 branches94.95 remain failed gate; other warm/late compose/source/disconnect guards still need validation."
+    },
+    {
+      "file": "src/features/image-translation/content/mangaCompositor.ts",
+      "status": "source-rechecked-and-verified-twenty-seventh",
+      "issue": "All8bodies re-read and traced. One monotonic performance.now()+15000 deadline before canvas allocation covers source drawing, every decode/draw and final delivery; each decode timer gets only remaining budget. Abort reason remains first, finally closes owned native bitmaps and late finish closes late ones; failure zeroes owned canvas, borrowed source untouched.19unit cases four100; exact old f410 source5fail14pass;6new executed compositor cases include5old failures and1independent-budget compatibility case.8native old/current comparisons use actual image/Canvas/bitmap with diagnostic clock/timer ports: old accepts after aggregate expiry, current stops and clears canvas, closes both late decodes,14second diagnostic budget produces identical red pixels; source-draw stops0decodes, patch-draw stops1. Synchronous native draw cannot be preempted and is checked after return; no hard main-thread blocking cap or measured performance speedup claim."
+    },
+    {
+      "file": "src/features/image-translation/ui/MangaEntry.vue",
+      "status": "source-rechecked-and-verified-twenty-seventh",
+      "issue": "All19script bodies and full template/CSS re-read. Component production source unchanged from exact f410.38actual client SFC/Vue renderer cases cover real template/events/aria/spinner/error/complete states, explicit consent, busy deduplication, ready/active/confirmed/unavailable behavior, Error/string retries, late check/confirm success and rejection after close/route/unavailable/unmount, old/new ownership, mouse/touch/pen/focus-visible/Esc/idle cleanup. Narrow Vue plugin and web transform only for this test avoids Node SSR-only template; beforeAll asserts actual render, actual VNode refs and controls exercised. Four100source V8coverage. Native actual component+scoped CSS diagnostic closed Shadow mount with trusted keyboard/mouse/CDPtouch proves2.7second focus retention and nonfocused collapse, spinner movement, consent close/retry/late responses,390×844dark/reduced/disabled animation, host hostile CSS does not alter13px modal, original text preserved;7screenshots all inspected, mount/browser/profile removed. Injected i18n/resource/persist ports and diagnostic mount do not prove actual WXT wrapper/guard, extension persistence, model/download/message/provider quality or realFirefox/devices. Prior mocked-wrapper component behavioral debt closed only for this explicit scope."
     }
   ]
 }

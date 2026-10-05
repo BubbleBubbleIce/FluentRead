@@ -1,13 +1,17 @@
 /**
  * @file src/features/image-translation/content/mangaCompositor.ts
  * 文件职责：将漫画的局部无损图块直接合成到原始图片或已捕获的可读画布，省去整页 PNG 编码与再解码。
- * 主要内容：逐块解码、核对尺寸、及时关闭位图；取消、超时或解码失败释放画布，迟到的位图仍关闭；完成前保留宿主原图可读。
+ * 主要内容：整页绘制与解码共用十五秒预算，逐块解码、核对尺寸、及时关闭位图；取消、超时或解码失败释放画布，迟到的位图仍关闭；完成前保留宿主原图可读。
  * 模块边界：只操作调用方图片和压缩结果，不访问模型、翻译服务、缓存或宿主样式。
  */
 import type {MangaCompressedPage} from '../mangaPatchResult';
 export async function composeMangaPage(source: HTMLImageElement | HTMLCanvasElement, page: MangaCompressedPage, signal: AbortSignal): Promise<HTMLCanvasElement> {
+    const deadline = performance.now() + 15_000;
     const canvas = document.createElement('canvas');
-    const check = () => {if (signal.aborted) throw new DOMException('图片翻译已取消', 'AbortError');};
+    const check = () => {
+        if (signal.aborted) throw new DOMException('图片翻译已取消', 'AbortError');
+        if (performance.now() >= deadline) throw new Error('译图加载超时');
+    };
     try {
         check(); canvas.width = page.width; canvas.height = page.height;
         const context = canvas.getContext('2d');
@@ -23,7 +27,7 @@ export async function composeMangaPage(source: HTMLImageElement | HTMLCanvasElem
                     if (error) reject(error); else resolve(value!);
                 };
                 const abort = () => finish(new DOMException('图片翻译已取消', 'AbortError'));
-                const timeout = setTimeout(() => finish(new Error('译图加载超时')), 15_000);
+                const timeout = setTimeout(() => finish(new Error('译图加载超时')), Math.max(0, deadline - performance.now()));
                 signal.addEventListener('abort', abort, {once: true});
                 try {
                     void createImageBitmap(new Blob([patch.bytes as BlobPart], {type: 'image/png'}))

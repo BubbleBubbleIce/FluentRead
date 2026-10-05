@@ -17501,6 +17501,1093 @@
         "boundary": "Read existing shared cached refs only; external change is not integrated or live remote freshness proof. Rewritten5de9history had tree identical to original import; e093cloud backup copy now changes tree. No blind merge/rebase or remote write."
       },
       "remaining": "630pending files plus actual MangaEntry Vue/native behavior debt, unchanged runtime strict gate and compositing/pipeline/performance/architecture coverage. Goal active; primary/reference projects untouched, no publishing."
+    },
+    {
+      "batch": "twenty-seventh",
+      "name": "shared-manga-composition-deadline-and-actual-client-vue-consent-verification",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 191,
+        "sourceReadFunctionBodies": 3195,
+        "pendingFiles": 630,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 44,
+      "newStaticTestDefinitions": 22,
+      "oldSourceRun": {
+        "baselineRevision": "f410f035288807810879d4fcf17c7d9a101f3d70",
+        "cases": 19,
+        "failed": 5,
+        "passed": 14,
+        "unhandledErrors": 0,
+        "reason": "Exact immutable compositor via Vite pre-transform: aggregate second-decode expiry, source/patch drawing before a later patch, and final source-only/last-patch drawing fail old implementation; independent subsequent invocation compatibility case passed old and current. Actual Vue source is unchanged and not reported as a repaired bug."
+      },
+      "implementation": {
+        "composition": "Capture one monotonic15second deadline before canvas allocation; source draw, each patch decode/draw and final delivery share remaining budget. Preserve abort/late bitmap cleanup and borrowed source ownership.",
+        "componentProductionChanged": false,
+        "testInfrastructure": "Narrow actual Vue SFC plugin and client test transform only for manga entry lifecycle file; assert render function and execute actual template/refs/handlers with Vue custom renderer; no additional Vite SSR server needed.",
+        "productionFunctionBodyDelta": 0,
+        "retiredPublicFunctions": 0,
+        "thresholdChanges": false,
+        "newIgnores": 0,
+        "limitations": "Native synchronous draw cannot be interrupted mid-call; only detect elapsed deadline on return and stop subsequent work. No elapsed performance benchmark in this batch."
+      },
+      "affectedTests": {
+        "files": 26,
+        "cases": 718,
+        "passed": true,
+        "unhandledErrors": 0,
+        "componentCases": 38,
+        "compositorCases": 19
+      },
+      "strictCoverage": {
+        "passed": false,
+        "modules": 29,
+        "total": {
+          "statements": 99.74,
+          "branches": 98.7,
+          "functions": 100,
+          "lines": 99.74
+        },
+        "runtime": {
+          "statements": 98.98,
+          "branches": 94.95,
+          "functions": 100,
+          "lines": 98.98
+        },
+        "otherModulesFour100": 28,
+        "component": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "compositor": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0,
+        "uncoveredRuntimeLocations": {
+          "statements": [
+            {
+              "start": {
+                "line": 157,
+                "column": 0
+              },
+              "end": {
+                "line": 157,
+                "column": 77
+              }
+            },
+            {
+              "start": {
+                "line": 158,
+                "column": 0
+              },
+              "end": {
+                "line": 158,
+                "column": 13
+              }
+            },
+            {
+              "start": {
+                "line": 509,
+                "column": 0
+              },
+              "end": {
+                "line": 509,
+                "column": 27
+              }
+            },
+            {
+              "start": {
+                "line": 510,
+                "column": 0
+              },
+              "end": {
+                "line": 510,
+                "column": 15
+              }
+            },
+            {
+              "start": {
+                "line": 511,
+                "column": 0
+              },
+              "end": {
+                "line": 511,
+                "column": 5
+              }
+            },
+            {
+              "start": {
+                "line": 661,
+                "column": 0
+              },
+              "end": {
+                "line": 661,
+                "column": 95
+              }
+            },
+            {
+              "start": {
+                "line": 662,
+                "column": 0
+              },
+              "end": {
+                "line": 662,
+                "column": 42
+              }
+            },
+            {
+              "start": {
+                "line": 663,
+                "column": 0
+              },
+              "end": {
+                "line": 663,
+                "column": 9
+              }
+            },
+            {
+              "start": {
+                "line": 951,
+                "column": 0
+              },
+              "end": {
+                "line": 951,
+                "column": 157
+              }
+            },
+            {
+              "start": {
+                "line": 952,
+                "column": 0
+              },
+              "end": {
+                "line": 952,
+                "column": 19
+              }
+            },
+            {
+              "start": {
+                "line": 953,
+                "column": 0
+              },
+              "end": {
+                "line": 953,
+                "column": 9
+              }
+            }
+          ],
+          "branches": [
+            {
+              "start": {
+                "line": 139,
+                "column": 48
+              },
+              "end": {
+                "line": 139,
+                "column": 73
+              }
+            },
+            {
+              "start": {
+                "line": 144,
+                "column": 39
+              },
+              "end": {
+                "line": 144,
+                "column": 46
+              }
+            },
+            {
+              "start": {
+                "line": 146,
+                "column": 60
+              },
+              "end": {
+                "line": 146,
+                "column": 67
+              }
+            },
+            {
+              "start": {
+                "line": 149,
+                "column": 97
+              },
+              "end": {
+                "line": 149,
+                "column": 111
+              }
+            },
+            {
+              "start": {
+                "line": 156,
+                "column": 64
+              },
+              "end": {
+                "line": 158,
+                "column": 13
+              }
+            },
+            {
+              "start": {
+                "line": 161,
+                "column": 38
+              },
+              "end": {
+                "line": 161,
+                "column": 55
+              }
+            },
+            {
+              "start": {
+                "line": 171,
+                "column": 29
+              },
+              "end": {
+                "line": 171,
+                "column": 130
+              }
+            },
+            {
+              "start": {
+                "line": 252,
+                "column": 121
+              },
+              "end": {
+                "line": 252,
+                "column": 134
+              }
+            },
+            {
+              "start": {
+                "line": 432,
+                "column": 29
+              },
+              "end": {
+                "line": 432,
+                "column": 43
+              }
+            },
+            {
+              "start": {
+                "line": 492,
+                "column": 27
+              },
+              "end": {
+                "line": 492,
+                "column": 41
+              }
+            },
+            {
+              "start": {
+                "line": 508,
+                "column": 34
+              },
+              "end": {
+                "line": 511,
+                "column": 5
+              }
+            },
+            {
+              "start": {
+                "line": 532,
+                "column": 30
+              },
+              "end": {
+                "line": 532,
+                "column": 66
+              }
+            },
+            {
+              "start": {
+                "line": 671,
+                "column": 133
+              },
+              "end": {
+                "line": 671,
+                "column": 140
+              }
+            },
+            {
+              "start": {
+                "line": 673,
+                "column": 82
+              },
+              "end": {
+                "line": 673,
+                "column": 89
+              }
+            },
+            {
+              "start": {
+                "line": 675,
+                "column": 72
+              },
+              "end": {
+                "line": 675,
+                "column": 79
+              }
+            },
+            {
+              "start": {
+                "line": 736,
+                "column": 4
+              },
+              "end": {
+                "line": 736,
+                "column": 6
+              }
+            },
+            {
+              "start": {
+                "line": 743,
+                "column": 24
+              },
+              "end": {
+                "line": 743,
+                "column": 54
+              }
+            },
+            {
+              "start": {
+                "line": 745,
+                "column": 24
+              },
+              "end": {
+                "line": 745,
+                "column": 52
+              }
+            },
+            {
+              "start": {
+                "line": 778,
+                "column": 28
+              },
+              "end": {
+                "line": 778,
+                "column": 50
+              }
+            },
+            {
+              "start": {
+                "line": 853,
+                "column": 27
+              },
+              "end": {
+                "line": 853,
+                "column": 41
+              }
+            },
+            {
+              "start": {
+                "line": 869,
+                "column": 34
+              },
+              "end": {
+                "line": 869,
+                "column": 71
+              }
+            },
+            {
+              "start": {
+                "line": 877,
+                "column": 113
+              },
+              "end": {
+                "line": 877,
+                "column": 120
+              }
+            },
+            {
+              "start": {
+                "line": 879,
+                "column": 125
+              },
+              "end": {
+                "line": 879,
+                "column": 149
+              }
+            },
+            {
+              "start": {
+                "line": 912,
+                "column": 54
+              },
+              "end": {
+                "line": 912,
+                "column": 61
+              }
+            },
+            {
+              "start": {
+                "line": 918,
+                "column": 50
+              },
+              "end": {
+                "line": 918,
+                "column": 57
+              }
+            },
+            {
+              "start": {
+                "line": 923,
+                "column": 50
+              },
+              "end": {
+                "line": 923,
+                "column": 57
+              }
+            },
+            {
+              "start": {
+                "line": 939,
+                "column": 18
+              },
+              "end": {
+                "line": 939,
+                "column": 42
+              }
+            },
+            {
+              "start": {
+                "line": 948,
+                "column": 121
+              },
+              "end": {
+                "line": 948,
+                "column": 130
+              }
+            },
+            {
+              "start": {
+                "line": 950,
+                "column": 50
+              },
+              "end": {
+                "line": 953,
+                "column": 9
+              }
+            },
+            {
+              "start": {
+                "line": 956,
+                "column": 55
+              },
+              "end": {
+                "line": 956,
+                "column": 157
+              }
+            },
+            {
+              "start": {
+                "line": 968,
+                "column": 55
+              },
+              "end": {
+                "line": 968,
+                "column": 79
+              }
+            },
+            {
+              "start": {
+                "line": 930,
+                "column": 58
+              },
+              "end": {
+                "line": 930,
+                "column": 65
+              }
+            },
+            {
+              "start": {
+                "line": 931,
+                "column": 88
+              },
+              "end": {
+                "line": 931,
+                "column": 121
+              }
+            },
+            {
+              "start": {
+                "line": 1145,
+                "column": 71
+              },
+              "end": {
+                "line": 1145,
+                "column": 90
+              }
+            },
+            {
+              "start": {
+                "line": 1152,
+                "column": 36
+              },
+              "end": {
+                "line": 1152,
+                "column": 62
+              }
+            }
+          ]
+        },
+        "debt": "Twenty-seventh29module gate remains failed only for image runtime statements/lines98.98 branches94.95 functions100;718affected assertions pass,28other modules including actual MangaEntry client setup/template and compositor four100. No ignores/exclusions/threshold changes. Prior26 component behavior and compositor aggregate-budget debts now covered with precise Vue/native diagnostic scope; actual WXT manga mount/resource-message/persistence/model/download/native-input environment and remaining runtime ownership/late guards still need distinct validation. Native synchronous Canvas draw cannot be preempted; allocations/decodes/base64 and host geometry remain performance debt."
+      },
+      "nativeComponentAndCompositor": {
+        "passed": true,
+        "sourceSha256": {
+          "ui": "fdb69c4d33cd6c16cba174c10a019032957cda12c0d6d96214c573be29b91741",
+          "baseline": "f587e51e49128dedaeccb4ce62e58198dd4acc0dcd8ecefe4d603fdf7d70234c",
+          "current": "107f358d85f3f48426da9bea4ad4e957de24399d2d72583255775059862bb844"
+        },
+        "bundleSha256": {
+          "ui": "8e956a123ffe566ce8f01d3a8c6fdf1c87f10b8d3edb71bcccf3da2176c86a96",
+          "baseline": "ac3dc74535c2f8447d631a13ac7493f62c3be19aaa732f671bd8881f83edbc76",
+          "current": "b3a9ce000c0ddb004bd37515eac16bd39d2bdd2fed9ecb9f5edb3d0b22584907"
+        },
+        "harnessSha256": "925cc28bcc0b24199084198366d7ccb63bcbb1e52ba34e20eb12dfd37028a3ee",
+        "scope": "Actual MangaEntry.vue client setup/template/scoped CSS in a diagnostic closed Shadow mount; only i18n and injected resource/persistence ports are diagnostic. Actual compositor with native image decoding, Canvas and ImageBitmap; injected monotonic clock/timer callbacks test deadlines, not elapsed performance. No WXT mount, actual model download, real extension persistence, provider quality or Firefox-runtime claim.",
+        "ui": {
+          "idle": {
+            "inspect": 0,
+            "persist": 0,
+            "toggle": 0,
+            "active": false,
+            "dialog": false,
+            "dialogText": "",
+            "busy": "false",
+            "pressed": "false",
+            "expanded": false,
+            "focusVisible": false,
+            "focused": false,
+            "spinner": false,
+            "animation": null,
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "focus": {
+            "inspect": 0,
+            "persist": 0,
+            "toggle": 0,
+            "active": false,
+            "dialog": false,
+            "dialogText": "",
+            "busy": "false",
+            "pressed": "false",
+            "expanded": true,
+            "focusVisible": true,
+            "focused": true,
+            "spinner": false,
+            "animation": null,
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "escaped": {
+            "inspect": 0,
+            "persist": 0,
+            "toggle": 0,
+            "active": false,
+            "dialog": false,
+            "dialogText": "",
+            "busy": "false",
+            "pressed": "false",
+            "expanded": false,
+            "focusVisible": false,
+            "focused": false,
+            "spinner": false,
+            "animation": null,
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "busy": {
+            "inspect": 1,
+            "persist": 0,
+            "toggle": 0,
+            "active": false,
+            "dialog": false,
+            "dialogText": "",
+            "busy": "true",
+            "pressed": "false",
+            "expanded": true,
+            "focusVisible": false,
+            "focused": false,
+            "spinner": true,
+            "animation": "fr-manga-entry-spin-audit27",
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "spinnerMoves": true,
+          "consent": {
+            "inspect": 1,
+            "persist": 0,
+            "toggle": 0,
+            "active": false,
+            "dialog": true,
+            "dialogText": "漫画翻译×首次使用，先准备阅读资源需要下载约 30 MB 的文字识别资源，复杂画面另需约 197 MB 的文字清除资源。下载一次后可重复使用。首次等待可能较长。图片在本地处理，识别出的文字交给你选择的翻译服务。准备资源并开始稍后漫画设置",
+            "busy": "false",
+            "pressed": "false",
+            "expanded": true,
+            "focusVisible": false,
+            "focused": false,
+            "spinner": false,
+            "animation": null,
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "lateCheck": {
+            "inspect": 2,
+            "persist": 0,
+            "toggle": 0,
+            "active": false,
+            "dialog": false,
+            "dialogText": "",
+            "busy": "false",
+            "pressed": "false",
+            "expanded": true,
+            "focusVisible": false,
+            "focused": false,
+            "spinner": false,
+            "animation": null,
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "lateSave": {
+            "inspect": 5,
+            "persist": 1,
+            "toggle": 2,
+            "active": false,
+            "dialog": false,
+            "dialogText": "",
+            "busy": "false",
+            "pressed": "false",
+            "expanded": false,
+            "focusVisible": false,
+            "focused": false,
+            "spinner": false,
+            "animation": null,
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "touch": {
+            "inspect": 6,
+            "persist": 3,
+            "toggle": 4,
+            "active": false,
+            "dialog": false,
+            "dialogText": "",
+            "busy": "false",
+            "pressed": "false",
+            "expanded": true,
+            "focusVisible": false,
+            "focused": false,
+            "spinner": false,
+            "animation": null,
+            "transition": "0.24s, 0.24s",
+            "closed": true,
+            "source": "宿主原文保持不变"
+          },
+          "narrow": {
+            "width": 390,
+            "height": 844,
+            "dialogWidth": 320,
+            "inside": true,
+            "fontSize": "13px",
+            "colorScheme": "dark",
+            "transition": "0s"
+          },
+          "reducedMotionAnimation": "none",
+          "disabledAnimation": "none",
+          "finalCalls": {
+            "inspect": 7,
+            "persist": 3,
+            "toggle": 4,
+            "settings": 0
+          },
+          "sourcePreserved": true,
+          "closedShadow": true,
+          "mountRemoved": true
+        },
+        "compositor": [
+          {
+            "version": "baseline",
+            "mode": "shared-timeout",
+            "outcome": "success",
+            "atDeadline": null,
+            "decodes": 2,
+            "closes": 2,
+            "draws": 3,
+            "clock": 15000,
+            "canvasReleased": false,
+            "timers": 0,
+            "pixel": [
+              255,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "version": "baseline",
+            "mode": "within-budget",
+            "outcome": "success",
+            "atDeadline": null,
+            "decodes": 2,
+            "closes": 2,
+            "draws": 3,
+            "clock": 14000,
+            "canvasReleased": false,
+            "timers": 0,
+            "pixel": [
+              255,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "version": "baseline",
+            "mode": "source-draw",
+            "outcome": "success",
+            "decodes": 2,
+            "closes": 2,
+            "draws": 3,
+            "clock": 15000,
+            "canvasReleased": false,
+            "timers": 0,
+            "pixel": [
+              255,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "version": "baseline",
+            "mode": "patch-draw",
+            "outcome": "success",
+            "decodes": 2,
+            "closes": 2,
+            "draws": 3,
+            "clock": 15000,
+            "canvasReleased": false,
+            "timers": 0,
+            "pixel": [
+              255,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "version": "current",
+            "mode": "shared-timeout",
+            "outcome": "译图加载超时",
+            "atDeadline": "译图加载超时",
+            "decodes": 2,
+            "closes": 2,
+            "draws": 2,
+            "clock": 15000,
+            "canvasReleased": true,
+            "timers": 0,
+            "pixel": null
+          },
+          {
+            "version": "current",
+            "mode": "within-budget",
+            "outcome": "success",
+            "atDeadline": null,
+            "decodes": 2,
+            "closes": 2,
+            "draws": 3,
+            "clock": 14000,
+            "canvasReleased": false,
+            "timers": 0,
+            "pixel": [
+              255,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "version": "current",
+            "mode": "source-draw",
+            "outcome": "译图加载超时",
+            "decodes": 0,
+            "closes": 0,
+            "draws": 1,
+            "clock": 15000,
+            "canvasReleased": true,
+            "timers": 0,
+            "pixel": null
+          },
+          {
+            "version": "current",
+            "mode": "patch-draw",
+            "outcome": "译图加载超时",
+            "decodes": 1,
+            "closes": 1,
+            "draws": 2,
+            "clock": 15000,
+            "canvasReleased": true,
+            "timers": 0,
+            "pixel": null
+          }
+        ],
+        "screenshotsGenerated": 7,
+        "screenshotsInspected": [
+          "idle",
+          "keyboard-focus",
+          "checking",
+          "consent",
+          "confirm-busy",
+          "confirm-error",
+          "narrow-dark-consent"
+        ],
+        "pageErrors": [],
+        "cleanupErrors": [],
+        "profileRemoved": true,
+        "backgroundWindowVerified": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground"
+      },
+      "browser": {
+        "passed": true,
+        "phases": 22,
+        "cases": [
+          "HAR technical identifiers stay unchanged without requests; repeated primary XSRF failures are skipped",
+          "missing languages exposes preparation action",
+          "real language download, OCR, translation and replacement",
+          "independent viewport reader preserves recognized original alongside translation",
+          "restore and redisplay reuse result without requests or source mutation",
+          "scroll retains same decoded bitmap",
+          "second image hover survives unrelated live DOM updates",
+          "DOM geometry matches source: contain-padding-border",
+          "DOM geometry matches source: cover-padding-border",
+          "DOM geometry matches source: none-padding-border",
+          "DOM geometry matches source: ancestor-clipping",
+          "DOM geometry matches source: ancestor-scroll-clipping",
+          "dynamic source change removes old translation",
+          "loading Cancel retains the same attached hovered focused row and button during progress",
+          "cancel never installs a late result",
+          "retry works after cancellation",
+          "injected offscreen channel closure retries once with a fresh request and installs a valid bitmap",
+          "transparent PNG hides original letters while translated bitmap remains visible",
+          "restoring transparent source releases only the extension opacity lease",
+          "host opacity change removes old replacement and preserves the host value",
+          "image removal cleans overlay",
+          "consumed cancellation ID can be cancelled again across real Offscreen routing without starting OCR/provider"
+        ],
+        "javascriptAssetsSha256": "5cac6f6acf594ebe9cad3b7d8394307696b43c1898f710c876c0e69e7a8b92be",
+        "actualArtifactsMatch": true,
+        "screenshotsGenerated": 15,
+        "screenshotsInspected": [
+          "02-translated",
+          "08-cancel-hover-stability"
+        ],
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "backgroundWindowVerified": true,
+        "profileRemoved": true,
+        "scopedRemainingProfileProcesses": {
+          "nativeComponentProfiles": 0,
+          "imageFlowProfiles": 0
+        },
+        "pageErrors": [],
+        "cleanupErrors": [],
+        "boundary": "Current Chrome production ordinary image flow/native Tesseract/public language data, deterministic Google/HAR. Distinct from manga component/compositor diagnostic harness and real manga/WXT model message/persistence/provider/Firefox/account/device/store proof."
+      },
+      "fixtureCorrections": [
+        "Initial external SSR component setup harness36cases passed but V8reportedVue0; replaced with standard narrowed Vue SFC/client transform and actual template renderer, adding2template tests.",
+        "Strict temporary config first lacked Vue plugin, then absolute-file transform pattern did not match; explicit actual render assertion and proper **/tests pattern corrected harness only.",
+        "Native initial HTML lacked UTF8charset, causing original-text comparison mojibake; first full browser/profile cleaned, charset fixed in fixture only.",
+        "Static test audit rejected2dynamic title expressions asduplicate; replaced phase loop with named tuple table,38executedcases retained and final467file audit passed."
+      ],
+      "checks": {
+        "compile": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 467,
+          "staticDefinitions": 6279
+        },
+        "architecture": {
+          "files": 4,
+          "cases": 829,
+          "passedCases": 827,
+          "failedCases": 2,
+          "unchangedExecutableOwnershipOmissions": 15,
+          "unchangedDocToolOmissions": 3
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "sourceReview": {
+        "newFiles": [],
+        "newFunctionBodies": 0,
+        "recheckedFiles": [
+          "src/features/image-translation/content/mangaCompositor.ts",
+          "src/features/image-translation/ui/MangaEntry.vue"
+        ],
+        "recheckedFunctionBodies": 27,
+        "changedFiles": [
+          "src/features/image-translation/content/mangaCompositor.ts"
+        ],
+        "inventoryFiles": 821,
+        "inventoryFunctions": 14694,
+        "cachedIntegratedPendingSources": [
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/handlers/webDavBackup.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/config/catalog.ts",
+          "src/core/config/freeTranslation.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WebDavBackup.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceCatalogItem.vue",
+          "src/features/settings/ui/services/freeTranslationChecks.ts",
+          "src/platform/google-drive/api.ts",
+          "src/platform/webdav/api.ts",
+          "src/providers/translation/free-extra-web.ts",
+          "src/providers/translation/free-web.ts",
+          "src/services/config/cloudBackupClient.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/config/webDavBackup.ts"
+        ],
+        "componentActualBehaviorVerified": true,
+        "noNewSourceReadCountClaim": true
+      },
+      "cachedMain": {
+        "snapshot": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "lastOriginalImported": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "additionalChange": "60a57d79087157d9102432d0fd1cb787bf093f35",
+        "pendingIntegrationFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/custom-hotkey.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/webdav.md",
+          "docs/guide/custom-hotkey.md",
+          "docs/guide/privacy.md",
+          "docs/guide/webdav.md",
+          "docs/testing.md",
+          "scripts/testing/run-lazy-options-ui-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/content/quickTranslationRuntime.ts",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/quickTranslation.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/full-page-translation/content/sectionTranslation.ts",
+          "src/features/quick-translation/content/index.ts",
+          "src/features/section-translation/content/index.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/ParagraphCopySettings.vue",
+          "src/features/settings/ui/QuickTranslationProfiles.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SectionTranslationSettings.vue",
+          "src/features/settings/ui/useTranslationShortcutSettings.ts",
+          "tests/i18n.test.ts",
+          "tests/quickTranslation.test.ts",
+          "tests/quickTranslationContentFeature.test.ts",
+          "tests/quickTranslationRuntime.test.ts",
+          "tests/sectionTranslationRegion.test.ts",
+          "tests/sectionTranslationRuntime.test.ts",
+          "userscript/languages/es-ES.5232b36c3c6cecf4.json",
+          "userscript/languages/fr-FR.9c540bb3afe7620f.json",
+          "userscript/languages/ja-JP.cd7bf483a90eadad.json",
+          "userscript/languages/ko-KR.810c33beac3ca576.json",
+          "userscript/languages/ru-RU.5f38998c7b689b22.json",
+          "userscript/vite.config.ts"
+        ],
+        "boundary": "Existing shared cached refs and primary externally advanced during final27report validation to shortcut PR829. No fetch or primary edit by this audit.50files differ from original imported f776;35since previous e093, all unintegrated. Ledger/inventory/tests cover isolated audit checkout, not newest primary. Remote freshness not queried, no blind merge/rebase or publishing.",
+        "previousSnapshot": "e0939fe9f16a125b310f51663fd194bb5c52f2cb",
+        "newExternalIntegrationFilesSincePreviousSnapshot": [
+          "docs/en/guide/custom-hotkey.md",
+          "docs/guide/custom-hotkey.md",
+          "docs/testing.md",
+          "scripts/testing/run-lazy-options-ui-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "src/app/content/quickTranslationRuntime.ts",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/quickTranslation.ts",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/full-page-translation/content/sectionTranslation.ts",
+          "src/features/quick-translation/content/index.ts",
+          "src/features/section-translation/content/index.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/ParagraphCopySettings.vue",
+          "src/features/settings/ui/QuickTranslationProfiles.vue",
+          "src/features/settings/ui/SectionTranslationSettings.vue",
+          "src/features/settings/ui/useTranslationShortcutSettings.ts",
+          "tests/i18n.test.ts",
+          "tests/quickTranslation.test.ts",
+          "tests/quickTranslationContentFeature.test.ts",
+          "tests/quickTranslationRuntime.test.ts",
+          "tests/sectionTranslationRegion.test.ts",
+          "tests/sectionTranslationRuntime.test.ts",
+          "userscript/languages/es-ES.5232b36c3c6cecf4.json",
+          "userscript/languages/fr-FR.9c540bb3afe7620f.json",
+          "userscript/languages/ja-JP.cd7bf483a90eadad.json",
+          "userscript/languages/ko-KR.810c33beac3ca576.json",
+          "userscript/languages/ru-RU.5f38998c7b689b22.json",
+          "userscript/vite.config.ts"
+        ],
+        "newExternalCommits": [
+          "80b1f4925e758476c7f18e79c5466bcf35a11fd0",
+          "f882f84bbf5a61bb35882d670ea7cec2dc652c82",
+          "d5c4b0e85c0281d037cb68c9a7dbf04fff606561"
+        ]
+      },
+      "remaining": "630pending sources, unchanged strict runtime/architecture gates, packaged manga WXT/model/message/persistence and performance debt. Goal remains active; primary externally updated to PR829, task did not edit it; reference projects not used or modified, no publishing.50cached-main changes not integrated, requiring separate source reconciliation and affected validation.",
+      "externalPrimaryChange": {
+        "previousObservedHead": "8bcc29789d34e981901ca02cc95c7c01a37d5cd9",
+        "currentObservedHead": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "currentWorkingTreeClean": true,
+        "taskModifiedPrimary": false,
+        "sourceCountsAndVerificationBoundToAuditCheckout": true
+      }
     }
   ]
 }

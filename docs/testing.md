@@ -793,6 +793,10 @@ node scripts/testing/run-image-translation-flow-test.cjs \
 
 图片单元与功能测试另覆盖低置信噪声、坐标回映、语言与图片缓存隔离、取消队列、有限并发保序去重、失败取消同批请求、同步消息异常清理及旧请求迟到清理。像素修补微基准只反映图像处理步骤，不代表 OCR 和网络请求的整体加速倍数。
 
+`pnpm exec vitest run tests/mangaEntryComponentLifecycle.test.ts tests/mangaCompositor.test.ts` 定向验证漫画入口和合成器。入口测试通过真实 Vue SFC 的客户端模板与 renderer 执行资源确认、按钮事件、焦点、闲置计时器、换章和卸载后的迟到响应；资源检查与保存由注入端口提供，不是实际模型下载或扩展配置持久化。`vitest.config.ts` 仅为该组件测试使用客户端转换，并断言真实 render 已生成，避免 Node 默认 SSR 转换让模板未执行。原生 DOM、闭合 Shadow Root、CSS、加载动画、触摸和窄屏仍须隔离浏览器验证。
+
+漫画合成器的绘制和全部图块解码共用从调用开始计算的 15 秒截止时间，每块只使用剩余预算。测试验证多块等待、最后一次绘制、取消、迟到位图关闭和独立调用的预算。同步原生 Canvas 绘制无法中途抢占；返回后检测耗时并停止后续工作、释放自有画布，不把该预算描述为主线程阻塞的硬上限。
+
 
 ## 圈选独立阅读流程
 

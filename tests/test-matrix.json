@@ -435,6 +435,7 @@
       "tests/mangaReader.test.ts",
       "tests/mangaSites.test.ts",
       "tests/mangaEntry.test.ts",
+      "tests/mangaEntryComponentLifecycle.test.ts",
       "tests/mangaQuality.test.ts",
       "tests/mangaTypography.test.ts",
       "tests/mangaOcr.test.ts",
