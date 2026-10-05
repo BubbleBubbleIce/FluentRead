@@ -154,7 +154,7 @@
     <!-- 翻译服务 -->
     <section v-if="hasVisitedSection('settings-services')" v-show="props.activeSection === 'settings-services'" id="settings-services" class="settings-section">
       <SettingsPanel name="connections" :active="props.activePanel">
-      <ServiceCatalog
+      <ServiceCatalog :active="viewActive && props.activeSection === 'settings-services'" :context="config"
         :service="selectedConfigurationService"
         :default-service="config.service"
         :website="selectedConfigurationWebsite"
@@ -170,7 +170,6 @@
         :custom-model-count="selectedConfigurationCustomModelCount"
         :allow-custom-models="configurationCompute.allowCustomModels"
         @update:service="setConfigurationService"
-        @update:favorites="config.favoriteServices = $event"
         @update:model="selectConfigurationModel"
         @add:service="openCustomProviderDialog"
         @add:model="addConfigurationModel"
@@ -448,7 +447,7 @@
       <SettingsPanel name="requests" :active="props.activePanel">
 <SettingsGroup :title="t('settings.requestLimits.globalTitle')" :description="t('settings.requestLimits.globalHelp')">
         <div data-testid="translation-scheduler-settings">
-          <RequestLimitFields :model-value="config" @update:model-value="Object.assign(config, $event)" />
+          <RequestLimitFields :active="viewActive && props.activeSection === 'settings-translation'" :model-value="config" @update:model-value="Object.assign(config, $event)" />
           <SettingsItem label="失败后最多重试">
             <SettingsNumberInput :model-value="config.translationMaxRetries" aria-label="失败后最多重试" :min="0" :max="10" @change="handleTranslationMaxRetriesChange" />
           </SettingsItem>
@@ -520,7 +519,7 @@
       @confirm="handleCustomSelectionHotkeyConfirm"
       @cancel="handleCustomSelectionHotkeyCancel"
     />
-  <CustomOpenAIProviderDialog v-model="customProviderDialogOpen" @submit="createCustomProvider" />
+  <CustomOpenAIProviderDialog :active="viewActive && props.activeSection === 'settings-services'" :context="config" v-model="customProviderDialogOpen" @submit="createCustomProvider" />
 </template>
 
 <script lang="ts" setup>
@@ -703,6 +702,7 @@ onDeactivated(() => {
 onBeforeUnmount(() => {disposed = true;viewActive.value = false;cancelPendingScroll();});
 watch(() => props.activeSection, (section) => {
   if (section !== scrollDestination) cancelPendingScroll();
+  if (section !== 'settings-services') customProviderDialogOpen.value = false;
 });
 
 function openSettingsSection(section: string, targetId?: string): void {
@@ -956,12 +956,12 @@ const {
 } = useServiceModelOptions(config, selectedConfigurationService);
 
 function openCustomProviderDialog(): void {
-  if (disposed || !viewActive.value) return;
+  if (disposed || !viewActive.value || props.activeSection !== 'settings-services') return;
   customProviderDialogOpen.value = true;
 }
 
 function createCustomProvider(draft: CustomProviderDraft): void {
-  if (disposed || !viewActive.value) return;
+  if (disposed || !viewActive.value || props.activeSection !== 'settings-services') return;
   const id = createNextCustomOpenAIProviderId(config.value.customOpenAIProviders);
   const provider: CustomOpenAIProvider = {
     id,

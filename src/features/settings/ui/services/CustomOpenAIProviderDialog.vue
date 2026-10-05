@@ -6,29 +6,29 @@
  -->
 <template>
   <el-dialog
-    :model-value="modelValue"
+    :model-value="modelValue && active && ownedOpen"
     width="min(520px, calc(100vw - 28px))"
     class="custom-openai-provider-dialog"
     data-testid="custom-service-dialog"
     title="添加 OpenAI 兼容服务"
     :close-on-click-modal="false"
     destroy-on-close
-    @opened="focusFirstField"
-    @update:model-value="updateOpenState"
+    :onOpened="actions.focus"
+    :onUpdate:modelValue="actions.update"
   >
-    <form class="custom-provider-form" novalidate @submit.prevent="submitProvider">
+    <form class="custom-provider-form" novalidate :onSubmit="withModifiers(actions.submit, ['prevent'])">
       <label>
         <span>服务名称</span>
         <input
           ref="nameInput"
-          v-model="draft.name"
+          :value="draft.name"
+          :onInput="actions.draft.bind(null, 'name')"
           type="text"
           autocomplete="off"
           data-testid="custom-service-name"
           placeholder="例如：本地 Ollama"
           :maxlength="maximumNameLength"
           :aria-invalid="Boolean(errors.name)"
-          @input="errors.name = ''"
         />
         <small v-if="errors.name" class="field-error" role="alert">{{ errors.name }}</small>
       </label>
@@ -36,14 +36,14 @@
       <label>
         <span>接口地址</span>
         <input
-          v-model="draft.endpoint"
+          :value="draft.endpoint"
+          :onInput="actions.draft.bind(null, 'endpoint')"
           type="url"
           autocomplete="url"
           data-testid="custom-service-endpoint"
           placeholder="http://localhost:11434/v1/chat/completions"
           :maxlength="maximumEndpointLength"
           :aria-invalid="Boolean(errors.endpoint)"
-          @input="errors.endpoint = ''"
         />
         <small>支持完整 Chat Completions 地址或以 /v1 结尾的 Base URL；模型须支持 Chat Completions</small>
         <small v-if="errors.endpoint" class="field-error" role="alert">{{ errors.endpoint }}</small>
@@ -52,7 +52,8 @@
       <label>
         <span>API Key <small>可选</small></span>
         <input
-          v-model="draft.apiKey"
+          :value="draft.apiKey"
+          :onInput="actions.draft.bind(null, 'apiKey')"
           type="password"
           autocomplete="new-password"
           data-testid="custom-service-api-key"
@@ -63,7 +64,8 @@
       <label>
         <span>首个模型</span>
         <input
-          v-model="draft.model"
+          :value="draft.model"
+          :onInput="actions.draft.bind(null, 'model')"
           type="text"
           autocomplete="off"
           spellcheck="false"
@@ -71,14 +73,13 @@
           placeholder="例如：gpt-4.1-mini"
           :maxlength="maximumModelLength"
           :aria-invalid="Boolean(errors.model)"
-          @input="errors.model = ''"
-          @keydown.esc.stop="closeDialog"
+          :onKeydown="withKeys(withModifiers(actions.close, ['stop']), ['esc'])"
         />
         <small v-if="errors.model" class="field-error" role="alert">{{ errors.model }}</small>
       </label>
 
       <footer>
-        <button type="button" class="secondary-button" @click="closeDialog">取消</button>
+        <button type="button" class="secondary-button" :onClick="actions.close">取消</button>
         <button type="submit" class="primary-button" data-testid="custom-service-save">保存服务</button>
       </footer>
     </form>
@@ -86,7 +87,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, withKeys, withModifiers } from 'vue'
+import {useSettingsActionContext} from '../../model/useSettingsActionContext'
 import {
   CUSTOM_OPENAI_RESERVED_MODEL_ID,
   MAX_CUSTOM_OPENAI_MODEL_LENGTH,
@@ -103,10 +105,13 @@ interface CustomOpenAIProviderDraft {
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
+  active?: boolean
+  context?: unknown
   maximumNameLength?: number
   maximumEndpointLength?: number
   maximumModelLength?: number
 }>(), {
+  active: true,
   maximumNameLength: MAX_CUSTOM_OPENAI_PROVIDER_NAME_LENGTH,
   maximumEndpointLength: MAX_CUSTOM_OPENAI_PROVIDER_ENDPOINT_LENGTH,
   maximumModelLength: MAX_CUSTOM_OPENAI_MODEL_LENGTH,
@@ -119,6 +124,18 @@ const emit = defineEmits<{
 
 const nameInput = ref<HTMLInputElement | null>(null)
 const draft = reactive<CustomOpenAIProviderDraft>({name: '', endpoint: '', apiKey: '', model: ''})
+const ownedOpen = ref(props.modelValue)
+const {active, capture} = useSettingsActionContext(() => props.active !== false, () => [props.context, props.modelValue])
+const actions = computed(() => {
+  const current = capture()
+  return {close: () => {if (current()) closeDialog()},
+    draft: (field: keyof CustomOpenAIProviderDraft, event: Event) => {
+      if (!current() || !ownedOpen.value || !(event.target instanceof HTMLInputElement)) return
+      draft[field] = event.target.value
+      if (field !== 'apiKey') errors[field] = ''
+    }, focus: () => {if (current()) focusFirstField()}, submit: () => {if (current()) submitProvider()},
+    update: (open: boolean) => {if (current()) updateOpenState(open)}}
+})
 const errors = reactive({name: '', endpoint: '', model: ''})
 
 function resetDraft(): void {
@@ -132,17 +149,19 @@ function resetDraft(): void {
 }
 
 function focusFirstField(): void {
-  nameInput.value?.focus()
+  if (active.value && ownedOpen.value && props.modelValue) nameInput.value?.focus()
 }
 
 function updateOpenState(value: boolean): void {
-  if (!value) resetDraft()
-  emit('update:modelValue', value)
+  if (!active.value || !ownedOpen.value) return
+  if (!value) closeDialog()
 }
 
 function closeDialog(): void {
+  const wasOpen = ownedOpen.value
+  ownedOpen.value = false
   resetDraft()
-  emit('update:modelValue', false)
+  if (wasOpen) emit('update:modelValue', false)
 }
 
 function isValidEndpoint(value: string): boolean {
@@ -155,27 +174,32 @@ function isValidEndpoint(value: string): boolean {
 }
 
 function submitProvider(): void {
+  if (!active.value || !ownedOpen.value || !props.modelValue) return
   const value: CustomOpenAIProviderDraft = {
     name: draft.name.trim(),
     endpoint: draft.endpoint.trim(),
     apiKey: draft.apiKey.trim(),
     model: draft.model.trim(),
   }
-  errors.name = value.name ? '' : '请输入服务名称'
-  errors.endpoint = !value.endpoint ? '请输入接口地址' : isValidEndpoint(value.endpoint) ? '' : '请输入有效的 HTTP 或 HTTPS 地址'
+  errors.name = !value.name ? '请输入服务名称' : value.name.length > props.maximumNameLength ? `服务名称最多 ${props.maximumNameLength} 个字符` : ''
+  errors.endpoint = !value.endpoint ? '请输入接口地址' : value.endpoint.length > props.maximumEndpointLength ? `接口地址最多 ${props.maximumEndpointLength} 个字符` : isValidEndpoint(value.endpoint) ? '' : '请输入有效的 HTTP 或 HTTPS 地址'
   errors.model = !value.model
     ? '请输入至少一个模型'
-    : value.model === CUSTOM_OPENAI_RESERVED_MODEL_ID
+    : value.model.length > props.maximumModelLength
+      ? `模型标识最多 ${props.maximumModelLength} 个字符`
+      : value.model === CUSTOM_OPENAI_RESERVED_MODEL_ID
       ? `“${CUSTOM_OPENAI_RESERVED_MODEL_ID}”是界面保留名称，请换一个模型标识`
       : ''
   if (errors.name || errors.endpoint || errors.model) return
-  emit('submit', value)
   closeDialog()
+  emit('submit', value)
 }
 
 watch(() => props.modelValue, (open) => {
-  if (open) resetDraft()
-})
+  resetDraft()
+  ownedOpen.value = open && active.value
+}, {flush: 'sync'})
+watch(() => [active.value, props.context], () => {closeDialog()}, {flush: 'sync'})
 </script>
 
 <style scoped>

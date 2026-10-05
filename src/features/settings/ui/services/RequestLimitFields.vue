@@ -16,8 +16,8 @@
       <div class="request-limit-number">
         <el-input-number
           :key="`${field.key}-${disabled ? 'inherit' : 'custom'}`"
-          :model-value="modelValue[field.key]" :disabled="disabled" :min="field.min" :max="field.max" :step="1" :controls="false"
-          :aria-label="translateLegacy(field.label)" @change="update(field.key, $event)"
+          :model-value="modelValue[field.key]" :disabled="disabled || !active" :min="field.min" :max="field.max" :step="1" :controls="false"
+          :aria-label="translateLegacy(field.label)" :onChange="actions.update.bind(null, field.key)"
         />
       </div>
     </SettingsItem>
@@ -25,14 +25,21 @@
 </template>
 
 <script setup lang="ts">
+import {computed} from 'vue';
+import {useSettingsActionContext} from '../../model/useSettingsActionContext';
 import FieldHelp from '../components/FieldHelp.vue';
 import type {TranslationRequestLimits} from '@/src/core/config/requestLimits';
 import {useUiI18n} from '@/src/ui/i18n';
 import SettingsItem from '../components/SettingsItem.vue';
 
-const props = withDefaults(defineProps<{modelValue: TranslationRequestLimits; disabled?: boolean; layout?: 'settings' | 'service'}>(), {disabled: false, layout: 'settings'});
+const props = withDefaults(defineProps<{modelValue: TranslationRequestLimits; active?: boolean; disabled?: boolean; layout?: 'settings' | 'service'}>(), {active: true, disabled: false, layout: 'settings'});
 const emit = defineEmits<{'update:model-value': [value: TranslationRequestLimits]}>();
 const {translateLegacy, t} = useUiI18n();
+const {active, capture} = useSettingsActionContext(() => props.active !== false, () => [props.modelValue, props.disabled]);
+const actions = computed(() => {
+  const current = capture();
+  return {update: (key: keyof TranslationRequestLimits, value: number | undefined) => {if (current()) update(key, value);}};
+});
 const fields = [
   {key: 'maxConcurrentTranslations', label: '翻译并发数', min: 1, max: 100, help: '设置同时执行的翻译任务上限；增加并发可能加快翻译，也会增加资源占用，并受服务限流约束'},
   {key: 'translationRequestsPerSecond', label: '每秒最多请求数', min: 0, max: 1000, help: '设为 0 表示不限速'},
@@ -44,7 +51,9 @@ function helpOf(field: typeof fields[number]): string {
 }
 
 function update(key: keyof TranslationRequestLimits, value: number | undefined): void {
-  const field = fields.find(field => field.key === key)!;
+  if (!active.value || props.disabled) return;
+  const field = fields.find(field => field.key === key);
+  if (!field) return;
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < field.min || value > field.max) return;
   emit('update:model-value', {...props.modelValue, [key]: value});
 }

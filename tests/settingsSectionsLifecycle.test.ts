@@ -67,6 +67,13 @@ async function mountSections({ready = Promise.resolve()} = {}) {
 }
 
 describe('设置主表单实际组件异步归属', () => {
+    it('离开服务设置关闭新服务对话框，隐藏时既不打开也不提交新服务', async () => {
+        const {state, props} = await mountSections();state.openCustomProviderDialog();expect(state.customProviderDialogOpen).toBe(false);
+        props.activeSection = 'settings-services';await settle();state.openCustomProviderDialog();expect(state.customProviderDialogOpen).toBe(true);
+        props.activeSection = 'settings-translation';await settle();expect(state.customProviderDialogOpen).toBe(false);
+        const before = JSON.stringify(state.config);state.createCustomProvider({name: 'stale', endpoint: 'https://fixture.example/v1', apiKey: '', model: 'fixture'});
+        expect(JSON.stringify(state.config)).toBe(before);
+    });
     it('缓存离开时关闭全文与悬浮录制，恢复暂选模式，返回后仍可录制', async () => {
         const {state, visible} = await mountSections();vi.useFakeTimers();
         state.config.floatingBallHotkey = 'Shift+Q';state.handleHotkeyChange('custom');

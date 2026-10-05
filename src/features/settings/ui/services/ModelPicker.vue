@@ -5,10 +5,12 @@
  * 模块边界：组件只发出选择、添加和删除事件，不直接修改 Config 或持久化数据；模型容量和规范化由 core/config 负责。
  -->
 <template>
-  <div class="model-picker" data-testid="model-picker" @keydown.esc.stop="closePicker">
+  <div class="model-picker" data-testid="model-picker" :onKeydown="withKeys(withModifiers(actions.close, ['stop']), ['esc'])">
     <ElPopover
-      :key="pickerContentKey"
-      v-model:visible="pickerOpen"
+      :key="`${revision}:${pickerContentKey}`"
+      :disabled="!active"
+      :visible="pickerOpen"
+      :onUpdate:visible="actions.open"
       placement="bottom-start"
       trigger="click"
       transition="model-picker-instant"
@@ -22,6 +24,7 @@
       <template #reference>
         <button
           ref="pickerTrigger"
+          :disabled="!active"
           type="button"
           class="model-picker-trigger"
           data-testid="model-picker-trigger"
@@ -37,7 +40,7 @@
         </button>
       </template>
 
-      <section class="model-picker-panel" role="dialog" aria-label="选择模型" @keydown.esc.stop="closePicker">
+      <section class="model-picker-panel" role="dialog" aria-label="选择模型" :onKeydown="withKeys(withModifiers(actions.close, ['stop']), ['esc'])">
         <header class="model-picker-heading">
           <div>
             <strong>选择模型</strong>
@@ -50,7 +53,7 @@
             data-testid="add-custom-model"
             :disabled="addDisabled"
             :aria-describedby="addDisabled ? limitDescriptionId : undefined"
-            @click="beginAddModel"
+            :onClick="actions.begin"
           >
             + 添加模型
           </button>
@@ -60,13 +63,14 @@
           已达到 {{ maximumModels }} 个模型上限
         </p>
 
-        <form v-if="addingModel" class="model-add-form" data-testid="custom-model-form" @submit.prevent="submitModel">
+        <form v-if="addingModel" class="model-add-form" data-testid="custom-model-form" :onSubmit="withModifiers(actions.submit, ['prevent'])">
           <label :for="modelInputId">模型标识</label>
           <div>
             <input
               :id="modelInputId"
               ref="modelInput"
-              v-model="modelDraft"
+              :value="modelDraft"
+              :onInput="actions.draft"
               type="text"
               autocomplete="off"
               spellcheck="false"
@@ -75,11 +79,10 @@
               :maxlength="maximumModelLength"
               :aria-invalid="Boolean(modelError)"
               :aria-describedby="modelError ? modelErrorId : undefined"
-              @input="modelError = ''"
-              @keydown.esc.prevent.stop="cancelAddModel"
+              :onKeydown="withKeys(withModifiers(actions.cancel, ['prevent', 'stop']), ['esc'])"
             />
             <button type="submit" data-testid="custom-model-submit">添加</button>
-            <button type="button" class="plain-button" @click="cancelAddModel">取消</button>
+            <button type="button" class="plain-button" :onClick="actions.cancel">取消</button>
           </div>
           <p v-if="modelError" :id="modelErrorId" class="model-error" role="alert">{{ modelError }}</p>
         </form>
@@ -103,7 +106,7 @@
               class="model-picker-option"
               :aria-pressed="selectedModel === option.value"
               :title="option.value"
-              @click="selectModel(option.value)"
+              :onClick="actions.select.bind(null, option.value)"
             >
               <strong>{{ option.label || option.value }}</strong>
               <span v-if="selectedModel === option.value" class="model-check" aria-hidden="true">✓</span>
@@ -114,7 +117,7 @@
               class="model-remove-button"
               :aria-label="`删除模型 ${option.label || option.value}`"
               :data-testid="`remove-custom-model-${option.value}`"
-              @click.stop="removeModel(option.value)"
+              :onClick="withModifiers(actions.remove.bind(null, option.value), ['stop'])"
             >
               ×
             </button>
@@ -127,8 +130,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, useId, watch } from 'vue'
+import { computed, nextTick, ref, useId, watch, withKeys, withModifiers } from 'vue'
 import {ElPopover} from 'element-plus'
+import {useSettingsActionContext} from '../../model/useSettingsActionContext'
 import {CUSTOM_OPENAI_RESERVED_MODEL_ID} from '@/src/core/config/customOpenAI'
 
 interface ModelPickerOption {
@@ -138,6 +142,9 @@ interface ModelPickerOption {
 }
 
 const props = withDefaults(defineProps<{
+  active?: boolean
+  context?: unknown
+  contextKey?: string
   options: ModelPickerOption[]
   selectedModel?: string
   maximumModels?: number
@@ -145,6 +152,7 @@ const props = withDefaults(defineProps<{
   customModelCount?: number
   allowCustomModels?: boolean
 }>(), {
+  active: true,
   selectedModel: '',
   maximumModels: 50,
   maximumModelLength: 256,
@@ -169,6 +177,21 @@ const modelInputId = `model-input-${useId()}`
 const modelErrorId = `model-error-${useId()}`
 const limitDescriptionId = `model-limit-${useId()}`
 
+const {active, capture, revision} = useSettingsActionContext(() => props.active !== false, () => [props.context, props.contextKey])
+let focusRevision = 0
+const actions = computed(() => {
+  const current = capture()
+  return {
+    open: (open: boolean) => {if (current()) pickerOpen.value = open && active.value},
+    close: () => {if (current()) closePicker()},
+    cancel: () => {if (current()) cancelAddModel()},
+    draft: (event: Event) => {if (current() && event.target instanceof HTMLInputElement) {modelDraft.value = event.target.value;modelError.value = ''}},
+    select: (model: string) => {if (current()) selectModel(model)},
+    remove: (model: string) => {if (current()) removeModel(model)},
+    submit: () => {if (current()) submitModel()},
+    begin: () => {if (current()) void beginAddModel()},
+  }
+})
 const filteredOptions = computed(() => {
   const keyword = query.value.trim().toLocaleLowerCase()
   if (!keyword) return props.options
@@ -183,24 +206,32 @@ const allowCustomModels = computed(() => props.allowCustomModels)
 const addDisabled = computed(() => !allowCustomModels.value || props.customModelCount >= props.maximumModels)
 
 async function beginAddModel(): Promise<void> {
-  if (addDisabled.value) return
+  if (!active.value || addDisabled.value) return
+  const current = capture()
+  const revision = ++focusRevision
   addingModel.value = true
   modelDraft.value = ''
   modelError.value = ''
   await nextTick()
-  modelInput.value?.focus()
+  if (current() && revision === focusRevision && addingModel.value) modelInput.value?.focus()
 }
 
 function cancelAddModel(): void {
+  focusRevision += 1
   addingModel.value = false
   modelDraft.value = ''
   modelError.value = ''
 }
 
 function submitModel(): void {
+  if (!active.value || !addingModel.value || addDisabled.value) return
   const model = modelDraft.value.trim()
   if (!model) {
     modelError.value = '请输入模型标识'
+    return
+  }
+  if (model.length > props.maximumModelLength) {
+    modelError.value = `模型标识最多 ${props.maximumModelLength} 个字符`
     return
   }
   if (model === CUSTOM_OPENAI_RESERVED_MODEL_ID) {
@@ -211,16 +242,18 @@ function submitModel(): void {
     modelError.value = '该模型已经存在'
     return
   }
-  emit('add', model)
   cancelAddModel()
+  emit('add', model)
 }
 
 function selectModel(model: string): void {
-  emit('select', model)
+  if (!active.value || !props.options.some(option => option.value === model)) return
   closePicker()
+  emit('select', model)
 }
 
 function removeModel(model: string): void {
+  if (!active.value || !props.options.some(option => option.value === model && option.removable)) return
   // Element Plus keeps a teleported popover slot mounted while it is open. Closing
   // before the parent replaces its config snapshot prevents the old slot from lingering.
   closePicker()
@@ -230,11 +263,17 @@ function removeModel(model: string): void {
 function closePicker(): void {
   // Move focus out of the panel before Element Plus applies aria-hidden. Focusing
   // after the visibility update is too late and causes an accessibility warning.
-  pickerTrigger.value?.focus({preventScroll: true})
+  if (active.value && pickerOpen.value) pickerTrigger.value?.focus({preventScroll: true})
   pickerOpen.value = false
   query.value = ''
   cancelAddModel()
 }
+
+watch(() => [active.value, props.context, props.contextKey], () => {
+  pickerOpen.value = false
+  query.value = ''
+  cancelAddModel()
+}, {flush: 'sync'})
 
 watch(() => props.selectedModel, () => {
   query.value = ''

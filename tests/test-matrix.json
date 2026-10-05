@@ -341,7 +341,8 @@
       "tests/translationShortcutSettings.test.ts",
       "tests/numberFormat.test.ts",
       "tests/hotkeyDraft.test.ts",
-      "tests/settingsTaskWait.test.ts"
+      "tests/settingsTaskWait.test.ts",
+      "tests/settingsActionContext.test.ts"
     ],
     "functional": [
       "tests/translationCenterComponent.test.ts",
@@ -468,7 +469,8 @@
       "tests/interfaceAppearanceLifecycle.test.ts",
       "tests/interfaceSettingsLifecycle.test.ts",
       "tests/modelVisionSettingsLifecycle.test.ts",
-      "tests/serviceConfigurationLifecycle.test.ts"
+      "tests/serviceConfigurationLifecycle.test.ts",
+      "tests/serviceEditorLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

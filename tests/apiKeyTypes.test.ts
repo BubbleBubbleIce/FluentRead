@@ -5,7 +5,7 @@
  * 模块边界：不挂载 Vue、不访问浏览器 API、不测试真实连接；连接协议由后台测试覆盖。
  */
 import { describe, expect, it } from 'vitest'
-import { normalizeApiKeyList, summarizeApiKeyChecks, eligibleApiKeyIndexes, duplicateApiKeyIndex, activeApiKeyIndexes, standbyApiKeyIndexes } from '@/src/features/settings/ui/services/apiKeyTypes'
+import { normalizeApiKeyList, summarizeApiKeyChecks, eligibleApiKeyIndexes, duplicateApiKeyIndexes, activeApiKeyIndexes, standbyApiKeyIndexes } from '@/src/features/settings/ui/services/apiKeyTypes'
 
 describe('api key UI model', () => {
   it('keeps an explicit list including empty rows and falls back to legacy token', () => {
@@ -33,11 +33,24 @@ describe('api key UI model', () => {
   it('keeps stable indexes while excluding blank and repeated keys', () => {
     const keys = ['first', ' ', ' second ', 'first', 'second', '']
     expect(eligibleApiKeyIndexes(keys)).toEqual([0, 2])
-    expect(duplicateApiKeyIndex(keys, 0)).toBeNull()
-    expect(duplicateApiKeyIndex(keys, 1)).toBeNull()
-    expect(duplicateApiKeyIndex(keys, 3)).toBe(0)
-    expect(duplicateApiKeyIndex(keys, 4)).toBe(2)
-    expect(duplicateApiKeyIndex(keys, 99)).toBeNull()
+    expect((duplicateApiKeyIndexes(keys).get(0) ?? null)).toBeNull()
+    expect((duplicateApiKeyIndexes(keys).get(1) ?? null)).toBeNull()
+    expect((duplicateApiKeyIndexes(keys).get(3) ?? null)).toBe(0)
+    expect((duplicateApiKeyIndexes(keys).get(4) ?? null)).toBe(2)
+    expect((duplicateApiKeyIndexes(keys).get(99) ?? null)).toBeNull()
+  })
+  it('preserves first-row indexes, whitespace and case with prototype-like credentials', () => {
+    expect([...duplicateApiKeyIndexes([' ', ' __proto__ ', 'A', 'a', '__proto__', ' A ', 'constructor', 'constructor', ''])])
+      .toEqual([[4, 1], [5, 2], [7, 6]])
+    expect([...duplicateApiKeyIndexes([])]).toEqual([])
+  })
+  it('reads each key once to build duplicate display for a large list', () => {
+    let reads = 0
+    const keys: string[] = []
+    for (let index = 0; index < 500; index++) Object.defineProperty(keys, index, {get: () => {reads += 1;return `fixture-${index % 250}`}, configurable: true})
+    const duplicates = duplicateApiKeyIndexes(keys)
+    expect(reads).toBe(500);expect(duplicates.size).toBe(250)
+    expect(duplicates.get(250)).toBe(0);expect(duplicates.get(499)).toBe(249)
   })
 
   it('splits usable rows into active and standby rows by usage mode', () => {

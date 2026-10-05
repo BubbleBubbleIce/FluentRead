@@ -11,7 +11,7 @@
       <div class="connection-field-control">
         <SegmentedControl
           compact :label="t('settings.requestLimits.scope')" :options="scopeOptions" data-request-limit-scope
-          :model-value="scope" @update:model-value="scope = $event === 'service' ? 'service' : 'model'"
+          :model-value="scope" :disabled="!active" :onUpdate:modelValue="actions.scope"
         />
         <small class="request-limit-hint" data-request-limit-scope-hint>{{ scope === 'model' ? t('settings.organization.modelScope', {model}) : t('settings.requestLimits.serviceScope') }}</small>
       </div>
@@ -21,17 +21,18 @@
       <div class="connection-field-control">
         <SegmentedControl
           compact :label="t('settings.requestLimits.mode')" :options="modeOptions" data-request-limit-mode
-          :model-value="preference?.enabled ? 'custom' : 'inherit'" @update:model-value="setFollowing($event === 'inherit')"
+          :model-value="preference?.enabled ? 'custom' : 'inherit'" :disabled="!active" :onUpdate:modelValue="actions.mode"
         />
         <small v-if="scope === 'model' && servicePreference?.enabled" class="request-limit-hint request-limit-cap">{{ t('settings.requestLimits.serviceCap') }}</small>
       </div>
     </div>
-    <RequestLimitFields layout="service" :model-value="preference?.enabled ? preference.limits : inherited" :disabled="!preference?.enabled" @update:model-value="setLimits" />
+    <RequestLimitFields layout="service" :active="active" :model-value="preference?.enabled ? preference.limits : inherited" :disabled="!preference?.enabled" :onUpdate:modelValue="actions.limits" />
   </div>
 </template>
 
 <script setup lang="ts">
 import {computed, ref, watch} from 'vue';
+import {useSettingsActionContext} from '../../model/useSettingsActionContext';
 import type {Config} from '@/src/core/config/model';
 import {
   getModelRequestLimitPreference, getServiceRequestLimitPreference, normalizeTranslationRequestLimits,
@@ -41,10 +42,17 @@ import {useUiI18n} from '@/src/ui/i18n';
 import SegmentedControl from '../components/SegmentedControl.vue';
 import RequestLimitFields from './RequestLimitFields.vue';
 
-const props = defineProps<{config: Config; service: string; model?: string}>();
+const props = withDefaults(defineProps<{config: Config; service: string; active?: boolean; model?: string}>(), {active: true});
 const {t} = useUiI18n();
 const scope = ref<'model' | 'service'>(props.model ? 'model' : 'service');
-watch(() => [props.service, props.model], () => { scope.value = props.model ? 'model' : 'service'; });
+watch(() => [props.config, props.service, props.model], () => { scope.value = props.model ? 'model' : 'service'; }, {flush: 'sync'});
+const {active, capture} = useSettingsActionContext(() => props.active !== false, () => [props.config, props.service, props.model, scope.value]);
+const actions = computed(() => {
+  const current = capture();
+  return {scope: (value: unknown) => {if (current() && (value === 'service' || value === 'model' && props.model)) scope.value = value;},
+    mode: (value: unknown) => {if (current() && (value === 'inherit' || value === 'custom')) setFollowing(value === 'inherit');},
+    limits: (limits: TranslationRequestLimits) => {if (current()) setLimits(limits);}};
+});
 const servicePreference = computed(() => getServiceRequestLimitPreference(props.config.serviceRequestLimits, props.service));
 const preference = computed(() => scope.value === 'model'
   ? getModelRequestLimitPreference(props.config.modelRequestLimits, props.service, props.model || '')
@@ -63,6 +71,7 @@ const modeOptions = computed(() => [
 ]);
 
 function save(next: RequestLimitPreference): void {
+  if (!active.value) return;
   if (scope.value === 'model' && props.model) {
     props.config.modelRequestLimits = withModelRequestLimit(props.config.modelRequestLimits, props.service, props.model, next);
   } else {
@@ -73,6 +82,7 @@ function setFollowing(following: boolean): void {
   save({enabled: !following, limits: {...(preference.value?.limits || inherited.value)}});
 }
 function setLimits(limits: TranslationRequestLimits): void {
+  if (!preference.value?.enabled) return;
   save({enabled: true, limits});
 }
 </script>

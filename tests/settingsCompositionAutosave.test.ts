@@ -5,34 +5,32 @@ import { resolve } from 'node:path';
 import { parseHTML } from 'linkedom';
 import * as ts from 'typescript';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import vue from '@vitejs/plugin-vue';
+import {createServer, type ViteDevServer} from 'vite';
 
-function loadPromptTemplateEditor(vueRuntime: typeof import('vue')): import('vue').Component {
+let server: ViteDevServer | undefined;
+async function loadPromptTemplateEditor(vueRuntime: typeof import('vue')): Promise<import('vue').Component> {
   const compiler = createRequire(require.resolve('@vitejs/plugin-vue'))('@vue/compiler-sfc');
   const filename = resolve(process.cwd(), 'src/features/settings/ui/services/PromptTemplateEditor.vue');
   const source = readFileSync(filename, 'utf8');
   const descriptor = compiler.parse(source, {filename}).descriptor;
   const compiledScript = compiler.compileScript(descriptor, {id: 'data-v-settings-composition-test'});
-  const script = compiledScript.content;
-  const scriptWithRuntime = script.replace(
-    /^import \{ ([^\n]+) \} from 'vue'\n/gmu,
-    (_match: string, bindings: string) => `const {${bindings.replace(/\s+as\s+/gu, ': ')}} = Vue;\n`,
-  )
-    .replace('export default', 'return');
-  const scriptJavaScript = ts.transpileModule(scriptWithRuntime, {
-    compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext},
-  }).outputText;
-  const component = new Function('Vue', scriptJavaScript)(vueRuntime) as import('vue').Component & {render?: Function};
+  server = await createServer({root: process.cwd(), configFile: false, appType: 'custom', logLevel: 'silent',
+    plugins: [{name: 'prompt-help-display-port', enforce: 'pre', resolveId(id) {return id.endsWith('/FieldHelp.vue') ? '\0prompt-help' : null;},
+      load(id) {return id === '\0prompt-help' ? 'export default {render: () => null};' : null;}}, vue()],
+    resolve: {alias: {'@': process.cwd()}}, server: {hmr: false, middlewareMode: true}});
+  const component = (await server.ssrLoadModule('/src/features/settings/ui/services/PromptTemplateEditor.vue')).default;
+  component.ssrRender = undefined;
 
   const template = compiler.compileTemplate({
     source: descriptor.template.content,
     filename,
     id: 'data-v-settings-composition-test',
-    compilerOptions: {bindingMetadata: compiledScript.bindings},
+    compilerOptions: {mode: 'function', bindingMetadata: compiledScript.bindings, expressionPlugins: ['typescript']},
   });
-  const renderCode = template.code
-    .replace(/^import \{ ([^\n]+) \} from "vue"\n\n?/u, (_match: string, bindings: string) => `const {${bindings.replace(/\s+as\s+/gu, ': ')}} = Vue;\n`)
-    .replace('export function render', 'function render');
-  component.render = new Function('Vue', `${renderCode}\nreturn render;`)(vueRuntime) as Function;
+  expect(template.errors).toEqual([]);
+  const renderCode = ts.transpileModule(template.code, {compilerOptions: {target: ts.ScriptTarget.ES2022}}).outputText;
+  component.render = new Function('Vue', renderCode)(vueRuntime);
   return component;
 }
 
@@ -85,7 +83,7 @@ function compositionEvent(window: any, type: string, data: string): Event {
   return event;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(async () => {vi.unstubAllGlobals();await server?.close();server = undefined;});
 
 async function mountEditor() {
   const {window} = parseHTML('<html><body><div id="app"></div></body></html>');
@@ -108,7 +106,7 @@ async function mountEditor() {
 
   const require = createRequire(import.meta.url);
   const vueRuntime = require('vue') as typeof import('vue');
-  const editor = loadPromptTemplateEditor(vueRuntime);
+  const editor = await loadPromptTemplateEditor(vueRuntime);
   const updates: string[] = [];
   const saves: string[] = [];
   let setExternalValue: (value: string) => void = () => undefined;
@@ -131,6 +129,7 @@ async function mountEditor() {
     },
   });
   const app = createDomRenderer(vueRuntime, document).createApp(appComponent);
+  app.provide(vueRuntime.ssrContextKey, {modules: new Set<string>()});
   app.mount(document.getElementById('app')!);
   await vueRuntime.nextTick();
   return {

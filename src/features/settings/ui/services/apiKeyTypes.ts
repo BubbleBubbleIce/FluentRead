@@ -47,9 +47,16 @@ export function standbyApiKeyIndexes(usable: readonly number[], rotationEnabled:
   return rotationEnabled ? [] : usable.slice(1)
 }
 
-export function duplicateApiKeyIndex(keys: readonly string[], index: number): number | null {
-  const key = keys[index]?.trim()
-  if (!key) return null
-  const first = keys.findIndex(value => value.trim() === key)
-  return first < index ? first : null
+/** 一次扫描建立重复行到首行的映射，渲染时不再逐行从头搜索凭据。 */
+export function duplicateApiKeyIndexes(keys: readonly string[]): Map<number, number> {
+  const firstByKey = new Map<string, number>()
+  const duplicates = new Map<number, number>()
+  keys.forEach((value, index) => {
+    const key = value.trim()
+    if (!key) return
+    const first = firstByKey.get(key)
+    if (first === undefined) firstByKey.set(key, index)
+    else duplicates.set(index, first)
+  })
+  return duplicates
 }

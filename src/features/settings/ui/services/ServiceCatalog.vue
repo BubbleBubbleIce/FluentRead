@@ -145,7 +145,7 @@
           <div class="model-heading">
             <strong>模型</strong>
           </div>
-          <ModelPicker
+          <ModelPicker :active="props.active !== false" :context="props.context" :context-key="service"
             :options="modelOptions"
             :selected-model="selectedModel"
             :maximum-models="maximumModels"
@@ -189,6 +189,8 @@ interface ModelPickerOption {
 }
 
 const props = defineProps<{
+  active?: boolean
+  context?: unknown
   service: string
   defaultService: string
   website?: ServiceWebsite
@@ -207,7 +209,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:service': [value: string]
-  'update:favorites': [value: string[]]
   'update:model': [value: string]
   'add:service': []
   'add:model': [value: string]

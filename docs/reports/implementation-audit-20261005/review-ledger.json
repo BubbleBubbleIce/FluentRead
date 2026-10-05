@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 826,
-    "functions": 14859,
+    "files": 827,
+    "functions": 14926,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -222,9 +222,9 @@
         "lines": 5248
       },
       "src/features/settings": {
-        "files": 82,
-        "functions": 1478,
-        "lines": 19194
+        "files": 83,
+        "functions": 1545,
+        "lines": 19344
       },
       "src/features/share-card": {
         "files": 7,
@@ -1461,6 +1461,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/model/useSettingsActionContext.ts",
+      "sha256": "de1804e4a50f84542aa4ed9ebc574b8ea9f4f286cadfb26aeb73022462e8a2cd",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/AreaTranslationSettings.vue",
       "sha256": "4b374d6b1d52937c30d9794f87cc73fe4a7588ff0fc842989f9745c89c7d37a7",
       "functionBodies": 30,
@@ -1498,7 +1504,7 @@
     },
     {
       "file": "src/features/settings/ui/SettingsSections.vue",
-      "sha256": "d67c910778120c3aa5d530d2d478a9e95a232c72e36e20ade438a86616795916",
+      "sha256": "c0104904d52cc883c2d3cf5eb0b2801f7e89721ba9d992cffc7304e1fbca6afc",
       "functionBodies": 166,
       "status": "source-read-and-traced"
     },
@@ -1521,9 +1527,45 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/services/ApiKeyList.vue",
+      "sha256": "21e6c1035651d3e37cf9369220bc14368ddf1f43f11aa0c5f18d6ed6ecfa8a51",
+      "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/CustomOpenAIProviderDialog.vue",
+      "sha256": "5a1ebf0ce4cdfb82f58d4673377a45278aab5b230753bec42df253cf99bfc85e",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/ModelPicker.vue",
+      "sha256": "940ea0112477db65540b329a3f769d0dfffb3c99e129b8ba45bdae75d731497e",
+      "functionBodies": 31,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/services/ModelVisionSettings.vue",
       "sha256": "e3797ab40ce814085876007603e679b7743f48e4e564cf0c9c98a4e53de1b08c",
       "functionBodies": 22,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/RequestHeaderSettings.vue",
+      "sha256": "f72f7f59c5eac1547afe9c89471cae531a209508d58c89cc75ffc05f4e23ae7b",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/RequestLimitFields.vue",
+      "sha256": "5d10c4d170c904c3d6ecdfadc0706637439b02666d2a523962f54159cd58dc39",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/RequestLimitSettings.vue",
+      "sha256": "90f8f503ca3b51ee9676ee7a38a8125f9435e7bb63fcfa3f7a2cfedf0d7bed25",
+      "functionBodies": 15,
       "status": "source-read-and-traced"
     },
     {
@@ -1534,7 +1576,7 @@
     },
     {
       "file": "src/features/settings/ui/services/ServiceConfiguration.vue",
-      "sha256": "8ebfbdd480496e12f57b884f2a3ff0b3780bed98a9480fdb2e6a799a863b80ea",
+      "sha256": "d4e0caa526eb8f5d9b2d9def017b27c632d02a39561f7ee57c2c8d45fd28fb03",
       "functionBodies": 91,
       "status": "source-read-and-traced"
     },
@@ -1542,6 +1584,12 @@
       "file": "src/features/settings/ui/services/ServiceNatureBadge.vue",
       "sha256": "58dbb6df16d83f4de81855208741f10162dcbbe81589eb37af7e1924f17c7554",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/apiKeyTypes.ts",
+      "sha256": "53887918a440507e915f907038c83529e6786853bbfec57a01af2ac3eb08fba6",
+      "functionBodies": 10,
       "status": "source-read-and-traced"
     },
     {
@@ -2355,16 +2403,9 @@
     "src/features/settings/ui/components/TranslationColorField.vue",
     "src/features/settings/ui/components/TranslationStylePreview.vue",
     "src/features/settings/ui/components/WritingStylePreview.vue",
-    "src/features/settings/ui/services/ApiKeyList.vue",
-    "src/features/settings/ui/services/CustomOpenAIProviderDialog.vue",
     "src/features/settings/ui/services/FreeTranslationSettings.vue",
-    "src/features/settings/ui/services/ModelPicker.vue",
     "src/features/settings/ui/services/PromptTemplateEditor.vue",
-    "src/features/settings/ui/services/RequestHeaderSettings.vue",
-    "src/features/settings/ui/services/RequestLimitFields.vue",
-    "src/features/settings/ui/services/RequestLimitSettings.vue",
     "src/features/settings/ui/services/ServiceCatalog.vue",
-    "src/features/settings/ui/services/apiKeyTypes.ts",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
     "src/features/share-card/content/runtime.ts",
     "src/features/share-card/core.ts",
@@ -2584,7 +2625,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue568pending source/function chains, settings child editors/resources and remaining translation/input/area/section/provider/config/learning UI plus existing image runtime strict/performance debt. Active service/probe/prompt/delete/Chrome lifetimes audited38; do not infer every child editor inactive. After complete scope, refresh then-latest main, safely rebase across rewritten history, whole-chain review/resolve/verify and merge exact reviewed head. Goal active; final integration pending.",
+    "Continue561pending files/functions. Next fully audit PromptTemplateEditor, FreeTranslationSettings and ServiceCatalog, with traced candidate IME/token/late-focus/polling/editor lifetimes and external-main changes. Catalog modified only to pass context and remove never-emitted favorites event; not counted as complete review39. Final latest-main rebase, full-chain review/fixes/verification/merge remains pending after all scope complete.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2612,12 +2653,13 @@
     "Thirty-fifth: five new complete reviews256function bodies;235reviewed4287bodies589pending. Bounded three-notice queue, keyed copy feedback, signal cleanup, pending reveal coalescing and unchanged-DOM update; native500notices/RAFs/timers500to1,500identical feedback mutations0. Settings KeepAlive/active props close recording and suspend active-dependent children; canceled duplicate/late navigation and hydration, coalesced latest-state tab broadcast with rejection handling, removed no-op service filter. New34executed cases29static definitions;11affected files241cases; five strict modules four100/121cases, new permanent notice owner. Actual compiled SFC lifecycle tests plus19production and7native flows. Two existing architecture failures remain13unowned executable/3doc tools. Controlled Microsoft/clipboard ports, native Edge only; builds do not prove live Firefox or provider/OS clipboard behavior. Language resource pin unchanged local/unpublished.",
     "Thirty-sixth:6new complete source reviews73function bodies;241files4354bodies584pending. New66executed cases42static definitions,16affected files472cases. Actual old-head leaf/subscription52cases44fail8pass and dialog17cases4fail13pass, immutable baselines/restoration retained. Three strict modules all4dimensions100/38cases; new permanent draft/subscription owners, old subscription exemption removed. Native actual Vue strategy work1000to0, production recorder/prompt20flows including immediate close persistence; initial focus guard stopped/cleaned profile, first config poll caught intermediate mode ACK, native dialog clear and recording-before100ms exposed actual bugs and were repaired. ModelVisionSettings active request/hidden service subscriptions and shared appearance/font/clear lifecycle remain pending. Final latest-main rebase, whole-chain review/fixes and merge explicitly requested, deferred until whole audit complete.",
     "Thirty-seventh:5new complete source reviews153function bodies plus existing Options callback+1;246files4508bodies579pending. New61executed cases45static definitions,9affected files392cases. Immutable original3source comparison90cases44fail46pass before final added keyboard guard; that guard separately passed final integration. Four strict modules all4dimensions100/74cases; permanent appearance bridge owner added and build-only exemption removed. Native6flows show10concurrent warm jobs reads/digests/installs20to2 without HTTP, distinct clears/race/root/prepare/owned FontFace behavior. Production15flows/5inspected screenshots, actual cache/crypto/FontFace/config; all font HTTP locally fixed assets. First production detected retained FontFace2to3 and was repaired/rebuilt/reverified2to2; preserved failed report/screens/source/build evidence. Existing architecture debt13executables/3docs and image runtime gaps persist. Final latest-main rebase, whole-chain review/fixes/verification and merge still pending whole audit.",
-    "Thirty-eighth:12new complete source reviews199bodies;258files4707bodies568pending. New71executed cases47static definitions;13related files202pass;9strict modules100cases all4dimensions100. Original6source comparison106cases50fail56pass plus1known unhandled late Chrome factory rejection; current integration/strict none. Production17flows/4inspected screenshots actual config/backend cancellation with local synthetic image HTTP:2held requests cancelled and unknown retry. Modal catalog target invalidation uses programmatically queued DOM event, normal clicks otherwise. Unit SFC setup/watch/KeepAlive null-render58cases not template proof. Existing13executable/3docs ownership debt and image runtime gaps persist. All-scope final latest-main rebase/review/fix/verify/merge still pending."
+    "Thirty-eighth:12new complete source reviews199bodies;258files4707bodies568pending. New71executed cases47static definitions;13related files202pass;9strict modules100cases all4dimensions100. Original6source comparison106cases50fail56pass plus1known unhandled late Chrome factory rejection; current integration/strict none. Production17flows/4inspected screenshots actual config/backend cancellation with local synthetic image HTTP:2held requests cancelled and unknown retry. Modal catalog target invalidation uses programmatically queued DOM event, normal clicks otherwise. Unit SFC setup/watch/KeepAlive null-render58cases not template proof. Existing13executable/3docs ownership debt and image runtime gaps persist. All-scope final latest-main rebase/review/fix/verify/merge still pending.",
+    "Thirty-ninth:8new files129bodies;266reviewed4836bodies561pending. New44executed cases30static definitions;12affected files149pass. Original7source47executed33fail14pass;5new captured-action API cases excluded, not counted as old defects. Actual cached client template6cases caught setup-only false confidence; controlled element ports not real Element Plus. Production13native flows3inspected screenshots and zero errors; first native same-option reopen failure fixed with context revision key. Other retries fixed input/checkbox selectors and full public snapshot theme fixture wiping synthetic credentials; final theme uses real UI. Two strict modules9cases four100, no weakened threshold/exemption. Existing13executable/3docs ownership debt and whole scope/latest-main delivery pending."
   ],
   "progress": {
-    "sourceReadFiles": 258,
-    "sourceReadFunctionBodies": 4707,
-    "pendingFiles": 568,
+    "sourceReadFiles": 266,
+    "sourceReadFunctionBodies": 4836,
+    "pendingFiles": 561,
     "goalComplete": false
   },
   "observations": [
@@ -3263,6 +3305,31 @@
       "file": "src/core/config/apiKeyCheckIdentity.ts",
       "status": "fixed-or-reviewed-and-verified-thirty-eighth",
       "issue": "Hoist route fields to Map to avoid prototype-name service TypeError; choose first provider with find rather than filter/map every provider. Actual original/current500provider work501to2 identity reads, same digest. Hidden1000config mutations perform0 vision identity reads; bounded work counts, not whole-page CPU or latency ratios."
+    },
+    {
+      "file": "src/features/settings/ui/services/ApiKeyList.vue",
+      "status": "fixed-reviewed-and-verified-thirty-ninth",
+      "issue": "Share a synchronous active settings context with captured callbacks, KeepAlive/unmount invalidation and readonly revision. Defaults active=true explicitly preserve callers that omit optional Boolean props. Parent forwards section/tab/config/service context. Old DOM callbacks bind at render time rather than cached Vue wrappers resolving latest actions when dispatched. Duplicate-key display builds a cached Map in one pass; remove old per-row linear search export/calls, never-emitted favorites event/parent listener and unused follow action wrapper. Row callbacks additionally capture keys once and validate current row value/length, so old indexes after list replacement, in-place shift or edit cannot touch another row. This snapshot is linear; bounded duplicate-map comparison remains63250 versus500 reads, not a whole-render or latency claim."
+    },
+    {
+      "file": "src/features/settings/ui/services/CustomOpenAIProviderDialog.vue",
+      "status": "fixed-reviewed-and-verified-thirty-ninth",
+      "issue": "Provider dialog clears drafts including synthetic key on external close/hide/cache/unmount; one owned open submits once and closes before emit. Native inputs, opened/close/submit bind captured actions; explicit name/endpoint/model length checks complement HTML. Parent closes on section exit and rejects hidden creation."
+    },
+    {
+      "file": "src/features/settings/ui/services/ModelPicker.vue",
+      "status": "fixed-reviewed-and-verified-thirty-ninth",
+      "issue": "Model picker cancels delayed focus on cancel/context changes; revalidates length, capacity, allow-custom and membership/removable flags at action time; closes draft/panel before notifying reentrant listeners. Real Element Plus failed to reopen after identical-list service switch; key now includes context revision as well as option content so stale internal events/control state cannot target a new service."
+    },
+    {
+      "file": "src/features/settings/ui/services/RequestLimitFields.vue",
+      "status": "fixed-reviewed-and-verified-thirty-ninth",
+      "issue": "Request fields reject disabled/hidden/unknown/invalid values; inherited parent refuses late limits that would reenable custom settings. Config/service/model changes synchronously reset scope. Captured handlers isolate old scope/config, request header add/remove/flags reject inactive or unsupported context and invalid boolean values."
+    },
+    {
+      "file": "src/features/settings/model/useSettingsActionContext.ts",
+      "status": "fixed-reviewed-and-verified-thirty-ninth",
+      "issue": "Share a synchronous active settings context with captured callbacks, KeepAlive/unmount invalidation and readonly revision. Defaults active=true explicitly preserve callers that omit optional Boolean props. Parent forwards section/tab/config/service context. Old DOM callbacks bind at render time rather than cached Vue wrappers resolving latest actions when dispatched."
     }
   ],
   "finalDelivery": {

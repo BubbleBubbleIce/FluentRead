@@ -28,13 +28,13 @@
             :id="`${id}-input-${index}`" :model-value="key" type="password" show-password autocomplete="off" :spellcheck="false"
             :aria-label="t('settings.services.keys.rowLabel', {number: index + 1})"
             :placeholder="props.placeholder || t('settings.services.keys.placeholder')"
-            :aria-invalid="duplicateApiKeyIndex(keys, index) !== null"
-            @update:model-value="emit('update', index, String($event))"
+            :aria-invalid="duplicates.has(index)"
+            :onUpdate:modelValue="actions.update.bind(null, index)"
           ><template v-if="multiple" #prefix><span class="api-key-prefix">{{ index + 1 }}</span></template></el-input>
         </div>
         <div class="api-key-row-status">
-          <span v-if="duplicateApiKeyIndex(keys, index) !== null" class="api-key-state is-duplicate" role="status">
-            {{ t('settings.services.keys.duplicate', {number: duplicateApiKeyIndex(keys, index)! + 1}) }}
+          <span v-if="duplicates.has(index)" class="api-key-state is-duplicate" role="status">
+            {{ t('settings.services.keys.duplicate', {number: duplicates.get(index)! + 1}) }}
           </span>
           <span v-else-if="rowStates[index]?.status === 'checking'" class="api-key-state is-checking" role="status">
             <span class="api-key-spinner" />{{ t('settings.services.keys.checking') }}
@@ -46,7 +46,7 @@
           </span>
           <button v-else-if="rowStates[index]?.status === 'error'" type="button" class="api-key-state is-error api-key-error-toggle"
             :aria-expanded="expandedErrors.has(index)" :aria-controls="`${id}-error-${index}`"
-            :title="t('settings.services.keys.failureDetails')" @click="toggleError(index)">
+            :title="t('settings.services.keys.failureDetails')" :onClick="actions.toggle.bind(null, index)">
             <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M10 6v5m0 3h.01" /></svg>
             {{ t('settings.services.keys.failed') }}
             <svg class="api-key-chevron" :class="{'is-expanded': expandedErrors.has(index)}" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
@@ -56,15 +56,15 @@
           </span>
         </div>
         <div v-if="multiple" class="api-key-row-actions">
-          <button v-if="key.trim() && duplicateApiKeyIndex(keys, index) === null" type="button" class="api-key-icon-button api-key-retest" :class="{'is-retry': rowStates[index]?.status === 'error'}" :disabled="busy"
+          <button v-if="key.trim() && !duplicates.has(index)" type="button" class="api-key-icon-button api-key-retest" :class="{'is-retry': rowStates[index]?.status === 'error'}" :disabled="busy"
             data-api-key-retry
             :aria-label="t('settings.services.keys.checkRow', {number: index + 1})"
-            :title="t('settings.services.keys.checkRow', {number: index + 1})" @click="emit('test', index)">
+            :title="t('settings.services.keys.checkRow', {number: index + 1})" :onClick="actions.test.bind(null, index)">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 7a6.5 6.5 0 1 0 .2 5M16 3v4h-4" /></svg>
           </button>
           <button type="button" class="api-key-icon-button api-key-remove" data-api-key-remove
             :aria-label="t('settings.services.keys.remove', {number: index + 1})"
-            :title="t('settings.services.keys.remove', {number: index + 1})" @click="emit('remove', index)">
+            :title="t('settings.services.keys.remove', {number: index + 1})" :onClick="actions.remove.bind(null, index)">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M8 5V3h4v2M6 5l.7 12h6.6L14 5M8.5 8v6m3-6v6" /></svg>
           </button>
         </div>
@@ -72,7 +72,7 @@
       </div>
     </div>
     <footer class="api-key-list-footer">
-      <button type="button" class="api-key-add" data-api-key-add @click="addKey">
+      <button type="button" class="api-key-add" data-api-key-add :onClick="actions.add">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>{{ t('settings.services.keys.addKey') }}
       </button>
       <div v-if="$slots.tools" class="api-key-tools"><slot name="tools" /></div>
@@ -82,9 +82,10 @@
 
 <script setup lang="ts">
 import {computed, nextTick, ref, useId, watch} from 'vue'
+import {useSettingsActionContext} from '../../model/useSettingsActionContext'
 import {useUiI18n} from '@/src/ui/i18n'
-import {duplicateApiKeyIndex, eligibleApiKeyIndexes, type ApiKeyCheckState, type ApiKeySummary} from './apiKeyTypes'
-const props = defineProps<{keys: string[]; states: Record<number, ApiKeyCheckState>; summary: ApiKeySummary | null; busy: boolean; label?: string; placeholder?: string; connectionState?: ApiKeyCheckState; standbyIndexes?: readonly number[]; checkMode?: 'single' | 'all'}>()
+import {duplicateApiKeyIndexes, eligibleApiKeyIndexes, type ApiKeyCheckState, type ApiKeySummary} from './apiKeyTypes'
+const props = withDefaults(defineProps<{active?: boolean; context?: unknown; contextKey?: string; keys: string[]; states: Record<number, ApiKeyCheckState>; summary: ApiKeySummary | null; busy: boolean; label?: string; placeholder?: string; connectionState?: ApiKeyCheckState; standbyIndexes?: readonly number[]; checkMode?: 'single' | 'all'}>(), {active: true})
 const emit = defineEmits<{add: []; update: [index: number, value: string]; remove: [index: number]; test: [index: number]; }>()
 const {t} = useUiI18n()
 const rowStates = computed(() => Object.keys(props.states).length ? props.states : props.connectionState ? {0: props.connectionState} : {})
@@ -98,19 +99,41 @@ function isStandby(index: number): boolean {
 }
 // 全量检查只覆盖实际参与请求的行，备用密钥不计入进度。
 const checkable = computed(() => eligibleApiKeyIndexes(props.keys).filter(index => !isStandby(index)))
+const {active, capture} = useSettingsActionContext(() => props.active !== false, () => [props.context, props.contextKey])
+const duplicates = computed(() => duplicateApiKeyIndexes(props.keys))
+const actions = computed(() => {
+  const current = capture()
+  const keys = props.keys.slice()
+  const isRowCurrent = (index: number) => current() && Number.isInteger(index) && index >= 0 && index < keys.length
+    && props.keys.length === keys.length && props.keys[index] === keys[index]
+  return {
+    add: () => {if (current()) void addKey()},
+    toggle: (index: number) => {if (isRowCurrent(index)) toggleError(index)},
+    update: (index: number, value: unknown) => {if (isRowCurrent(index)) emit('update', index, String(value))},
+    remove: (index: number) => {if (isRowCurrent(index)) emit('remove', index)},
+    test: (index: number) => {if (isRowCurrent(index) && !props.busy && eligible.value.includes(index)) emit('test', index)},
+  }
+})
+// 单项检查仍覆盖备用密钥；只有全量进度排除备用行。
+const eligible = computed(() => eligibleApiKeyIndexes(props.keys))
 const checked = computed(() => Object.values(props.states).filter(state => state.status === 'success' || state.status === 'error').length)
 const checkingIndex = computed(() => props.keys.findIndex((_, index) => props.states[index]?.status === 'checking'))
-watch(() => props.keys, () => { expandedErrors.value = new Set() })
+watch(() => props.keys, () => { expandedErrors.value = new Set() }, {deep: true})
+watch(() => [active.value, props.context, props.contextKey], () => {expandedErrors.value = new Set()}, {flush: 'sync'})
 function toggleError(index: number): void {
+  if (!active.value || !Number.isInteger(index) || index < 0 || index >= props.keys.length) return
   const next = new Set(expandedErrors.value)
   if (next.has(index)) next.delete(index)
   else next.add(index)
   expandedErrors.value = next
 }
 async function addKey(): Promise<void> {
+  if (!active.value) return
+  const current = capture()
   // 已有空行时也照常新增：用户可以先排好几行再逐个粘贴，多余的行随时删除。
   emit('add')
   await nextTick()
+  if (!current()) return
   const inputs = root.value?.querySelectorAll<HTMLInputElement>('.api-key-entry input')
   const input = inputs?.[inputs.length - 1]
   input?.focus({preventScroll: true})

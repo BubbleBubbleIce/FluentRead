@@ -282,7 +282,7 @@
 
     <div v-if="compute.showNewAPI" class="connection-field"><div class="connection-field-label"><strong>NewAPI接口</strong></div><div class="connection-field-control"><el-input v-model="config.newApiUrl" aria-label="接口地址" placeholder="请输入 New API 接口地址" /><p class="provider-field-help">填写 New API 服务的接口地址</p></div></div>
 
-    <ApiKeyList
+    <ApiKeyList :active="active" :context="config" :context-key="service"
       v-if="compute.showToken && !compute.showServiceSecret"
       :label="compute.showAI && !compute.requireApiKey || service === services.deeplx && !deepLXRequiresToken ? translateLegacy('API Key（可选）') : compute.showCloudVendor ? compute.cloudCredentialLabels.token : 'API Key'"
       :placeholder="compute.showAI && !compute.requireApiKey || service === services.deeplx && !deepLXRequiresToken ? t('settings.services.keys.optionalPlaceholder') : undefined"
@@ -382,7 +382,7 @@
     <el-tab-pane v-if="settingsTabs.requests" name="requests" :label="t(SETTINGS_TAB_LABELS.requests)">
       <section id="service-requests-settings" class="service-settings-panel" data-configuration-group="requests">
         <FreeTranslationSettings v-if="service === services.freeTranslation" :config="config" :advanced="true" />
-        <RequestLimitSettings :config="config" :service="service" :model="compute.showModel ? effectiveModelLabel : undefined" />
+        <RequestLimitSettings :active="active && activeSettingsTab === 'requests'" :config="config" :service="service" :model="compute.showModel ? effectiveModelLabel : undefined" />
 
       </section>
     </el-tab-pane>
@@ -414,7 +414,7 @@
             </div>
           </div>
 
-          <RequestHeaderSettings v-if="compute.showAI" :config="config" />
+          <RequestHeaderSettings v-if="compute.showAI" :active="active && activeSettingsTab === 'custom-request'" :config="config" />
 
           <div v-if="compute.showCustomBody" class="connection-field"><div class="connection-field-label"><strong>自定义请求体</strong><FieldHelp :content="translateLegacy('填写要合并到翻译请求中的 JSON 参数对象')" /></div><div class="connection-field-control"><el-input v-model="config.customBody[service]" type="textarea" :rows="3" aria-label="自定义请求体" :class="{ 'input-error': !isValidCustomBody(config.customBody[service]) }" placeholder='例如：{"thinking": {"type": "disabled"}}' />
               <div v-if="!isValidCustomBody(config.customBody[service])" class="error-text">请输入合法的 JSON 对象，否则该配置将被忽略</div></div></div>
@@ -456,7 +456,7 @@ import browser from 'webextension-polyfill'
 import { requestConfigSave, waitForConfigPersistenceQueue } from '@/src/services/config/store'
 import { CONNECTION_TEST_MESSAGE, DEFAULT_OLLAMA_ENDPOINT, getAliyunTranslationEndpoint, getMimoEndpoint, MINIMAX_ENDPOINTS } from '@/src/core/config/constants'
 import { chromeTranslationPreparationStore } from '@/src/platform/browser/chromeTranslationPreparationRequest'
-import { ElMessage, ElTabs, ElTabPane } from 'element-plus'
+import { ElMessage, ElMessageBox, ElTabs, ElTabPane } from 'element-plus'
 import 'element-plus/es/components/tabs/style/css'
 import FieldHelp from '../components/FieldHelp.vue'
 import SegmentedControl from '../components/SegmentedControl.vue'

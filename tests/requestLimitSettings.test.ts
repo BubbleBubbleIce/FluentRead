@@ -116,4 +116,12 @@ describe('request limit settings interaction', () => {
     expect(changes).toEqual([{...values, translationRequestsPerMinute: 0}]);
     expect(values.translationRequestsPerMinute).toBe(250);
   });
+  it('ignores late change events from disabled or hidden fields and unknown field names', async () => {
+    const values = normalizeTranslationRequestLimits(new Config()), changes: typeof values[] = [];
+    const {state, props} = await mount('RequestLimitFields', {modelValue: values, disabled: true, 'onUpdate:modelValue': (value: typeof values) => changes.push(value)});
+    state.update('translationRequestsPerMinute', 12);expect(changes).toEqual([]);
+    props.disabled = false;props.active = false;state.update('translationRequestsPerMinute', 12);expect(changes).toEqual([]);
+    props.active = true;state.update('missing', 12);expect(changes).toEqual([]);
+    state.update('translationRequestsPerMinute', 12);expect(changes).toEqual([{...values, translationRequestsPerMinute: 12}]);
+  });
 });
