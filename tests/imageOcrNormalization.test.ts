@@ -69,6 +69,70 @@ describe('普通图片按完整段落翻译', () => {
         expect(groupImageParagraphs([])).toEqual([]);
     });
 
+    it('两千条连续正文的遮挡查找不反复读取后续整图横坐标', () => {
+        let coordinateReads = 0;
+        const input = Array.from({length: 2000}, (_, index) => {
+            const region = line(`Sentence ${index}`, 0, index * 14);
+            Object.defineProperty(region.bbox, 'x0', {get: () => {coordinateReads++; return 0;}, enumerable: true});
+            return region;
+        });
+        const output = groupImageParagraphs(input);
+        expect(output).toHaveLength(1);
+        expect(output[0].sourceBoxes).toHaveLength(input.length);
+        expect(output[0].text).toBe(input.map(region => region.text).join(' '));
+        expect(coordinateReads).toBeLessThan(100_000);
+    });
+
+    it('长正文仍受起点以前的高竖排框、末行以后起始的跨栏框以及已使用正文遮挡', () => {
+        const body = Array.from({length: 100}, (_, index) => line(`Body ${index}`, 0, 20 + index * 14));
+        const early = {...line('vertical label', 90, 0, 20, 2000), vertical: true as const};
+        const late = {...line('late overlap', 50, 37, 100, 10), sourceBoxes: []};
+        expect(groupImageParagraphs([early, ...body]).every(region => !region.sourceBoxes)).toBe(true);
+        const result = groupImageParagraphs([...body, late]);
+        expect(result[0]).toBe(body[0]);
+        expect(result[1]).toBe(body[1]);
+        expect(result.find(region => region.text.startsWith('Body 2 '))?.sourceBoxes).toHaveLength(98);
+        expect(result).toContain(late);
+        // 已归入前一段的区域仍是另一栏/段的障碍，不能从全局索引永久删除。
+        const earlierGroup = [line('First A', 120, 0, 1), line('Second A', 120, 14, 1)];
+        const nextGroup = [line('First B', 125, 0, 0.5), line('Second B', 117, 14, 0.5)];
+        expect(groupImageParagraphs([...earlierGroup, ...nextGroup, ...body.slice(5)]).slice(0, 3).map(region => region.text))
+            .toEqual(['First A Second A', 'First B', 'Second B']);
+    });
+
+    it('多栏交错的长正文暂时排除本栏成员后，查询仍能剪掉相邻栏而不改变源框', () => {
+        let coordinateReads = 0;
+        const input = Array.from({length: 2000}, (_, index) => {
+            const x0 = index % 2 * 250;
+            const region = line(`Column ${index % 2} row ${Math.floor(index / 2)}`, x0, Math.floor(index / 2) * 14);
+            Object.defineProperty(region.bbox, 'x0', {get: () => {coordinateReads++; return x0;}, enumerable: true});
+            return region;
+        });
+        const before = structuredClone(input);
+        const output = groupImageParagraphs(input);
+        expect(output.map(region => region.sourceBoxes?.length)).toEqual([1000, 1000]);
+        expect(output[0].bbox).toEqual({x0: 0, x1: 200, y0: 0, y1: 13998});
+        expect(output[1].bbox).toEqual({x0: 250, x1: 450, y0: 0, y1: 13998});
+        expect(input).toEqual(before);
+        expect(coordinateReads).toBeLessThan(100_000);
+    });
+
+    it('大图中的重复对象只加入一次，源框复制与重复值对象的遮挡保持原约定', () => {
+        const input = Array.from({length: 100}, (_, index) => line(`Text ${index}`, 0, index * 14));
+        const duplicate = input[30];
+        const before = structuredClone(input);
+        const result = groupImageParagraphs([...input, duplicate, input[0]]);
+        expect(result).toHaveLength(1);
+        expect(result[0].sourceBoxes).toEqual(input.map(region => region.bbox));
+        expect(result[0].sourceBoxes![30]).not.toBe(duplicate.bbox);
+        expect(input).toEqual(before);
+        const separate = {...duplicate, bbox: {...duplicate.bbox}};
+        const obstructed = groupImageParagraphs([...input, separate]);
+        expect(obstructed[0].sourceBoxes).toHaveLength(30);
+        expect(obstructed).toContain(duplicate);
+        expect(obstructed).toContain(separate);
+    });
+
     it('千个分散标签只检查纵向邻域，避免逐标签扫描整图', () => {
         let coordinateReads = 0;
         const input = Array.from({length: 1000}, (_, index) => {

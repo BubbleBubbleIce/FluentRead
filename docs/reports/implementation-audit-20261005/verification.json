@@ -12895,6 +12895,445 @@
       "referenceCodeUsedInThisBatch": false,
       "pushed": false,
       "remoteMerged": false
+    },
+    {
+      "batch": "twenty-first",
+      "name": "image-obstruction-index-and-current-provider-native-fixture",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 163,
+        "sourceReadFunctionBodies": 2657,
+        "pendingFiles": 658,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 4,
+      "newStaticTestDefinitions": 4,
+      "newOptionalNativePhases": 3,
+      "oldSourceRun": {
+        "executedCases": 27,
+        "passed": 26,
+        "failed": 1,
+        "scope": "Three new cases before implementation;2000continuous x0reads2007001fails budget. Earlier initial test trial had one incorrect vertical-fixture expectation, corrected its height before authoritative old run. Fourth dual-column case added after patch."
+      },
+      "implementation": {
+        "index": "Lazily build balanced active-AABB/count tree only64+regions with an eligible merge. Exclude all identity occurrences of current members/candidate; restore rejected candidate immediately and all members at group end. Dynamic internal bounds prune adjacent columns, only private parent boxes mutate. Previous-used groups remain obstacles; singleton identity/order and sourceBoxes snapshots preserved. O(n) extra index memory, O(log n) depth, no universal query-complexity guarantee.",
+        "redundancy": "Reject noncontiguous geometry before allocating proposed alignment state; reuse one next height and x coordinates instead of extra metrics object/reads. Do not allocate member Set on indexed inputs. No exported function removed or API changed.",
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "strictCoverage": {
+        "files": 6,
+        "executedCases": 135,
+        "modules": 6,
+        "metrics": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "differentialAndTiming": {
+        "scope": "Actual immutable baseline vs current grouping source. Pure Node only; no OCR/network/Canvas timing.",
+        "sourceSha256": {
+          "baseline": "fa2b11e474be16c1eb0c28ff7bcf3de247609aee2b8afb58fdf3885449e9caa5",
+          "current": "c5c181baa0746b4f302b544b9c50dab4f88be636a28faf3509eaa59b8dbb98ff"
+        },
+        "differentials": 4006,
+        "uncleanedCases": 1000,
+        "valuesAndSingletonIdentitiesEqual": true,
+        "inputUnchanged": true,
+        "workCounts": [
+          {
+            "name": "continuous2000",
+            "x0Reads": {
+              "baseline": 2007001,
+              "current": 16002
+            }
+          },
+          {
+            "name": "twoColumns2000",
+            "x0Reads": {
+              "baseline": 3010002,
+              "current": 19002
+            }
+          }
+        ],
+        "timing": [
+          {
+            "name": "bambu",
+            "medianMs": {
+              "baseline": 0.011041000000204804,
+              "current": 0.013625000000047294
+            },
+            "samplesMs": {
+              "baseline": [
+                0.028333000000202446,
+                0.01670799999965311,
+                0.011041000000204804,
+                0.010499999999865395,
+                0.011290999999800988,
+                0.010499999999865395,
+                0.009833000000071479
+              ],
+              "current": [
+                0.027207999999973254,
+                0.015249999999923602,
+                0.01375000000007276,
+                0.012999999999919964,
+                0.013625000000047294,
+                0.012165999999979249,
+                0.011958000000049651
+              ]
+            },
+            "outputSha256": "e6058650a88bddd3b78ff5b6fee83b4abfd3cd780a9c1a2dd415585bca0ddacc"
+          },
+          {
+            "name": "labels1000",
+            "medianMs": {
+              "baseline": 0.6982080000002497,
+              "current": 0.6902079999999842
+            },
+            "samplesMs": {
+              "baseline": [
+                0.6714590000001408,
+                0.7497079999998277,
+                0.7370829999999842,
+                0.7042080000001079,
+                0.6982080000002497,
+                0.5093340000003082,
+                0.46233299999994415
+              ],
+              "current": [
+                0.5971660000000156,
+                1.03387500000008,
+                0.6625829999998132,
+                0.6226249999999709,
+                0.7168750000000728,
+                0.6902079999999842,
+                0.7142920000001141
+              ]
+            },
+            "outputSha256": "df64a1c624c66abd88f4f38e17cbab0ecc5ccaf0ea238f20fa84a786ac3690a8"
+          },
+          {
+            "name": "continuous500",
+            "medianMs": {
+              "baseline": 5.801584000000275,
+              "current": 0.7987499999999272
+            },
+            "samplesMs": {
+              "baseline": [
+                5.771541999999954,
+                5.549416999999721,
+                5.894208000000162,
+                5.964832999999999,
+                5.6753749999998035,
+                5.801584000000275,
+                6.2599999999997635
+              ],
+              "current": [
+                1.112333000000035,
+                0.7987499999999272,
+                0.8451669999999467,
+                0.728874999999789,
+                1.1973330000000715,
+                0.7971670000001723,
+                0.7896670000000086
+              ]
+            },
+            "outputSha256": "44d36ca9459ddae3f21083961c00fb668204e772a4c3b837f8fc0de1f4cb1ffd"
+          },
+          {
+            "name": "continuous2000",
+            "medianMs": {
+              "baseline": 92.34799999999996,
+              "current": 5.510457999999744
+            },
+            "samplesMs": {
+              "baseline": [
+                93.31683299999986,
+                94.58424999999988,
+                92.48458400000072,
+                92.31404099999963,
+                92.33858299999974,
+                92.20258399999966,
+                92.34799999999996
+              ],
+              "current": [
+                5.510457999999744,
+                5.45824999999968,
+                5.525000000000546,
+                5.790375000000495,
+                5.33691700000054,
+                5.671667000000525,
+                5.268500000000131
+              ]
+            },
+            "outputSha256": "5bbe38c7d232470c12e930b13bac375c59456c784e20f86036f00803382c52a7"
+          },
+          {
+            "name": "twoColumns2000",
+            "medianMs": {
+              "baseline": 100.61791699999958,
+              "current": 5.867792000000009
+            },
+            "samplesMs": {
+              "baseline": [
+                100.69941699999981,
+                100.61791699999958,
+                100.30362499999956,
+                100.2074590000002,
+                99.46762500000023,
+                102.4195409999993,
+                100.92504199999985
+              ],
+              "current": [
+                5.852292000000489,
+                6.076792000000751,
+                5.7072079999998095,
+                5.689041999999972,
+                6.0746670000007725,
+                6.188500000000204,
+                5.867792000000009
+              ]
+            },
+            "outputSha256": "505d473c6efa2ab36c9ddf086830842c74abc856ae3cc24928f2d1e9164474be"
+          },
+          {
+            "name": "separatePairs1000",
+            "medianMs": {
+              "baseline": 18.396875000000364,
+              "current": 1.6999159999995754
+            },
+            "samplesMs": {
+              "baseline": [
+                17.68212499999936,
+                18.734040999999706,
+                18.396875000000364,
+                18.579334000000017,
+                18.13933299999917,
+                18.14337499999965,
+                18.405749999999898
+              ],
+              "current": [
+                1.7610839999997552,
+                1.627958000000035,
+                1.5741250000000946,
+                2.4406669999998485,
+                2.029167000000598,
+                1.644083000000137,
+                1.6999159999995754
+              ]
+            },
+            "outputSha256": "de69f4a6c4b39686ba2c7d2e9dc327c7df02264dfc956ed8c28ce07aec9e62d8"
+          }
+        ]
+      },
+      "timingBoundary": "Final independent Node process after own test/compile/inventory/browser/build handles ended;3warmups,7alternating rounds. Counter phase excluded from timing. Earlier concurrent-inventory trial superseded. No machine-wide idle assertion, whole image/network/browser speed ratio or universal improvement. Bambu small fixture about2.6microseconds slower; dispersed1000labels approximately unchanged.",
+      "architecture": {
+        "sourceChecksPassed": true,
+        "sourceHeaderCases": 801,
+        "moduleBoundaryCases": 13,
+        "providerBoundaryCases": 6,
+        "ownership": {
+          "executedCases": 9,
+          "passed": 7,
+          "failed": 2,
+          "remainingExecutableOmissions": 15,
+          "unownedDocumentationTools": 3,
+          "wholeGatePassed": false
+        }
+      },
+      "checks": {
+        "typecheck": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed; no actual Firefox runtime",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testSuiteAudit": {
+          "passed": true,
+          "files": 466,
+          "staticRegisteredDefinitions": 6213
+        },
+        "docsBuild": "passed",
+        "docsCheck": {
+          "passed": true,
+          "pages": 77,
+          "links": 3959,
+          "anchors": 745,
+          "images": 154,
+          "scope": "Public VitePress site only: reports/** explicitly excluded. Internal report JSON, reviewed source hashes and review partition validated separately."
+        }
+      },
+      "browser": {
+        "staleFixture": {
+          "passed": false,
+          "case": "HAR identifier filtering and Google XSRF cooldown",
+          "reason": "HAR request assertions see empty tracked inputs because new preferred Google HTML request falls through stale fetch mock. Stale run not deterministic translation proof.",
+          "profileRemoved": true
+        },
+        "correctedFixtureOnPreviousBuild": {
+          "passed": true,
+          "cases": [
+            "HAR technical identifiers stay unchanged without requests; repeated primary XSRF failures are skipped",
+            "missing languages exposes preparation action",
+            "real language download, OCR, translation and replacement",
+            "independent viewport reader preserves recognized original alongside translation",
+            "restore and redisplay reuse result without requests or source mutation",
+            "scroll retains same decoded bitmap",
+            "second image hover survives unrelated live DOM updates",
+            "DOM geometry matches source: contain-padding-border",
+            "DOM geometry matches source: cover-padding-border",
+            "DOM geometry matches source: none-padding-border",
+            "DOM geometry matches source: ancestor-clipping",
+            "DOM geometry matches source: ancestor-scroll-clipping",
+            "dynamic source change removes old translation",
+            "loading Cancel retains the same attached hovered focused row and button during progress",
+            "cancel never installs a late result",
+            "retry works after cancellation",
+            "injected offscreen channel closure retries once with a fresh request and installs a valid bitmap",
+            "transparent PNG hides original letters while translated bitmap remains visible",
+            "restoring transparent source releases only the extension opacity lease",
+            "host opacity change removes old replacement and preserves the host value",
+            "image removal cleans overlay"
+          ],
+          "phases": 21,
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "temporaryProfileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 15
+        },
+        "final": {
+          "passed": true,
+          "cases": [
+            "HAR technical identifiers stay unchanged without requests; repeated primary XSRF failures are skipped",
+            "missing languages exposes preparation action",
+            "real language download, OCR, translation and replacement",
+            "independent viewport reader preserves recognized original alongside translation",
+            "restore and redisplay reuse result without requests or source mutation",
+            "scroll retains same decoded bitmap",
+            "second image hover survives unrelated live DOM updates",
+            "DOM geometry matches source: contain-padding-border",
+            "DOM geometry matches source: cover-padding-border",
+            "DOM geometry matches source: none-padding-border",
+            "DOM geometry matches source: ancestor-clipping",
+            "DOM geometry matches source: ancestor-scroll-clipping",
+            "dynamic source change removes old translation",
+            "loading Cancel retains the same attached hovered focused row and button during progress",
+            "cancel never installs a late result",
+            "retry works after cancellation",
+            "injected offscreen channel closure retries once with a fresh request and installs a valid bitmap",
+            "transparent PNG hides original letters while translated bitmap remains visible",
+            "restoring transparent source releases only the extension opacity lease",
+            "host opacity change removes old replacement and preserves the host value",
+            "image removal cleans overlay"
+          ],
+          "phases": 21,
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "temporaryProfileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 15
+        },
+        "dense": {
+          "passed": true,
+          "cases": [
+            "ninety individually drawn rows survive real OCR as a complete paragraph",
+            "dense reader matches complete grouped request and restore preserves source",
+            "dense cached redisplay sends no new translation request"
+          ],
+          "phases": 3,
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "temporaryProfileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 2
+        },
+        "denseResult": {
+          "drawnRows": 90,
+          "recognizedRows": 90,
+          "providerCalls": 1,
+          "completeParagraphs": 1,
+          "sourceMatchesRequest": true,
+          "originalPreserved": true,
+          "cachedRedisplayNoNewRequests": true
+        },
+        "javascriptAssetsSha256": "c2e76d3af0f82d8fdeee16b9f0f881e453b5335562dab8b514bb6d697d2c65b2",
+        "screenshotsInspected": [
+          "final02translated",
+          "final08cancel-hover",
+          "dense-reader"
+        ],
+        "cleanupVerified": true,
+        "temporaryProfileProcessesAfterRun": 0,
+        "qualityObservation": "Dense reader/translated thumbnail has residual punctuation-like marks. Root cause not verified; must inspect raw OCR, normalization and erase boxes. Synthetic short translation is not semantic completeness/provider quality proof."
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/image-translation/core.ts",
+          "src/features/image-translation/services/inpainting.ts",
+          "src/features/image-translation/services/rendering.ts",
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/features/image-translation/services/mangaEncoding.ts",
+          "src/shared/image/types.ts"
+        ],
+        "newFunctionBodies": 123,
+        "changedFiles": [
+          "src/features/image-translation/paragraphs.ts"
+        ],
+        "netProductionFunctionBodyChange": 5,
+        "inventoryFiles": 821,
+        "inventoryFunctions": 14701,
+        "cachedIntegratedPendingSources": [
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/handlers/webDavBackup.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/config/catalog.ts",
+          "src/core/config/freeTranslation.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/services/mangaOcr.ts",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WebDavBackup.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceCatalogItem.vue",
+          "src/features/settings/ui/services/freeTranslationChecks.ts",
+          "src/platform/google-drive/api.ts",
+          "src/platform/webdav/api.ts",
+          "src/providers/translation/free-extra-web.ts",
+          "src/providers/translation/free-web.ts",
+          "src/services/config/cloudBackupClient.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/config/webDavBackup.ts"
+        ]
+      },
+      "reproducedUnfixedLayoutFailure": {
+        "sourceSha256": "f7ba0a3d8d6e98f6fab6e1b8b8a974bf58403acdfdc7ba657823de80a6d65a83",
+        "lines": 150000,
+        "inputBytes": 299999,
+        "scope": "Actual pure layout function. Synthetic response only, no provider/browser reproduction.",
+        "threw": true,
+        "name": "RangeError",
+        "message": "Maximum call stack size exceeded"
+      },
+      "remaining": [
+        "658pending source files including24changed cached-main source files",
+        "Fix150000line layout RangeError and investigate dense punctuation-like remnants",
+        "Inpaint cluster array copying/spread, vertical grouping/dedup work and synchronous area crop encoding",
+        "OCR/manga adapters still need complete source review",
+        "All prior highlighter/remount/section/vocabulary budgets and verification ownership gaps"
+      ],
+      "referenceRepositoriesChanged": false,
+      "referenceCodeUsedInThisBatch": false,
+      "pushed": false,
+      "remoteMerged": false
     }
   ]
 }
