@@ -45,6 +45,28 @@ afterEach(async () => {
 });
 
 describe('大模型用量 IndexedDB repository', () => {
+    it.each([1, MODEL_USAGE_MAX_STORED_EVENTS])('已有 %i 条时写入和裁剪仅访问索引，不读回完整事件', async (count) => {
+        const repository = createRepository('index-only-retention');
+        await repository.recordMany(Array.from({length: count}, (_, index) => usageEvent({
+            id: `retention-${String(index).padStart(4, '0')}`, startedAt: 1,
+        })));
+        let reads = 0;
+        const reading = (event: unknown) => {
+            if (event !== undefined) reads += 1;
+            return event;
+        };
+        repository.database.events.hook('reading', reading);
+        try {
+            await expect(repository.recordMany([usageEvent({id: 'retention-new', startedAt: 2})])).resolves.toBe(1);
+        } finally {
+            repository.database.events.hook('reading').unsubscribe(reading);
+        }
+        expect(reads).toBe(0);
+        expect(await repository.database.events.count()).toBe(Math.min(count + 1, MODEL_USAGE_MAX_STORED_EVENTS));
+        expect(await repository.database.events.get('retention-new')).toBeDefined();
+        expect(Boolean(await repository.database.events.get('retention-0000'))).toBe(count < MODEL_USAGE_MAX_STORED_EVENTS);
+    });
+
     it('批量写入只保留白名单字段，并以事件 id 幂等去重', async () => {
         const repository = createRepository('allowlist');
         const first = {

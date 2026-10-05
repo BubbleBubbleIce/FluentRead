@@ -152,7 +152,7 @@ export const navigationGroups = [
         id: 'settings-translation-stats', icon: '◔', label: '翻译统计', description: '请求规模、耗时与服务表现', group: '工具与学习',
         heading: '翻译统计', summary: '查看每次翻译请求的规模和耗时，比较各翻译服务的响应速度与稳定性',
         kicker: '本地工具', title: '翻译统计', detail: '查看翻译请求的规模、耗时分布和各服务的表现',
-        searchDescription: '翻译统计、请求统计、请求大小、请求规模、字符数、耗时、平均耗时、最长耗时、最大耗时、P95、响应速度、成功率、失败原因、超时、缓存命中、服务对比、性能' + '模型用量、调用统计、Token、请求记录、耗时、输入 Token、输出 Token、缓存输入、缓存写入、缓存命中率、导入、导出、Kimi、月之暗面、OpenAI、DeepSeek',
+        searchDescription: '翻译统计、请求统计、请求大小、请求规模、字符数、耗时、平均耗时、最长耗时、最大耗时、P95、响应速度、成功率、失败原因、超时、缓存命中、服务对比、性能' + ' · ' + '模型用量、调用统计、Token、请求记录、耗时、输入 Token、输出 Token、缓存输入、缓存写入、缓存命中率、导入、导出、Kimi、月之暗面、OpenAI、DeepSeek',
       },
     ],
   },

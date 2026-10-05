@@ -219,6 +219,7 @@ export class TranslationStatsRepository {
     private queue: Array<{event: StoredTranslationRequestEvent; attempts: TranslationRouteAttempt[]}> = [];
     private timer: unknown = null;
     private operations: Promise<void> = Promise.resolve();
+    private scheduledFlush: {generation: number; promise: Promise<void>} | null = null;
     private readonly flushDelayMs: number;
     private readonly maxBufferedEvents: number;
     private readonly maxStoredRequests: number;
@@ -282,10 +283,20 @@ export class TranslationStatsRepository {
             this.clearTimer(this.timer);
             this.timer = null;
         }
-        return this.enqueue(() => this.writeQueued());
+        const generation = this.generation;
+        if (this.scheduledFlush?.generation === generation) return this.scheduledFlush.promise;
+        const promise = this.enqueue(() => {
+            // 只合并尚未开始的刷新；写入期间新到的事件必须能安排下一批。
+            if (this.scheduledFlush?.promise === promise) this.scheduledFlush = null;
+            return this.writeQueued(generation);
+        });
+        this.scheduledFlush = {generation, promise};
+        return promise;
     }
 
-    private async writeQueued(): Promise<void> {
+    private async writeQueued(expectedGeneration: number): Promise<void> {
+        // clear 会同步推进代次；旧任务不得读取 clear 后的新队列。
+        if (expectedGeneration !== this.generation) return;
         const queued = this.queue.splice(0);
         if (queued.length === 0) return;
         const batch = queued.map((item) => item.event);

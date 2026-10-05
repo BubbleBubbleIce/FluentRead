@@ -5,6 +5,8 @@
  * 模块边界：本文件只处理展示格式，不参与 Token 聚合、排序、计费、导入导出或供应商 usage 解释；业务数据始终保留原始整数。
  */
 
+import {createNumberFormatter} from '@/src/core/i18n/numberFormat';
+
 export interface FormattedTokenCount {
     compact: string;
     exact: string;
@@ -26,7 +28,9 @@ const compactValueFormatter = new Intl.NumberFormat('zh-CN', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
 });
-
+const exactFormatter = createNumberFormatter({maximumFractionDigits: 0});
+const compactFormatter = createNumberFormatter({notation: 'compact', maximumFractionDigits: 2});
+const percentFormatter = createNumberFormatter({style: 'percent', maximumFractionDigits: 1});
 
 function safeCount(value: number): number {
     return Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -38,11 +42,9 @@ function roundedCompactValue(value: number): number {
 
 export function formatTokenCount(value: number, locale = 'zh-CN'): FormattedTokenCount {
     const count = safeCount(value);
-    const exact = new Intl.NumberFormat(locale, {maximumFractionDigits: 0}).format(count);
+    const exact = exactFormatter(locale).format(count);
     if (!locale.toLowerCase().startsWith('zh')) {
-        const compact = new Intl.NumberFormat(locale, {
-            notation: 'compact', maximumFractionDigits: 2,
-        }).format(count);
+        const compact = compactFormatter(locale).format(count);
         return {compact, exact, isCompact: compact !== exact};
     }
     if (count < COMPACT_UNITS[0].divisor) return {compact: exact, exact, isCompact: false};
@@ -68,5 +70,5 @@ export function formatTokenCount(value: number, locale = 'zh-CN'): FormattedToke
 
 export function formatUsageRate(value: number | null, locale = 'zh-CN'): string {
     if (value === null || !Number.isFinite(value) || value < 0) return '—';
-    return new Intl.NumberFormat(locale, {style: 'percent', maximumFractionDigits: 1}).format(Math.min(1, value));
+    return percentFormatter(locale).format(Math.min(1, value));
 }

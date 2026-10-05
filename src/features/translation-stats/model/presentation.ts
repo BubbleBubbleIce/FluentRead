@@ -5,6 +5,8 @@
  * 模块边界：本文件只做纯计算与格式化，不发送后台消息、不读取配置，也不包含 Vue 响应式或界面文案 key。
  */
 
+import {createNumberFormatter} from '@/src/core/i18n/numberFormat';
+
 import {
     TRANSLATION_STATS_ERROR_KINDS,
     type TranslationRouteBreakdownItem,
@@ -20,6 +22,18 @@ export type TranslationStatsTrendSegmentKey = 'success' | 'failed' | 'cancelled'
 export type TranslationStatsBreakdownSortKey = 'requests' | 'successRate' | 'average' | 'p95' | 'max' | 'size';
 export type TranslationRouteSortKey = 'attempts' | 'successRate' | 'average' | 'p95' | 'max' | 'size';
 export type TranslationStatsSortDirection = 'asc' | 'desc';
+
+const numberFormatter = createNumberFormatter({maximumFractionDigits: 0});
+const compactFormatter = createNumberFormatter({notation: 'compact', maximumFractionDigits: 1});
+const percentFormatter = createNumberFormatter({style: 'percent', maximumFractionDigits: 1});
+const millisecondFormatter = createNumberFormatter({style: 'unit', unit: 'millisecond', unitDisplay: 'short', maximumFractionDigits: 0});
+const secondFormatter = createNumberFormatter({style: 'unit', unit: 'second', unitDisplay: 'short', maximumFractionDigits: 0});
+const secondDecimalFormatter = createNumberFormatter({style: 'unit', unit: 'second', unitDisplay: 'short', maximumFractionDigits: 1});
+const secondPreciseFormatter = createNumberFormatter({style: 'unit', unit: 'second', unitDisplay: 'short', maximumFractionDigits: 2});
+const minuteFormatter = createNumberFormatter({style: 'unit', unit: 'minute', unitDisplay: 'short', maximumFractionDigits: 0});
+const byteFormatter = createNumberFormatter({style: 'unit', unit: 'byte', unitDisplay: 'short', maximumFractionDigits: 0});
+const kilobyteFormatter = createNumberFormatter({style: 'unit', unit: 'kilobyte', unitDisplay: 'short', maximumFractionDigits: 1});
+const megabyteFormatter = createNumberFormatter({style: 'unit', unit: 'megabyte', unitDisplay: 'short', maximumFractionDigits: 1});
 
 export interface TranslationStatsTrendBar {
     key: string;
@@ -194,36 +208,32 @@ function isValidNumber(value: number | null | undefined): value is number {
 }
 
 export function formatStatsNumber(value: number, language: string): string {
-    return new Intl.NumberFormat(language, {maximumFractionDigits: 0}).format(isValidNumber(value) ? value : 0);
+    return numberFormatter(language).format(isValidNumber(value) ? value : 0);
 }
 
 /** 一万以下保留完整千分位，更大的数量使用当前语言的紧凑写法。 */
 export function formatStatsCompact(value: number, language: string): string {
     const safe = isValidNumber(value) ? value : 0;
     if (safe < 10_000) return formatStatsNumber(safe, language);
-    return new Intl.NumberFormat(language, {notation: 'compact', maximumFractionDigits: 1}).format(safe);
+    return compactFormatter(language).format(safe);
 }
 
 export function formatStatsPercent(value: number | null, language: string): string {
     if (!isValidNumber(value)) return '—';
-    return new Intl.NumberFormat(language, {style: 'percent', maximumFractionDigits: 1}).format(value);
-}
-
-function formatUnit(value: number, unit: string, language: string, maximumFractionDigits: number): string {
-    return new Intl.NumberFormat(language, {style: 'unit', unit, unitDisplay: 'short', maximumFractionDigits}).format(value);
+    return percentFormatter(language).format(value);
 }
 
 export function formatStatsDuration(value: number | null, language: string): string {
     if (!isValidNumber(value)) return '—';
-    if (value < 1_000) return formatUnit(Math.round(value), 'millisecond', language, 0);
-    if (value < 60_000) return formatUnit(value / 1_000, 'second', language, value < 10_000 ? 2 : 1);
+    if (value < 1_000) return millisecondFormatter(language).format(Math.round(value));
+    if (value < 60_000) return (value < 10_000 ? secondPreciseFormatter : secondDecimalFormatter)(language).format(value / 1_000);
     const totalSeconds = Math.round(value / 1_000);
-    return `${formatUnit(Math.floor(totalSeconds / 60), 'minute', language, 0)} ${formatUnit(totalSeconds % 60, 'second', language, 0)}`;
+    return `${minuteFormatter(language).format(Math.floor(totalSeconds / 60))} ${secondFormatter(language).format(totalSeconds % 60)}`;
 }
 
 export function formatStatsBytes(value: number, language: string): string {
     const safe = isValidNumber(value) ? value : 0;
-    if (safe < 1_024) return formatUnit(safe, 'byte', language, 0);
-    if (safe < 1_024 * 1_024) return formatUnit(safe / 1_024, 'kilobyte', language, 1);
-    return formatUnit(safe / 1_024 / 1_024, 'megabyte', language, 1);
+    if (safe < 1_024) return byteFormatter(language).format(safe);
+    if (safe < 1_024 * 1_024) return kilobyteFormatter(language).format(safe / 1_024);
+    return megabyteFormatter(language).format(safe / 1_024 / 1_024);
 }

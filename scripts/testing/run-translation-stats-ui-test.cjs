@@ -307,6 +307,10 @@ async function readStoredStats(page) {
 async function main() {
   fs.mkdirSync(artifactsDir, {recursive: true});
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-translation-stats-profile-'));
+  const profileIdentity = fs.lstatSync(profileDir);
+  const ownerFile = path.join(profileDir, '.fluentread-ui-test-owner');
+  const owner = `${process.pid}-${Date.now()}`;
+  fs.writeFileSync(ownerFile, owner, {flag: 'wx'});
   const report = {ok: false, suite: 'translation-stats', artifactType: 'production', extensionDir, artifactsDir,
     browser: 'isolated Microsoft Edge', manifest: {version: manifest.version, optionsPath},
     launchMode: null, focusPolicy: null, windowPlacement: null, assertions: {}, responsive: [], focusChecks: [],
@@ -480,7 +484,8 @@ async function main() {
         await new Promise((resolve, reject) => {
           const transaction = database.transaction('requests', 'readwrite');
           for (let index = 0; index < 53; index++) transaction.objectStore('requests').put({...original,
-            id: `paging-${index}`, serviceId: 'deeplx', model: '', startedAt: Date.now() - index * 1000});
+            id: `paging-${index}`, serviceId: 'deeplx', model: '', source: 'network', cachedSegments: 0,
+            startedAt: Date.now() - index * 1000});
           transaction.oncomplete = resolve;
           transaction.onerror = () => reject(transaction.error);
         });
@@ -531,25 +536,49 @@ async function main() {
     await page.locator(`${panel} .stats-button-quiet`).click();
     const dialog = page.locator('.stats-dialog');
     await dialog.waitFor({state: 'visible', timeout});
+    assert.equal(await page.locator('.settings-app').getAttribute('inert'), '');
+    const cancel = dialog.getByRole('button', {name: '取消', exact: true});
+    const confirm = dialog.locator('.stats-button-danger');
+    assert.equal(await cancel.evaluate(button => button === document.activeElement), true);
+    await cancel.press('Shift+Tab');
+    assert.equal(await confirm.evaluate(button => button === document.activeElement), true);
+    await confirm.press('Tab');
+    assert.equal(await cancel.evaluate(button => button === document.activeElement), true);
     await capture(page, report, 'translation-stats-reset-dialog');
     await page.keyboard.press('Escape');
     await dialog.waitFor({state: 'hidden', timeout});
+    assert.equal(await page.locator('.settings-app').getAttribute('inert'), null);
     await page.locator(`${panel} .stats-button-quiet`).click();
     await dialog.locator('.stats-button-danger').click();
     await page.locator(`${panel} .stats-state-empty`).waitFor({state: 'visible', timeout});
     assert.match(await page.locator(`${panel} .stats-notice`).textContent(), /翻译统计已清除/u);
     const cleared = await readStoredStats(page);
     assert.deepEqual([cleared.requests.length, cleared.rollups.length, cleared.routes.length], [0, 0, 0]);
+    await dialog.waitFor({state: 'hidden', timeout});
+    assert.equal(await page.locator('.settings-app').getAttribute('inert'), null);
+    assert.equal(await page.locator(`${panel} .stats-button-quiet`).evaluate(button => button === document.activeElement), true);
     report.assertions.resetClearsBothStores = true;
+    report.assertions.resetFocusTrapAndInertOwnership = true;
 
     report.focusChecks.push(await assertBackground(context, 'after reset'));
     assert.deepEqual(report.consoleErrors, []);
     report.ok = true;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
-    await launched?.close().catch(() => {});
-    await fixture.close();
-    fs.rmSync(profileDir, {recursive: true, force: true});
+    try {
+      await launched?.close();
+      report.cleanup = {browserClosed: Boolean(launched)};
+      assert.equal(fs.readFileSync(ownerFile, 'utf8'), owner);
+      const current = fs.lstatSync(profileDir);
+      assert.ok(current.dev === profileIdentity.dev && current.ino === profileIdentity.ino && !current.isSymbolicLink());
+      fs.rmSync(profileDir, {recursive: true});
+      report.cleanup.profileRemoved = !fs.existsSync(profileDir);
+    } catch (error) {
+      report.cleanupError = error.message;
+      throw error;
+    } finally {
+      await fixture.close();
+      fs.writeFileSync(path.join(artifactsDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
+    }
   }
   console.log(JSON.stringify(report, null, 2));
 }

@@ -573,6 +573,7 @@ const resetCancelButton = ref<HTMLButtonElement | null>(null)
 let snapshotRevision = 0
 let logRevision = 0
 let mounted = false
+let inertSettingsApp: HTMLElement | null = null
 
 const unsubscribeConfig = subscribeConfig((nextConfig) => {
   customOpenAIProviders.value = nextConfig.customOpenAIProviders.map((provider) => ({...provider, models: [...provider.models]}))
@@ -779,6 +780,7 @@ async function sendStatsMessage<T>(message: Record<string, unknown>, missingMess
 }
 
 async function loadSnapshot(): Promise<void> {
+  if (!mounted || !props.active) return
   const revision = ++snapshotRevision
   // 新筛选开始时立即作废旧列表请求，防止旧响应盖过新范围。
   logRevision += 1
@@ -810,7 +812,7 @@ function resetLog(): void {
 }
 
 async function loadRequestPage(offset: number): Promise<void> {
-  if (!props.active || !snapshot.value) return
+  if (!mounted || !props.active || !snapshot.value) return
   const revision = ++logRevision
   const target = Math.max(0, offset)
   logLoading.value = true
@@ -842,25 +844,32 @@ async function loadRequestPage(offset: number): Promise<void> {
 }
 
 function setSettingsBackgroundInert(value: boolean): void {
-  const settingsApp = document.querySelector<HTMLElement>('.settings-app')
-  if (value) settingsApp?.setAttribute('inert', '')
-  else settingsApp?.removeAttribute('inert')
+  if (value) {
+    const settingsApp = document.querySelector<HTMLElement>('.settings-app')
+    if (!settingsApp || settingsApp.hasAttribute('inert')) return
+    inertSettingsApp = settingsApp
+    settingsApp.setAttribute('inert', '')
+  } else {
+    inertSettingsApp?.removeAttribute('inert')
+    inertSettingsApp = null
+  }
 }
 
 async function openResetDialog(): Promise<void> {
+  if (!mounted) return
   resetError.value = ''
   resetMessage.value = ''
   setSettingsBackgroundInert(true)
   resetDialogOpen.value = true
   await nextTick()
-  resetCancelButton.value?.focus()
+  if (mounted && resetDialogOpen.value) resetCancelButton.value?.focus()
 }
 
 function closeResetDialog(): void {
   if (resetting.value) return
   resetDialogOpen.value = false
   setSettingsBackgroundInert(false)
-  void nextTick(() => resetButton.value?.focus())
+  void nextTick(() => { if (mounted && !resetDialogOpen.value) resetButton.value?.focus() })
 }
 
 function handleDialogKeydown(event: KeyboardEvent): void {
@@ -887,21 +896,22 @@ function handleDialogKeydown(event: KeyboardEvent): void {
 }
 
 async function resetStats(): Promise<void> {
-  if (resetting.value) return
+  if (!mounted || resetting.value) return
   resetting.value = true
   resetError.value = ''
   try {
     await sendStatsMessage<{cleared: true}>({action: 'reset'}, t('translationStats.reset.failed'))
+    if (!mounted) return
     resetDialogOpen.value = false
     setSettingsBackgroundInert(false)
     resetMessage.value = t('translationStats.reset.done')
     await loadSnapshot()
     await nextTick()
-    resetButton.value?.focus()
+    if (mounted && !resetDialogOpen.value) resetButton.value?.focus()
   } catch (error) {
-    resetError.value = error instanceof Error ? error.message : t('translationStats.reset.failed')
+    if (mounted) resetError.value = error instanceof Error ? error.message : t('translationStats.reset.failed')
   } finally {
-    resetting.value = false
+    if (mounted) resetting.value = false
   }
 }
 

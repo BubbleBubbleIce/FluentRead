@@ -3,7 +3,7 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 823,
+    "files": 824,
     "functions": 14781,
     "groups": {
       "entrypoints/background.ts": {
@@ -112,9 +112,9 @@
         "lines": 481
       },
       "src/core/i18n": {
-        "files": 22,
-        "functions": 43,
-        "lines": 28447
+        "files": 23,
+        "functions": 45,
+        "lines": 28471
       },
       "src/core/language": {
         "files": 11,
@@ -189,7 +189,7 @@
       "src/features/model-usage": {
         "files": 4,
         "functions": 121,
-        "lines": 1295
+        "lines": 1307
       },
       "src/features/page-notice": {
         "files": 2,
@@ -243,8 +243,8 @@
       },
       "src/features/translation-stats": {
         "files": 3,
-        "functions": 99,
-        "lines": 1185
+        "functions": 98,
+        "lines": 1205
       },
       "src/features/video-subtitle": {
         "files": 46,
@@ -263,8 +263,8 @@
       },
       "src/platform": {
         "files": 37,
-        "functions": 486,
-        "lines": 4479
+        "functions": 485,
+        "lines": 4490
       },
       "src/providers": {
         "files": 40,
@@ -483,6 +483,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/handlers/modelUsage.ts",
+      "sha256": "05398fa426b4aba120bef35892e39e0d35f240be9e2d861ff830ddf45abeee09",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/translationStats.ts",
+      "sha256": "98c4544a39aa27c5ef4eef642f43a39ffb5a8fb85bc7098c17876c98e2dac22b",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/maintenanceRuntime.ts",
       "sha256": "1ddb0cdac471ef0b07b7ee9c3fcba96071a26a7dc4bf49eaa85859228686e4f3",
       "functionBodies": 5,
@@ -648,6 +660,12 @@
       "file": "src/core/glossary/model.ts",
       "sha256": "4791901ee0a51518f9d7edd76f470e1fcb38e985b739770c8ca4fb3d1fe2fdd5",
       "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/i18n/numberFormat.ts",
+      "sha256": "e6cd76d50a85a71375c59d102dfc0945f6d62846bf702275e42170a84b318270",
+      "functionBodies": 2,
       "status": "source-read-and-traced"
     },
     {
@@ -1281,6 +1299,30 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/model-usage/model/insights.ts",
+      "sha256": "cafa5dce0b7c0bdb7cb6163f5be6c3079442d68e49cb05c2b39763a0a748eafc",
+      "functionBodies": 12,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/model-usage/model/tokenFormat.ts",
+      "sha256": "b513244a49265f38805081621ae952681fe474ff19e25d6c7be296944a46484b",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/model-usage/public.ts",
+      "sha256": "3bce8192246871318e1cd7152914b4893e05ef53b4f66b814216c84004bbde3e",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/model-usage/ui/ModelUsageDashboard.vue",
+      "sha256": "ef38a4c792fa647f620d30cc23ec202deb6024b4ac93c3c54db3d81afd75cd29",
+      "functionBodies": 105,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/quick-translation/content/index.ts",
       "sha256": "9991042ab636df44a1c5088de9d8ba444165ced23ffb00d702bc424251b1c825",
       "functionBodies": 22,
@@ -1317,6 +1359,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/model/navigation.ts",
+      "sha256": "e9e22cf7cb1bd476c826f5909053e277f8207f010377529324d71c65bc4c56a0",
+      "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/LearningCenter.vue",
       "sha256": "33d9429320ccb41c8d9974b3482c547779706fb08a0c2bd999a5cd7134fd0e9c",
       "functionBodies": 5,
@@ -1344,6 +1392,24 @@
       "file": "src/features/settings/ui/useTranslationShortcutSettings.ts",
       "sha256": "da10c5dc128b1125ca65b88d92ab3073c6df15c84c121f9c88563f0e7e901cee",
       "functionBodies": 35,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/translation-stats/model/presentation.ts",
+      "sha256": "783d11e753920b2a2b0b5495960a724324e17cc3b1abf59a855be6a283c618eb",
+      "functionBodies": 27,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/translation-stats/public.ts",
+      "sha256": "00b4b7547c99d2cb26f467d91b5c7ead2ecb59a3d138f456bbb618a9819e52dd",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/translation-stats/ui/TranslationStatsDashboard.vue",
+      "sha256": "06601f110f6e0f0884048ea354a9cab44b7386b18b4a38a4932d72bbdf6e05bc",
+      "functionBodies": 71,
       "status": "source-read-and-traced"
     },
     {
@@ -1503,6 +1569,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/platform/storage/modelUsageRepository.ts",
+      "sha256": "584e35e1b4bbce264aa1c7d9fd502cc5479e27fa569d0be7d9914a50d4dbaed7",
+      "functionBodies": 45,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/translationStatsRepository.ts",
+      "sha256": "58e3902c5260d4d3929c8f5e245ac4409e7ce70985806f844b58b6e3e2c4fcab",
+      "functionBodies": 45,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/platform/webdav/properties.ts",
       "sha256": "426b1d2c217364fcd4f6f91f108252a72d62cc43fb8346238cb284908f9f3a2e",
       "functionBodies": 10,
@@ -1512,6 +1590,36 @@
       "file": "src/providers/translation/google.ts",
       "sha256": "0799d95d33bcc14f7d424124148958cc9af98c5c1c10ce45b8c063fdc088b4de",
       "functionBodies": 59,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/model-usage/aggregation.ts",
+      "sha256": "8643926b906eda4874f57d0bb7197425cdf921e618acafa26248c224d3f8d38b",
+      "functionBodies": 30,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/model-usage/types.ts",
+      "sha256": "3ac34b71f040a11d3f028f15f9c43caff7858c83cc874f49648211a1ee1847b9",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation-stats/aggregation.ts",
+      "sha256": "992816617dc16089683f9ccc50224259087408cbc75f4c090e291f44d77a8d55",
+      "functionBodies": 46,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation-stats/measure.ts",
+      "sha256": "1680244fcd525317ddbefbcaee778120a0ce9f9c6c950ca9db90510be71586e6",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation-stats/types.ts",
+      "sha256": "dfad79f0c287b62f45025d2b6658fe13cbf3f0c96b7f5f6e9a04f72a50aa4e18",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -1750,13 +1858,11 @@
     "src/app/background/handlers/googleDriveSync.ts",
     "src/app/background/handlers/imageTranslation.ts",
     "src/app/background/handlers/inputTranslation.ts",
-    "src/app/background/handlers/modelUsage.ts",
     "src/app/background/handlers/openOptions.ts",
     "src/app/background/handlers/selectionTts.ts",
     "src/app/background/handlers/selectionWordLookup.ts",
     "src/app/background/handlers/translation.ts",
     "src/app/background/handlers/translationCache.ts",
-    "src/app/background/handlers/translationStats.ts",
     "src/app/background/handlers/visionProbe.ts",
     "src/app/background/handlers/vocabulary.ts",
     "src/app/background/handlers/webDavBackup.ts",
@@ -1974,10 +2080,6 @@
     "src/features/local-tts/offscreen/tts.ts",
     "src/features/local-tts/offscreen/tts.worker.ts",
     "src/features/local-tts/protocol.ts",
-    "src/features/model-usage/model/insights.ts",
-    "src/features/model-usage/model/tokenFormat.ts",
-    "src/features/model-usage/public.ts",
-    "src/features/model-usage/ui/ModelUsageDashboard.vue",
     "src/features/page-notice/content/notice.ts",
     "src/features/page-notice/public.ts",
     "src/features/paragraph-copy/content/index.ts",
@@ -2027,7 +2129,6 @@
     "src/features/settings/model/credentialPreview.ts",
     "src/features/settings/model/dataBackup.ts",
     "src/features/settings/model/googleDrivePreview.ts",
-    "src/features/settings/model/navigation.ts",
     "src/features/settings/model/siteAdaptationEditor.ts",
     "src/features/settings/model/sitePreferences.ts",
     "src/features/settings/ui/AlwaysTranslateSites.vue",
@@ -2106,9 +2207,6 @@
     "src/features/translation-center/model/comparison.ts",
     "src/features/translation-center/public.ts",
     "src/features/translation-center/ui/TranslationCenter.vue",
-    "src/features/translation-stats/model/presentation.ts",
-    "src/features/translation-stats/public.ts",
-    "src/features/translation-stats/ui/TranslationStatsDashboard.vue",
     "src/features/video-subtitle/background/cacheHandlers.ts",
     "src/features/video-subtitle/background/handlers.ts",
     "src/features/video-subtitle/background/runtime.ts",
@@ -2197,9 +2295,7 @@
     "src/platform/storage/freeTranslationHealthStorage.ts",
     "src/platform/storage/harnessSessionRepository.ts",
     "src/platform/storage/learningMemoryRepository.ts",
-    "src/platform/storage/modelUsageRepository.ts",
     "src/platform/storage/remoteConfigStorageRuntime.ts",
-    "src/platform/storage/translationStatsRepository.ts",
     "src/platform/storage/visionProbeStorage.ts",
     "src/platform/webdav/api.ts",
     "src/platform/webdav/connection.ts",
@@ -2264,11 +2360,6 @@
     "src/services/harness/sessions.ts",
     "src/services/harness/usage.ts",
     "src/services/interfaceFonts.ts",
-    "src/services/model-usage/aggregation.ts",
-    "src/services/model-usage/types.ts",
-    "src/services/translation-stats/aggregation.ts",
-    "src/services/translation-stats/measure.ts",
-    "src/services/translation-stats/types.ts",
     "src/services/translation/types.ts",
     "src/services/writing/runtime.ts",
     "src/shared/function/sha256.ts",
@@ -2326,7 +2417,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue616pending source/function chains and image runtime strict-100/performance debt. Reconciled133main files63819aacto99511e12;118snapshot-exact/15merged-or-audited files. Two new full source reviews14bodies and complete picker reread63bodies;40of42changed source files still need full review. Cached9c60e79d has83later changes, recorded as pending source reconciliation, not remotely refreshed.",
+    "Continue599pending source/function chains, image runtime strict-100/performance debt and external source reconciliation. Model usage/statistics data repositories, handlers, pure models and actual Vue dashboards fully read this batch. Cached origin/main advanced to510683f2 with165later file changes; these usage/statistics chain files are unchanged between integrated99511e12 and cached source. Navigation has3unrelated later rows pending reconciliation. No new remote fetch or blind rewritten-history merge.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2348,12 +2439,13 @@
     "Twenty-ninth: shortcut settings and actual CustomHotkeyInput client SFC are now permanently owned by strict coverage, both four100;43new executed cases and107affected pass. Actual Options storage/9browser flows verified.15existing executable-module and3documentation-tool ownership gaps remain. Source review198files/3378bodies,623pending. Cached main581aec18 contains68changed files after integrated d5, including SettingsSections; not integrated yet. Primary clean at d5 and not modified by this task. Previous image/runtime debt entries are historical measurements with unresolved scope, not latest successful whole-repository coverage. Local userscript resource commit remains unpublished.",
     "Thirtieth:68actual main changes through581aec18 reconciled; source integration is not full review.199source-read files/3388bodies,622pending. WebDAV URL edge fixed with4baseline failures and actual XML/parser/API/local-HTTP behavior four100; invalid raw parser inputs are a function-boundary issue, not proof that validated live connections failed. Existing image runtime coverage/CPU budgets remain pending. Main cache moved again to63819aac with44new actual changes, not integrated. Userscript resources pinned to local verified04bd1820only, not published. Primary clean at d5, not modified by task.",
     "Thirty-first: imported44main source changes through63819aac and fully reviewed6new/3changed files,205files3527bodies617pending. Client revoked-port cleanup could strand Promise;9old-source regressions fail, fixed completion keeps registered ownership. Background consumed cancellation history could delete fresh cancellation;2old-source regressions fail, redundant array removed. Native recovery9cases and client6diagnostic comparisons pass with bounded evidence; retained listener when deregistration itself throws is suppressed, not falsely claimed removed.35module coverage gate still fails runtime;14architecture/3documentation ownership debts remain. Cachedf7f00e0380laterchanges unintegrated. Local20ef5b65language pin bytes verified only, not publicly published.",
-    "Thirty-second: 133main changes reconciled, section picker/core/public fully read. New dynamic nested shadow roots are observed with150-element scan batches, insertion scans only new subtrees, and stop/selection changes cancel queued work. UI exclusion crosses ShadowRoot hosts; layout ancestor traversal stops at512 and redundant ancestor UI checks removed. Old-source7regressions fail;12files308cases and9modules four100 pass.23files883integration cases pass separately with overlap. Native production16cases pass;two dynamic-shadow paragraphs preserve source and requests remain stable for1000ms. Existing14executable/3documentation ownership debts and previously measured image-runtime strict-100 gap remain. Shadow-host text preview still uses light DOM and may be blank; no whole-goal completion or live-provider claim. Local1c4482cc language pin verified but unpublished."
+    "Thirty-second: 133main changes reconciled, section picker/core/public fully read. New dynamic nested shadow roots are observed with150-element scan batches, insertion scans only new subtrees, and stop/selection changes cancel queued work. UI exclusion crosses ShadowRoot hosts; layout ancestor traversal stops at512 and redundant ancestor UI checks removed. Old-source7regressions fail;12files308cases and9modules four100 pass.23files883integration cases pass separately with overlap. Native production16cases pass;two dynamic-shadow paragraphs preserve source and requests remain stable for1000ms. Existing14executable/3documentation ownership debts and previously measured image-runtime strict-100 gap remain. Shadow-host text preview still uses light DOM and may be blank; no whole-goal completion or live-provider claim. Local1c4482cc language pin verified but unpublished.",
+    "Thirty-third:18new full source reviews424function bodies;225reviewed/599pending. Fixed stats clear-vs-queued-flush new-generation loss and coalesced pending flush work; indexed model usage retention avoids full-row hydration; bounded8locale caches replace repeated Intl constructors, eliminating formatUnit wrapper. Both Vue dashboard resets ignore late completion after unmount and release only owned inert state.12modules four100/111cases,6integration files138cases,27production UI assertion flows and native old/new source work-count comparisons pass. Initial stats browser pagination fixture could inherit partial-cache source from random first row; new53rows explicitly network. Architecture gate still has14executable/3documentation ownership debts; unrelated image-runtime strict gap remains. Userscript resource pin1c4482cc remains local/unpublished. Date/time/remaining UI formatting, active-panel handoff, closed-shadow statistics dialog/query root, huge-import validation and duplicate stats event contracts remain separate review/validation work; no whole-goal or provider-quality guarantee."
   ],
   "progress": {
-    "sourceReadFiles": 207,
-    "sourceReadFunctionBodies": 3561,
-    "pendingFiles": 616,
+    "sourceReadFiles": 225,
+    "sourceReadFunctionBodies": 3985,
+    "pendingFiles": 599,
     "goalComplete": false
   },
   "observations": [
@@ -2854,6 +2946,41 @@
       "file": "src/core/i18n/messages/legacy-corrections.ts",
       "status": "fixed-or-reviewed-and-verified-thirty-second",
       "issue": "Removed one retired YouTube subtitle source row and six locale corrections after integrated source-reference test failed. This one-row removal is not a full review of this large registry."
+    },
+    {
+      "file": "src/platform/storage/translationStatsRepository.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-third",
+      "issue": "Old pending flush drained new-generation queue before clear transaction, deleting fresh events and rollups/routes. Capture generation before scheduling and reject stale work before splice. Coalesce only not-yet-started same-generation flush promises; clear start slot at execution so arrivals during a write get their own next batch. Native old/new source reproduction retains new rows and totals,241to1pending jobs for250events."
+    },
+    {
+      "file": "src/platform/storage/modelUsageRepository.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-third",
+      "issue": "Replace full-row toArray/slice/map retention with count and compound-index primaryKeys limited to overflow. Native1000plus1workload hydrates1001to0rows while preserving1000latest events and stable oldest deletion."
+    },
+    {
+      "file": "src/core/i18n/numberFormat.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-third",
+      "issue": "New shared fixed-rule formatter factory snapshots options, caches at most8languages per rule, evicts oldest and preserves native invalid-locale errors. Token constructors400to4 and statistics1100to11per100renders, native actual-source comparison; no overall UI latency claim."
+    },
+    {
+      "file": "src/features/translation-stats/model/presentation.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-third",
+      "issue": "Reuse fixed integer/compact/percent/unit formatters, remove one redundant formatUnit function. Preserve unit, rounding, invalid-value, sorting and histogram behavior; four100covered."
+    },
+    {
+      "file": "src/features/model-usage/ui/ModelUsageDashboard.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-third",
+      "issue": "Actual compiled SFC late reset success/error and inactive unmount reproduced failures. Guard query/reset/focus by mount state; preserve preexisting inert and release captured owned element. Production focus trap, cancel, clear and refocus pass."
+    },
+    {
+      "file": "src/features/translation-stats/ui/TranslationStatsDashboard.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-third",
+      "issue": "Same lifecycle/inert ownership fixes independently verified on actual SFC. Production real broker/local providers and IndexedDB test cache/shared/partial/failure metrics, request filters/paging, layouts and clear of requests/rollups/routes."
+    },
+    {
+      "file": "src/features/settings/model/navigation.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-third",
+      "issue": "Complete16body source review. Stats searchDescription concatenated two known legacy strings without separator, preventing non-Chinese localization. Existing compound separator enables both full translations; source snapshot navigation3later unrelated rows remain pending reconciliation, not silently integrated."
     }
   ]
 }

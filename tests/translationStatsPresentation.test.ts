@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {emptyTranslationStatsTotals} from '@/src/services/translation-stats/aggregation';
 import {
     breakdownMetric,
@@ -25,6 +25,8 @@ import type {
     TranslationStatsTotals,
 } from '@/src/services/translation-stats/types';
 
+afterEach(() => vi.restoreAllMocks());
+
 function totals(overrides: Partial<TranslationStatsTotals> = {}): TranslationStatsTotals {
     return {...emptyTranslationStatsTotals(), ...overrides};
 }
@@ -38,6 +40,25 @@ function item(serviceId: string, model: string, overrides: Partial<TranslationSt
 }
 
 describe('翻译统计展示模型', () => {
+    it('同语言面板重复渲染复用全部数量、比例、时长与字节格式器', async () => {
+        vi.resetModules();
+        const format = await import('@/src/features/translation-stats/model/presentation');
+        const formatter = vi.spyOn(Intl, 'NumberFormat');
+        for (let index = 0; index < 100; index += 1) {
+            expect(format.formatStatsNumber(1234, 'en-US')).toBe('1,234');
+            expect(format.formatStatsCompact(123_456, 'en-US')).toBe('123.5K');
+            expect(format.formatStatsPercent(.1234, 'en-US')).toBe('12.3%');
+            expect(format.formatStatsDuration(420, 'en-US')).toBe('420 ms');
+            expect(format.formatStatsDuration(2345, 'en-US')).toBe('2.35 sec');
+            expect(format.formatStatsDuration(12_340, 'en-US')).toBe('12.3 sec');
+            expect(format.formatStatsDuration(125_000, 'en-US')).toBe('2 min 5 sec');
+            expect(format.formatStatsBytes(512, 'en-US')).toBe('512 byte');
+            expect(format.formatStatsBytes(1536, 'en-US')).toBe('1.5 kB');
+            expect(format.formatStatsBytes(3 * 1024 * 1024, 'en-US')).toBe('3 MB');
+        }
+        expect(formatter).toHaveBeenCalledTimes(11);
+    });
+
     it('请求趋势按结果分段，耗时与文本量按最大值计算柱高', () => {
         const points = [
             point('a', {requestCount: 4, outcomes: {success: 2, error: 1, timeout: 0, cancelled: 1}, averageDurationMs: 500, sourceChars: 100}),

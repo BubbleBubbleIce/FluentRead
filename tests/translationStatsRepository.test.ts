@@ -144,6 +144,52 @@ describe('翻译统计事件白名单', () => {
 });
 
 describe('翻译统计 IndexedDB 仓库', () => {
+    it.each(['manual', 'automatic'] as const)('清除前排队的 %s 刷新不得读走新代次事件', async (mode) => {
+        const {repository, database} = createRepository({maxBufferedEvents: mode === 'automatic' ? 1 : 100});
+        const generation = repository.captureGeneration();
+        repository.record(requestEvent({id: 'before-clear'}));
+        const flushing = repository.flush();
+        const clearing = repository.clear();
+        repository.record(requestEvent({id: 'stale-completion'}), generation);
+        repository.record(requestEvent({
+            id: 'after-clear', routes: ['google'],
+            routeAttempts: [{route: 'google', outcome: 'success', durationMs: 120, chars: 20}],
+        }));
+        await clearing;
+        await flushing;
+        await repository.flush();
+
+        expect((await database.requests.toArray()).map(event => event.id)).toEqual(['after-clear']);
+        expect((await database.rollups.toArray()).map(rollup => rollup.requestCount)).toEqual([1]);
+        expect((await database.routes.toArray()).map(rollup => rollup.attemptCount)).toEqual([1]);
+    });
+
+    it('同一轮连续入队达到阈值后共用一次待执行刷新，保留所有事件', async () => {
+        const {repository, database} = createRepository({maxBufferedEvents: 10});
+        const flush = vi.spyOn(repository, 'flush');
+        for (let index = 0; index < 250; index += 1) repository.record(requestEvent({id: `burst-${index}`}));
+        const pending = flush.mock.results.map(result => result.value as Promise<void>);
+        await Promise.all(pending);
+        expect(new Set(pending).size).toBe(1);
+        expect(await database.requests.count()).toBe(250);
+        expect((await database.rollups.toArray()).map(rollup => rollup.requestCount)).toEqual([250]);
+        repository.record(requestEvent({id: 'next-burst'}));
+        await repository.flush();
+        expect(await database.requests.count()).toBe(251);
+    });
+
+    it('刷新开始后入队的事件另行排队，读取必须等到新批次写入', async () => {
+        const {repository, database} = createRepository();
+        repository.record(requestEvent({id: 'first-batch'}));
+        const first = repository.flush();
+        await Promise.resolve();
+        repository.record(requestEvent({id: 'second-batch'}));
+        const snapshot = await repository.getDashboard();
+        await first;
+        expect(snapshot.selected.totals.requestCount).toBe(2);
+        expect(await database.requests.count()).toBe(2);
+    });
+
     it('缓冲写入只安排一次定时刷新，并按小时、服务和模型折叠汇总', async () => {
         const {repository, database, timers} = createRepository();
         repository.record(requestEvent({id: 'a'}));

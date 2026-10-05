@@ -345,10 +345,10 @@ export function parseModelUsageTransferDocument(value: unknown): ModelUsageTrans
 async function pruneStoredModelUsageEvents(
     events: Table<StoredModelUsageEvent, string>,
 ): Promise<void> {
-    const ordered = await events.orderBy('[startedAt+id]').toArray();
-    const overflowCount = ordered.length - MODEL_USAGE_MAX_STORED_EVENTS;
+    const overflowCount = await events.count() - MODEL_USAGE_MAX_STORED_EVENTS;
     if (overflowCount <= 0) return;
-    await events.bulkDelete(ordered.slice(0, overflowCount).map((event) => event.id));
+    const expired = await events.orderBy('[startedAt+id]').limit(overflowCount).primaryKeys();
+    await events.bulkDelete(expired);
 }
 
 export class ModelUsageRepository {

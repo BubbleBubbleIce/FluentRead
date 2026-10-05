@@ -168,6 +168,10 @@ function assertLayout(metrics) {
 async function main() {
   fs.mkdirSync(artifactsDir, {recursive: true});
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-model-usage-profile-'));
+  const profileIdentity = fs.lstatSync(profileDir);
+  const ownerFile = path.join(profileDir, '.fluentread-ui-test-owner');
+  const owner = `${process.pid}-${Date.now()}`;
+  fs.writeFileSync(ownerFile, owner, {flag: 'wx'});
   const report = {ok: false, suite: 'model-usage', artifactType: 'production', extensionDir, artifactsDir,
     browser: 'isolated Microsoft Edge', manifest: {version: manifest.version, optionsPath},
     launchMode: null, focusPolicy: null, windowPlacement: null, assertions: {}, caseCoverage: [],
@@ -452,6 +456,29 @@ async function main() {
     await seed(page, events);
     await waitTotals(page, 1250, 6);
     report.assertions.refreshAndEmpty = true;
+    await dashboard.locator('.usage-reset-button').click();
+    const resetDialog = page.getByRole('alertdialog');
+    await resetDialog.waitFor({state: 'visible', timeout});
+    assert.equal(await page.locator('.settings-app').getAttribute('inert'), '');
+    const cancelReset = resetDialog.getByRole('button', {name: '取消', exact: true});
+    const confirmReset = resetDialog.getByRole('button', {name: '确认清除统计', exact: true});
+    assert.equal(await cancelReset.evaluate(button => button === document.activeElement), true);
+    await cancelReset.press('Shift+Tab');
+    assert.equal(await confirmReset.evaluate(button => button === document.activeElement), true);
+    await confirmReset.press('Tab');
+    assert.equal(await cancelReset.evaluate(button => button === document.activeElement), true);
+    await cancelReset.press('Escape');
+    await resetDialog.waitFor({state: 'hidden', timeout});
+    assert.equal(await page.locator('.settings-app').getAttribute('inert'), null);
+    await dashboard.locator('.usage-reset-button').click();
+    await confirmReset.click();
+    await waitTotals(page, 0, 0);
+    await resetDialog.waitFor({state: 'hidden', timeout});
+    assert.equal(await page.locator('.settings-app').getAttribute('inert'), null);
+    assert.equal(await dashboard.locator('.usage-reset-button').evaluate(button => button === document.activeElement), true);
+    report.assertions.resetFocusTrapCancelAndClear = true;
+    await seed(page, events);
+    await waitTotals(page, 1250, 6);
     await page.evaluate(async () => {
       const stored = await chrome.runtime.sendMessage({type: 'configStorageRead', key: 'local:config'});
       if (!stored?.success || !stored.value) throw new Error(stored?.error || '读取英文 UI 测试配置基线失败');
@@ -482,9 +509,20 @@ async function main() {
     if (page && !page.isClosed()) await capture(page, report, 'failure').catch(() => {});
     throw error;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.close();
-    fs.rmSync(profileDir, {recursive: true, force: true});
+    try {
+      await launched?.close();
+      report.cleanup = {browserClosed: Boolean(launched)};
+      assert.equal(fs.readFileSync(ownerFile, 'utf8'), owner);
+      const current = fs.lstatSync(profileDir);
+      assert.ok(current.dev === profileIdentity.dev && current.ino === profileIdentity.ino && !current.isSymbolicLink());
+      fs.rmSync(profileDir, {recursive: true});
+      report.cleanup.profileRemoved = !fs.existsSync(profileDir);
+    } catch (error) {
+      report.cleanupError = error.message;
+      throw error;
+    } finally {
+      fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
+    }
   }
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 }

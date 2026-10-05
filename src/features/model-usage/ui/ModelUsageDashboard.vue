@@ -590,6 +590,7 @@ const resetButton = ref<HTMLButtonElement | null>(null)
 let dashboardRevision = 0
 let requestLogRevision = 0
 let mounted = false
+let inertSettingsApp: HTMLElement | null = null
 const unsubscribeConfig = subscribeConfig(nextConfig => {
   customOpenAIProviders.value = nextConfig.customOpenAIProviders.map(provider => ({
     ...provider,
@@ -870,6 +871,7 @@ function currentFilter(): Filter {
 }
 
 async function loadSnapshot(): Promise<void> {
+  if (!mounted || !props.active) return
   const revision = ++dashboardRevision
   requestLogRevision += 1
   requestLogLoading.value = false
@@ -923,7 +925,7 @@ function jumpToRequestPage(): void {
 watch(requestPageIndex, (index) => { requestJumpPage.value = index + 1 })
 
 async function loadRequestPage(pageIndex: number): Promise<void> {
-  if (!props.active || !snapshot.value || pageIndex < 0) return
+  if (!mounted || !props.active || !snapshot.value || pageIndex < 0) return
   const revision = ++requestLogRevision
   requestLogRetryPageIndex.value = pageIndex
   requestLogLoading.value = true
@@ -961,12 +963,13 @@ async function loadRequestPage(pageIndex: number): Promise<void> {
 }
 
 async function openResetDialog(): Promise<void> {
+  if (!mounted) return
   resetError.value = ''
   resetMessage.value = ''
   setSettingsBackgroundInert(true)
   resetDialogOpen.value = true
   await nextTick()
-  resetCancelButton.value?.focus()
+  if (mounted && resetDialogOpen.value) resetCancelButton.value?.focus()
 }
 
 function closeResetDialog(): void {
@@ -974,13 +977,19 @@ function closeResetDialog(): void {
   resetDialogOpen.value = false
   setSettingsBackgroundInert(false)
   resetError.value = ''
-  void nextTick(() => resetButton.value?.focus())
+  void nextTick(() => { if (mounted && !resetDialogOpen.value) resetButton.value?.focus() })
 }
 
 function setSettingsBackgroundInert(value: boolean): void {
-  const settingsApp = (props.queryRoot || document).querySelector<HTMLElement>('.settings-app')
-  if (value) settingsApp?.setAttribute('inert', '')
-  else settingsApp?.removeAttribute('inert')
+  if (value) {
+    const settingsApp = (props.queryRoot || document).querySelector<HTMLElement>('.settings-app')
+    if (!settingsApp || settingsApp.hasAttribute('inert')) return
+    inertSettingsApp = settingsApp
+    settingsApp.setAttribute('inert', '')
+  } else {
+    inertSettingsApp?.removeAttribute('inert')
+    inertSettingsApp = null
+  }
 }
 
 function handleResetDialogKeydown(event: KeyboardEvent): void {
@@ -1008,22 +1017,23 @@ function handleResetDialogKeydown(event: KeyboardEvent): void {
 }
 
 async function resetUsage(): Promise<void> {
-  if (resetting.value) return
+  if (!mounted || resetting.value) return
   resetting.value = true
   resetError.value = ''
   try {
     const response = await browser.runtime.sendMessage({type: 'modelUsage', action: 'reset'}) as ModelUsageResponse<{cleared?: boolean}>
+    if (!mounted) return
     if (response?.success !== true) throw new Error(response?.error || '后台没有确认清除结果')
     resetDialogOpen.value = false
     setSettingsBackgroundInert(false)
     resetMessage.value = '模型用量请求记录及汇总已清除'
     await loadSnapshot()
     await nextTick()
-    resetButton.value?.focus()
+    if (mounted && !resetDialogOpen.value) resetButton.value?.focus()
   } catch (error) {
-    resetError.value = error instanceof Error ? error.message : '清除统计失败'
+    if (mounted) resetError.value = error instanceof Error ? error.message : '清除统计失败'
   } finally {
-    resetting.value = false
+    if (mounted) resetting.value = false
   }
 }
 
