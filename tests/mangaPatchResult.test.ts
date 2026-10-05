@@ -26,6 +26,13 @@ describe('漫画局部结果与有界轻量缓存',()=>{
     it('极小检测框也覆盖绘字的最小内框，避免恢复丢像素',()=>{
         expect(mangaPatchRects([region(10,10,11,11)],100,100)).toEqual([{x:8,y:8,width:6,height:6}]);
     });
+    it('超多源框归约边界不展开函数参数，保留整段与边缘蒙版且不修改输入', () => {
+        const sourceBoxes = Array.from({length: 150_000}, (_, index) => ({x0: index % 100 + 20, y0: index % 50 + 30, x1: index % 100 + 24, y1: index % 50 + 36}));
+        const pageRegion = {...region(10, 10, 180, 100), sourceBoxes};
+        expect(mangaPatchRects([pageRegion], 200, 150)).toEqual([{x: 10, y: 10, width: 170, height: 90}]);
+        expect(sourceBoxes).toHaveLength(150_000); expect(sourceBoxes[0]).toEqual({x0: 20, y0: 30, x1: 24, y1: 36});
+        expect(pageRegion.bbox).toEqual({x0: 10, y0: 10, x1: 180, y1: 100});
+    });
     it('接受空白页和有效结果，base64 立即转成紧凑二进制',()=>{
         expect(parseMangaPatchPacket({width:1,height:1,patches:[]})).toEqual({width:1,height:1,patches:[]});
         const p=parseMangaPatchPacket(packet());const page=compressMangaPage(p,lines);

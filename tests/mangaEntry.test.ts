@@ -131,6 +131,20 @@ describe('独立漫画入口所有权和配置端口', () => {
         expect(stale.remove).toHaveBeenCalledOnce();expect(openMangaEntry()).toBe(true);expect(current.mounted.instance.open).toHaveBeenCalledOnce();
         unmountMangaEntry();expect(current.remove).toHaveBeenCalledOnce();
     });
+    it('等待 UI 创建时卸载立即退订，迟到实例不能重复退订或覆盖新入口', async () => {
+        const pending = deferred(); mocks.create.mockReturnValueOnce(pending.promise);
+        const request = mountMangaEntry({} as never), oldPage = props().page;
+        unmountMangaEntry(); const immediateStops = [mocks.stopStatus.mock.calls.length, mocks.stopConfig.mock.calls.length];
+        location.href = 'https://mangaplus.shueisha.co.jp/viewer/1024051'; document.dispatchEvent(new Event('fluentread-route-change'));
+        const oldRouteAfterUnmount = oldPage.route;
+        const current = {remove: vi.fn(), mounted: {instance: {open: vi.fn()}}}; mocks.create.mockResolvedValueOnce(current);
+        await mountMangaEntry({} as never); const stale = {remove: vi.fn()}; pending.resolve(stale); await request;
+        expect(immediateStops).toEqual([1, 1]); expect(oldRouteAfterUnmount).toBe(href);
+        expect(mocks.stopStatus).toHaveBeenCalledOnce(); expect(mocks.stopConfig).toHaveBeenCalledOnce();
+        expect(stale.remove).toHaveBeenCalledOnce(); expect(openMangaEntry()).toBe(true);
+        expect(current.mounted.instance.open).toHaveBeenCalledOnce();
+        unmountMangaEntry(); expect(mocks.stopStatus).toHaveBeenCalledTimes(2); expect(mocks.stopConfig).toHaveBeenCalledTimes(2);
+    });
     it('不匹配地址不挂载迟到面板且网站名称安全回退', async () => {
         location.href = 'https://example.com';await mountMangaEntry({} as never);expect(props().page.site).toBe('');expect(openMangaEntry()).toBe(false);
     });

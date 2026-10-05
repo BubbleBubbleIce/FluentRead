@@ -1,7 +1,7 @@
 /**
  * @file src/features/image-translation/mangaPatchResult.ts
  * 文件职责：定义漫画局部无损结果的消息边界和阅读会话内的轻量缓存。
- * 主要内容：共用清字蒙版余量，合并重叠绘制范围；校验坐标、尺寸和二进制预算，立即去除传输用 base64；缓存仅保存压缩图块及文字坐标，按真实字节与张数淘汰。
+ * 主要内容：共用清字蒙版余量，以逐框归约计算绘制边界，不将长页源框展开为函数参数，合并重叠绘制范围；校验坐标、尺寸和二进制预算，立即去除传输用 base64；缓存仅保存压缩图块及文字坐标，按真实字节与张数淘汰。
  * 模块边界：无 DOM、存储、模型与网络副作用；调用方负责来源身份、任务取消和画布合成。
  */
 import type {OcrLine} from './core';
@@ -25,13 +25,17 @@ export function mangaMaskBoxes(region: MangaRegion, width: number, height: numbe
 export function mangaPatchRects(regions: MangaRegion[], width: number, height: number): MangaPatchRect[] {
     const rects: MangaPatchRect[] = [];
     for (const region of regions) {
-        const boxes = [...mangaMaskBoxes(region, width, height), {...region.bbox,
-            x1: Math.max(region.bbox.x1, Math.max(0, region.bbox.x0) + 4),
-            y1: Math.max(region.bbox.y1, Math.max(0, region.bbox.y0) + 4)}];
-        const x = Math.max(0, Math.floor(Math.min(...boxes.map(box => box.x0))));
-        const y = Math.max(0, Math.floor(Math.min(...boxes.map(box => box.y0))));
-        const right = Math.min(width, Math.ceil(Math.max(...boxes.map(box => box.x1))));
-        const bottom = Math.min(height, Math.ceil(Math.max(...boxes.map(box => box.y1))));
+        let left = region.bbox.x0, top = region.bbox.y0;
+        let x1 = Math.max(region.bbox.x1, Math.max(0, left) + 4);
+        let y1 = Math.max(region.bbox.y1, Math.max(0, top) + 4);
+        for (const box of mangaMaskBoxes(region, width, height)) {
+            left = Math.min(left, box.x0); top = Math.min(top, box.y0);
+            x1 = Math.max(x1, box.x1); y1 = Math.max(y1, box.y1);
+        }
+        const x = Math.max(0, Math.floor(left));
+        const y = Math.max(0, Math.floor(top));
+        const right = Math.min(width, Math.ceil(x1));
+        const bottom = Math.min(height, Math.ceil(y1));
         if (right <= x || bottom <= y) continue;
         let rect = {x, y, width: right - x, height: bottom - y};
         // 密集长页也保留全部译文；达到消息图块上限时合并相邻绘制范围。

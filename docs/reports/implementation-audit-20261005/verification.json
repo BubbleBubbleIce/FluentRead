@@ -16596,6 +16596,911 @@
         "boundary": "Read existing shared cached refs only; external change is not integrated or live remote freshness proof. Rewritten5de9history had tree identical to original import; e093cloud backup copy now changes tree. No blind merge/rebase or remote write."
       },
       "remaining": "634pending files; runtime strict coverage/mutation/identity/clip/status-array and broader OCR/draw/architecture chains remain. Goal active; user primary and reference projects untouched, no publishing."
+    },
+    {
+      "batch": "twenty-sixth",
+      "name": "cancelled-warm-page-return-pending-entry-cleanup-and-patch-bounds",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 191,
+        "sourceReadFunctionBodies": 3195,
+        "pendingFiles": 630,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 4,
+      "newStaticTestDefinitions": 4,
+      "oldSourceRun": {
+        "baselineRevision": "cba05975220b0987dacb55f2a767f145a486f432",
+        "selectedCases": 4,
+        "failed": 3,
+        "passed": 1,
+        "skippedUnrelated": 236,
+        "reason": "Original runtime/entry/patch module via Vite pre-transform. Same-checkpoint aborted warm reuse hangs visible page, pending UI unmount unsubscribes0rather than1,150000source-box spread overflows. Replacement-slot repeated-near test protects existing behavior and already passed old source."
+      },
+      "implementation": {
+        "warming": "Share only live warm slot; replace canceled task on same-checkpoint return while preserving serial chain and existing identity guarded finally.",
+        "entry": "Register idempotent matching-owner cleanup immediately after status/config/route subscription, before awaiting UI factory.",
+        "rectangles": "Reduce shared masks and translated bounds without combinedbox/fourcoordinate arrays or variadic arguments; preserve clamp/min4/overlap/cap behavior.",
+        "productionFunctionBodyDelta": -4,
+        "retiredPublicFunctions": 0,
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "files": 25,
+        "cases": 674,
+        "passed": true,
+        "unhandledErrors": 0
+      },
+      "strictCoverage": {
+        "passed": false,
+        "modules": 28,
+        "total": {
+          "statements": 99.73,
+          "branches": 98.65,
+          "functions": 100,
+          "lines": 99.73
+        },
+        "runtime": {
+          "statements": 98.98,
+          "branches": 94.95,
+          "functions": 100,
+          "lines": 98.98
+        },
+        "otherModulesFour100": 27,
+        "thresholdChanges": false,
+        "newIgnores": 0,
+        "uncoveredRuntimeLocations": {
+          "statements": [
+            {
+              "start": {
+                "line": 157,
+                "column": 0
+              },
+              "end": {
+                "line": 157,
+                "column": 77
+              }
+            },
+            {
+              "start": {
+                "line": 158,
+                "column": 0
+              },
+              "end": {
+                "line": 158,
+                "column": 13
+              }
+            },
+            {
+              "start": {
+                "line": 509,
+                "column": 0
+              },
+              "end": {
+                "line": 509,
+                "column": 27
+              }
+            },
+            {
+              "start": {
+                "line": 510,
+                "column": 0
+              },
+              "end": {
+                "line": 510,
+                "column": 15
+              }
+            },
+            {
+              "start": {
+                "line": 511,
+                "column": 0
+              },
+              "end": {
+                "line": 511,
+                "column": 5
+              }
+            },
+            {
+              "start": {
+                "line": 661,
+                "column": 0
+              },
+              "end": {
+                "line": 661,
+                "column": 95
+              }
+            },
+            {
+              "start": {
+                "line": 662,
+                "column": 0
+              },
+              "end": {
+                "line": 662,
+                "column": 42
+              }
+            },
+            {
+              "start": {
+                "line": 663,
+                "column": 0
+              },
+              "end": {
+                "line": 663,
+                "column": 9
+              }
+            },
+            {
+              "start": {
+                "line": 951,
+                "column": 0
+              },
+              "end": {
+                "line": 951,
+                "column": 157
+              }
+            },
+            {
+              "start": {
+                "line": 952,
+                "column": 0
+              },
+              "end": {
+                "line": 952,
+                "column": 19
+              }
+            },
+            {
+              "start": {
+                "line": 953,
+                "column": 0
+              },
+              "end": {
+                "line": 953,
+                "column": 9
+              }
+            }
+          ],
+          "branches": [
+            {
+              "start": {
+                "line": 139,
+                "column": 48
+              },
+              "end": {
+                "line": 139,
+                "column": 73
+              }
+            },
+            {
+              "start": {
+                "line": 144,
+                "column": 39
+              },
+              "end": {
+                "line": 144,
+                "column": 46
+              }
+            },
+            {
+              "start": {
+                "line": 146,
+                "column": 60
+              },
+              "end": {
+                "line": 146,
+                "column": 67
+              }
+            },
+            {
+              "start": {
+                "line": 149,
+                "column": 97
+              },
+              "end": {
+                "line": 149,
+                "column": 111
+              }
+            },
+            {
+              "start": {
+                "line": 156,
+                "column": 64
+              },
+              "end": {
+                "line": 158,
+                "column": 13
+              }
+            },
+            {
+              "start": {
+                "line": 161,
+                "column": 38
+              },
+              "end": {
+                "line": 161,
+                "column": 55
+              }
+            },
+            {
+              "start": {
+                "line": 171,
+                "column": 29
+              },
+              "end": {
+                "line": 171,
+                "column": 130
+              }
+            },
+            {
+              "start": {
+                "line": 252,
+                "column": 121
+              },
+              "end": {
+                "line": 252,
+                "column": 134
+              }
+            },
+            {
+              "start": {
+                "line": 432,
+                "column": 29
+              },
+              "end": {
+                "line": 432,
+                "column": 43
+              }
+            },
+            {
+              "start": {
+                "line": 492,
+                "column": 27
+              },
+              "end": {
+                "line": 492,
+                "column": 41
+              }
+            },
+            {
+              "start": {
+                "line": 508,
+                "column": 34
+              },
+              "end": {
+                "line": 511,
+                "column": 5
+              }
+            },
+            {
+              "start": {
+                "line": 532,
+                "column": 30
+              },
+              "end": {
+                "line": 532,
+                "column": 66
+              }
+            },
+            {
+              "start": {
+                "line": 671,
+                "column": 133
+              },
+              "end": {
+                "line": 671,
+                "column": 140
+              }
+            },
+            {
+              "start": {
+                "line": 673,
+                "column": 82
+              },
+              "end": {
+                "line": 673,
+                "column": 89
+              }
+            },
+            {
+              "start": {
+                "line": 675,
+                "column": 72
+              },
+              "end": {
+                "line": 675,
+                "column": 79
+              }
+            },
+            {
+              "start": {
+                "line": 736,
+                "column": 4
+              },
+              "end": {
+                "line": 736,
+                "column": 6
+              }
+            },
+            {
+              "start": {
+                "line": 743,
+                "column": 24
+              },
+              "end": {
+                "line": 743,
+                "column": 54
+              }
+            },
+            {
+              "start": {
+                "line": 745,
+                "column": 24
+              },
+              "end": {
+                "line": 745,
+                "column": 52
+              }
+            },
+            {
+              "start": {
+                "line": 778,
+                "column": 28
+              },
+              "end": {
+                "line": 778,
+                "column": 50
+              }
+            },
+            {
+              "start": {
+                "line": 853,
+                "column": 27
+              },
+              "end": {
+                "line": 853,
+                "column": 41
+              }
+            },
+            {
+              "start": {
+                "line": 869,
+                "column": 34
+              },
+              "end": {
+                "line": 869,
+                "column": 71
+              }
+            },
+            {
+              "start": {
+                "line": 877,
+                "column": 113
+              },
+              "end": {
+                "line": 877,
+                "column": 120
+              }
+            },
+            {
+              "start": {
+                "line": 879,
+                "column": 125
+              },
+              "end": {
+                "line": 879,
+                "column": 149
+              }
+            },
+            {
+              "start": {
+                "line": 912,
+                "column": 54
+              },
+              "end": {
+                "line": 912,
+                "column": 61
+              }
+            },
+            {
+              "start": {
+                "line": 918,
+                "column": 50
+              },
+              "end": {
+                "line": 918,
+                "column": 57
+              }
+            },
+            {
+              "start": {
+                "line": 923,
+                "column": 50
+              },
+              "end": {
+                "line": 923,
+                "column": 57
+              }
+            },
+            {
+              "start": {
+                "line": 939,
+                "column": 18
+              },
+              "end": {
+                "line": 939,
+                "column": 42
+              }
+            },
+            {
+              "start": {
+                "line": 948,
+                "column": 121
+              },
+              "end": {
+                "line": 948,
+                "column": 130
+              }
+            },
+            {
+              "start": {
+                "line": 950,
+                "column": 50
+              },
+              "end": {
+                "line": 953,
+                "column": 9
+              }
+            },
+            {
+              "start": {
+                "line": 956,
+                "column": 55
+              },
+              "end": {
+                "line": 956,
+                "column": 157
+              }
+            },
+            {
+              "start": {
+                "line": 968,
+                "column": 55
+              },
+              "end": {
+                "line": 968,
+                "column": 79
+              }
+            },
+            {
+              "start": {
+                "line": 930,
+                "column": 58
+              },
+              "end": {
+                "line": 930,
+                "column": 65
+              }
+            },
+            {
+              "start": {
+                "line": 931,
+                "column": 88
+              },
+              "end": {
+                "line": 931,
+                "column": 121
+              }
+            },
+            {
+              "start": {
+                "line": 1145,
+                "column": 71
+              },
+              "end": {
+                "line": 1145,
+                "column": 90
+              }
+            },
+            {
+              "start": {
+                "line": 1152,
+                "column": 36
+              },
+              "end": {
+                "line": 1152,
+                "column": 62
+              }
+            }
+          ]
+        },
+        "debt": "Twenty-sixth28module image gate remains failed: runtime statements/lines98.98 branches94.95 functions100;674affected assertions pass,27other modules four100. No ignore/exclusion/threshold changes. Actual MangaEntry.vue consent/reveal/focus/idle/late-persist component behavior remains unverified by mocked wrapper, needs actual Vue/native UI tests. Compositor per-patch15s does not establish total multi-patch budget; continue late compose/ownership and native allocation/draw/base64 workloads."
+      },
+      "nativeWarmOwnership": {
+        "passed": true,
+        "baselineRuntimeExact": true,
+        "currentRuntimeMatches": true,
+        "sourceSha256": {
+          "baseline": "4c1e7bcf9fe390b60cf164ea61153e63fa12db6055e3a5652054e0f27336271e",
+          "current": "4d1ac9e3e7165e6c0adce9449b86159a96fe50f391b83fcb3f36b46ef4ffcb66"
+        },
+        "bundleSha256": {
+          "baseline": "0827f88d097ff98ed18efa7a672c63efd02c4ff544ec89e1ce8d4f230181dfe5",
+          "current": "83bbd4fcf7258e8682a65e66aba020bcd9ee58410989a9d22af15e457f276622"
+        },
+        "harnessSha256": "7c21562a9b961ed58d305701387c1e06c3c988ed47335266db6621c64733b16d",
+        "cases": [
+          {
+            "version": "baseline",
+            "translated": false,
+            "providerCalls": 4,
+            "decodeCalls": 5,
+            "loadingRows": 1,
+            "afterLateBitmapAndRepeatedScroll": {
+              "providerCalls": 4,
+              "decodeCalls": 5,
+              "bitmapCloses": 5,
+              "pixel": null,
+              "sourceAttributesPreserved": true,
+              "originalOpacityRestored": true,
+              "overlayRootRemoved": true
+            }
+          },
+          {
+            "version": "current",
+            "translated": true,
+            "providerCalls": 4,
+            "decodeCalls": 6,
+            "loadingRows": 0,
+            "afterLateBitmapAndRepeatedScroll": {
+              "providerCalls": 4,
+              "decodeCalls": 6,
+              "bitmapCloses": 6,
+              "pixel": [
+                255,
+                0,
+                0,
+                255
+              ],
+              "sourceAttributesPreserved": true,
+              "originalOpacityRestored": true,
+              "overlayRootRemoved": true
+            }
+          }
+        ],
+        "scope": "full actual content runtime/controls/presentation/reader/session/compositor with native DOM/canvas/FileReader/bitmap; reactive diagnostic config and deterministic image-client ports; actual RAF callbacks manually flushed within one checkpoint to force cancellation/return, no native input latency or manga model quality claim",
+        "sourceBoundary": "Old/current full runtime loaded with same current dependency modules; reactive config and deterministic client are diagnostic ports, brand/native DOM/control/reader/compositor stay actual. No packaged WXT/runtime message/model quality or trusted input latency claim.",
+        "pageErrors": [],
+        "cleanupErrors": [],
+        "profileRemoved": true,
+        "backgroundWindowVerified": true
+      },
+      "pureRectangleComparison": {
+        "passed": true,
+        "sourceFile": "src/features/image-translation/mangaPatchResult.ts",
+        "baselineSourcesExact": true,
+        "currentSourcesMatch": true,
+        "harnessSha256": "1d7be7a660670f7de226ea65a44855fc444f0a027d2b705b6d8dd1feb355fdb0",
+        "baseline": "cba05975220b0987dacb55f2a767f145a486f432",
+        "sourceSha256": {
+          "baseline": "f1c7f657f9956d9f8e4ca32e66bab3570ba26bbcea67a6aebfc9c1c744c882b7",
+          "current": "b47b3be743bf0bb795ac297b7a7ea18e442377e36d54e08d91bf2b7b5f7f1efc"
+        },
+        "differentialCases": 4005,
+        "inputPreserved": true,
+        "syntheticLargeInput": {
+          "sourceBoxes": 150000,
+          "baselineFailure": "RangeError: Maximum call stack size exceeded",
+          "currentResult": [
+            {
+              "x": 10,
+              "y": 10,
+              "width": 170,
+              "height": 90
+            }
+          ],
+          "boundary": "Pure valid-coordinate helper stress case. Does not prove OCR grouping/inpainting or full large-page pipeline accepts150000regions."
+        },
+        "timing": [
+          {
+            "name": "empty",
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "invocationsPerSample": 2000,
+            "summary": {
+              "baseline": {
+                "medianMs": 2.749999999997499e-05,
+                "samples": [
+                  2.6916499999970254e-05,
+                  2.679149999994479e-05,
+                  2.862499999997681e-05,
+                  2.7479499999969903e-05,
+                  2.756249999998772e-05,
+                  2.749999999997499e-05,
+                  2.7541999999982637e-05,
+                  2.756249999998772e-05,
+                  2.74375000000191e-05
+                ]
+              },
+              "current": {
+                "medianMs": 2.7500000000031832e-05,
+                "samples": [
+                  2.6749999999992725e-05,
+                  2.6333000000022365e-05,
+                  2.775000000002592e-05,
+                  2.7166499999964345e-05,
+                  2.7520999999978814e-05,
+                  2.7228999999977076e-05,
+                  2.756249999998772e-05,
+                  2.7500000000031832e-05,
+                  2.7625000000000455e-05
+                ]
+              }
+            }
+          },
+          {
+            "name": "ordinary-one-box",
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "invocationsPerSample": 2000,
+            "summary": {
+              "baseline": {
+                "medianMs": 0.00021614600000003747,
+                "samples": [
+                  0.0002578125,
+                  0.00021141649999998436,
+                  0.0006278750000000173,
+                  0.00020564550000000281,
+                  0.00021047900000002072,
+                  0.00021614600000003747,
+                  0.00023783300000002327,
+                  0.00021625000000000227,
+                  0.00021024999999997361
+                ]
+              },
+              "current": {
+                "medianMs": 5.114600000001701e-05,
+                "samples": [
+                  8.506250000004912e-05,
+                  5.181249999998272e-05,
+                  5.114600000001701e-05,
+                  4.754200000002129e-05,
+                  5.377099999998336e-05,
+                  4.918749999995953e-05,
+                  5.102099999999155e-05,
+                  0.00016147900000004257,
+                  4.754150000002255e-05
+                ]
+              }
+            }
+          },
+          {
+            "name": "5000-source-boxes",
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "invocationsPerSample": 20,
+            "summary": {
+              "baseline": {
+                "medianMs": 0.21132294999999884,
+                "samples": [
+                  0.21183750000000146,
+                  0.21186665000000177,
+                  0.1885228999999981,
+                  0.18629374999999868,
+                  0.21132294999999884,
+                  0.20028329999999528,
+                  0.21447500000000447,
+                  0.22528960000000212,
+                  0.1955812499999979
+                ]
+              },
+              "current": {
+                "medianMs": 0.06253750000000195,
+                "samples": [
+                  0.04654375000000073,
+                  0.06253750000000195,
+                  0.05997914999999807,
+                  0.060908299999999825,
+                  0.06512709999999515,
+                  0.06266040000000431,
+                  0.04929584999999861,
+                  0.06611045000000218,
+                  0.06622920000000362
+                ]
+              }
+            }
+          },
+          {
+            "name": "10000-source-boxes",
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "invocationsPerSample": 10,
+            "summary": {
+              "baseline": {
+                "medianMs": 0.41184580000000326,
+                "samples": [
+                  0.41184580000000326,
+                  0.4366709000000014,
+                  0.4018124999999941,
+                  0.4489667000000054,
+                  0.4064917000000037,
+                  0.4292749999999955,
+                  0.38697919999999614,
+                  0.4619167000000061,
+                  0.39042500000000474
+                ]
+              },
+              "current": {
+                "medianMs": 0.13160830000000487,
+                "samples": [
+                  0.13160830000000487,
+                  0.13470000000000937,
+                  0.1128832999999986,
+                  0.13931250000000545,
+                  0.11957079999999679,
+                  0.14127079999999523,
+                  0.11102499999999509,
+                  0.1321833999999967,
+                  0.11269999999999528
+                ]
+              }
+            }
+          }
+        ],
+        "work": [
+          {
+            "version": "baseline",
+            "arrayMapCalls": 5,
+            "arrayMapElementVisits": 25004
+          },
+          {
+            "version": "current",
+            "arrayMapCalls": 1,
+            "arrayMapElementVisits": 5000
+          }
+        ],
+        "timingBoundary": "Actual immutable/current pure module,3warmups9alternating rounds; input generation/differential/structuredClone/counters excluded, own earlier tests/native/inventory handles ended before run and no own concurrent work; no whole-machine-idle or full pipeline claim."
+      },
+      "browser": {
+        "passed": true,
+        "phases": 22,
+        "cases": [
+          "HAR technical identifiers stay unchanged without requests; repeated primary XSRF failures are skipped",
+          "missing languages exposes preparation action",
+          "real language download, OCR, translation and replacement",
+          "independent viewport reader preserves recognized original alongside translation",
+          "restore and redisplay reuse result without requests or source mutation",
+          "scroll retains same decoded bitmap",
+          "second image hover survives unrelated live DOM updates",
+          "DOM geometry matches source: contain-padding-border",
+          "DOM geometry matches source: cover-padding-border",
+          "DOM geometry matches source: none-padding-border",
+          "DOM geometry matches source: ancestor-clipping",
+          "DOM geometry matches source: ancestor-scroll-clipping",
+          "dynamic source change removes old translation",
+          "loading Cancel retains the same attached hovered focused row and button during progress",
+          "cancel never installs a late result",
+          "retry works after cancellation",
+          "injected offscreen channel closure retries once with a fresh request and installs a valid bitmap",
+          "transparent PNG hides original letters while translated bitmap remains visible",
+          "restoring transparent source releases only the extension opacity lease",
+          "host opacity change removes old replacement and preserves the host value",
+          "image removal cleans overlay",
+          "consumed cancellation ID can be cancelled again across real Offscreen routing without starting OCR/provider"
+        ],
+        "javascriptAssetsSha256": "b9f31584f96a7a08fb29c4b24c482710aa7197c137fb415b1f6bb5dda959039b",
+        "actualArtifactsMatch": true,
+        "screenshotsGenerated": 15,
+        "screenshotsInspected": [
+          "02-translated",
+          "08-cancel-hover-stability"
+        ],
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "backgroundWindowVerified": true,
+        "profileRemoved": true,
+        "scopedRemainingProfileProcesses": {
+          "nativeWarmRaceProfiles": 0,
+          "imageFlowProfiles": 0
+        },
+        "pageErrors": [],
+        "cleanupErrors": [],
+        "boundary": "Actual Chrome production ordinary image flow/native Tesseract and public language data; deterministic Google/HAR. Does not exercise real manga models, MangaEntry consent UI, live provider quality, Firefox runtime/accounts/devices/store release."
+      },
+      "fixtureCorrections": [
+        "First native race bundle lacked brand PNG dataurl loader; failed before profile/browser creation. Added asset loader only, unchanged product, final baseline/current cases passed."
+      ],
+      "checks": {
+        "compile": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 466,
+          "staticDefinitions": 6257
+        },
+        "architecture": {
+          "files": 4,
+          "cases": 829,
+          "passedCases": 827,
+          "failedCases": 2,
+          "unchangedExecutableOwnershipOmissions": 15,
+          "unchangedDocToolOmissions": 3
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/image-translation/mangaPatchResult.ts",
+          "src/features/image-translation/content/mangaEntry.ts",
+          "src/features/image-translation/progress.ts",
+          "src/features/image-translation/ui/MangaEntry.vue"
+        ],
+        "newFunctionBodies": 55,
+        "changedFiles": [
+          "src/features/image-translation/content/runtime.ts",
+          "src/features/image-translation/mangaPatchResult.ts",
+          "src/features/image-translation/content/mangaEntry.ts"
+        ],
+        "inventoryFiles": 821,
+        "inventoryFunctions": 14694,
+        "cachedIntegratedPendingSources": [
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/handlers/webDavBackup.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/config/catalog.ts",
+          "src/core/config/freeTranslation.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WebDavBackup.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceCatalogItem.vue",
+          "src/features/settings/ui/services/freeTranslationChecks.ts",
+          "src/platform/google-drive/api.ts",
+          "src/platform/webdav/api.ts",
+          "src/providers/translation/free-extra-web.ts",
+          "src/providers/translation/free-web.ts",
+          "src/services/config/cloudBackupClient.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/config/webDavBackup.ts"
+        ],
+        "componentSourceOnlyBoundary": "src/features/image-translation/ui/MangaEntry.vue"
+      },
+      "cachedMain": {
+        "snapshot": "e0939fe9f16a125b310f51663fd194bb5c52f2cb",
+        "lastOriginalImported": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "additionalChange": "60a57d79087157d9102432d0fd1cb787bf093f35",
+        "pendingIntegrationFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/webdav.md",
+          "docs/guide/privacy.md",
+          "docs/guide/webdav.md",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/features/settings/ui/RemoteConfigSync.vue"
+        ],
+        "boundary": "Read existing shared cached refs only; external change is not integrated or live remote freshness proof. Rewritten5de9history had tree identical to original import; e093cloud backup copy now changes tree. No blind merge/rebase or remote write."
+      },
+      "remaining": "630pending files plus actual MangaEntry Vue/native behavior debt, unchanged runtime strict gate and compositing/pipeline/performance/architecture coverage. Goal active; primary/reference projects untouched, no publishing."
     }
   ]
 }

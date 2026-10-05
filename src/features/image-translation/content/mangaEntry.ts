@@ -1,7 +1,7 @@
 /**
  * @file src/features/image-translation/content/mangaEntry.ts
  * 文件职责：将安静的独立漫画按钮和按需资源确认挂载到隔离 Shadow UI，并桥接真实会话、资源检查与持久偏好。
- * 主要内容：按地址与站点策略显示备用按钮，自动源语言沿已确认的阅读路径选择俄语或韩语资源提示，手动选择优先；俄语和韩语检查既有 OCR 语言包与漫画清字资源，其他语言检查漫画模型；订阅会话和配置并同步源语言；挂载所有权防止迟到实例回到页面，卸载清理订阅。
+ * 主要内容：用地址识别阅读页，按悬浮球和站点显隐显示备用按钮，不自动弹出阅读面板；订阅会话和配置，跨路由同步网站名称；订阅建立后立即登记清理，等待 UI 创建时卸载也即时退订；清理幂等且只清除自己的槽位，挂载所有权防止迟到实例回到页面或影响新入口。
  * 模块边界：仅编排 feature 内部 UI 与公共配置、浏览器消息端口，不下载模型、不实现翻译，宿主脚本不能通过合成 DOM 事件发起动作。
  */
 import {reactive} from 'vue';
@@ -38,7 +38,14 @@ export function mountMangaEntry(ctx: ContentScriptContext, ports: {startAreaTran
     const stopStatus = subscribeMangaTranslation(value => Object.assign(status, value));
     const stopConfig = subscribeConfig(sync);
     document.addEventListener('fluentread-route-change', sync);
-    const remove = () => {stopStatus();stopConfig();document.removeEventListener('fluentread-route-change', sync);};
+    let removed = false;
+    const remove = () => {
+        if (removed) return;
+        removed = true;
+        stopStatus();stopConfig();document.removeEventListener('fluentread-route-change', sync);
+        if (cleanup === remove) cleanup = undefined;
+    };
+    cleanup = remove;
     pending = createVueShadowUi(ctx, {name: 'fluent-read-manga-entry', hostId: 'fluent-read-manga-entry-container', component: MangaEntry, mode: 'closed',
         props: {status, settings, page,
             startAreaTranslation: async () => config.on && config.imageTranslationMangaEnabled && status.available && status.areaFallback === true
@@ -62,7 +69,7 @@ export function mountMangaEntry(ctx: ContentScriptContext, ports: {startAreaTran
     }).then(value => {if (request !== owner || !config.on || !config.imageTranslationMangaEnabled || !isMangaReaderPage()) {value.remove();remove();return;}
         // 与译图使用同一根层级，避免被 Pixiv 的 body 堆叠上下文压到译图下方。
         if (value.shadowHost) document.documentElement.appendChild(value.shadowHost);
-        ui = value;cleanup = remove;})
+        ui = value;})
         .catch(error => {remove();throw error;}).finally(() => {if (request === owner) pending = null;});
     return pending;
 }

@@ -1592,6 +1592,39 @@ describe('视频预览不自动显示图片翻译', () => {
         const before=decode.mock.calls.length;await chapter.visit(9,0);expect(decode).toHaveBeenCalledTimes(before+1);expect(chapter.pages[0].style.opacity).not.toBe('0');
         await chapter.visit(0);expect(decode).toHaveBeenCalledTimes(before+1);expect(client.translate).toHaveBeenCalledTimes(4);expect(chapter.pages[0].style.opacity).toBe('0');
     });
+    it('预合成离开附近窗口后同一检查点返页，不复用已取消任务而停留在加载状态', async () => {
+        const env = readerPage(); settings.imageTranslationMangaPrefetchPages = 0; settings.imageTranslationMangaCachePages = 2;
+        const chapter = cacheChapter(env, 10), decode = vi.fn(async () => ({width: 10, height: 20, close: vi.fn()}));
+        vi.stubGlobal('createImageBitmap', decode);
+        client.translate.mockResolvedValue({...result, image: '', mangaPatches: {width: 400, height: 200, patches: [{x: 0, y: 0, width: 10, height: 20, image: 'data:image/png;base64,AQID'}]}});
+        toggleMangaTranslation(); await flush(); await chapter.visit(3); await chapter.visit(6); await chapter.visit(9);
+        const pending = deferred<{width: number; height: number; close: ReturnType<typeof vi.fn>}>(); decode.mockReturnValueOnce(pending.promise);
+        chapter.near(0); await flush(); const before = decode.mock.calls.length;
+        chapter.near(-1); const returned = chapter.visit(0); await returned;
+        const late = {width: 10, height: 20, close: vi.fn()}; pending.resolve(late); await flush();
+        expect(chapter.pages[0].style.opacity).toBe('0'); expect(decode).toHaveBeenCalledTimes(before + 1);
+        expect(client.translate).toHaveBeenCalledTimes(4);
+        expect(late.close).toHaveBeenCalledOnce(); expect(chapter.pages[0].style.opacity).toBe('0');
+        for (let frame = 0; frame < 3; frame++) await chapter.visit(0);
+        expect(decode).toHaveBeenCalledTimes(before + 1); expect(client.translate).toHaveBeenCalledTimes(4);
+    });
+    it('已取消的旧预合成结束不清除新任务，同页连续靠近只重建一次', async () => {
+        const env = readerPage(); settings.imageTranslationMangaPrefetchPages = 0; settings.imageTranslationMangaCachePages = 2;
+        const chapter = cacheChapter(env, 10), decode = vi.fn(async () => ({width: 10, height: 20, close: vi.fn()}));
+        vi.stubGlobal('createImageBitmap', decode);
+        client.translate.mockResolvedValue({...result, image: '', mangaPatches: {width: 400, height: 200, patches: [{x: 0, y: 0, width: 10, height: 20, image: 'data:image/png;base64,AQID'}]}});
+        toggleMangaTranslation(); await flush(); await chapter.visit(3); await chapter.visit(6); await chapter.visit(9);
+        const old = deferred<{width: number; height: number; close: ReturnType<typeof vi.fn>}>(), current = deferred<{width: number; height: number; close: ReturnType<typeof vi.fn>}>();
+        decode.mockReturnValueOnce(old.promise).mockReturnValueOnce(current.promise);
+        chapter.near(0); await flush(); const before = decode.mock.calls.length;
+        chapter.near(-1); chapter.near(0); await flush();
+        for (let frame = 0; frame < 3; frame++) {chapter.near(0); await flush();}
+        const stale = {width: 10, height: 20, close: vi.fn()}, valid = {width: 10, height: 20, close: vi.fn()};
+        old.resolve(stale); current.resolve(valid); await flush();
+        expect(decode).toHaveBeenCalledTimes(before + 1); expect(stale.close).toHaveBeenCalledOnce(); expect(valid.close).toHaveBeenCalledOnce();
+        await chapter.visit(0); expect(chapter.pages[0].style.opacity).toBe('0'); expect(decode).toHaveBeenCalledTimes(before + 1);
+        expect(client.translate).toHaveBeenCalledTimes(4);
+    });
     it.each(['pause','source','language','route','unmount'] as const)('预合成期间 %s，迟到结果不能复活且位图释放',async change=>{
         const env=readerPage();settings.imageTranslationMangaPrefetchPages=0;settings.imageTranslationMangaCachePages=2;
         const chapter=cacheChapter(env,10),decode=vi.fn().mockImplementation(async()=>({width:10,height:20,close:vi.fn()}));vi.stubGlobal('createImageBitmap',decode);
