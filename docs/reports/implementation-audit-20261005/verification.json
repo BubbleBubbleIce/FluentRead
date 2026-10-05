@@ -26318,6 +26318,498 @@
         "Local userscript resource pin1c4482cc unchanged/unpublished",
         "No remote fetch/rebase/merge39; final integration follows complete audit"
       ]
+    },
+    {
+      "batch": "fortieth",
+      "name": "Free weight read lifecycle and cached service directory search",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 268,
+        "sourceReadFunctionBodies": 4931,
+        "pendingFiles": 559,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue"
+        ],
+        "newFunctionBodies": 95,
+        "rereadPreviouslyReviewedFiles": [
+          "src/features/settings/ui/services/ServiceConfiguration.vue"
+        ],
+        "unchangedRelatedRereads": [
+          "ServiceCatalogItem.vue",
+          "src/ui/view-model/serviceCatalog.ts",
+          "src/app/background/handlers/freeTranslationWeights.ts",
+          "src/features/settings/model/taskWait.ts",
+          "src/features/settings/model/useSettingsActionContext.ts"
+        ],
+        "sourceProof": {
+          "src/features/settings/ui/services/FreeTranslationSettings.vue": {
+            "sha256": "0a900c3cc1c69b7694011eff01697990461adfb2141a9a4ee577d42736541efd",
+            "fullyRead": true,
+            "functionBodies": 57,
+            "review": "Complete source/function and chain review"
+          },
+          "src/features/settings/ui/services/ServiceCatalog.vue": {
+            "sha256": "29c35ae619ace8264fc16886796e5897b40f77dac7bc5c1403f0457b71a64082",
+            "fullyRead": true,
+            "functionBodies": 38,
+            "review": "Complete source/function and chain review"
+          },
+          "src/features/settings/ui/services/ServiceConfiguration.vue": {
+            "sha256": "38f199574654995f5ae10aecd17b91e8ffd0a8fda45bae30fc98b24f4a8c4ea7",
+            "fullyRead": true,
+            "functionBodies": 91,
+            "review": "Previous full source read retained; modified active child forwarding retraced"
+          }
+        },
+        "nextNotCounted": [
+          "PromptTemplateEditor.vue",
+          "InputTranslationSettings.vue"
+        ]
+      },
+      "implementation": [
+        "Free weight reads belong only to mounted active basic balanced settings; parent passes section/tab ownership. One interval and one coalesced caller wait, ten-second deadline; hide/KeepAlive/unmount/config/mode/order/email/advanced changes invalidate old results and cancel local waiting. Burst changes read only final state; existing background RPC is read-only and underlying message is not forcibly cancelled.",
+        "Reject incomplete, invalid or old-enabled-set snapshots and retain full current local fallback. Preserve all13providers including disabled/experimental, existing individual checks/errors/durations and keep-one rule. Guard hidden/old cached template mode/toggle/order/email/timeout events, strict value validation; wipe uncommitted email on context change. No provider live connection checks performed.",
+        "Service directory captures callbacks for current active context/service, rejects missing/disabled service choices and keeps default separate. Cancel stale focus/scroll, close and restore focus once after normal selection, close reselected service without redundant emit, clear directory draft/open state on view/context exit. Model event forwarding is similarly owned; existing ModelPicker validation retained.",
+        "Directory empty keyword returns existing groups without per-item normalization. A lazy reactive search text Map is reused for successive keywords and rebuilt on directory data change. Actual baseline/current SFC setup500items produce identical results; label/description/searchTerms reads1500->0 empty and4500->1500 across3queries. Excludes ID/group work, DOM and latency. Remove old repeated per-query transformation and duplicate focus path rather than add new wrapper modules."
+      ],
+      "newTests": {
+        "executedCases": 35,
+        "staticDefinitions": 18,
+        "newFiles": [
+          "tests/serviceDirectoryLifecycle.test.ts"
+        ],
+        "originalComparison": {
+          "baselineHead": "d0a03468c77eb79ef56b20fff3d92ffa5779534f",
+          "sourceFiles": 2,
+          "executed": 35,
+          "failed": 29,
+          "passed": 6,
+          "unhandledErrors": 1,
+          "boundary": "Actual SFC setup and cached client templates with controlled RPC/display/scheduler ports. Final corrected tree renderer used for comparison; earlier harness preparation failures excluded. One old malformed snapshot creates unhandled render error, preserved; failure count not independent bugs."
+        }
+      },
+      "strictCoverage": {
+        "testFiles": 2,
+        "cases": 11,
+        "modules": {
+          "src/features/settings/model/taskWait.ts": {
+            "lines": {
+              "total": 19,
+              "covered": 19,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 2,
+              "covered": 2,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 19,
+              "covered": 19,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 7,
+              "covered": 7,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/settings/model/useSettingsActionContext.ts": {
+            "lines": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "unchangedSharedModules": true,
+        "thresholdsOrExemptionsWeakened": false
+      },
+      "integration": {
+        "files": 12,
+        "cases": 186,
+        "passed": 186,
+        "compiledCachedDirectoryTemplateCases": 35,
+        "existingFreeTemplateCases": 14,
+        "existingChildEditorCases": 37,
+        "existingPromptImeCases": 3,
+        "unhandledErrors": 0
+      },
+      "performance": {
+        "items": 500,
+        "sameResults": true,
+        "before": {
+          "emptySearchFieldReads": 1500,
+          "threeQueriesSearchFieldReads": 4500
+        },
+        "after": {
+          "emptySearchFieldReads": 0,
+          "threeQueriesSearchFieldReads": 1500
+        },
+        "boundary": "Actual SFC setup computed directory, baseline source transform; excludes DOM rendering, group partition, item ID reads and latency."
+      },
+      "browser": {
+        "passed": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "finalBrowserFrontmost": false,
+        "cases": [
+          "full 13-provider catalog includes disabled providers and initial unchecked status",
+          "balanced mode shows complete local or backend allocation without connection tests",
+          "native enable, sequential strategy and reorder save while all providers remain visible",
+          "native partial email stays local and valid email commits",
+          "advanced timeout saves independently of basic service controls",
+          "free-service exit and return retain complete catalog and edited preferences",
+          "NFKC case-insensitive search matches full-width custom label, no-result and clear restore directory",
+          "mobile selection closes directory and restores focus once while preserving default",
+          "reselecting current service closes mobile directory without changing default",
+          "section exit clears directory draft and open state; dark 390px free cards fit viewport",
+          "reload retains email timeout final strategy reordered providers and original default"
+        ],
+        "consoleErrors": [],
+        "screenshotsInspected": [
+          "free-services-light-1280.png",
+          "directory-search-light-1280.png",
+          "free-services-dark-390.png"
+        ],
+        "browserClosed": true,
+        "profileRemoved": true,
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-directory-audit-production-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        },
+        "productionJavascriptSha256": "ee7ab149627221043a3be18982405f52655c06cb9434df0db1a918c120e53d52",
+        "persistenceCases": [
+          "provider enable and reorder",
+          "valid email",
+          "advanced timeout",
+          "reload final values"
+        ],
+        "quickClose": false,
+        "crossPageSync": false,
+        "latestWriteWins": true,
+        "evidenceBoundary": "Production Chrome extension actual Vue and Element Plus settings; native directory and free-service actions, no translation or connection checks. Polling timeout and late callbacks are controlled-template proof only.",
+        "priorAttempt": "ElSwitch role is a hidden native input; corrected test click to its visible .el-switch, retained hidden input state assertions. Failed attempt preserved privately and owned profile removed. No product code change after final builds."
+      },
+      "architecture": {
+        "selectedFiles": [
+          "tests/architecture/moduleBoundaries.test.ts",
+          "tests/architecture/sourceFileHeaders.test.ts",
+          "tests/architecture/verificationOwnership.test.ts"
+        ],
+        "files": 3,
+        "cases": 830,
+        "passed": 828,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3,
+        "countBoundary": "Different selected boundary suite from batch39; counts not comparable as added source coverage."
+      },
+      "externalMain": {
+        "primaryHead": "510683f2d60985bb4494d6a9cf9ada2bb3b83acf",
+        "primaryClean": true,
+        "cachedOrigin": "4b34f3d9ac3326ba0b4bc7ee35190078a006b376",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/en/guide/webpage-translation.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/guide/webpage-translation.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/reports/settings-ui-polish-20261006/README.md",
+          "docs/reports/settings-ui-polish-20261006/cloud-compatibility-report.json",
+          "docs/reports/settings-ui-polish-20261006/cloud-delete-loading.png",
+          "docs/reports/settings-ui-polish-20261006/delete-loading-report.json",
+          "docs/reports/settings-ui-polish-20261006/key-policy-menu.png",
+          "docs/reports/settings-ui-polish-20261006/layout-report.json",
+          "docs/reports/settings-ui-polish-20261006/learning-level.png",
+          "docs/reports/settings-ui-polish-20261006/reading-desktop.png",
+          "docs/reports/settings-ui-polish-20261006/request-limits.png",
+          "docs/reports/settings-ui-polish-20261006/resources-current.png",
+          "docs/reports/settings-ui-polish-20261006/resources-management.png",
+          "docs/reports/settings-ui-polish-20261006/resources-tesseract.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-dark-390.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-light-1440.png",
+          "docs/reports/settings-ui-polish-20261006/site-preference-menu.png",
+          "docs/reports/settings-ui-polish-20261006/speech-unified.png",
+          "docs/reports/settings-ui-polish-20261006/tooltip-selectable.png",
+          "docs/reports/settings-ui-polish-20261006/vision-single-result.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-drive-version-compat-ui-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-settings-layout-polish-test.cjs",
+          "scripts/testing/run-settings-reading-menu-ui-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/cloudSync.ts",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/localTts.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/image-translation/ui/image-ocr-settings.css",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/LocalTranslationModelSettings.vue",
+          "src/features/settings/ui/LocalTtsSettings.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/FieldHelp.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/services/ModelVisionSettings.vue",
+          "src/features/settings/ui/services/RequestLimitSettings.vue",
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/settings/ui/settings-sections.css",
+          "src/features/settings/ui/site-rule-workspace.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/google-drive/api.ts",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/platform/webdav/api.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/backgroundGoogleDriveSync.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/googleDriveApi.test.ts",
+          "tests/i18n.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/webDavApi.test.ts",
+          "tests/webDavBackup.test.ts",
+          "tests/webDavHttpIntegration.test.ts",
+          "tests/webDavProperties.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.e66b7ea53ace2cc3.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.af00cb4d384a4548.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/ja-JP.1691d1c911d69419.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.3efdea50649f4cd2.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.8d66f666ac96d59f.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts"
+        ],
+        "pendingFileCount": 224
+      },
+      "finalDelivery": {
+        "status": "pending-full-audit",
+        "requestedByUser": true,
+        "steps": [
+          "Complete all source/function/chain review and related fixes/performance/tests",
+          "Rebase onto then-latest verified main and reconcile changed/new source review",
+          "Review the whole resulting code and functional chains, resolve all related findings and verify",
+          "Merge the verified reviewed head using the repository delivery workflow"
+        ],
+        "performed": false
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 485,
+          "staticDefinitions": 6652
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Goal remains active;559production source files pending",
+        "Setup/template/native/strict counts overlap; do not add as unique cases",
+        "Timeout and cancelled callbacks tested with controlled scheduler/RPC, not live hung backend or elapsed browser polling",
+        "Actual Edge only; Firefox/userscript builds do not establish native target interaction",
+        "No live provider/network translation or quality proof; no reference repositories/dependency changes",
+        "Chinese UI retained; no complete new English localization claim",
+        "Local userscript resource pin1c4482cc unchanged/unpublished",
+        "No remote fetch/rebase/merge40; final delivery follows whole audit"
+      ]
     }
   ]
 }

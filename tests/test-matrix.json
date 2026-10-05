@@ -470,7 +470,8 @@
       "tests/interfaceSettingsLifecycle.test.ts",
       "tests/modelVisionSettingsLifecycle.test.ts",
       "tests/serviceConfigurationLifecycle.test.ts",
-      "tests/serviceEditorLifecycle.test.ts"
+      "tests/serviceEditorLifecycle.test.ts",
+      "tests/serviceDirectoryLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

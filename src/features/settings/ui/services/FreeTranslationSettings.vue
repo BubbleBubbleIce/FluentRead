@@ -1,15 +1,15 @@
 <!--
  * @file src/features/settings/ui/services/FreeTranslationSettings.vue
  * 文件职责：编辑免费翻译服务的启停、选择策略、邮箱与等待时间。
- * 主要内容：以等宽等高卡片统一展示全部服务的启停、连接结果、单次测试耗时与分流参考；失败说明集中显示，邮箱作为独立紧凑字段常驻，高级态显示等待上限。
+ * 主要内容：展示全部服务的启停、连接结果、耗时与分流参考；仅活跃分流视图合并读取后台快照，切换时取消等待和旧事件，邮箱草稿只在所属配置提交。
  * 模块边界：只修改传入的配置，由设置页统一持久化；只读取不含凭据的后台权重快照，不请求翻译。
  -->
 <template>
   <div class="free-translation-settings" :class="{'is-advanced': advanced}" data-free-translation-settings>
     <template v-if="!advanced">
       <div class="mode-picker" role="radiogroup" :aria-label="translateLegacy('免费翻译选择模式')">
-        <label class="mode-option" :class="{ 'is-selected': mode === 'balanced' }"><input type="radio" name="free-translation-mode" value="balanced" :checked="mode === 'balanced'" :aria-label="t('settings.services.freeWeights.mode')" @change="setMode('balanced')" /><span>{{ t('settings.services.freeWeights.mode') }}</span></label>
-        <label class="mode-option" :class="{ 'is-selected': mode === 'sequential' }"><input type="radio" name="free-translation-mode" value="sequential" :checked="mode === 'sequential'" :aria-label="translateLegacy('优先顺序')" @change="setMode('sequential')" /><span>{{ translateLegacy('优先顺序') }}</span></label>
+        <label class="mode-option" :class="{ 'is-selected': mode === 'balanced' }"><input type="radio" name="free-translation-mode" value="balanced" :checked="mode === 'balanced'" :aria-label="t('settings.services.freeWeights.mode')" :disabled="!active" :onChange="actions.setMode.bind(null, 'balanced')" /><span>{{ t('settings.services.freeWeights.mode') }}</span></label>
+        <label class="mode-option" :class="{ 'is-selected': mode === 'sequential' }"><input type="radio" name="free-translation-mode" value="sequential" :checked="mode === 'sequential'" :aria-label="translateLegacy('优先顺序')" :disabled="!active" :onChange="actions.setMode.bind(null, 'sequential')" /><span>{{ translateLegacy('优先顺序') }}</span></label>
       </div>
       <p class="mode-help">{{ mode === 'balanced' ? t('settings.services.freeWeights.strategy') : translateLegacy('依次调用启用的免费接口；可使用上下按钮调整顺序') }}</p>
       <p v-if="!isSequential && displayedWeightSnapshot.total === 0" class="service-unavailable" role="status">{{ t('settings.services.freeWeights.unavailable') }}</p>
@@ -32,9 +32,9 @@
                 </div>
               </div>
               <div class="provider-actions">
-                <button v-if="isSequential" type="button" :disabled="!isEnabled(provider.id) || order.indexOf(provider.id) === 0" :aria-label="`${translateLegacy('上移')} ${translateLegacy(provider.label)}`" :title="translateLegacy('上移')" @click="move(provider.id, -1)"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 9 4-4 4 4" /></svg></button>
-                <button v-if="isSequential" type="button" :disabled="!isEnabled(provider.id) || order.indexOf(provider.id) === order.length - 1" :aria-label="`${translateLegacy('下移')} ${translateLegacy(provider.label)}`" :title="translateLegacy('下移')" @click="move(provider.id, 1)"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 7 4 4 4-4" /></svg></button>
-                <el-switch :model-value="isEnabled(provider.id)" :disabled="toggleDisabled(provider.id)" :aria-label="`${translateLegacy('启用')} ${translateLegacy(provider.label)}`" @update:model-value="toggle(provider.id, Boolean($event))" />
+                <button v-if="isSequential" type="button" :disabled="!active || !isEnabled(provider.id) || order.indexOf(provider.id) === 0" :aria-label="`${translateLegacy('上移')} ${translateLegacy(provider.label)}`" :title="translateLegacy('上移')" :onClick="actions.move.bind(null, provider.id, -1)"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 9 4-4 4 4" /></svg></button>
+                <button v-if="isSequential" type="button" :disabled="!active || !isEnabled(provider.id) || order.indexOf(provider.id) === order.length - 1" :aria-label="`${translateLegacy('下移')} ${translateLegacy(provider.label)}`" :title="translateLegacy('下移')" :onClick="actions.move.bind(null, provider.id, 1)"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 7 4 4 4-4" /></svg></button>
+                <el-switch :model-value="isEnabled(provider.id)" :disabled="!active || toggleDisabled(provider.id)" :aria-label="`${translateLegacy('启用')} ${translateLegacy(provider.label)}`" :onUpdate:modelValue="actions.toggle.bind(null, provider.id)" />
               </div>
             </div>
             <div class="provider-meta">
@@ -49,7 +49,7 @@
       </section>
       <p class="fallback-footnote">{{ t('settings.services.library.keepOne') }}</p>
       <section class="provider-settings" :aria-label="t('settings.services.library.memoryEmail')">
-        <label class="compact-field"><span>{{ t('settings.services.library.memoryEmail') }}</span><el-input v-model="myMemoryEmailDraft" type="email" :placeholder="translateLegacy('不填写也可以使用')" :aria-label="t('settings.services.library.memoryEmail')" :aria-invalid="myMemoryEmailInvalid" @change="commitMyMemoryEmail" /></label>
+        <label class="compact-field"><span>{{ t('settings.services.library.memoryEmail') }}</span><el-input :model-value="myMemoryEmailDraft" :disabled="!active" :onUpdate:modelValue="actions.updateEmail" type="email" :placeholder="translateLegacy('不填写也可以使用')" :aria-label="t('settings.services.library.memoryEmail')" :aria-invalid="myMemoryEmailInvalid" :onChange="actions.commitEmail" /></label>
         <p v-if="myMemoryEmailInvalid" class="provider-note" role="status">{{ translateLegacy('请输入有效邮箱，或留空') }}</p>
         <p>{{ translateLegacy('提供邮箱后可提升额度；邮箱会随请求发送给 MyMemory') }} <a href="https://mymemory.translated.net/doc/usagelimits.php" target="_blank" rel="noreferrer">{{ translateLegacy('官方额度说明') }}</a></p>
       </section>
@@ -57,14 +57,14 @@
     <template v-if="advanced">
       <div class="timeout-field">
         <div class="timeout-label"><strong>{{ t('settings.services.waitTimeout') }}</strong><FieldHelp :content="`${t('settings.services.freeWeights.budget')} ${translateLegacy('网络问题通常几分钟后重试；限流按服务提示恢复；拦截可能需要几小时；日额度通常隔天恢复')}`" /></div>
-        <el-input-number :model-value="config.freeTranslationTimeoutMs / 1000" :min="1" :max="15" :step="1" :controls="false" :aria-label="translateLegacy('每个服务最多等待（秒）')" @update:model-value="setDuration($event)" />
+        <el-input-number :model-value="config.freeTranslationTimeoutMs / 1000" :min="1" :max="15" :step="1" :controls="false" :aria-label="translateLegacy('每个服务最多等待（秒）')" :disabled="!active" :onUpdate:modelValue="actions.setDuration" />
       </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
 import browser from 'webextension-polyfill'
 import type { Config } from '@/src/core/config/model'
 import { FREE_TRANSLATION_PROVIDERS, normalizeFreeTranslationMode, normalizeFreeTranslationOrder, normalizeMyMemoryEmail, type FreeTranslationProviderId } from '@/src/core/config/freeTranslation'
@@ -75,6 +75,8 @@ import {
   type FreeTranslationWeightSnapshot,
   type FreeTranslationWeightsResponse,
 } from '@/src/services/translation/freeWeights'
+import {useSettingsActionContext} from '../../model/useSettingsActionContext'
+import {waitForSettingsTask} from '../../model/taskWait'
 import { useUiI18n } from '@/src/ui/i18n'
 import ServiceIcon from '@/src/ui/components/ServiceIcon.vue'
 import ServiceNatureBadge from './ServiceNatureBadge.vue'
@@ -83,15 +85,16 @@ import type { FreeTranslationChecks } from './freeTranslationChecks'
 
 type FreeTranslationMode = 'balanced' | 'sequential'
 type FreeTranslationConfig = Config & {freeTranslationMode: FreeTranslationMode}
-const props = defineProps<{config: Config; advanced?: boolean; checks?: FreeTranslationChecks}>()
+const props = withDefaults(defineProps<{config: Config; active?: boolean; advanced?: boolean; checks?: FreeTranslationChecks}>(), {active: true})
 const advanced = computed(() => props.advanced === true)
 const config = toRef(props, 'config')
 const freeConfig = computed(() => config.value as FreeTranslationConfig)
 const { t, translateLegacy } = useUiI18n()
+const {active, capture, revision} = useSettingsActionContext(() => props.active, () => [props.config, props.advanced])
 const myMemoryEmailDraft = ref(config.value.myMemoryEmail)
 const myMemoryEmailInvalid = computed(() => Boolean(myMemoryEmailDraft.value.trim() && !normalizeMyMemoryEmail(myMemoryEmailDraft.value)))
-watch(() => config.value.myMemoryEmail, value => { myMemoryEmailDraft.value = value })
-function commitMyMemoryEmail(): void { if (!myMemoryEmailInvalid.value) config.value.myMemoryEmail = normalizeMyMemoryEmail(myMemoryEmailDraft.value) }
+watch(() => [config.value, config.value.myMemoryEmail, revision.value], () => {myMemoryEmailDraft.value = config.value.myMemoryEmail}, {flush: 'sync'})
+function commitMyMemoryEmail(): void { if (active.value && !advanced.value && !myMemoryEmailInvalid.value) config.value.myMemoryEmail = normalizeMyMemoryEmail(myMemoryEmailDraft.value) }
 const mode = computed<FreeTranslationMode>(() => normalizeFreeTranslationMode(freeConfig.value.freeTranslationMode) as FreeTranslationMode)
 const isSequential = computed(() => mode.value === 'sequential')
 const order = computed(() => normalizeFreeTranslationOrder(config.value.freeTranslationOrder))
@@ -104,6 +107,9 @@ const weightByProvider = computed(() => new Map(displayedWeightSnapshot.value.en
 const refreshMinutes = Math.round(FREE_TRANSLATION_WEIGHT_REFRESH_INTERVAL_MS / 60_000)
 let weightRefreshTimer: ReturnType<typeof setInterval> | undefined
 let weightRequestGeneration = 0
+const mounted = ref(false)
+const canReadWeights = computed(() => mounted.value && active.value && !advanced.value && mode.value === 'balanced')
+let weightRequest: {controller: AbortController; promise: Promise<void>} | undefined
 
 function providerWeight(providerId: string): number {
   if (!isEnabled(providerId)) return 0
@@ -147,42 +153,80 @@ function weightAriaLabel(providerId: string): string {
     weight: formatPercentage(providerWeight(providerId)),
   })
 }
-async function refreshWeights(): Promise<void> {
-  if (advanced.value || mode.value !== 'balanced') return
-  const generation = ++weightRequestGeneration
-  try {
-    const response = await browser.runtime.sendMessage({type: FREE_TRANSLATION_WEIGHTS_MESSAGE_TYPE}) as FreeTranslationWeightsResponse | undefined
-    if (generation !== weightRequestGeneration) return
-    weightSnapshot.value = response?.success === true && response.snapshot ? response.snapshot : null
-  } catch {
-    if (generation === weightRequestGeneration) weightSnapshot.value = null
+function isCurrentSnapshot(value: unknown): value is FreeTranslationWeightSnapshot {
+  if (!value || typeof value !== 'object') return false
+  const snapshot = value as FreeTranslationWeightSnapshot
+  if (![0, 100].includes(snapshot.total) || !Number.isFinite(snapshot.observedAt) || !Array.isArray(snapshot.entries)
+    || snapshot.entries.length !== FREE_TRANSLATION_PROVIDERS.length) return false
+  const ids = new Set<string>(), enabled = new Set(order.value)
+  let total = 0
+  for (const entry of snapshot.entries) {
+    if (!entry || !FREE_TRANSLATION_PROVIDERS.some(provider => provider.id === entry.providerId) || ids.has(entry.providerId)
+      || !['disabled', 'ready', 'cooling', 'recovering'].includes(entry.status) || !Number.isFinite(entry.weight)
+      || entry.weight < 0 || entry.weight > 100 || (entry.status === 'disabled') === enabled.has(entry.providerId)
+      || ((entry.status === 'disabled' || entry.status === 'cooling') && entry.weight !== 0)) return false
+    ids.add(entry.providerId);total += entry.weight
   }
+  return Math.abs(total - snapshot.total) < 0.11
 }
-function startWeightRefresh(): void {
-  if (advanced.value) return
-  void refreshWeights()
-  weightRefreshTimer = setInterval(() => { void refreshWeights() }, FREE_TRANSLATION_WEIGHT_REFRESH_INTERVAL_MS)
+function refreshWeights(): Promise<void> {
+  if (!canReadWeights.value) return Promise.resolve()
+  if (weightRequest) return weightRequest.promise
+  const generation = weightRequestGeneration, current = capture()
+  const operation = {controller: new AbortController(), promise: Promise.resolve()}
+  weightRequest = operation
+  operation.promise = (async () => {
+    try {
+      const response = await waitForSettingsTask(browser.runtime.sendMessage({type: FREE_TRANSLATION_WEIGHTS_MESSAGE_TYPE}) as Promise<FreeTranslationWeightsResponse | undefined>, operation.controller.signal, 10_000, '免费权重读取超时')
+      if (current() && generation === weightRequestGeneration && canReadWeights.value) {
+        weightSnapshot.value = response?.success === true && isCurrentSnapshot(response.snapshot) ? response.snapshot : null
+      }
+    } catch {
+      if (current() && generation === weightRequestGeneration) weightSnapshot.value = null
+    } finally {
+      if (weightRequest === operation) weightRequest = undefined
+    }
+  })()
+  return operation.promise
 }
-function setMode(value: FreeTranslationMode): void { freeConfig.value.freeTranslationMode = normalizeFreeTranslationMode(value) as FreeTranslationMode }
+function restartWeightRefresh(): void {
+  const generation = ++weightRequestGeneration
+  weightRequest?.controller.abort();weightRequest = undefined;weightSnapshot.value = null
+  if (weightRefreshTimer !== undefined) clearInterval(weightRefreshTimer)
+  weightRefreshTimer = undefined
+  if (!canReadWeights.value) return
+  weightRefreshTimer = setInterval(() => {void refreshWeights()}, FREE_TRANSLATION_WEIGHT_REFRESH_INTERVAL_MS)
+  // 配置保存和目录重排可能在同一轮连续发生；只读取最终所属状态。
+  void nextTick(() => {if (generation === weightRequestGeneration && canReadWeights.value) void refreshWeights()})
+}
+function setMode(value: FreeTranslationMode): void { if (active.value && !advanced.value && (value === 'balanced' || value === 'sequential')) freeConfig.value.freeTranslationMode = value }
 function isEnabled(id: string): boolean { return order.value.includes(id) }
 function toggleDisabled(id: string): boolean { return isEnabled(id) && order.value.length === 1 }
 function toggle(id: string, enabled: boolean): void {
-  if (!FREE_TRANSLATION_PROVIDERS.some(provider => provider.id === id) || enabled === isEnabled(id) || toggleDisabled(id)) return
+  if (!active.value || advanced.value || typeof enabled !== 'boolean' || !FREE_TRANSLATION_PROVIDERS.some(provider => provider.id === id) || enabled === isEnabled(id) || toggleDisabled(id)) return
   config.value.freeTranslationOrder = enabled ? [...order.value, id] : order.value.filter(value => value !== id)
 }
 function move(id: string, direction: -1 | 1): void {
+  if (!active.value || advanced.value || !isSequential.value || (direction !== -1 && direction !== 1)) return
   const current = order.value.indexOf(id), next = current + direction
   if (current < 0 || next < 0 || next >= order.value.length) return
   const reordered = [...order.value]; [reordered[current], reordered[next]] = [reordered[next], reordered[current]]; config.value.freeTranslationOrder = reordered
 }
-function setDuration(seconds: number | undefined): void { if (typeof seconds === 'number' && Number.isFinite(seconds)) config.value.freeTranslationTimeoutMs = Math.round(Math.min(15, Math.max(1, seconds)) * 1000) }
-watch(mode, value => { if (value === 'balanced') void refreshWeights() })
-watch(order, () => { if (mode.value === 'balanced') void refreshWeights() })
-onMounted(startWeightRefresh)
-onBeforeUnmount(() => {
-  weightRequestGeneration += 1
-  if (weightRefreshTimer) clearInterval(weightRefreshTimer)
+function setDuration(seconds: number | undefined): void { if (active.value && advanced.value && typeof seconds === 'number' && Number.isFinite(seconds)) config.value.freeTranslationTimeoutMs = Math.round(Math.min(15, Math.max(1, seconds)) * 1000) }
+const actions = computed(() => {
+  const current = capture()
+  return {
+    setMode: (value: FreeTranslationMode) => {if (current()) setMode(value)},
+    toggle: (id: string, value: boolean) => {if (current()) toggle(id, value)},
+    move: (id: string, direction: -1 | 1) => {if (current()) move(id, direction)},
+    setDuration: (value: number | undefined) => {if (current()) setDuration(value)},
+    updateEmail: (value: string) => {if (current() && !advanced.value && typeof value === 'string') myMemoryEmailDraft.value = value},
+    commitEmail: () => {if (current()) commitMyMemoryEmail()},
+  }
 })
+watch(() => [canReadWeights.value, config.value, order.value.join('\0'), config.value.myMemoryEmail], restartWeightRefresh, {flush: 'sync', immediate: true})
+onMounted(() => {mounted.value = true})
+onBeforeUnmount(() => {mounted.value = false})
 </script>
 
 <style scoped>

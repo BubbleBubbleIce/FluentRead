@@ -11,7 +11,7 @@
     :data-custom-service-configuration="compute.showCustomOpenAI ? 'true' : 'false'"
     :data-ai-advanced-settings="compute.showAI ? 'true' : 'false'"
   >
-    <FreeTranslationSettings v-if="service === services.freeTranslation" :config="config" :advanced="false" :checks="freeProviderChecks" />
+    <FreeTranslationSettings v-if="service === services.freeTranslation" :active="active" :config="config" :advanced="false" :checks="freeProviderChecks" />
 
     <LocalTranslationModelSettings v-if="service === services.localTranslation" :config="config" :service="service" />
 
@@ -381,7 +381,7 @@
     </el-tab-pane>
     <el-tab-pane v-if="settingsTabs.requests" name="requests" :label="t(SETTINGS_TAB_LABELS.requests)">
       <section id="service-requests-settings" class="service-settings-panel" data-configuration-group="requests">
-        <FreeTranslationSettings v-if="service === services.freeTranslation" :config="config" :advanced="true" />
+        <FreeTranslationSettings v-if="service === services.freeTranslation" :active="active && activeSettingsTab === 'requests'" :config="config" :advanced="true" />
         <RequestLimitSettings :active="active && activeSettingsTab === 'requests'" :config="config" :service="service" :model="compute.showModel ? effectiveModelLabel : undefined" />
 
       </section>

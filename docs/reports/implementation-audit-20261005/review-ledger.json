@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 827,
-    "functions": 14926,
+    "functions": 14957,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 83,
-        "functions": 1545,
-        "lines": 19344
+        "functions": 1576,
+        "lines": 19412
       },
       "src/features/share-card": {
         "files": 7,
@@ -1539,6 +1539,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/services/FreeTranslationSettings.vue",
+      "sha256": "0a900c3cc1c69b7694011eff01697990461adfb2141a9a4ee577d42736541efd",
+      "functionBodies": 57,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/services/ModelPicker.vue",
       "sha256": "940ea0112477db65540b329a3f769d0dfffb3c99e129b8ba45bdae75d731497e",
       "functionBodies": 31,
@@ -1569,6 +1575,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/services/ServiceCatalog.vue",
+      "sha256": "29c35ae619ace8264fc16886796e5897b40f77dac7bc5c1403f0457b71a64082",
+      "functionBodies": 38,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/services/ServiceCatalogItem.vue",
       "sha256": "bab522b190ccf83c91c284c581b0c61ec3dff20333367ee6595cb7e0edd9acb7",
       "functionBodies": 0,
@@ -1576,7 +1588,7 @@
     },
     {
       "file": "src/features/settings/ui/services/ServiceConfiguration.vue",
-      "sha256": "d4e0caa526eb8f5d9b2d9def017b27c632d02a39561f7ee57c2c8d45fd28fb03",
+      "sha256": "38f199574654995f5ae10aecd17b91e8ffd0a8fda45bae30fc98b24f4a8c4ea7",
       "functionBodies": 91,
       "status": "source-read-and-traced"
     },
@@ -2403,9 +2415,7 @@
     "src/features/settings/ui/components/TranslationColorField.vue",
     "src/features/settings/ui/components/TranslationStylePreview.vue",
     "src/features/settings/ui/components/WritingStylePreview.vue",
-    "src/features/settings/ui/services/FreeTranslationSettings.vue",
     "src/features/settings/ui/services/PromptTemplateEditor.vue",
-    "src/features/settings/ui/services/ServiceCatalog.vue",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
     "src/features/share-card/content/runtime.ts",
     "src/features/share-card/core.ts",
@@ -2625,7 +2635,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue561pending files/functions. Next fully audit PromptTemplateEditor, FreeTranslationSettings and ServiceCatalog, with traced candidate IME/token/late-focus/polling/editor lifetimes and external-main changes. Catalog modified only to pass context and remove never-emitted favorites event; not counted as complete review39. Final latest-main rebase, full-chain review/fixes/verification/merge remains pending after all scope complete.",
+    "Continue559pending source files/functions. Next fully trace/fix PromptTemplateEditor and InputTranslationSettings with IME, token capacity, external draft/context changes and delayed focus; remaining settings/app chains and external-main reconciliation follow. Latest-main rebase, full-chain review/fixes/verification/merge remain required after whole audit.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2654,12 +2664,13 @@
     "Thirty-sixth:6new complete source reviews73function bodies;241files4354bodies584pending. New66executed cases42static definitions,16affected files472cases. Actual old-head leaf/subscription52cases44fail8pass and dialog17cases4fail13pass, immutable baselines/restoration retained. Three strict modules all4dimensions100/38cases; new permanent draft/subscription owners, old subscription exemption removed. Native actual Vue strategy work1000to0, production recorder/prompt20flows including immediate close persistence; initial focus guard stopped/cleaned profile, first config poll caught intermediate mode ACK, native dialog clear and recording-before100ms exposed actual bugs and were repaired. ModelVisionSettings active request/hidden service subscriptions and shared appearance/font/clear lifecycle remain pending. Final latest-main rebase, whole-chain review/fixes and merge explicitly requested, deferred until whole audit complete.",
     "Thirty-seventh:5new complete source reviews153function bodies plus existing Options callback+1;246files4508bodies579pending. New61executed cases45static definitions,9affected files392cases. Immutable original3source comparison90cases44fail46pass before final added keyboard guard; that guard separately passed final integration. Four strict modules all4dimensions100/74cases; permanent appearance bridge owner added and build-only exemption removed. Native6flows show10concurrent warm jobs reads/digests/installs20to2 without HTTP, distinct clears/race/root/prepare/owned FontFace behavior. Production15flows/5inspected screenshots, actual cache/crypto/FontFace/config; all font HTTP locally fixed assets. First production detected retained FontFace2to3 and was repaired/rebuilt/reverified2to2; preserved failed report/screens/source/build evidence. Existing architecture debt13executables/3docs and image runtime gaps persist. Final latest-main rebase, whole-chain review/fixes/verification and merge still pending whole audit.",
     "Thirty-eighth:12new complete source reviews199bodies;258files4707bodies568pending. New71executed cases47static definitions;13related files202pass;9strict modules100cases all4dimensions100. Original6source comparison106cases50fail56pass plus1known unhandled late Chrome factory rejection; current integration/strict none. Production17flows/4inspected screenshots actual config/backend cancellation with local synthetic image HTTP:2held requests cancelled and unknown retry. Modal catalog target invalidation uses programmatically queued DOM event, normal clicks otherwise. Unit SFC setup/watch/KeepAlive null-render58cases not template proof. Existing13executable/3docs ownership debt and image runtime gaps persist. All-scope final latest-main rebase/review/fix/verify/merge still pending.",
-    "Thirty-ninth:8new files129bodies;266reviewed4836bodies561pending. New44executed cases30static definitions;12affected files149pass. Original7source47executed33fail14pass;5new captured-action API cases excluded, not counted as old defects. Actual cached client template6cases caught setup-only false confidence; controlled element ports not real Element Plus. Production13native flows3inspected screenshots and zero errors; first native same-option reopen failure fixed with context revision key. Other retries fixed input/checkbox selectors and full public snapshot theme fixture wiping synthetic credentials; final theme uses real UI. Two strict modules9cases four100, no weakened threshold/exemption. Existing13executable/3docs ownership debt and whole scope/latest-main delivery pending."
+    "Thirty-ninth:8new files129bodies;266reviewed4836bodies561pending. New44executed cases30static definitions;12affected files149pass. Original7source47executed33fail14pass;5new captured-action API cases excluded, not counted as old defects. Actual cached client template6cases caught setup-only false confidence; controlled element ports not real Element Plus. Production13native flows3inspected screenshots and zero errors; first native same-option reopen failure fixed with context revision key. Other retries fixed input/checkbox selectors and full public snapshot theme fixture wiping synthetic credentials; final theme uses real UI. Two strict modules9cases four100, no weakened threshold/exemption. Existing13executable/3docs ownership debt and whole scope/latest-main delivery pending.",
+    "Fortieth:2new reviewed files95bodies;268reviewed4931bodies559pending. New35executed/18static;12affected files186pass. Immutable two-source comparison35cases29failed6passed, one unhandled old malformed-entries render error preserved, not a count of independent bugs. Current zero unhandled errors. Strict unchanged shared context/task wait11cases four100; no threshold/exemption changes. Native11flows3screens inspected/errors0; first attempt hidden ElSwitch input selector corrected to visible switch click, no product error inferred. Earlier test preparation timers/no-tree renderer errors preserved but excluded from baseline claims. Existing13executable/3docs ownership debt; scope and final latest-main delivery pending."
   ],
   "progress": {
-    "sourceReadFiles": 266,
-    "sourceReadFunctionBodies": 4836,
-    "pendingFiles": 561,
+    "sourceReadFiles": 268,
+    "sourceReadFunctionBodies": 4931,
+    "pendingFiles": 559,
     "goalComplete": false
   },
   "observations": [
@@ -3330,6 +3341,16 @@
       "file": "src/features/settings/model/useSettingsActionContext.ts",
       "status": "fixed-reviewed-and-verified-thirty-ninth",
       "issue": "Share a synchronous active settings context with captured callbacks, KeepAlive/unmount invalidation and readonly revision. Defaults active=true explicitly preserve callers that omit optional Boolean props. Parent forwards section/tab/config/service context. Old DOM callbacks bind at render time rather than cached Vue wrappers resolving latest actions when dispatched."
+    },
+    {
+      "file": "src/features/settings/ui/services/FreeTranslationSettings.vue",
+      "status": "fixed-reviewed-and-verified-fortieth",
+      "issue": "Free weight reads belong only to mounted active basic balanced settings; parent passes section/tab ownership. One interval and one coalesced caller wait, ten-second deadline; hide/KeepAlive/unmount/config/mode/order/email/advanced changes invalidate old results and cancel local waiting. Burst changes read only final state; existing background RPC is read-only and underlying message is not forcibly cancelled. Reject incomplete, invalid or old-enabled-set snapshots and retain full current local fallback. Preserve all13providers including disabled/experimental, existing individual checks/errors/durations and keep-one rule. Guard hidden/old cached template mode/toggle/order/email/timeout events, strict value validation; wipe uncommitted email on context change. No provider live connection checks performed."
+    },
+    {
+      "file": "src/features/settings/ui/services/ServiceCatalog.vue",
+      "status": "fixed-reviewed-and-verified-fortieth",
+      "issue": "Service directory captures callbacks for current active context/service, rejects missing/disabled service choices and keeps default separate. Cancel stale focus/scroll, close and restore focus once after normal selection, close reselected service without redundant emit, clear directory draft/open state on view/context exit. Model event forwarding is similarly owned; existing ModelPicker validation retained. Directory empty keyword returns existing groups without per-item normalization. A lazy reactive search text Map is reused for successive keywords and rebuilt on directory data change. Actual baseline/current SFC setup500items produce identical results; label/description/searchTerms reads1500->0 empty and4500->1500 across3queries. Excludes ID/group work, DOM and latency. Remove old repeated per-query transformation and duplicate focus path rather than add new wrapper modules."
     }
   ],
   "finalDelivery": {
