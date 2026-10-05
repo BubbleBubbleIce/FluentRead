@@ -1,13 +1,13 @@
 /**
  * @file src/features/vocabulary/protocol.ts
- * 文件职责：定义内容页、设置页和后台之间使用的精简词书消息协议，避免前端调用者依赖完整 Dexie 领域实现及其浏览器副作用。
- * 主要内容：包含消息常量、收藏输入、列表与导出选项、动作联合、RuntimeMessage、统一成功/失败响应和 VocabularyBookChangedMessage。
+ * 文件职责：定义内容页、设置页和后台共用的轻量词书消息合同，作为状态、选项、响应与消息常量的唯一来源，避免调用者引入领域算法或 Dexie 副作用。
+ * 主要内容：包含全部四种收藏状态、消息常量、收藏输入、列表与导出选项、动作联合、RuntimeMessage、统一响应和变更通知；线上语境允许缺少正文，领域模型再要求有效正文。
  * 模块边界：协议文件只承载可序列化类型，不校验数据库记录、不计算复习计划也不发送消息；后台 handler 负责验证，learningModel/repository 保持权威领域状态。
  */
 export const VOCABULARY_BOOK_MESSAGE = 'fluentReadVocabularyBook' as const;
 export const VOCABULARY_BOOK_CHANGED_MESSAGE = 'fluentReadVocabularyBookChanged' as const;
 
-export type VocabularyStatus = 'new' | 'learning' | 'mastered';
+export type VocabularyStatus = 'new' | 'learning' | 'familiar' | 'mastered';
 export type VocabularyReviewRating = 'again' | 'good' | 'manual-mastered' | 'relearn';
 export type VocabularyScheduledReviewRating = Extract<VocabularyReviewRating, 'again' | 'good'>;
 
@@ -75,7 +75,7 @@ export type VocabularyBookAction =
 
 export interface VocabularyBookRuntimeMessage {
     type: typeof VOCABULARY_BOOK_MESSAGE;
-    action?: VocabularyBookAction | unknown;
+    action?: unknown;
     entryId?: unknown;
     term?: unknown;
     word?: unknown;

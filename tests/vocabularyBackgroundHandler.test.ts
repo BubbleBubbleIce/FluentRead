@@ -1,4 +1,7 @@
 import {describe, expect, it, vi} from 'vitest';
+import ts from 'typescript';
+import {resolve} from 'node:path';
+import {readFileSync} from 'node:fs';
 
 import {
     createBrowserVocabularyBookChangedBroadcaster,
@@ -13,6 +16,65 @@ import {
     VOCABULARY_BOOK_CHANGED_MESSAGE,
     VOCABULARY_BOOK_MESSAGE,
 } from '@/src/features/vocabulary/protocol';
+
+function protocolTypeDiagnostics(body: string): string[] {
+    const file = resolve(process.cwd(), '.vocabulary-protocol-contract.ts');
+    const options: ts.CompilerOptions = {target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,
+        moduleResolution:ts.ModuleResolutionKind.Bundler,strict:true,skipLibCheck:true,noEmit:true,types:[]};
+    const host = ts.createCompilerHost(options); const original = host.getSourceFile.bind(host);
+    host.getSourceFile = (name,languageVersion,onError,createNew) => name === file
+        ? ts.createSourceFile(name,body,languageVersion,true) : original(name,languageVersion,onError,createNew);
+    return ts.getPreEmitDiagnostics(ts.createProgram([file],options,host)).map(diagnostic => ts.flattenDiagnosticMessageText(diagnostic.messageText,'\n'));
+}
+
+const contractImports = `import type * as Wire from './src/features/vocabulary/protocol';
+import type * as Domain from './src/features/vocabulary/learningModel';
+type Assert<T extends true> = T;
+type Equal<A,B> = (<T>()=>T extends A?1:2) extends (<T>()=>T extends B?1:2)?true:false;`;
+
+describe('vocabulary wire and domain contracts', () => {
+    it('compiles every persisted status and shared contract while retaining the wire context boundary', () => {
+        const errors = protocolTypeDiagnostics(contractImports+`
+const states: Domain.VocabularyStatus[] = ['new','learning','familiar','mastered'];
+const list: Wire.VocabularyListOptions = {status:states};
+type Status = Assert<Equal<Wire.VocabularyStatus,Domain.VocabularyStatus>>;
+type List = Assert<Equal<Wire.VocabularyListOptions,Domain.VocabularyListOptions>>;
+type Rating = Assert<Equal<Wire.VocabularyReviewRating,Domain.VocabularyReviewRating>>;
+type Scheduled = Assert<Equal<Wire.VocabularyScheduledReviewRating,Domain.VocabularyScheduledReviewRating>>;
+type Export = Assert<Equal<Wire.VocabularyExportOptions,Domain.VocabularyExportOptions>>;
+type Error = Assert<Equal<Wire.VocabularyBookErrorCode,Domain.VocabularyBookErrorCode>>;
+type Response = Assert<Equal<Wire.VocabularyBookResponse<string>,Domain.VocabularyBookResponse<string>>>;
+type Changed = Assert<Equal<Wire.VocabularyBookChangedMessage,Domain.VocabularyBookChangedMessage>>;
+type Upsert = Assert<Equal<Omit<Wire.VocabularyUpsertInput,'context'|'contexts'>,Omit<Domain.VocabularyUpsertInput,'context'|'contexts'>>>;
+type Actions = Assert<Equal<Exclude<Wire.VocabularyBookAction,'reencounterGet'|'reencounterList'>,Domain.VocabularyBookRequest['action']>>;
+type Message = Assert<Equal<typeof import('./src/features/vocabulary/protocol').VOCABULARY_BOOK_MESSAGE,typeof import('./src/features/vocabulary/learningModel').VOCABULARY_BOOK_MESSAGE>>;
+const wireContext: Wire.VocabularyContextInput = {sourceUrl:'https://example.test/source'};
+const input: Wire.VocabularyUpsertInput = {sourceLanguage:'en',targetLanguage:'zh-CN',term:'art',translation:'艺术',context:wireContext};
+const untrusted: Wire.VocabularyBookRuntimeMessage = {type:'fluentReadVocabularyBook',action:{malformed:true},input:false};
+type RequiredDomainText = Assert<undefined extends Domain.VocabularyContextInput['text']?false:true>;
+`);
+        expect(errors).toEqual([]);
+    });
+    it('still rejects unknown statuses, unsupported ratings, missing save fields and domain contexts without text', () => {
+        const errors = protocolTypeDiagnostics(contractImports+`
+const status: Wire.VocabularyStatus = 'unsupported';
+const rating: Wire.VocabularyScheduledReviewRating = 'perfect';
+const save: Wire.VocabularyUpsertInput = {term:'art'};
+const context: Domain.VocabularyContextInput = {sourceUrl:'https://example.test/source'};
+`);
+        expect(errors).toHaveLength(4);
+        expect(errors.some(error=>error.includes('unsupported'))).toBe(true);
+        expect(errors.some(error=>error.includes('perfect'))).toBe(true);
+        expect(errors.some(error=>error.includes('sourceLanguage'))).toBe(true);
+        expect(errors.some(error=>error.includes('text'))).toBe(true);
+    });
+    it('emits a standalone wire protocol with no runtime dependency on model algorithms or storage', () => {
+        const source=readFileSync(resolve(process.cwd(),'src/features/vocabulary/protocol.ts'),'utf8');
+        const emitted=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+        const ast=ts.createSourceFile('protocol.js',emitted,ts.ScriptTarget.ES2022,true,ts.ScriptKind.JS);
+        expect(ast.statements.filter(statement=>ts.isImportDeclaration(statement)||ts.isExportDeclaration(statement)&&statement.moduleSpecifier)).toEqual([]);
+    });
+});
 
 async function flushMicrotasks(times = 4): Promise<void> {
     for (let index = 0; index < times; index += 1) await Promise.resolve();

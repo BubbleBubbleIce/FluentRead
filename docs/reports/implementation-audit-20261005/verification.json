@@ -12316,6 +12316,585 @@
       "referenceRepositoriesChanged": false,
       "pushed": false,
       "merged": false
+    },
+    {
+      "batch": "twentieth",
+      "name": "vocabulary-canonical-contracts-and-cached-main-integration",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 157,
+        "sourceReadFunctionBodies": 2529,
+        "pendingFiles": 664,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 3,
+      "newStaticTestDefinitions": 3,
+      "oldSourceRun": {
+        "executedCases": 16,
+        "passed": 15,
+        "failed": 1,
+        "semanticDiagnostics": 3,
+        "scope": "Actual TypeScript semantic compilation with current source; original protocol omits familiar, fails assignability and two equality checks."
+      },
+      "implementation": {
+        "canonicalContracts": "Protocol owns four statuses, shared options/ratings/errors/responses/change notification and two constants. Model imports/reexports public names and derives upsert noncontext fields. Wire context text remains optional; domain requires text. Remove eight duplicate type declarations and two constant mirrors. Runtime action unknown union simplified; no algorithm behavior/speed claim.",
+        "runtimeBoundary": "Standalone transpiled protocol has no runtime import/export-from dependency. Module boundary checks include type edges and find no new cycle.",
+        "productionBodiesRemoved": 0
+      },
+      "strictCoverage": {
+        "vocabulary": {
+          "files": 7,
+          "executedCases": 135,
+          "modules": 8,
+          "metrics": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "integratedParagraphsAndCapabilities": {
+          "files": 3,
+          "executedCases": 61,
+          "modules": 2,
+          "metrics": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "files": 35,
+        "executedCases": 941,
+        "initialPassed": 938,
+        "initialFailed": 3,
+        "initialFailure": "Only WebDAV loopback server listen EPERM in sandbox; three HTTP fixtures individually rerun with permitted local server and passed.",
+        "rerunFiles": 1,
+        "rerunCases": 3,
+        "finalAllCasesPassed": true,
+        "scope": "Provider/client/broker/snapshot/same-target/fullpage, image OCR/inpainting/rendering/offscreen/bubbles, cloud clients/handlers/API/transactions, settings lifecycle and vocabulary UI/study. No full regression."
+      },
+      "architecture": {
+        "sourceHeaderCases": 801,
+        "moduleBoundaryCases": 13,
+        "providerBoundaryCases": 6,
+        "sourceChecksPassed": true,
+        "ownership": {
+          "executedCases": 9,
+          "passed": 7,
+          "failed": 2,
+          "remainingExecutableOmissions": 15,
+          "unownedDocumentationTools": 3,
+          "wholeGatePassed": false
+        }
+      },
+      "checks": {
+        "typecheck": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed; no actual Firefox runtime",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "docsTypecheck": "passed",
+        "testSuiteAudit": {
+          "passed": true,
+          "files": 466,
+          "staticRegisteredDefinitions": 6209
+        },
+        "docsBuild": "passed",
+        "docsCheck": {
+          "passed": true,
+          "pages": 77,
+          "links": 3959,
+          "anchors": 745,
+          "images": 154
+        }
+      },
+      "browser": {
+        "settings": {
+          "passed": true,
+          "anchorCases": 51,
+          "layouts": [
+            {
+              "label": "general",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "translation",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "interface",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "selection",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "image-translation",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "video",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "writing",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "advanced",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "data",
+              "width": 1432,
+              "height": 876,
+              "documentWidth": 1432,
+              "documentHeight": 876,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 1148,
+              "contentScrollWidth": 1148,
+              "contentHeight": 767,
+              "navHeight": 42
+            },
+            {
+              "label": "interface-1024",
+              "width": 1024,
+              "height": 960,
+              "documentWidth": 1024,
+              "documentHeight": 960,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 780,
+              "contentScrollWidth": 780,
+              "contentHeight": 851,
+              "navHeight": 42
+            },
+            {
+              "label": "interface-820",
+              "width": 820,
+              "height": 960,
+              "documentWidth": 820,
+              "documentHeight": 960,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 576,
+              "contentScrollWidth": 576,
+              "contentHeight": 851,
+              "navHeight": 42
+            },
+            {
+              "label": "interface-390",
+              "width": 390,
+              "height": 960,
+              "documentWidth": 390,
+              "documentHeight": 960,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 362,
+              "contentScrollWidth": 362,
+              "contentHeight": 761,
+              "navHeight": 41
+            },
+            {
+              "label": "interface-mobile-english",
+              "width": 390,
+              "height": 960,
+              "documentWidth": 390,
+              "documentHeight": 960,
+              "scrollX": 0,
+              "scrollY": 0,
+              "contentWidth": 362,
+              "contentScrollWidth": 362,
+              "contentHeight": 718,
+              "navHeight": 41
+            }
+          ],
+          "keyboard": true,
+          "manualScroll": true,
+          "searchAndCrossPage": true,
+          "preservesConfig": true,
+          "conditionalAnchors": true,
+          "localizedAnchors": [
+            {
+              "section": "general",
+              "labels": [
+                "Basics",
+                "Translation service selection",
+                "Web assistance",
+                "Basic preferences"
+              ]
+            },
+            {
+              "section": "translation",
+              "labels": [
+                "Reading assistance",
+                "Hover",
+                "Input fields",
+                "Full page",
+                "Page tools"
+              ]
+            },
+            {
+              "section": "interface",
+              "labels": [
+                "Translation style",
+                "Interface skin",
+                "Animation",
+                "Menu layout",
+                "Interface font"
+              ]
+            },
+            {
+              "section": "selection",
+              "labels": [
+                "Choose a default view",
+                "AI explanations",
+                "Speech & more preferences"
+              ]
+            },
+            {
+              "section": "image-translation",
+              "labels": [
+                "Translation services",
+                "Web image translation",
+                "Continuous manga translation",
+                "Area translation settings",
+                "Controls and cache",
+                "Recognition resources and downloads",
+                "Supported sites"
+              ]
+            },
+            {
+              "section": "video",
+              "labels": [
+                "Translation & display",
+                "Subtitle appearance",
+                "Local AI subtitles"
+              ]
+            },
+            {
+              "section": "writing",
+              "labels": [
+                "Writing service",
+                "Response style"
+              ]
+            },
+            {
+              "section": "advanced",
+              "labels": [
+                "Content detection",
+                "Translation cache",
+                "Requests & retries"
+              ]
+            },
+            {
+              "section": "data",
+              "labels": [
+                "Backup & import",
+                "Settings history"
+              ]
+            }
+          ],
+          "pageErrors": [],
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 6,
+          "screenshotsInspected": [
+            "interface-mobile-dark",
+            "translation-input"
+          ]
+        },
+        "vocabularyAndReading": {
+          "passed": true,
+          "phases": 24,
+          "cases": [
+            {
+              "id": "default-off-with-existing-saved-entries",
+              "status": "passed"
+            },
+            {
+              "id": "setting-label-follows-cross-page-interface-language",
+              "status": "passed"
+            },
+            {
+              "id": "inline-matching-protected-content-original-text-and-geometry",
+              "status": "passed"
+            },
+            {
+              "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+              "status": "passed"
+            },
+            {
+              "id": "keyboard-entry-and-escape-without-model-request",
+              "status": "passed"
+            },
+            {
+              "id": "unapproved-sentence-context-disables-explanation",
+              "status": "passed"
+            },
+            {
+              "id": "explicit-current-context-only-and-unchanged-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dark-and-mobile-clamped-layout",
+              "status": "passed"
+            },
+            {
+              "id": "close-cancels-delayed-stream-without-resurrection",
+              "status": "passed"
+            },
+            {
+              "id": "model-failure-and-explicit-retry",
+              "status": "passed"
+            },
+            {
+              "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dynamic-text-stale-card-and-late-shadow-root",
+              "status": "passed"
+            },
+            {
+              "id": "scroll-discovers-later-reading",
+              "status": "passed"
+            },
+            {
+              "id": "visit-pause-keeps-global-preference",
+              "status": "passed"
+            },
+            {
+              "id": "cross-page-delete-removes-all-corresponding-marks",
+              "status": "passed"
+            },
+            {
+              "id": "master-toggle-and-site-disable-clear-and-restore",
+              "status": "passed"
+            },
+            {
+              "id": "permanent-disable-persists-across-reload",
+              "status": "passed"
+            },
+            {
+              "id": "continuous-chinese-saved-study-and-review-context",
+              "status": "passed"
+            },
+            {
+              "id": "large-collection-file-import-and-management-recovery",
+              "status": "passed"
+            },
+            {
+              "id": "anki-reserves-management-action-during-confirmation",
+              "status": "passed"
+            },
+            {
+              "id": "learning-tab-unmounts-collection-before-real-export-response",
+              "status": "passed"
+            },
+            {
+              "id": "closed-book-rejects-late-anki-download",
+              "status": "passed"
+            },
+            {
+              "id": "remounted-anki-both-privacy-choices-and-persistent-data-preserved",
+              "status": "passed"
+            },
+            {
+              "id": "cancel-then-confirm-clear-on-temporary-collection",
+              "status": "passed"
+            }
+          ],
+          "contentSha256": "54b2bd997f231db4b1ccc5f5bb615d0d57a8693b8ace410dc82ab5d412c4804d",
+          "javascriptAssetsSha256": "ff719659ea512c6c22d33c4c0339b79906fca7a1f4c1f7865d7ddb42222d04a2",
+          "pageErrors": [],
+          "studyContext": {
+            "displayedContext": [
+              "我每天学习中文。"
+            ],
+            "displayedCloze": [
+              "我每天____中文。"
+            ],
+            "storedDataPreserved": true,
+            "additionalModelRequests": 0,
+            "evidence": "Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request."
+          },
+          "largeImport": {
+            "fileBytes": 10539965,
+            "rawContexts": 150000,
+            "retainedContexts": 8,
+            "stackOverflowReproduced": false,
+            "priorDataPreservedOnFailure": false,
+            "modelRequests": 0,
+            "evidence": "Production options file input change, actual import IPC and persistent store. Below20MiB warning threshold; no timing assertion."
+          },
+          "bookActions": {
+            "lateDownloads": 0,
+            "busyDuringConfirmation": true,
+            "backendExportSucceeded": true,
+            "actualBookUnmounted": true,
+            "evidence": "Native buttons and learning-center tab, real export IPC held until after unmount; callback/Promise delivery instrumentation, not timing."
+          },
+          "backgroundWindowVerified": true,
+          "scope": "Large-import baseline-only priorDataPreservedOnFailure field false means check not performed in final successful run, not lost-data assertion."
+        },
+        "cleanupVerified": true,
+        "temporaryProfileProcessesAfterRun": 0
+      },
+      "cachedIntegration": {
+        "cachedMain": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "mergeCommit": "08f779175d610933b90b84a55246488d33f35d11",
+        "incomingCommits": 24,
+        "changedSrcFiles": 51,
+        "sourceReviewInvalidatedAndRevisited": [
+          "src/app/translation/client.ts",
+          "src/features/full-page-translation/content/translationRequest.ts",
+          "src/features/vocabulary/learningModel.ts",
+          "src/features/vocabulary/protocol.ts",
+          "src/services/translation/capabilities.ts"
+        ],
+        "pendingChangedInventoryFiles": [
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/handlers/webDavBackup.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/config/catalog.ts",
+          "src/core/config/freeTranslation.ts",
+          "src/features/image-translation/core.ts",
+          "src/features/image-translation/services/inpainting.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/services/mangaEncoding.ts",
+          "src/features/image-translation/services/mangaOcr.ts",
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/features/image-translation/services/rendering.ts",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WebDavBackup.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceCatalogItem.vue",
+          "src/features/settings/ui/services/freeTranslationChecks.ts",
+          "src/platform/google-drive/api.ts",
+          "src/platform/webdav/api.ts",
+          "src/providers/translation/free-extra-web.ts",
+          "src/providers/translation/free-web.ts",
+          "src/services/config/cloudBackupClient.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/config/webDavBackup.ts"
+        ],
+        "ancestorVerified": true,
+        "remoteFreshnessVerified": false,
+        "conflict": "Only client header comment; combined audit snapshot/cancellation and main Google retry explanation. Runtime patches merged automatically and affected chains revalidated.",
+        "boundary": "Local integration and validation do not mark all imported source functions reviewed. Pending files still in ledger. No remote main merge or push."
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/providers/translation/google.ts",
+          "src/features/image-translation/paragraphs.ts",
+          "src/features/settings/ui/components/SettingsSectionNavigation.vue",
+          "src/features/settings/ui/services/ServiceNatureBadge.vue"
+        ],
+        "newFunctionBodies": 90,
+        "rereviewedChangedFiles": [
+          "src/app/translation/client.ts",
+          "src/features/full-page-translation/content/translationRequest.ts",
+          "src/features/vocabulary/learningModel.ts",
+          "src/features/vocabulary/protocol.ts",
+          "src/services/translation/capabilities.ts"
+        ]
+      },
+      "remaining": [
+        "All pending files/functions and full verification ownership gaps",
+        "Paragraph obstruction full-input scan work count and exact output differential",
+        "Highlighter deep/Range/geometry/wide-owner/ancestor-mutation/scroll work",
+        "Whole-root remount and section preview/restore",
+        "Vocabulary compilation/single-call and large-import sanitizer/Map memory",
+        "Cached-main pending source files and untested real provider/account/Firefox/device behavior"
+      ],
+      "referenceRepositoriesChanged": false,
+      "referenceCodeUsedInThisBatch": false,
+      "pushed": false,
+      "remoteMerged": false
     }
   ]
 }

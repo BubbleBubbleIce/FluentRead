@@ -1,13 +1,32 @@
 /**
  * @file src/features/vocabulary/learningModel.ts
- * 文件职责：定义单词与句子学习收藏的完整数据模型与纯状态算法，覆盖多语种原文、上下文、掌握度、复习队列、会话推进、导入导出和错误协议。
- * 主要内容：包含权威收藏与复习类型、导入导出、解释合并、会话 guard 与最近收藏的单次遍历选择；学习语境复用统一表达匹配，用一个索引和挖空结果选择真实原句，不重复扫描已选语境。
- * 模块边界：此文件不访问 IndexedDB、浏览器消息或 UI；repository 负责持久化和清洗，protocol 提供轻量运行时镜像，VocabularyBook.vue 只调用这些纯函数驱动学习流程。
+ * 文件职责：定义单词与句子学习收藏的领域数据模型与纯状态算法，复用轻量协议的公共消息合同，覆盖多语种原文、上下文、掌握度、复习队列、会话推进及导入导出。
+ * 主要内容：包含收藏与复习扩展类型、导入导出、解释合并、会话 guard 与最近收藏的单次遍历选择；公共状态、选项、响应和消息常量只在 protocol 定义；学习语境复用统一表达匹配，用一个索引和挖空结果选择真实原句，不重复扫描已选语境。
+ * 模块边界：此文件不访问 IndexedDB、浏览器消息或 UI；repository 负责持久化和清洗，protocol 提供公共消息合同，VocabularyBook.vue 只调用这些纯函数驱动学习流程。
  */
 import {createExpressionIndex, matchExpressions, type ExpressionIndex} from './domain/expressionMatcher';
-
-export const VOCABULARY_BOOK_MESSAGE = 'fluentReadVocabularyBook' as const;
-export const VOCABULARY_BOOK_CHANGED_MESSAGE = 'fluentReadVocabularyBookChanged' as const;
+import {
+  VOCABULARY_BOOK_MESSAGE,
+  VOCABULARY_BOOK_CHANGED_MESSAGE,
+  type VocabularyContextInput as VocabularyWireContextInput,
+  type VocabularyUpsertInput as VocabularyWireUpsertInput,
+  type VocabularyStatus,
+  type VocabularyReviewRating,
+  type VocabularyScheduledReviewRating,
+  type VocabularyListOptions,
+  type VocabularyExportOptions,
+} from './protocol';
+export {VOCABULARY_BOOK_MESSAGE, VOCABULARY_BOOK_CHANGED_MESSAGE};
+export type {
+  VocabularyStatus,
+  VocabularyReviewRating,
+  VocabularyScheduledReviewRating,
+  VocabularyListOptions,
+  VocabularyExportOptions,
+  VocabularyBookErrorCode,
+  VocabularyBookResponse,
+  VocabularyBookChangedMessage,
+} from './protocol';
 
 export const VOCABULARY_BOOK_EXPORT_FORMAT = 'fluentread-vocabulary-book' as const;
 export const VOCABULARY_BOOK_EXPORT_VERSION = 1 as const;
@@ -122,9 +141,6 @@ export function mergeVocabularyNotes(left: VocabularyEntry, right: VocabularyEnt
 }
 
 export type VocabularyMasteryLevel = 0 | 1 | 2 | 3 | 4 | 5;
-export type VocabularyStatus = 'new' | 'learning' | 'familiar' | 'mastered';
-export type VocabularyReviewRating = 'again' | 'good' | 'manual-mastered' | 'relearn';
-export type VocabularyScheduledReviewRating = Extract<VocabularyReviewRating, 'again' | 'good'>;
 
 export interface VocabularyTranslationSnapshot {
   text: string;
@@ -133,11 +149,8 @@ export interface VocabularyTranslationSnapshot {
 
 export type VocabularyTranslations = Record<string, VocabularyTranslationSnapshot>;
 
-export interface VocabularyContextInput {
+export interface VocabularyContextInput extends VocabularyWireContextInput {
   text: string;
-  sourceUrl?: string;
-  pageTitle?: string;
-  capturedAt?: number;
 }
 
 export interface VocabularyContext {
@@ -303,29 +316,9 @@ export interface VocabularyReviewLog {
   nextReviewAt: number | null;
 }
 
-export interface VocabularyUpsertInput {
-  sourceLanguage: string;
-  targetLanguage: string;
-  term: string;
-  translation: string;
-  kind?: 'sentence' | 'expression';
-  note?: string;
-  phonetic?: string;
-  partOfSpeech?: string | string[];
+export interface VocabularyUpsertInput extends Omit<VocabularyWireUpsertInput, 'context' | 'contexts'> {
   context?: VocabularyContextInput;
   contexts?: VocabularyContextInput[];
-}
-
-export interface VocabularyListOptions {
-  status?: VocabularyStatus | VocabularyStatus[];
-  sourceLanguage?: string;
-  targetLanguage?: string;
-  search?: string;
-  dueOnly?: boolean;
-  now?: number;
-  order?: 'recent' | 'due' | 'term';
-  offset?: number;
-  limit?: number;
 }
 
 export interface VocabularyReviewResult {
@@ -361,11 +354,6 @@ export interface VocabularyBookExport {
   reviewLogs: VocabularyReviewLog[];
 }
 
-export interface VocabularyExportOptions {
-  includePrivateContext?: boolean;
-  now?: number;
-}
-
 export interface VocabularyImportResult {
   inserted: number;
   updated: number;
@@ -374,13 +362,6 @@ export interface VocabularyImportResult {
   /** 按词条执行保留上限裁剪后仍存在的已导入复习日志数量。 */
   reviewLogsImported: number;
 }
-
-export type VocabularyBookErrorCode =
-  | 'invalid-input'
-  | 'not-found'
-  | 'limit-exceeded'
-  | 'invalid-export'
-  | 'storage-error';
 
 export type VocabularyGetByTermRequest = {
   type: typeof VOCABULARY_BOOK_MESSAGE;
@@ -414,27 +395,3 @@ export type VocabularyBookRequest =
       options?: VocabularyExportOptions;
     }
   | { type: typeof VOCABULARY_BOOK_MESSAGE; action: 'importData'; data: unknown };
-
-export type VocabularyBookResponse<T = unknown> =
-  | { success: true; data: T }
-  | {
-      success: false;
-      error: {
-        code: VocabularyBookErrorCode;
-        message: string;
-      };
-    };
-
-export interface VocabularyBookChangedMessage {
-  type: typeof VOCABULARY_BOOK_CHANGED_MESSAGE;
-  reason:
-    | 'upsert'
-    | 'note'
-    | 'review'
-    | 'manual-mastered'
-    | 'relearn'
-    | 'remove'
-    | 'clear'
-    | 'import';
-  entryId?: string;
-}
