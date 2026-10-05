@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 821,
-    "functions": 14694,
+    "functions": 14703,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -83,13 +83,13 @@
       },
       "src/app": {
         "files": 101,
-        "functions": 1168,
-        "lines": 11424
+        "functions": 1169,
+        "lines": 11431
       },
       "src/core/config": {
         "files": 52,
-        "functions": 703,
-        "lines": 9060
+        "functions": 704,
+        "lines": 9066
       },
       "src/core/context-menu": {
         "files": 2,
@@ -114,7 +114,7 @@
       "src/core/i18n": {
         "files": 22,
         "functions": 43,
-        "lines": 28327
+        "lines": 28340
       },
       "src/core/language": {
         "files": 11,
@@ -153,8 +153,8 @@
       },
       "src/features/full-page-translation": {
         "files": 50,
-        "functions": 908,
-        "lines": 11415
+        "functions": 912,
+        "lines": 11438
       },
       "src/features/glossary": {
         "files": 3,
@@ -204,7 +204,7 @@
       "src/features/quick-translation": {
         "files": 3,
         "functions": 23,
-        "lines": 400
+        "lines": 409
       },
       "src/features/reading-assistant": {
         "files": 14,
@@ -213,8 +213,8 @@
       },
       "src/features/section-translation": {
         "files": 4,
-        "functions": 66,
-        "lines": 729
+        "functions": 68,
+        "lines": 747
       },
       "src/features/selection-translation": {
         "files": 22,
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 79,
-        "functions": 1401,
-        "lines": 19287
+        "functions": 1402,
+        "lines": 19296
       },
       "src/features/share-card": {
         "files": 7,
@@ -574,8 +574,8 @@
     },
     {
       "file": "src/app/content/quickTranslationRuntime.ts",
-      "sha256": "3466ba59f6b980042c52fa04c75b56d1d9da7dab9a4577dc41b2a68632300710",
-      "functionBodies": 6,
+      "sha256": "14caae5bb1f011b14fbd7f8e5792bbef3b3ab4dd5fe09e7c1607ae1b1da9c14b",
+      "functionBodies": 7,
       "status": "source-read-and-traced"
     },
     {
@@ -636,6 +636,18 @@
       "file": "src/core/config/mangaSiteCatalog.ts",
       "sha256": "b83880bb16aad5c5174a0cbe75cdf2cff687ca42016101c46f24226f5943109c",
       "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/quickTranslation.ts",
+      "sha256": "85f2ba91d66eb1c7095739af304cce8cd3ccdc6c602f447b1072b8e689c28a6a",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/glossary/model.ts",
+      "sha256": "4791901ee0a51518f9d7edd76f470e1fcb38e985b739770c8ca4fb3d1fe2fdd5",
+      "functionBodies": 24,
       "status": "source-read-and-traced"
     },
     {
@@ -922,8 +934,8 @@
     },
     {
       "file": "src/features/full-page-translation/content/sectionTranslation.ts",
-      "sha256": "7b6759c94ba7e2a691574cba8260e4e8cb39b6e55efb28a70ba1ba9b6f553f72",
-      "functionBodies": 24,
+      "sha256": "b2f5303879666f928409f8d0479fd4af6a0e6b512fce010568a67780fc158d64",
+      "functionBodies": 28,
       "status": "source-read-and-traced"
     },
     {
@@ -1239,6 +1251,24 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/quick-translation/content/index.ts",
+      "sha256": "9991042ab636df44a1c5088de9d8ba444165ced23ffb00d702bc424251b1c825",
+      "functionBodies": 22,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/section-translation/content/index.ts",
+      "sha256": "2df17740b80bfccac5e021afd2debb634256e3e41a9b7c75ed1f28eb983a5282",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/section-translation/content/picker.ts",
+      "sha256": "1c25d1bdb83c62cc7f189f238f28593d07d6d73e9c14fd5396dbb49a71924151",
+      "functionBodies": 43,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/LearningCenter.vue",
       "sha256": "33d9429320ccb41c8d9974b3482c547779706fb08a0c2bd999a5cd7134fd0e9c",
       "functionBodies": 5,
@@ -1260,6 +1290,12 @@
       "file": "src/features/settings/ui/services/ServiceNatureBadge.vue",
       "sha256": "58dbb6df16d83f4de81855208741f10162dcbbe81589eb37af7e1924f17c7554",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/useTranslationShortcutSettings.ts",
+      "sha256": "459eb29f8b617068355ff2ef742e6dbf63d3b9790bf87df646db8106c0beead4",
+      "functionBodies": 23,
       "status": "source-read-and-traced"
     },
     {
@@ -1736,7 +1772,6 @@
     "src/core/config/modelThinking.ts",
     "src/core/config/pageTranslation.ts",
     "src/core/config/paragraphCopy.ts",
-    "src/core/config/quickTranslation.ts",
     "src/core/config/requestHeaders.ts",
     "src/core/config/requestLimits.ts",
     "src/core/config/scheduling.ts",
@@ -1762,7 +1797,6 @@
     "src/core/glossary/builtins.ts",
     "src/core/glossary/index.ts",
     "src/core/glossary/match.ts",
-    "src/core/glossary/model.ts",
     "src/core/glossary/protection.ts",
     "src/core/glossary/transfer.ts",
     "src/core/harness/loop.ts",
@@ -1893,7 +1927,6 @@
     "src/features/paragraph-copy/content/index.ts",
     "src/features/paragraph-copy/core.ts",
     "src/features/paragraph-copy/public.ts",
-    "src/features/quick-translation/content/index.ts",
     "src/features/quick-translation/core.ts",
     "src/features/quick-translation/public.ts",
     "src/features/reading-assistant/answerFormat.ts",
@@ -1910,8 +1943,6 @@
     "src/features/reading-assistant/ui/ReadingAnswer.vue",
     "src/features/reading-assistant/ui/ReadingPanel.vue",
     "src/features/reading-assistant/ui/SentenceAnalysis.vue",
-    "src/features/section-translation/content/index.ts",
-    "src/features/section-translation/content/picker.ts",
     "src/features/section-translation/core.ts",
     "src/features/section-translation/public.ts",
     "src/features/selection-translation/background/offscreenAdapter.ts",
@@ -2010,7 +2041,6 @@
     "src/features/settings/ui/services/modelOptions.ts",
     "src/features/settings/ui/services/useVisionProbeStatus.ts",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
-    "src/features/settings/ui/useTranslationShortcutSettings.ts",
     "src/features/share-card/content/runtime.ts",
     "src/features/share-card/core.ts",
     "src/features/share-card/export.ts",
@@ -2261,12 +2291,13 @@
     "Twenty-fifth full25module image gate remains failed: runtime statements/lines98.98 branches94.8 functions100;593affected assertions pass,24other modules four100. No ignores, exclusions or threshold changes. Warm queue races, late compose/request/source/disconnect guards and remaining geometry/mutation cases still need meaningful validation.",
     "Twenty-sixth28module image gate remains failed: runtime statements/lines98.98 branches94.95 functions100;674affected assertions pass,27other modules four100. No ignore/exclusion/threshold changes. Actual MangaEntry.vue consent/reveal/focus/idle/late-persist component behavior remains unverified by mocked wrapper, needs actual Vue/native UI tests. Compositor per-patch15s does not establish total multi-patch budget; continue late compose/ownership and native allocation/draw/base64 workloads.",
     "Twenty-seventh29module gate remains failed only for image runtime statements/lines98.98 branches94.95 functions100;718affected assertions pass,28other modules including actual MangaEntry client setup/template and compositor four100. No ignores/exclusions/threshold changes. Prior26 component behavior and compositor aggregate-budget debts now covered with precise Vue/native diagnostic scope; actual WXT manga mount/resource-message/persistence/model/download/native-input environment and remaining runtime ownership/late guards still need distinct validation. Native synchronous Canvas draw cannot be preempted; allocations/decodes/base64 and host geometry remain performance debt.",
-    "Shared origin/main and clean primary externally advanced during final27validation from e093cached/8bccprimary to d5c4b0e8shortcut PR829.50files differ from original imported f776,35new since e093; not integrated. Audit821file inventory and191reviewed hashes cover isolated audit checkout only. Reconcile actual source changes without blindly merging rewritten history, then refresh pending source/function inventory and affected tests."
+    "Shared origin/main and clean primary externally advanced during final27validation from e093cached/8bccprimary to d5c4b0e8shortcut PR829.50files differ from original imported f776,35new since e093; not integrated. Audit821file inventory and191reviewed hashes cover isolated audit checkout only. Reconcile actual source changes without blindly merging rewritten history, then refresh pending source/function inventory and affected tests.",
+    "Twenty-eighth reconciled all50actual main changes through d5 via clean three-way source patch without merging rewritten history. Other imported source files remain pending function review.9selected modules four100 and256affected cases pass; this does not close image runtime/full repository ownership gaps. Userscript language JSON pinned to a verified local snapshot commit, not remotely published or live-download verified. Settings shortcut dialog delayed opening and deep preview/restore costs remain pending."
   ],
   "progress": {
-    "sourceReadFiles": 191,
-    "sourceReadFunctionBodies": 3195,
-    "pendingFiles": 630,
+    "sourceReadFiles": 197,
+    "sourceReadFunctionBodies": 3340,
+    "pendingFiles": 624,
     "goalComplete": false
   },
   "observations": [
@@ -2699,6 +2730,20 @@
       "file": "src/features/image-translation/ui/MangaEntry.vue",
       "status": "source-rechecked-and-verified-twenty-seventh",
       "issue": "All19script bodies and full template/CSS re-read. Component production source unchanged from exact f410.38actual client SFC/Vue renderer cases cover real template/events/aria/spinner/error/complete states, explicit consent, busy deduplication, ready/active/confirmed/unavailable behavior, Error/string retries, late check/confirm success and rejection after close/route/unavailable/unmount, old/new ownership, mouse/touch/pen/focus-visible/Esc/idle cleanup. Narrow Vue plugin and web transform only for this test avoids Node SSR-only template; beforeAll asserts actual render, actual VNode refs and controls exercised. Four100source V8coverage. Native actual component+scoped CSS diagnostic closed Shadow mount with trusted keyboard/mouse/CDPtouch proves2.7second focus retention and nonfocused collapse, spinner movement, consent close/retry/late responses,390×844dark/reduced/disabled animation, host hostile CSS does not alter13px modal, original text preserved;7screenshots all inspected, mount/browser/profile removed. Injected i18n/resource/persist ports and diagnostic mount do not prove actual WXT wrapper/guard, extension persistence, model/download/message/provider quality or realFirefox/devices. Prior mocked-wrapper component behavioral debt closed only for this explicit scope."
+    },
+    {
+      "files": [
+        "src/core/config/quickTranslation.ts",
+        "src/features/quick-translation/content/index.ts",
+        "src/features/section-translation/content/index.ts",
+        "src/features/section-translation/content/picker.ts",
+        "src/core/glossary/model.ts",
+        "src/features/settings/ui/useTranslationShortcutSettings.ts",
+        "src/app/content/quickTranslationRuntime.ts",
+        "src/features/full-page-translation/content/sectionTranslation.ts"
+      ],
+      "status": "source-read-and-traced-twenty-eighth",
+      "issue": "Section old/new mount, async result ownership and source settlement repaired with12old-source failures; lazy preview avoids glossary snapshot/identity/text reads for fresh candidates. Actual bounded glossary/request computation and native DOM measured separately from production13phase flow. Six new files fully read; data catalog cleanup is partial review, not full catalog coverage."
     }
   ]
 }

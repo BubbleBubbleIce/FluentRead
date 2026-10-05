@@ -18588,6 +18588,255 @@
         "taskModifiedPrimary": false,
         "sourceCountsAndVerificationBoundToAuditCheckout": true
       }
+    },
+    {
+      "batch": "twenty-eighth",
+      "name": "current-main-source-reconciliation-section-ownership-lazy-preview-and-resource-consistency",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 197,
+        "sourceReadFunctionBodies": 3340,
+        "pendingFiles": 624,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/core/config/quickTranslation.ts",
+          "src/features/quick-translation/content/index.ts",
+          "src/features/section-translation/content/index.ts",
+          "src/features/section-translation/content/picker.ts",
+          "src/core/glossary/model.ts",
+          "src/features/settings/ui/useTranslationShortcutSettings.ts"
+        ],
+        "newFunctionBodies": 140,
+        "recheckedFiles": [
+          "src/app/content/quickTranslationRuntime.ts",
+          "src/features/full-page-translation/content/sectionTranslation.ts"
+        ],
+        "mainChangedSourcesStillPending": [
+          "src/app/popup/PopupApp.vue",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/ParagraphCopySettings.vue",
+          "src/features/settings/ui/QuickTranslationProfiles.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SectionTranslationSettings.vue",
+          "userscript/vite.config.ts"
+        ],
+        "dataCatalogEditsArePartialReview": true
+      },
+      "mainIntegration": {
+        "snapshot": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "originalSourceImportedThrough": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "files": 50,
+        "snapshotExactFiles": 41,
+        "mergedOrAuditedFiles": [
+          "docs/testing.md",
+          "src/features/full-page-translation/content/sectionTranslation.ts",
+          "src/features/section-translation/content/index.ts",
+          "tests/i18n.test.ts",
+          "tests/quickTranslation.test.ts",
+          "tests/quickTranslationRuntime.test.ts",
+          "tests/sectionTranslationRegion.test.ts",
+          "tests/sectionTranslationRuntime.test.ts",
+          "userscript/vite.config.ts"
+        ],
+        "threeWayApplyClean": true,
+        "rewrittenHistoryMerged": false,
+        "primaryModified": false,
+        "sourceTreeOnly": true
+      },
+      "oldSourceRun": {
+        "baseline": "d5c4b0e85c0281d037cb68c9a7dbf04fff606561",
+        "files": 2,
+        "cases": 36,
+        "failed": 12,
+        "passed": 24,
+        "unhandledErrors": 0
+      },
+      "newExecutedUnitCases": 15,
+      "newStaticTestDefinitions": 10,
+      "implementation": {
+        "settledSource": "Capture raw candidate source before starting async translation; late unchanged/empty results cannot settle subsequently changed text.",
+        "preview": "Check WeakMap before reading text; lazily capture config and memoize invocation identity only when an existing owner/settled source requires comparison.",
+        "mount": "Pre-aborted signals preserve active mount; replacement stops prior picker; stale key/pointer/abort/pick callbacks cannot control replacement or issue stale notices; results recheck site/enabled/owner after await.",
+        "removedPrivateWrapper": "translatePickedSection replaced with owned inline async callback. No retired public function.",
+        "i18n": "Delete eight exact retired-source rows and obsolete gtx pattern alternative; align six manga cache-copy keys with actual audited Vue source. Existing scan tests now pass; all eight removals and copy drift already present at preceding audit commit, independent of imported main.",
+        "languageResources": {
+          "commit": "de1267ddef8d0ff1d4d9a837977f828062171e16",
+          "files": 5,
+          "bytesVerifiedInCommit": true,
+          "resourcePinUpdated": true,
+          "remotePublished": false
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "files": 12,
+        "cases": 256,
+        "passed": true,
+        "unhandledErrors": 0
+      },
+      "strictCoverage": {
+        "passed": true,
+        "modules": 9,
+        "total": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "allModulesFour100": true,
+        "scopeIncludesSectionAndQuickRuntimeConfigPickerGlossary": true
+      },
+      "nativePreview": {
+        "scope": "Actual old/current section orchestration and actual request capture/identity plus actual bounded glossary normalization/SHA256 in native DOM. Candidate discovery, translation and owner state are diagnostic ports; this isolates preview work and settled-source ownership, not end-to-end provider latency or production discovery performance.",
+        "workload": {
+          "glossaryEntries": 5000,
+          "libraries": 10,
+          "candidates": 50,
+          "charactersPerCandidate": 15000,
+          "discovery": "same diagnostic candidate iterator; excludes actual discovery cost"
+        },
+        "timing": {
+          "baseline": {
+            "samples": 20,
+            "median": 13.599999904632568,
+            "p95": 14.199999809265137,
+            "max": 14.299999713897705
+          },
+          "current": {
+            "samples": 20,
+            "median": 0.09999990463256836,
+            "p95": 0.10000038146972656,
+            "max": 0.10000038146972656
+          }
+        },
+        "samplesPerVersion": 20,
+        "warmupRounds": 5,
+        "alternatingVersions": true,
+        "ownBuildTestJobsTerminalBeforeMeasurement": true,
+        "wholeMachineIdleClaim": false,
+        "oldCaptureIdentityTextReads": [
+          1,
+          1,
+          50
+        ],
+        "currentCaptureIdentityTextReads": [
+          0,
+          0,
+          0
+        ],
+        "sourceChanges": [
+          {
+            "version": "baseline",
+            "summary": {
+              "total": 1,
+              "active": 0,
+              "pending": 0,
+              "truncated": false,
+              "action": "settled"
+            },
+            "text": "New foreign text while the older operation is pending",
+            "requests": 1
+          },
+          {
+            "version": "current",
+            "summary": {
+              "total": 1,
+              "active": 0,
+              "pending": 1,
+              "truncated": false,
+              "action": "translate"
+            },
+            "text": "New foreign text while the older operation is pending",
+            "requests": 1
+          }
+        ],
+        "errors": 0,
+        "cleanupErrors": 0,
+        "profileRemoved": true,
+        "sourceHashes": {
+          "baseline": "939dc376c03dca42318b156482c14a0b80abb7e3199adc2dd1850e2a148bc0e7",
+          "request": "ddca0175135767bb1da643900b3c2421d22bb9ab9a79b1f3b3560e71033a76a4",
+          "glossary": "4791901ee0a51518f9d7edd76f470e1fcb38e985b739770c8ca4fb3d1fe2fdd5",
+          "current": "b2f5303879666f928409f8d0479fd4af6a0e6b512fce010568a67780fc158d64"
+        },
+        "harnessSha256": "347d9e41243e0be4a7e367030451fc8103b01979b8f5d27f720a11d3bc5f8e86"
+      },
+      "browser": {
+        "scope": "production extension, trusted CDP pointer/keyboard gestures, deterministic Google transport",
+        "cases": [
+          "popup shows the section entry next to the page action",
+          "picker highlights the paragraph under the pointer and widens with ArrowUp",
+          "clicking inside the section translates only that section without following the link",
+          "picking the translated section again restores only that section",
+          "Escape, right-click and forged events leave the page untouched",
+          "picking page chrome translates it even though page translation keeps it original",
+          "same-language and empty sections explain why nothing was requested",
+          "optional shortcut enters and leaves picking, and yields to typing",
+          "restoring page translation also restores translated sections",
+          "independent section shortcut selects a container before requesting its target language",
+          "another section profile switches the container language, and the same profile restores it",
+          "section profile yields while editing and cancels without translation",
+          "turning the plugin off exits picking and rejects new requests"
+        ],
+        "screenshots": 6,
+        "screenshotsInspected": [
+          "profile-container-translated",
+          "picker-restore-label"
+        ],
+        "errors": 0,
+        "profileRemoved": true,
+        "backgroundLaunchVerified": true,
+        "transport": "deterministic Google; no live provider, GitHub page, Firefox-runtime or actual-account proof",
+        "scopedRemainingProfileProcesses": {
+          "nativeSectionProfiles": 0,
+          "productionSectionProfiles": 0
+        }
+      },
+      "checks": {
+        "compile": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "manifestVerifier": "passed",
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "testAudit": "passed-467-files-6299-static-definitions",
+        "architecture": "1274-passed-two-existing-ownership-failures-1276-cases",
+        "internalReportValidation": "passed"
+      },
+      "verificationRepairs": [
+        "Temporary native diagnostic namespace lacked file resolution: first attempt failed before browser launch, fixed only fixture.",
+        "Temporary strict config spread inferred custom-provider union during compile; removed archived temporary config after terminal coverage, no product type change.",
+        "Generated current language hashes initially missing; generated immutable snapshots and committed them locally before pinning; remote publication remains pending.",
+        "Static trust-boundary assertion now allows the stricter trusted-input OR stale-owner guard, rejects AND weakening.",
+        "Stale stylesheet composition assertion now includes existing vocabulary reencounter styles; actual page stylesheet source unchanged."
+      ],
+      "remainingDebt": [
+        "Whole repository audit remains active; no claim every function is reviewed or bug-free.",
+        "Prior image runtime strict gaps and architecture ownership gaps remain separate.",
+        "Actual full discovery, deep DOM preview/restore, large glossary identity for active owners, settings custom-dialog 100ms delayed opening/unmount ownership, sync/provider/learning/message chains still need audit.",
+        "Other imported main sources remain pending full function review; source integration/build assertions are not source review."
+      ],
+      "architectureDebt": {
+        "files": 31,
+        "cases": 1276,
+        "passed": 1274,
+        "failed": 2,
+        "unownedExecutableModules": 15,
+        "unownedDocsTools": 3,
+        "thresholdsOrOwnershipExclusionsChanged": false
+      }
     }
   ]
 }

@@ -11,7 +11,9 @@ const mocks = vi.hoisted(() => ({
     isFullPageTranslationActive: vi.fn(() => false),
     restoreOriginalContent: vi.fn(),
     startSectionTranslationPicker: vi.fn(),
+    serviceAvailable: vi.fn(),
 }));
+vi.mock('@/src/services/translation/capabilities', () => ({isTranslationServiceAvailable: mocks.serviceAvailable}));
 
 vi.mock('@/src/features/quick-translation/public', () => ({
     mountQuickTranslationContentFeature: (deps: Record<string, any>) => {
@@ -65,6 +67,31 @@ describe('快捷翻译 content composition', () => {
         mocks.isFullPageTranslationActive.mockReturnValue(false);
         vi.stubGlobal('document', {addEventListener: vi.fn()});
         vi.stubGlobal('window', {});
+    });
+
+    it('外部全文生命周期解除旧方案身份，默认手势回调和服务可用性跟随当前配置', () => {
+        const current = config();
+        mountConfiguredQuickTranslation(current, {} as any, () => false, new AbortController().signal);
+        const dependencies = mocks.mountedDependencies!;
+        expect(dependencies.resetLegacyKeyboardGestures()).toBeUndefined();
+        mocks.serviceAvailable.mockReturnValueOnce(false).mockReturnValueOnce(true);
+        expect(dependencies.isProfileAvailable(profile({service: ''}))).toBe(false);
+        current.service = services.google;
+        expect(dependencies.isProfileAvailable(profile({service: ''}))).toBe(true);
+        expect(mocks.serviceAvailable.mock.calls).toEqual([[services.microsoft], [services.google]]);
+        let active = false;
+        mocks.isFullPageTranslationActive.mockImplementation(() => active);
+        mocks.autoTranslateEnglishPage.mockImplementation(() => {active = true;});
+        mocks.restoreOriginalContent.mockImplementation(() => {active = false;});
+        const selected = profile({action: 'full-page'});
+        dependencies.runFullPage(selected);
+        for (const type of ['fluentread-translation-started', 'fluentread-translation-ended']) {
+            const listener = vi.mocked(document.addEventListener).mock.calls.find(([event]) => event === type)![1] as () => void;
+            listener();
+            dependencies.runFullPage(selected);
+        }
+        expect(mocks.autoTranslateEnglishPage).toHaveBeenCalledTimes(3);
+        expect(mocks.restoreOriginalContent).toHaveBeenCalledTimes(3);
     });
 
     it('把每条悬停方案解析为独立请求覆盖后交给共享翻译引擎', () => {

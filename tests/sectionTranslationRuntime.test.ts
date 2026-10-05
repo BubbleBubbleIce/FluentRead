@@ -246,3 +246,31 @@ it('选择期间 Popup 保留当前方案，另一方案会重新选择容器', 
     expect(options.isExitHotkey({key: 'x', code: 'KeyX', ctrlKey: false, altKey: false, shiftKey: false, metaKey: false})).toBe(false);
     controller.abort();
 });
+
+describe('局部入口挂载所有权和迟到提示', () => {
+    it('预取消的挂载不登记监听器，也不覆盖仍在使用的入口', () => {
+        const current = mount(), count = listeners.length, stopped = new AbortController(); stopped.abort();
+        mountSectionTranslationContentFeature({isSiteDisabled: () => false}, stopped.signal);
+        expect(listeners).toHaveLength(count); expect(startSectionTranslationPicker()).toBe(true); current.abort();
+    });
+    it('替代挂载结束旧选择；旧挂载的卸载和键盘事件不影响新选择', () => {
+        const previous = mount(); startSectionTranslationPicker(); harness.pickerActive.mockReturnValue(true);
+        const current = mount(); expect(harness.stopPicker).toHaveBeenCalledOnce();
+        harness.pickerActive.mockReturnValue(false); harness.config.sectionTranslationHotkeyEnabled = true;
+        const event = emit('keydown', {altKey: true}); expect(harness.startPicker).toHaveBeenCalledTimes(2); expect(event.preventDefault).toHaveBeenCalledOnce();
+        harness.pickerActive.mockReturnValue(true); const before = harness.stopPicker.mock.calls.length; previous.abort();
+        expect(harness.stopPicker).toHaveBeenCalledTimes(before); expect(startSectionTranslationPicker()).toBe(true); current.abort();
+    });
+    it.each(['abort', 'replace', 'disabled', 'site'] as const)('点选后的迟到结果不会在入口失效后重新弹出提示：%s', async reason => {
+        const current = mount(); startSectionTranslationPicker(); const options = lastPickerOptions();
+        let finish!: (value: unknown) => void; harness.toggle.mockReturnValueOnce(new Promise(resolve => {finish = resolve;}));
+        options.onPick('old-section'); let replacement: AbortController | undefined;
+        if (reason === 'abort') current.abort(); else if (reason === 'replace') replacement = mount(); else if (reason === 'disabled') harness.config.on = false; else siteDisabled = true;
+        finish({action: 'empty'}); for (let i=0;i<4;i++) await Promise.resolve(); expect(harness.notices).toEqual([]);
+        replacement?.abort(); current.abort();
+    });
+    it('退场后的旧回调不会再发出区域翻译请求', () => {
+        const current = mount(); startSectionTranslationPicker(); const options = lastPickerOptions(); current.abort();
+        options.onPick('detached-section'); expect(harness.toggle).not.toHaveBeenCalled();
+    });
+});

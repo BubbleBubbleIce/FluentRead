@@ -18,6 +18,8 @@ interface FakeCandidate {
 const harness = vi.hoisted(() => ({
     config: {translationScope: 'content' as 'content' | 'all'},
     checkConfig: vi.fn(() => true),
+    capture: vi.fn((overrides = {}) => ({displayMode: 'bilingual', ...overrides})),
+    identity: vi.fn((snapshot: unknown) => JSON.stringify(snapshot)),
     translateTarget: vi.fn(),
     restoreTranslationOwner: vi.fn((_owner: unknown) => true),
     states: new Map<unknown, Record<string, unknown>>(),
@@ -31,8 +33,8 @@ const harness = vi.hoisted(() => ({
 vi.mock('@/src/services/config/store', () => ({config: harness.config}));
 vi.mock('@/src/app/translation/check', () => ({checkConfig: harness.checkConfig}));
 vi.mock('@/src/features/full-page-translation/content/translationRequest', () => ({
-    captureFullPageTranslationConfig: (overrides = {}) => ({displayMode: 'bilingual', ...overrides}),
-    getTranslationInvocationIdentity: (snapshot: unknown) => JSON.stringify(snapshot),
+    captureFullPageTranslationConfig: harness.capture,
+    getTranslationInvocationIdentity: harness.identity,
 }));
 vi.mock('@/src/features/full-page-translation/content/runtime', () => ({
     translateTarget: harness.translateTarget,
@@ -350,4 +352,33 @@ it('在已有译文段落内部换方案时，按原文所有者重建候选并�
     harness.translateTarget.mockResolvedValue({status: 'committed'});
     expect((await toggleTranslationSection(inner as unknown as Element, overrides)).translated).toBe(1);
     expect(harness.translateTarget).toHaveBeenCalledWith(expect.objectContaining({element: owner}), 'bilingual', false, undefined, expect.objectContaining(overrides));
+});
+
+describe('局部盘点快照和迟到无需翻译结果', () => {
+    it.each(['element', 'nodes'] as const)('旧结果不会把新原文记为无需翻译：%s', async mode => {
+        const el = element(`late-source-${mode}`, 0, root, '已经是目标语言');
+        const nodes = [{textContent: '已经是目标语言'}];
+        const item = candidate(el, mode === 'nodes' ? nodes : undefined); harness.discoveries.content = steps([item]);
+        let finish!: (value: unknown) => void; harness.translateTarget.mockReturnValueOnce(new Promise(resolve => {finish = resolve;}));
+        const task = toggleTranslationSection(root as unknown as Element);
+        el.textContent = nodes[0].textContent = 'New foreign source'; finish({status: 'unchanged', source: '已经是目标语言'}); await task;
+        expect(inspectTranslationSection(root as unknown as Element)).toMatchObject({action: 'translate', pending: 1});
+        harness.translateTarget.mockResolvedValueOnce({status: 'committed'}); await toggleTranslationSection(root as unknown as Element);
+        expect(harness.translateTarget).toHaveBeenCalledTimes(2);
+    });
+    it.each([undefined, {profileId: 'section-lazy', targetLanguage: 'ja'}])('新候选预览不读取全文文本或重建请求快照：%s', overrides => {
+        const el = element('fresh-lazy', 0, root), readText = vi.fn(() => 'Fresh text');
+        Object.defineProperty(el, 'textContent', {get: readText}); harness.discoveries.content = steps([candidate(el)]);
+        expect(inspectTranslationSection(root as unknown as Element, undefined, overrides)).toMatchObject({action: 'translate', pending: 1});
+        expect(harness.capture).not.toHaveBeenCalled(); expect(harness.identity).not.toHaveBeenCalled(); expect(readText).not.toHaveBeenCalled();
+    });
+    it('同方案已有译文默认预览不构造快照，比较方案时仅构造一次', () => {
+        const overrides = {profileId: 'section-lazy', targetLanguage: 'ja'};
+        const first = element('first-owner-lazy', 0, root), second = element('second-owner-lazy', 20, root);
+        const identity = JSON.stringify({displayMode: 'bilingual', ...overrides});
+        own(first, 'translated', {translationInvocationIdentity: identity}); own(second, 'translated', {translationInvocationIdentity: identity});
+        expect(inspectTranslationSection(root as unknown as Element).action).toBe('restore'); expect(harness.capture).not.toHaveBeenCalled();
+        expect(inspectTranslationSection(root as unknown as Element, undefined, overrides).action).toBe('restore');
+        expect(harness.capture).toHaveBeenCalledOnce(); expect(harness.identity).toHaveBeenCalledOnce();
+    });
 });

@@ -28,6 +28,23 @@ function profile(overrides: Partial<QuickTranslationProfile> = {}): QuickTransla
 }
 
 describe('快捷翻译调用解析', () => {
+    it('损坏导入项不接管快捷键，不支持的服务和非模型服务不保留模型覆盖', () => {
+        const result = normalizeQuickTranslationProfiles([
+            null, [], {action: 'invalid'},
+            profile({id: '', hotkey: 'F5', service: 'removed', model: 'obsolete'}),
+            profile({id: 'kept', hotkey: 'F6', service: services.google, model: 'unused', displayMode: 'translation-only', fullPageMode: 'viewport'}),
+            profile({id: 'kept', hotkey: 'F7', service: services.openai, model: 'chosen', displayMode: 'bilingual', fullPageMode: 'all'}),
+            profile({id: 'empty', hotkey: ''}),
+            profile({id: 'duplicate', action: 'hover', hotkey: 'F7', targetLanguage: 'fr'}),
+        ], {isSupportedService: service => service !== 'removed', serviceUsesModel: service => service === services.openai});
+        expect(result).toHaveLength(5);
+        expect(result[0]).toMatchObject({enabled: false, service: '', model: ''});
+        expect(result[1]).toMatchObject({enabled: true, service: services.google, model: '', displayMode: 'translation-only', fullPageMode: 'viewport'});
+        expect(result[2]).toMatchObject({enabled: true, service: services.openai, model: 'chosen', displayMode: 'bilingual', fullPageMode: 'all'});
+        expect(result[3]).toMatchObject({enabled: false, hotkey: ''});
+        expect(result[4]).toMatchObject({enabled: false, action: 'hover', hotkey: '', targetLanguage: 'fr'});
+        expect(new Set(result.map(item => item.id)).size).toBe(5);
+    });
     it('快捷方案保留简繁目标差异，历史别名与非中文目标均可继续使用', () => {
         const normalized = normalizeQuickTranslationProfiles([
             profile({id: 'simplified', hotkey: 'Alt+S', targetLanguage: ' zh-CN '}),

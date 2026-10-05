@@ -63,7 +63,8 @@ describe('host-page trust boundary', () => {
     // 网页脚本不能伪造点击或按键替用户选择区域并发起翻译，也不能读取选择浮层。
     expect(picker).toContain("attachShadow({mode: 'closed'})");
     expect(picker.match(/if \(!event\.isTrusted\) return;/g)?.length).toBeGreaterThanOrEqual(9);
-    expect(entry.match(/if \(!event\.isTrusted\) return;/g)?.length).toBeGreaterThanOrEqual(2);
+    // 同一信任守卫可以同时拒绝旧挂载实例；只能用 OR 收紧，不能用 AND 绕过不可信输入。
+    expect(entry.match(/if \(!event\.isTrusted(?: \|\| activeStarter !== start)?\) return;/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
     expect(`${picker}\n${entry}`).not.toContain('CustomEvent');
   });
 

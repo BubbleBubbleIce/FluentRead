@@ -1107,7 +1107,7 @@ describe('options UI composition architecture', () => {
     expect(colorField).toContain('role="radiogroup"')
     expect(colorField).toContain('normalizeTranslationColor(value ?? \'\')')
     expect(pageStylesInstaller).toContain("import translationDisplayStyles from '@/src/ui/styles/translation-display.css?inline'")
-    expect(pageStylesInstaller).toContain('`${translationDisplayStyles}\\n${pageStyles}\\n${sentenceHighlightStyles}`')
+    expect(pageStylesInstaller).toContain('`${translationDisplayStyles}\\n${pageStyles}\\n${sentenceHighlightStyles}\\n${reencounterStyles}`')
     expect(pageCss).not.toMatch(/\.fluent-display-[a-z-]+\s*\{/u)
     expect(pageCss).not.toContain('.fluent-read-bilingual-content {')
     // 基础规则必须先于预设，否则透明背景会覆盖简约卡片和学习标记的底色。

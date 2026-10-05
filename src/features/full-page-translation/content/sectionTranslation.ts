@@ -100,9 +100,9 @@ function discoverSectionCandidates(root: Element, maxSteps: number): SectionDisc
     return discoverInScope(root, 'all', maxSteps);
 }
 
-function isSettled(candidate: TranslationCandidate, identity: string): boolean {
+function isSettled(candidate: TranslationCandidate, identity: () => string): boolean {
     const settled = settledCandidates.get(getTranslationCandidateKey(candidate));
-    return settled?.text === candidateSnapshot(candidate) && settled.identity === identity;
+    return Boolean(settled && settled.text === candidateSnapshot(candidate) && settled.identity === identity());
 }
 
 /** 失败或切换方案时按所有者状态重建候选；合成行内段沿用首个来源文本节点定位。 */
@@ -133,11 +133,13 @@ function resolveSectionAction(total: number, active: number, pending: number): T
     return total > 0 ? 'settled' : 'empty';
 }
 
-function summarize(root: Element, maxSteps: number, snapshot: FullPageTranslationConfigSnapshot,
+function summarize(root: Element, maxSteps: number, snapshot: () => FullPageTranslationConfigSnapshot,
     compareInvocation: boolean): {summary: TranslationSectionSummary; pending: TranslationCandidate[]} {
-    const identity = getTranslationInvocationIdentity(snapshot);
+    // 新候选和默认恢复不比较请求身份；避免每次预览都归一化、散列整份词库。
+    let identity: string | undefined;
+    const invocationIdentity = (): string => identity ??= getTranslationInvocationIdentity(snapshot());
     const needsProfileSwitch = (owner: HTMLElement): boolean => compareInvocation
-        && getTranslationState(owner)?.translationInvocationIdentity !== identity;
+        && getTranslationState(owner)?.translationInvocationIdentity !== invocationIdentity();
     const ancestor = findActiveAncestorOwner(root);
     if (ancestor) {
         if (needsProfileSwitch(ancestor)) {
@@ -159,7 +161,7 @@ function summarize(root: Element, maxSteps: number, snapshot: FullPageTranslatio
     for (const candidate of candidates) {
         const owner = resolveTranslationStateNode(candidate);
         if (owner && (activeOwners.has(owner) || pending.has(owner))) continue;
-        if (isSettled(candidate, identity)) settled += 1;
+        if (isSettled(candidate, invocationIdentity)) settled += 1;
         else pending.set(owner ?? getTranslationCandidateKey(candidate), candidate);
     }
     const active = activeOwners.size;
@@ -175,7 +177,7 @@ export function inspectTranslationSection(
     maxSteps: number = SECTION_PREVIEW_DISCOVERY_STEPS,
     overrides?: PageTranslationConfigOverrides,
 ): TranslationSectionSummary {
-    return summarize(root, maxSteps, captureFullPageTranslationConfig(overrides), Boolean(overrides)).summary;
+    return summarize(root, maxSteps, () => captureFullPageTranslationConfig(overrides), Boolean(overrides)).summary;
 }
 
 /** 视口内的段落先翻译，其次是下方即将读到的内容，最后才是已经滚过的上方内容。 */
@@ -199,11 +201,12 @@ async function translatePendingCandidates(pending: readonly TranslationCandidate
     const identity = getTranslationInvocationIdentity(translationConfig);
     // translateTarget 在首次 await 前同步入队，因此调用顺序就是共享翻译队列的派发顺序。
     const outcomes = await Promise.all(orderByReadingPosition(pending).map(async (candidate) => {
+        const source = candidateSnapshot(candidate);
         const outcome: TranslationTargetOutcome = await translateTarget(candidate, translationConfig.displayMode, false, undefined, translationConfig)
             .catch(() => ({status: 'failed' as const}));
         if (outcome.status === 'unchanged' || outcome.status === 'empty') {
             settledCandidates.set(getTranslationCandidateKey(candidate), {
-                text: candidateSnapshot(candidate), identity,
+                text: source, identity,
             });
         }
         return outcome.status;
@@ -234,7 +237,7 @@ function restoreSection(root: Element): number {
  */
 export async function toggleTranslationSection(root: Element, overrides?: PageTranslationConfigOverrides): Promise<TranslationSectionResult> {
     const snapshot = captureFullPageTranslationConfig(overrides);
-    const {summary, pending} = summarize(root, Number.POSITIVE_INFINITY, snapshot, Boolean(overrides));
+    const {summary, pending} = summarize(root, Number.POSITIVE_INFINITY, () => snapshot, Boolean(overrides));
     if (summary.action === 'translate') return translatePendingCandidates(pending, snapshot);
     if (summary.action === 'restore') return {action: 'restored', ...EMPTY_TALLY, restored: restoreSection(root)};
     return {action: summary.action, ...EMPTY_TALLY};

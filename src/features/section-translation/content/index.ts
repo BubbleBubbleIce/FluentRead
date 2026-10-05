@@ -42,10 +42,6 @@ function reportSectionResult(result: TranslationSectionResult): void {
     }
 }
 
-async function translatePickedSection(element: Element, invocation?: PageTranslationInvocation): Promise<void> {
-    reportSectionResult(await toggleTranslationSection(element, invocation));
-}
-
 /** 供 Popup 等扩展消息进入选择模式；返回 false 表示当前页面没有可用的局部翻译运行时。 */
 export function startSectionTranslationPicker(invocation?: PageTranslationInvocation): boolean {
     return activeStarter?.(invocation) === true;
@@ -59,13 +55,17 @@ export function mountSectionTranslationContentFeature(
     options: SectionTranslationContentOptions,
     signal: AbortSignal,
 ): void {
+    if (signal.aborted) return;
+    if (activeStarter) stopSectionPicker();
     let pointer: SectionPickerPoint | null = null;
     const matchesConfiguredHotkey = (event: KeyboardEvent): boolean => config.sectionTranslationHotkeyEnabled === true
         && matchesSectionTranslationHotkey(event, config.sectionTranslationHotkey, config.customSectionTranslationHotkey);
 
     let activeProfileId = '';
+    const isCurrent = (): boolean => !signal.aborted && activeStarter === start
+        && !options.isSiteDisabled() && config.on === true;
     const start = (invocation?: PageTranslationInvocation): boolean => {
-        if (signal.aborted || options.isSiteDisabled() || config.on !== true) return false;
+        if (!isCurrent()) return false;
         // 快捷方案再次触发时退出当前选择；切换方案时重新进入，让高亮盘点与请求使用同一方案。
         if (isSectionPickerActive()) {
             if (!invocation) return true;
@@ -79,7 +79,11 @@ export function mountSectionTranslationContentFeature(
             inspect: (element) => invocation
                 ? inspectTranslationSection(element, undefined, invocation)
                 : inspectTranslationSection(element),
-            onPick: (element) => void translatePickedSection(element, invocation),
+            onPick: async (element) => {
+                if (!isCurrent()) return;
+                const result = await toggleTranslationSection(element, invocation);
+                if (isCurrent()) reportSectionResult(result);
+            },
             text,
             isExitHotkey: event => matchesConfiguredHotkey(event) || Boolean(profileHotkey && matchesHotkey(event, profileHotkey)),
             isEditing: isEditingInPage,
@@ -87,12 +91,12 @@ export function mountSectionTranslationContentFeature(
     };
 
     document.addEventListener('pointermove', (event) => {
-        if (!event.isTrusted) return;
+        if (!event.isTrusted || activeStarter !== start) return;
         pointer = {x: event.clientX, y: event.clientY};
     }, {capture: true, passive: true, signal});
 
     document.addEventListener('keydown', (event) => {
-        if (!event.isTrusted) return;
+        if (!event.isTrusted || activeStarter !== start) return;
         if (event.repeat || !matchesConfiguredHotkey(event) || isSectionPickerActive()) return;
         if (options.isSiteDisabled() || config.on !== true || isEditingInPage(event)) return;
         event.preventDefault();
@@ -102,7 +106,8 @@ export function mountSectionTranslationContentFeature(
 
     activeStarter = start;
     signal.addEventListener('abort', () => {
-        if (activeStarter === start) activeStarter = null;
+        if (activeStarter !== start) return;
+        activeStarter = null;
         stopSectionPicker();
     }, {once: true});
 }

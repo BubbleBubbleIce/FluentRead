@@ -21,6 +21,17 @@ const terms = (text: string | string[], entries = [entry()], overrides: Partial<
 const pairs = (libraries: GlossaryLibrary[]) => libraries.flatMap((lib) => lib.entries.map(({source, target, caseSensitive}) => ({source, target, caseSensitive})));
 
 describe('术语库数据边界与配置版本', () => {
+    it('只保存合法初始模板来源，损坏版本与标识不会进入持久化配置', () => {
+        const valid = {id: 'technical', version: 2};
+        const inputs = [valid, {id: 1, version: 2}, {id: 'bad id', version: 2},
+            {id: 'technical', version: '2'}, {id: 'technical', version: 1.5},
+            {id: 'technical', version: 0}, {id: 'technical', version: -1}, null];
+        const result = normalizeGlossaryLibraries(inputs.map((preset, i) => ({...library({id: `g-${i}`}), preset,
+            enabled: i === 0 ? false : true, sourceLanguage: undefined, targetLanguage: undefined})));
+        expect(result[0]).toMatchObject({preset: valid, enabled: false, sourceLanguage: '', targetLanguage: ''});
+        expect(result.slice(1).every(item => !('preset' in item))).toBe(true);
+        expect(normalizeGlossaryLibraries(result)).toEqual(result);
+    });
     it('清洗存储对象，保留字面标点并去掉未知字段，不修改输入', () => {
         const raw = [{id: 'kept', name: ' 名称 ', enabled: false, sourceLanguage: 'EN_us', targetLanguage: 'auto',
             domains: ['EXAMPLE.com.', '*.例子.中国', 'example.com', 'http://bad.com'], ignored: 'private', entries: [
