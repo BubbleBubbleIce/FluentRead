@@ -415,3 +415,81 @@ describe('large bilingual owners through the public hover lifecycle', () => {
         expect(f.highlighted()).toEqual(['First.', '一句。']); dispose(); dispose();
     });
 });
+
+
+describe('bounded sentence iteration before alignment', () => {
+    afterEach(() => vi.unstubAllGlobals());
+    function segmentFixture(chunks: Map<string, string[]>) {
+        const reads = new Map<string, number>();
+        const closed = new Set<string>();
+        class Segmenter {
+            segment(text: string) {
+                return {
+                    *[Symbol.iterator]() {
+                        try {
+                            for (const segment of chunks.get(text) ?? []) {
+                                reads.set(text, (reads.get(text) ?? 0) + 1);
+                                yield {segment};
+                            }
+                        } finally {closed.add(text);}
+                    },
+                };
+            }
+        }
+        vi.stubGlobal('Intl', {...Intl, Segmenter});
+        return {reads, closed};
+    }
+    it('stops an oversized source at the first rejected sentence and never segments its translation', () => {
+        const parts = Array<string>(5000).fill('Sentence. '); const source = parts.join('');
+        const f = segmentFixture(new Map([[source, parts], ['译文。', ['译文。']]]));
+        expect(alignBilingualSentences(source, '译文。')).toEqual([]);
+        expect(f.reads.get(source)).toBe(257); expect(f.closed.has(source)).toBe(true);
+        expect(f.reads.has('译文。')).toBe(false);
+    });
+    it('stops an oversized translation and releases its iterator after accepting a short source', () => {
+        const parts = Array<string>(5000).fill('句子。'); const translation = parts.join('');
+        const f = segmentFixture(new Map([['Source.', ['Source.']], [translation, parts]]));
+        expect(alignBilingualSentences('Source.', translation)).toEqual([]);
+        expect(f.reads.get('Source.')).toBe(1); expect(f.reads.get(translation)).toBe(257);
+        expect(f.closed.has(translation)).toBe(true);
+    });
+    it('keeps the unrestricted public span result and rejects rather than truncates a bounded result', () => {
+        const parts = Array<string>(300).fill('Sentence. '); const source = parts.join('');
+        segmentFixture(new Map([[source, parts]]));
+        expect(sentenceSpans(source)).toHaveLength(300);
+        expect(sentenceSpans(source, 256)).toEqual([]);
+        expect(sentenceSpans(source, 300)).toHaveLength(300);
+    });
+    it('counts trimmed sentences after abbreviation merging, not raw native segments', () => {
+        const parts = [...Array<string>(255).fill('Done. '), 'Dr. ', 'Smith left.  ', '  '];
+        const source = parts.join(''); const translation = '句子。'.repeat(256);
+        const f = segmentFixture(new Map([[source, parts], [translation, Array<string>(256).fill('句子。')]]));
+        const pairs = alignBilingualSentences(source, translation);
+        expect(pairs).toHaveLength(256);
+        expect(source.slice(pairs.at(-1)!.source.start, pairs.at(-1)!.source.end)).toBe('Dr. Smith left.');
+        expect(pairs.at(-1)!.translation.end).toBe(translation.length);
+        expect(f.reads.get(source)).toBe(parts.length);
+    });
+    it('rejects the next genuine sentence after an abbreviation merged at the cap', () => {
+        const parts = [...Array<string>(255).fill('Done. '), 'Dr. ', 'Smith left. ', ...Array<string>(500).fill('Extra. ')];
+        const source = parts.join(''); const f = segmentFixture(new Map([[source, parts]]));
+        expect(sentenceSpans(source, 256)).toEqual([]);
+        expect(f.reads.get(source)).toBe(258); expect(f.closed.has(source)).toBe(true);
+    });
+    it('preserves the exact native cap and UTF16 coordinates at both ends', () => {
+        const source = '  🧪 Sentence. '.repeat(256); const translation = '  句子。 '.repeat(256);
+        const pairs = alignBilingualSentences(source, translation);
+        expect(pairs).toHaveLength(256);
+        expect(source.slice(pairs[0].source.start, pairs[0].source.end)).toBe('🧪 Sentence.');
+        expect(pairs.at(-1)!.source.end).toBe(source.trimEnd().length);
+        expect(pairs.at(-1)!.translation.end).toBe(translation.trimEnd().length);
+    });
+    it('applies the same cap in the fallback and preserves short quoted sentence coordinates', () => {
+        vi.stubGlobal('Intl', {...Intl, Segmenter: undefined});
+        expect(alignBilingualSentences('Sentence. '.repeat(5000), '译文。')).toEqual([]);
+        expect(sentenceSpans('句子。'.repeat(5000), 256)).toEqual([]);
+        const text = '  🧪 Dr. Smith paid 3.14 dollars. “Ready?” Next!  ';
+        expect(sentenceSpans(text).map(span => text.slice(span.start, span.end)))
+            .toEqual(['🧪 Dr. Smith paid 3.14 dollars.', '“Ready?”', 'Next!']);
+    });
+});

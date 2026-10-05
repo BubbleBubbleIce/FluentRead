@@ -134,7 +134,7 @@
       "src/core/translation": {
         "files": 24,
         "functions": 325,
-        "lines": 4797
+        "lines": 4802
       },
       "src/features/area-translation": {
         "files": 14,
@@ -652,8 +652,8 @@
     },
     {
       "file": "src/core/translation/lineBreak.ts",
-      "sha256": "c62a224b155c47366d2cd41499a2b34c1e6751768da9387aff6aeafab428bf1e",
-      "functionBodies": 3,
+      "sha256": "4fbe72b431097d055daff49c452a281c2fa8f19bb687133e31a28d3f34544d37",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -676,8 +676,8 @@
     },
     {
       "file": "src/core/translation/sentenceAlignment.ts",
-      "sha256": "8449f632b04868bd291190ea4d7502e92a167c5f1314bb97589fac83ec33a244",
-      "functionBodies": 4,
+      "sha256": "62f9cd70a98382b2af78eea38b9ec0ba54ba0829849a9ebafa1c38a8d51ce1ee",
+      "functionBodies": 3,
       "status": "source-read-and-traced"
     },
     {
@@ -1047,9 +1047,39 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/vocabulary/content/readingText.ts",
+      "sha256": "3f325fba6ec0ba902ee59a1003e444769c336a5c2f0df9c4702e1ff2c24743c1",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/vocabulary/content/reencounter.ts",
       "sha256": "9887579104b620da1ca04ff6fea33efdf09574f09f17e114d200741357288926",
       "functionBodies": 19,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/content/reencounterState.ts",
+      "sha256": "c2a4d1a18f7e3e51c7d8b4fffc4ddfe90a5021337864d02f05412046ab0d19d8",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/content/scanner.ts",
+      "sha256": "af3a894e57e29088c1a57c83a41b98b2bfff91f34541325a5402c7872ac6ac3e",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/domain/reencounter.ts",
+      "sha256": "52cbbc46f674bb0077d52e5f2d58140d583ffb92218976762f323bc83682817b",
+      "functionBodies": 12,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/protocol.ts",
+      "sha256": "f6d37d4dfd972044535ede9830efe53544c6a7b00e6acc14a6392687553b4665",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -1778,12 +1808,7 @@
     "src/features/video-subtitle/transcriptionCache.ts",
     "src/features/vocabulary/background/handler.ts",
     "src/features/vocabulary/background/index.ts",
-    "src/features/vocabulary/content/readingText.ts",
-    "src/features/vocabulary/content/reencounterState.ts",
-    "src/features/vocabulary/content/scanner.ts",
-    "src/features/vocabulary/domain/reencounter.ts",
     "src/features/vocabulary/learningModel.ts",
-    "src/features/vocabulary/protocol.ts",
     "src/features/vocabulary/repository.ts",
     "src/features/vocabulary/ui/CollectionEntry.vue",
     "src/features/vocabulary/ui/ReencounterPanel.vue",
@@ -1965,7 +1990,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Profile remaining sentence alignment/range creation, wide owner lookup and deep-DOM long tasks; reproduce ancestor mutation storms and rapid scroll/pointer cancellation ordering; section preview/restore totals, native whole-root remount and every pending module plus latest-main integration remain open. Current highlight recursion, sparse-text records and subscriber teardown failures are fixed within the stated fixtures.",
+    "Fix public reading-text recursion and profile vocabulary scanner with empty books/large DOM; remaining highlight Range/geometry/wide-owner work, ancestor mutation storms and rapid scroll/pointer ordering; section preview/restore, whole-root remount, all pending modules and latest-main integration remain open. Sentence cap now stops native and fallback iteration at the first rejected genuine sentence.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -1979,9 +2004,9 @@
     "Local origin/main tracking ref f94225c3 includes six post-baseline image/docs commits. Reconcile and re-review that source before full-goal completion; the current audit inventory remains based on fd4fac88. No remote freshness or release claim."
   ],
   "progress": {
-    "sourceReadFiles": 136,
-    "sourceReadFunctionBodies": 2088,
-    "pendingFiles": 681,
+    "sourceReadFiles": 141,
+    "sourceReadFunctionBodies": 2124,
+    "pendingFiles": 676,
     "goalComplete": false
   },
   "observations": [
@@ -2072,8 +2097,18 @@
     },
     {
       "file": "src/core/translation/sentenceAlignment.ts",
-      "status": "source-reviewed-performance-investigation-pending",
-      "issue": "sentenceSpans eagerly enumerates all native segments before alignBilingualSentences applies its 256-sentence cap. Profile and reproduce work before changing the contract; no native regression claim yet."
+      "status": "fixed-and-verified-with-whole-chain-performance-debt",
+      "issue": "Native/fallback sentence spans iterate lazily, reject after257genuine spans with abbreviation merging before cap, and skip translation if source is invalid. Unrestricted public result unchanged. Native isolated-world trace of the production build confirms9000+9000baseline segment reads versus257+0final; exact256boundary, both-side compact actions and restore pass. Uninstrumented baseline/final have no long tasks in this fixture, so no browser jank-removal or universal speedup claim. Remaining range/geometry/deep DOM issues stay open."
+    },
+    {
+      "file": "src/features/vocabulary/content/readingText.ts",
+      "status": "public-entry-reproduced-fix-pending",
+      "issue": "Unchanged public collectReadingGroups with20,000real nested elements throws RangeError under linkedom style/geometry mocks; original Text identity preserved. No native browser reproduction yet. Recursive DOM/shadow/slot traversal and eager group/range work require a cancellation-aware fix and validation."
+    },
+    {
+      "file": "src/features/vocabulary/content/scanner.ts",
+      "status": "source-read-performance-and-lifecycle-investigation-pending",
+      "issue": "Scanning still collects page groups with an empty index; investigate avoidable work, callback errors, post-dispose setEntries and geometry copies. These are source candidates, not reproduced production failures."
     }
   ]
 }

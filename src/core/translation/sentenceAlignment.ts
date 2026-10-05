@@ -1,21 +1,23 @@
 /**
  * @file src/core/translation/sentenceAlignment.ts
  * 文件职责：为双语阅读生成保留字符坐标的句子边界及有序对应组。
- * 主要内容：使用原生分句与兼容回退处理标点、缩写和空白；句数不同时按累计长度选择受约束的相邻句边界。
+ * 主要内容：按需迭代原生分句与兼容回退，保留标点、缩写和字符坐标；可在合并后句数超限时立即拒绝，句数不同时按累计长度选择受约束的相邻句边界。
  * 模块边界：只处理字符串，不读取网页或配置，不调用翻译服务；长度对齐是局部启发式，不代表语义校验。
  */
-import {splitTranslationSentences} from './lineBreak';
+import {iterateTranslationSentences} from './lineBreak';
 
 export interface SentenceSpan {start: number; end: number}
 export interface SentencePair {source: SentenceSpan; translation: SentenceSpan}
 
-export function sentenceSpans(text: string): SentenceSpan[] {
+/** 默认返回完整边界；指定句数上限时超限返回空数组，不能留下不完整的双语对应。 */
+export function sentenceSpans(text: string, maximum = Infinity): SentenceSpan[] {
     const chunks = typeof Intl.Segmenter === 'function'
-        ? Array.from(new Intl.Segmenter(undefined, {granularity: 'sentence'}).segment(text), part => part.segment)
-        : splitTranslationSentences(text);
+        ? new Intl.Segmenter(undefined, {granularity: 'sentence'}).segment(text)
+        : iterateTranslationSentences(text);
     const spans: SentenceSpan[] = [];
     let offset = 0;
-    for (const chunk of chunks) {
+    for (const part of chunks) {
+        const chunk = typeof part === 'string' ? part : part.segment;
         const start = offset + chunk.length - chunk.trimStart().length;
         offset += chunk.length;
         const end = offset - (chunk.length - chunk.trimEnd().length);
@@ -24,15 +26,19 @@ export function sentenceSpans(text: string): SentenceSpan[] {
         // 原生 ICU 分句会把 Dr. Smith 等称谓拆开；沿用译文换行的常见缩写保护。
         if (previous && /\b(?:Mr|Mrs|Ms|Dr|Prof|St|vs|etc|No|Fig|e\.g|i\.e)\.$/iu.test(text.slice(previous.start, previous.end))) {
             previous.end = end;
-        } else spans.push({start, end});
+        } else {
+            spans.push({start, end});
+            if (spans.length > maximum) return [];
+        }
     }
     return spans;
 }
 
 export function alignBilingualSentences(sourceText: string, translationText: string): SentencePair[] {
-    const source = sentenceSpans(sourceText);
-    const translation = sentenceSpans(translationText);
-    if (!source.length || !translation.length || Math.max(source.length, translation.length) > 256) return [];
+    const source = sentenceSpans(sourceText, 256);
+    if (!source.length) return [];
+    const translation = sentenceSpans(translationText, 256);
+    if (!translation.length) return [];
     if (source.length === translation.length) return source.map((span, i) => ({source: span, translation: translation[i]}));
     const sourceIsShorter = source.length < translation.length;
     const anchors = sourceIsShorter ? source : translation;

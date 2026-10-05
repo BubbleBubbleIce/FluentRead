@@ -7889,6 +7889,591 @@
       },
       "referenceRepositoriesUsed": false,
       "goalComplete": false
+    },
+    {
+      "name": "fourteenth-lazy-sentence-alignment-and-fallback",
+      "baseCommit": "bfcf29c1971c132ff6afe18ed48c2180a40e5ea7",
+      "scope": "Re-reviewed sentence alignment and fallback splitter; fully read5further vocabulary source/protocol files (36bodies).676files remain pending. Public reading traversal overflow is reproduced and remains a next fix, goal active.",
+      "reviewProgress": {
+        "sourceReadFiles": 141,
+        "sourceReadFunctionBodies": 2124,
+        "pendingFiles": 676,
+        "goalComplete": false
+      },
+      "inventory": {
+        "files": 817,
+        "functionBodies": 14580,
+        "newReadFiles": 5,
+        "newReadBodies": 36,
+        "lineBreakBodyChange": 1,
+        "alignmentBodyChange": -1
+      },
+      "strictCoverage": {
+        "status": "passed",
+        "testFiles": 7,
+        "testCases": 113,
+        "modules": [
+          "src/core/translation/sentenceAlignment.ts",
+          "src/core/translation/lineBreak.ts",
+          "src/features/full-page-translation/content/sentenceHighlight.ts",
+          "src/app/content/bilingualSentenceHighlight.ts"
+        ],
+        "percent": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        },
+        "thresholdsUnchanged": true
+      },
+      "additionalAffectedSuites": {
+        "status": "passed",
+        "testFiles": 1,
+        "testCases": 93,
+        "scope": "browser isolation contract after final runner changes"
+      },
+      "totalAffectedCases": 206,
+      "newExecutedCases": 9,
+      "newRegisteredCaseDefinitions": 9,
+      "regressionEvidence": {
+        "baselineCases": 41,
+        "baselineFailedCases": 5,
+        "scope": "Seven new public alignment tests against unchanged source; failures include the new optional cap contract, not five independently observed production bugs. Later two fallback-iterator tests were not run against old source. Old alignment output already rejects more than256sentences, but only after full enumeration."
+      },
+      "implementation": {
+        "iteration": "Native segment iterator and fallback generator stream; cap checked after trimming and abbreviation merge; reject complete alignment at first257thgenuine sentence. If source rejects, do not segment translation.",
+        "publicDefault": "sentenceSpans without cap returns all spans; splitTranslationSentences returns complete array including empty-text contract.",
+        "fallback": "Own regular-expression cursor per generator; explicit horizontal whitespace scan avoids repeated tail slices; complete array and iterator use same boundaries."
+      },
+      "sourceComparison": {
+        "node": "v20.11.1",
+        "differential": {
+          "cases": 1100,
+          "passed": true
+        },
+        "workCounts": [
+          {
+            "mode": "native",
+            "which": "baseline",
+            "sourceReads": 9000,
+            "translationReads": 1
+          },
+          {
+            "mode": "native",
+            "which": "final",
+            "sourceReads": 257,
+            "translationReads": 0
+          },
+          {
+            "mode": "fallback",
+            "which": "baseline",
+            "sourceReads": 9000,
+            "translationReads": 1
+          },
+          {
+            "mode": "fallback",
+            "which": "final",
+            "sourceReads": 257,
+            "translationReads": 0
+          }
+        ],
+        "microbenchmarkMedians": [
+          {
+            "mode": "native",
+            "case": "source-over-limit",
+            "medianMs": {
+              "baseline": 62.582,
+              "final": 1.974
+            },
+            "rounds": 5
+          },
+          {
+            "mode": "native",
+            "case": "translation-over-limit",
+            "medianMs": {
+              "baseline": 39.947,
+              "final": 1.433
+            },
+            "rounds": 5
+          },
+          {
+            "mode": "native",
+            "case": "boundary-256",
+            "medianMs": {
+              "baseline": 0.437,
+              "final": 0.483
+            },
+            "rounds": 5
+          },
+          {
+            "mode": "fallback",
+            "case": "source-over-limit",
+            "medianMs": {
+              "baseline": 1.499,
+              "final": 0.087
+            },
+            "rounds": 5
+          },
+          {
+            "mode": "fallback",
+            "case": "translation-over-limit",
+            "medianMs": {
+              "baseline": 1.718,
+              "final": 0.047
+            },
+            "rounds": 5
+          },
+          {
+            "mode": "fallback",
+            "case": "boundary-256",
+            "medianMs": {
+              "baseline": 0.103,
+              "final": 0.107
+            },
+            "rounds": 5
+          }
+        ],
+        "sourceHashes": {
+          "baseline:lineBreak": "c62a224b155c47366d2cd41499a2b34c1e6751768da9387aff6aeafab428bf1e",
+          "baseline:sentenceAlignment": "8449f632b04868bd291190ea4d7502e92a167c5f1314bb97589fac83ec33a244",
+          "final:lineBreak": "4fbe72b431097d055daff49c452a281c2fa8f19bb687133e31a28d3f34544d37",
+          "final:sentenceAlignment": "62f9cd70a98382b2af78eea38b9ec0ba54ba0829849a9ebafa1c38a8d51ce1ee"
+        },
+        "boundary": "Same-process public exports transpiled from baseline/current TypeScript. Alternating five rounds, not real browser speedup or statistical regression guarantee.256sentence native median slightly increases0.437to0.483ms."
+      },
+      "controlledBaseline": {
+        "passed": true,
+        "baseline": true,
+        "verifyActions": true,
+        "buildSha256": "43236570d2cb44c76176e62a30c2265c6ead53184179154781e8d986181d2fc3",
+        "cases": [
+          {
+            "id": "alignment-limit",
+            "emptyNodes": 0,
+            "sentences": 9000,
+            "sentence": "Go!",
+            "expectedHighlight": false,
+            "highlighted": false,
+            "highlightLatencyMs": null,
+            "collectedCharacters": 72003,
+            "longTasksMs": [],
+            "maxHeartbeatGapMs": 21.199999809265137,
+            "hostMutations": 0,
+            "originalPreserved": true,
+            "originalTextIdentity": true,
+            "highlightedText": "",
+            "initialRequests": 2,
+            "restoredOriginal": {
+              "textExact": true,
+              "sameTextNode": true
+            },
+            "restoreClearedHighlight": true,
+            "extraRequests": 0
+          },
+          {
+            "id": "alignment-boundary",
+            "emptyNodes": 0,
+            "sentences": 256,
+            "sentence": "Go!",
+            "expectedHighlight": true,
+            "highlighted": true,
+            "highlightLatencyMs": 23,
+            "collectedCharacters": 2051,
+            "longTasksMs": [],
+            "maxHeartbeatGapMs": 21.09999990463257,
+            "hostMutations": 0,
+            "originalPreserved": true,
+            "originalTextIdentity": true,
+            "highlightedText": "Go!测试译文：Go!",
+            "initialRequests": 1,
+            "bothDirectionsAndCompactActions": true,
+            "restoredOriginal": {
+              "textExact": true,
+              "sameTextNode": true
+            },
+            "restoreClearedHighlight": true,
+            "extraRequests": 0
+          }
+        ],
+        "consoleErrors": [],
+        "unexpectedNetworkRequests": 0,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "instrumented": false,
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        }
+      },
+      "controlledBrowser": {
+        "uninstrumentedRuns": [
+          {
+            "passed": true,
+            "baseline": false,
+            "verifyActions": true,
+            "buildSha256": "0eb9d25121bee88a5812eea2321aa65ee0bd1f1b08dddd025eee77b9343368b3",
+            "cases": [
+              {
+                "id": "alignment-limit",
+                "emptyNodes": 0,
+                "sentences": 9000,
+                "sentence": "Go!",
+                "expectedHighlight": false,
+                "highlighted": false,
+                "highlightLatencyMs": null,
+                "collectedCharacters": 72003,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.600000381469727,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "",
+                "initialRequests": 2,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              },
+              {
+                "id": "alignment-boundary",
+                "emptyNodes": 0,
+                "sentences": 256,
+                "sentence": "Go!",
+                "expectedHighlight": true,
+                "highlighted": true,
+                "highlightLatencyMs": 20,
+                "collectedCharacters": 2051,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.199999809265137,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Go!测试译文：Go!",
+                "initialRequests": 1,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              }
+            ],
+            "consoleErrors": [],
+            "unexpectedNetworkRequests": 0,
+            "launchMode": "macos-background-cdp",
+            "focusPolicy": "launchservices-no-foreground",
+            "instrumented": false,
+            "windowPlacement": {
+              "mode": "background-visible-no-focus",
+              "browserFrontmost": false
+            }
+          },
+          {
+            "passed": true,
+            "baseline": false,
+            "verifyActions": true,
+            "buildSha256": "0eb9d25121bee88a5812eea2321aa65ee0bd1f1b08dddd025eee77b9343368b3",
+            "cases": [
+              {
+                "id": "alignment-limit",
+                "emptyNodes": 0,
+                "sentences": 9000,
+                "sentence": "Go!",
+                "expectedHighlight": false,
+                "highlighted": false,
+                "highlightLatencyMs": null,
+                "collectedCharacters": 72003,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.59999990463257,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "",
+                "initialRequests": 2,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              },
+              {
+                "id": "alignment-boundary",
+                "emptyNodes": 0,
+                "sentences": 256,
+                "sentence": "Go!",
+                "expectedHighlight": true,
+                "highlighted": true,
+                "highlightLatencyMs": 25,
+                "collectedCharacters": 2051,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.699999809265137,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Go!测试译文：Go!",
+                "initialRequests": 1,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              }
+            ],
+            "consoleErrors": [],
+            "unexpectedNetworkRequests": 0,
+            "launchMode": "macos-background-cdp",
+            "focusPolicy": "launchservices-no-foreground",
+            "instrumented": false,
+            "windowPlacement": {
+              "mode": "background-visible-no-focus",
+              "browserFrontmost": false
+            }
+          }
+        ],
+        "nativeCounterRuns": [
+          {
+            "passed": true,
+            "baseline": true,
+            "verifyActions": true,
+            "buildSha256": "43236570d2cb44c76176e62a30c2265c6ead53184179154781e8d986181d2fc3",
+            "cases": [
+              {
+                "id": "alignment-limit",
+                "emptyNodes": 0,
+                "sentences": 9000,
+                "sentence": "Go!",
+                "expectedHighlight": false,
+                "highlighted": false,
+                "highlightLatencyMs": null,
+                "collectedCharacters": 72003,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.800000190734863,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "",
+                "sentenceBudgetTrace": [
+                  {
+                    "characters": 35999,
+                    "reads": 9000,
+                    "closed": true
+                  },
+                  {
+                    "characters": 36004,
+                    "reads": 9000,
+                    "closed": true
+                  }
+                ],
+                "initialRequests": 2,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              },
+              {
+                "id": "alignment-boundary",
+                "emptyNodes": 0,
+                "sentences": 256,
+                "sentence": "Go!",
+                "expectedHighlight": true,
+                "highlighted": true,
+                "highlightLatencyMs": 24,
+                "collectedCharacters": 2051,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.5,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Go!测试译文：Go!",
+                "sentenceBudgetTrace": [
+                  {
+                    "characters": 1023,
+                    "reads": 256,
+                    "closed": true
+                  },
+                  {
+                    "characters": 1028,
+                    "reads": 256,
+                    "closed": true
+                  }
+                ],
+                "initialRequests": 1,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              }
+            ],
+            "consoleErrors": [],
+            "unexpectedNetworkRequests": 0,
+            "launchMode": "macos-background-cdp",
+            "focusPolicy": "launchservices-no-foreground",
+            "instrumented": true,
+            "windowPlacement": {
+              "mode": "background-visible-no-focus",
+              "browserFrontmost": false
+            }
+          },
+          {
+            "passed": true,
+            "baseline": false,
+            "verifyActions": true,
+            "buildSha256": "0eb9d25121bee88a5812eea2321aa65ee0bd1f1b08dddd025eee77b9343368b3",
+            "cases": [
+              {
+                "id": "alignment-limit",
+                "emptyNodes": 0,
+                "sentences": 9000,
+                "sentence": "Go!",
+                "expectedHighlight": false,
+                "highlighted": false,
+                "highlightLatencyMs": null,
+                "collectedCharacters": 72003,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.200000286102295,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "",
+                "sentenceBudgetTrace": [
+                  {
+                    "characters": 35999,
+                    "reads": 257,
+                    "closed": true
+                  }
+                ],
+                "initialRequests": 2,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              },
+              {
+                "id": "alignment-boundary",
+                "emptyNodes": 0,
+                "sentences": 256,
+                "sentence": "Go!",
+                "expectedHighlight": true,
+                "highlighted": true,
+                "highlightLatencyMs": 21,
+                "collectedCharacters": 2051,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.300000190734863,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Go!测试译文：Go!",
+                "sentenceBudgetTrace": [
+                  {
+                    "characters": 1023,
+                    "reads": 256,
+                    "closed": true
+                  },
+                  {
+                    "characters": 1028,
+                    "reads": 256,
+                    "closed": true
+                  }
+                ],
+                "initialRequests": 1,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              }
+            ],
+            "consoleErrors": [],
+            "unexpectedNetworkRequests": 0,
+            "launchMode": "macos-background-cdp",
+            "focusPolicy": "launchservices-no-foreground",
+            "instrumented": true,
+            "windowPlacement": {
+              "mode": "background-visible-no-focus",
+              "browserFrontmost": false
+            }
+          }
+        ],
+        "counterMethod": "Proxy the real Intl sentence iterator in verified extension isolated world; preserve native segments and count reads/closure. These runs confirm actual reachability/work, their timing is excluded from performance comparison.",
+        "scope": "9000sentences with combined72003characters below shared100000gate; exact256boundary. Real keyboard and pointer, deterministic Microsoft transport, original text and Text identity, both-side compact entry and play labels, host click, native restore, no passive extra requests or owner mutations. No real speech/clipboard/save effects.",
+        "representativeScreenshotsInspected": 4,
+        "measurement": "Uninstrumented runs sequential after own build/test jobs ended. No machine-wide idle guarantee or CPU profiler attribution."
+      },
+      "comparison": {
+        "nativeWork": "Baseline reads9000source+9000translation segments; final reads257source and no translation; both iterators close normally.",
+        "uninstrumentedTiming": "9000sentence baseline/finals have no long tasks; heartbeat21.2baseline vs21.6/21.6ms final.256boundary firstpaint23baseline vs20/25ms final, input+rAF+poll included. No browser jank removal or universal speedup claim."
+      },
+      "nextChainReproduction": {
+        "publicEntry": "collectReadingGroups",
+        "depth": 20000,
+        "sourceHash": "3f325fba6ec0ba902ee59a1003e444769c336a5c2f0df9c4702e1ff2c24743c1",
+        "evidence": "Public export compiled unchanged with controlled linkedom visibility/geometry mocks; not native browser",
+        "outcome": "threw",
+        "error": "RangeError: Maximum call stack size exceeded",
+        "originalPreserved": true
+      },
+      "openPerformanceIssue": [
+        "Deep DOM50ms tasks/64-68.1ms heartbeat from thirteenth remain unremeasured and unresolved.",
+        "Eager Range creation, geometry, wide owner, ancestor mutation and rapid scroll/pointer ordering remain open.",
+        "Public reencounter recursive traversal overflows in controlled20,000depth fixture; not fixed this batch.",
+        "Twelfth123-151ms synchronous root remount and section preview/restore totals remain open."
+      ],
+      "affectedArchitecture": {
+        "status": "passed",
+        "testFiles": 3,
+        "testCases": 815,
+        "wholeRepositoryGatePassed": false
+      },
+      "typeCheck": "passed",
+      "chromeBuild": "passed",
+      "firefoxBuild": "passed; build-only evidence",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "ok",
+        "files": 466,
+        "registeredCases": 6112,
+        "parameterExpansionsIncluded": false
+      },
+      "artifactHashes": {
+        "content": "0eb9d25121bee88a5812eea2321aa65ee0bd1f1b08dddd025eee77b9343368b3",
+        "background": "9ee6d3de1b978a142fc3457dc39741cf347c5894fcf97cbdaf471729709408a8",
+        "manifest": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844"
+      },
+      "temporaryBrowserCleanup": {
+        "ownedNativeBrowserProcesses": 0,
+        "passed": true,
+        "runsClosedWith": "full focus-safe launcher.close; zero after traced pair and final uninstrumented repeat"
+      },
+      "integrationDebt": "Six cached post-baseline image/docs main commits and19executable/3documentation ownership gaps remain; no remote freshness/release proof.",
+      "liveProviderValidated": false,
+      "firefoxRuntimeValidated": false,
+      "touchDeviceValidated": false,
+      "referenceRepositoriesUsed": false,
+      "goalComplete": false,
+      "docsBuild": "passed",
+      "docsCheck": {
+        "status": "passed",
+        "pages": 77,
+        "links": 3955,
+        "anchors": 741,
+        "images": 154
+      }
     }
   ]
 }

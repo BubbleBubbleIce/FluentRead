@@ -28,6 +28,7 @@ import {
 import {
     LONG_PARAGRAPH_LINE_BREAK_MIN_LENGTH,
     applyLongParagraphLineBreaks,
+    iterateTranslationSentences,
     splitTranslationSentences,
 } from '@/src/core/translation/lineBreak';
 import {
@@ -182,6 +183,30 @@ describe('长段落自动换行', () => {
         expect(splitTranslationSentences('Dr. Smith wrote it')).toHaveLength(1);
         expect(splitTranslationSentences('他说“好的。”然后离开了。')).toHaveLength(2);
         expect(splitTranslationSentences('句子结束。   ')).toEqual(['句子结束。   ']);
+    });
+
+    it('按需读取兼容分句，两个迭代器及完整数组调用不会相互移动游标', () => {
+        const first = iterateTranslationSentences('First. \t　Second! Third?');
+        const second = iterateTranslationSentences('甲。乙。');
+        expect(first.next()).toEqual({done: false, value: 'First. \t　'});
+        expect(second.next()).toEqual({done: false, value: '甲。'});
+        expect(splitTranslationSentences('Other! Sentence?')).toEqual(['Other! ', 'Sentence?']);
+        expect(Array.from(first)).toEqual(['Second! ', 'Third?']);
+        expect(Array.from(second)).toEqual(['乙。']);
+        expect(Array.from(iterateTranslationSentences(''))).toEqual(['']);
+    });
+
+    it('提前关闭迭代器后仍保持后续分句、尾随空白和原文重组契约', () => {
+        const source = 'One! Two? Three。 \t　';
+        const iterator = iterateTranslationSentences(source);
+        expect(iterator.next().value).toBe('One! ');
+        iterator.return?.();
+        expect(iterator.next().done).toBe(true);
+        expect(splitTranslationSentences(source)).toEqual(['One! ', 'Two? ', 'Three。 \t　']);
+        for (const value of ['\t　', 'One。\r\nTwo。', 'One。\u00a0Two。', 'One。Two。 \t', 'Last。　', 'One。 \t　Two!']) {
+            expect(splitTranslationSentences(value).join('')).toBe(value);
+            expect(Array.from(iterateTranslationSentences(value))).toEqual(splitTranslationSentences(value));
+        }
     });
 
     it('只改写超过长度门槛且确实多句的译文，短段落保持原样', () => {

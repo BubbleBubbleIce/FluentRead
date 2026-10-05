@@ -2,38 +2,37 @@
  * @file src/core/translation/lineBreak.ts
  *
  * 文件职责：为长段落译文按句子边界插入换行，让连续大段译文在保持原有内联结构的前提下更易阅读。
- * 主要内容：识别中英文句末标点并排除常见缩写与小数点误判，提供句子切分纯函数，以及在已渲染译文容器内以 TreeWalker 收集文本并就地插入 <br> 的 DOM 改写函数，只处理超过长度门槛且确实包含多句的段落。 可核对的公开符号包括 LONG_PARAGRAPH_LINE_BREAK_MIN_LENGTH、splitTranslationSentences、applyLongParagraphLineBreaks。
+ * 主要内容：独立游标按需迭代保留标点与空白的句子，排除常见缩写与小数点误判；数组入口复用相同边界，译文 DOM 通过 TreeWalker 收集并就地插入 <br>，仅改写超过门槛的多句段落。
  * 模块边界：本文件属于可独立测试的 core 候选领域；可以读取和改写传入的译文 DOM，但不访问配置存储、不调用 provider、不注册页面监听器，也不决定译文何时渲染。
  */
 
 /** 低于该字符数的段落不做换行，避免把短句拆得支离破碎。 */
 export const LONG_PARAGRAPH_LINE_BREAK_MIN_LENGTH = 120;
 
-// 句末标点后若紧跟引号或右括号，收尾符号仍归属上一句。
-const sentenceEndPattern = /(?:[。．！？；…]|[!?;]|(?<![A-Z])(?<!\b(?:Mr|Mrs|Ms|Dr|Prof|St|vs|etc|No|Fig|e\.g|i\.e))\.(?=\s))[”’"')\]】》»]*/gu;
-
 /**
- * 按句末标点切分文本，返回保留原标点和尾随空白的句子片段。
- * 没有可用边界时返回单元素数组，调用方据此跳过改写。
+ * 按需读取句子，允许调用方在达到上限时停止；每个迭代器拥有独立的正则游标。
+ * 句末引号和右括号、尾随横向空白仍归属上一句，空文本也保留一个空片段。
  */
-export function splitTranslationSentences(text: string): string[] {
-    const sentences: string[] = [];
+export function* iterateTranslationSentences(text: string): IterableIterator<string> {
+    const sentenceEndPattern = /(?:[。．！？；…]|[!?;]|(?<![A-Z])(?<!\b(?:Mr|Mrs|Ms|Dr|Prof|St|vs|etc|No|Fig|e\.g|i\.e))\.(?=\s))[”’"')\]】》»]*/gu;
     let cursor = 0;
-    sentenceEndPattern.lastIndex = 0;
     for (let match = sentenceEndPattern.exec(text); match; match = sentenceEndPattern.exec(text)) {
         const end = match.index + match[0].length;
         // 数字中的小数点与省略号内部不构成句子边界。
         if (end >= text.length) break;
-        const tail = text.slice(end);
-        const trailingSpace = /^[ \t　]*/u.exec(tail)![0].length;
-        const next = tail.slice(trailingSpace);
-        if (!next) break;
-        sentences.push(text.slice(cursor, end + trailingSpace));
-        cursor = end + trailingSpace;
+        let next = end;
+        while (next < text.length && (text[next] === ' ' || text[next] === '\t' || text[next] === '　')) next++;
+        if (next >= text.length) break;
+        yield text.slice(cursor, next);
+        cursor = next;
         sentenceEndPattern.lastIndex = cursor;
     }
-    if (cursor < text.length) sentences.push(text.slice(cursor));
-    return sentences.length > 0 ? sentences : [text];
+    if (cursor < text.length || cursor === 0) yield text.slice(cursor);
+}
+
+/** 数组入口保持完整片段及空文本契约，供译文 DOM 换行使用。 */
+export function splitTranslationSentences(text: string): string[] {
+    return Array.from(iterateTranslationSentences(text));
 }
 
 /**

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-// 生产扩展经真实全文快捷键翻译原文，宿主追加空文本或深层空分支，再测量真实指针高亮。
+// 生产扩展经真实全文快捷键翻译，验证句数边界、稀疏或深层来源上的原生指针高亮。
 // 使用临时后台 Edge、本地确定性 transport；测量阶段不运行构建或测试。
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
@@ -14,10 +14,15 @@ const extensionDir = path.resolve(arg('extension-dir', '.output/chrome-mv3'));
 const artifactsDir = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-sentence-responsiveness'));
 const baseline = process.argv.includes('--baseline');
 const verifyActions = process.argv.includes('--verify-actions');
+const traceBudget = process.argv.includes('--trace-budget');
 const {chromium} = require(path.join(arg('playwright-root', path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules')), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(arg('focus-safe-helper', path.join(os.homedir(), '.codex/skills/fluentread-extension-ui-test/scripts/focus-safe-browser.cjs')));
-const cases = [{id: 'sparse', emptyNodes: 50_000, sentences: 200}, {id: 'deep', depth: 2000, sentences: 3}];
-const report = {baseline, verifyActions, passed: false, evidence: 'Production extension, native keyboard and pointer; host inserts empty Text nodes or a deeply nested empty branch after translation without moving original Text; local deterministic Microsoft fixture',
+const alignmentStress = process.argv.includes('--alignment-stress');
+const cases = alignmentStress
+  ? [{id: 'alignment-limit', emptyNodes: 0, sentences: 9000, sentence: 'Go!', expectedHighlight: false},
+     {id: 'alignment-boundary', emptyNodes: 0, sentences: 256, sentence: 'Go!', expectedHighlight: true}]
+  : [{id: 'sparse', emptyNodes: 50_000, sentences: 200, expectedHighlight: true}, {id: 'deep', depth: 2000, sentences: 3, expectedHighlight: true}];
+const report = {baseline, verifyActions, traceBudget, passed: false, evidence: 'Production extension, native keyboard and pointer; local deterministic Microsoft fixture; optional isolated-world sentence iterator counters are separate from uninstrumented timing',
   buildSha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex'), cases: [], consoleErrors: []};
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-sentence-responsiveness-'));
 fs.mkdirSync(artifactsDir, {recursive: true});
@@ -40,6 +45,7 @@ async function main() {
     assert.equal(report.launchMode, 'macos-background-cdp'); assert.equal(report.focusPolicy, 'launchservices-no-foreground');
     assert.equal(report.windowPlacement.browserFrontmost, false);
     const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+    const extensionId = new URL(worker.url()).host;
     await installTranslationFixtureOnWorker(worker, {translationUrl: provider.translationUrl, blockedUrl: provider.blockedUrl});
     const setup = await newPageWithoutForeground(context);
     await setup.goto(`chrome-extension://${new URL(worker.url()).host}/icon/128.png`);
@@ -58,7 +64,7 @@ async function main() {
       page.on('pageerror', error => report.consoleErrors.push({case: fixture.id, message: error.message}));
       await page.goto(`http://127.0.0.1:${server.address().port}/${fixture.id}`, {waitUntil: 'domcontentloaded'});
       await page.locator('#fluent-read-page-styles').waitFor({state: 'attached'});
-      const source = Array.from({length: fixture.sentences}, (_, i) => `Sentence ${i} keeps useful reading context.`).join(' ');
+      const source = Array.from({length: fixture.sentences}, (_, i) => fixture.sentence || `Sentence ${i} keeps useful reading context.`).join(' ');
       await page.evaluate(source => {
         const owner = document.querySelector('#owner'); owner.textContent = source;
         window.sourceNode = owner.firstChild;
@@ -86,12 +92,50 @@ async function main() {
       await page.waitForTimeout(600);
       assert.equal(await page.locator('#owner > .fluent-read-bilingual-content').count(), 1);
       const point = await page.evaluate(() => {
-        const range = document.createRange(); range.setStart(window.sourceNode, 3); range.setEnd(window.sourceNode, 4);
+        const range = document.createRange(); range.setStart(window.sourceNode, 1); range.setEnd(window.sourceNode, 2);
         const rect = range.getClientRects()[0]; return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2};
       });
-      const expected = 'Sentence 0 keeps useful reading context.';
+      const expected = fixture.sentence || 'Sentence 0 keeps useful reading context.';
+      if (alignmentStress) {
+        const size = await page.evaluate(() => document.querySelector('#owner').textContent.length);
+        assert(size <= 100_000, 'Alignment fixture must not be skipped by the character gate');
+      }
+      let budgetSession, budgetContext;
+      if (traceBudget) {
+        budgetSession = await context.newCDPSession(page);
+        const worlds = [];
+        budgetSession.on('Runtime.executionContextCreated', event => worlds.push(event.context.id));
+        await budgetSession.send('Runtime.enable');
+        for (const contextId of worlds) {
+          const result = await budgetSession.send('Runtime.evaluate', {contextId, returnByValue: true,
+            expression: 'typeof chrome !== "undefined" && chrome.runtime?.id'});
+          if (result.result?.value === extensionId) {budgetContext = contextId; break;}
+        }
+        assert(budgetContext, 'Must instrument the actual extension isolated world');
+        const result = await budgetSession.send('Runtime.evaluate', {contextId: budgetContext, returnByValue: true,
+          expression: '(' + function () {
+            const segment = Intl.Segmenter.prototype.segment;
+            globalThis.__frSentenceBudgetTrace = [];
+            Intl.Segmenter.prototype.segment = function (text) {
+              const segments = segment.call(this, text);
+              if (this.resolvedOptions().granularity !== 'sentence') return segments;
+              const item = {characters: text.length, reads: 0, closed: false};
+              globalThis.__frSentenceBudgetTrace.push(item);
+              return new Proxy(segments, {get(target, key) {
+                if (key === Symbol.iterator) return function* () {
+                  try {for (const part of target) {item.reads++; yield part;}}
+                  finally {item.closed = true;}
+                };
+                const value = Reflect.get(target, key, target);
+                return typeof value === 'function' ? value.bind(target) : value;
+              }});
+            };
+            return true;
+          }.toString() + ')()'});
+        assert.equal(result.result?.value, true);
+      }
       await page.evaluate(() => {
-        window.tasks = []; window.ticks = []; window.mutations = []; window.rangeCount = 0;
+        window.tasks = []; window.ticks = []; window.mutations = [];
         window.taskObserver = new PerformanceObserver(list => window.tasks.push(...list.getEntries().map(entry => entry.duration)));
         window.taskObserver.observe({type: 'longtask', buffered: false});
         window.mutationObserver = new MutationObserver(records => window.mutations.push(...records.map(record => record.type)));
@@ -102,27 +146,43 @@ async function main() {
       const started = Date.now();
       await page.mouse.move(point.x, point.y);
       let highlighted = false;
-      try {
-        await page.waitForFunction(expected => [...(CSS.highlights.get('fluentread-bilingual-sentence') || [])].map(range => range.toString()).join('') === expected + '测试译文：' + expected, expected, {timeout: 8000});
-        highlighted = true;
-      } catch (error) {if (!baseline) throw error;}
-      const highlightLatencyMs = Date.now() - started;
+      if (fixture.expectedHighlight) {
+        try {
+          await page.waitForFunction(expected => [...(CSS.highlights.get('fluentread-bilingual-sentence') || [])].map(range => range.toString()).join('') === expected + '测试译文：' + expected, expected, {timeout: 8000});
+          highlighted = true;
+        } catch (error) {if (!baseline) throw error;}
+      }
+      const highlightLatencyMs = fixture.expectedHighlight ? Date.now() - started : null;
       await page.waitForTimeout(850);
       const result = await page.evaluate(({fixture, source, highlighted, highlightLatencyMs}) => {
         window.taskObserver.disconnect(); window.mutationObserver.disconnect(); clearInterval(window.timer);
         const clone = document.querySelector('#owner').cloneNode(true);
         clone.querySelectorAll('[data-fr-translation-owned="true"]').forEach(node => node.remove());
-        return {...fixture, highlighted, highlightLatencyMs, longTasksMs: window.tasks, maxHeartbeatGapMs: Math.max(0, ...window.ticks),
+        return {...fixture, highlighted: fixture.expectedHighlight ? highlighted : Boolean(CSS.highlights.get('fluentread-bilingual-sentence')?.size), highlightLatencyMs, collectedCharacters: document.querySelector('#owner').textContent.length, longTasksMs: window.tasks, maxHeartbeatGapMs: Math.max(0, ...window.ticks),
           hostMutations: window.mutations.length, originalPreserved: clone.textContent === source,
           originalTextIdentity: document.querySelector('#owner').contains(window.sourceNode),
           highlightedText: [...(CSS.highlights.get('fluentread-bilingual-sentence') || [])].map(range => range.toString()).join('')};
       }, {fixture, source, highlighted, highlightLatencyMs});
       report.cases.push(result);
+      if (budgetSession) {
+        try {
+          const trace = await budgetSession.send('Runtime.evaluate', {contextId: budgetContext, returnByValue: true,
+            expression: 'globalThis.__frSentenceBudgetTrace'});
+          result.sentenceBudgetTrace = trace.result?.value;
+          const sourceTrace = result.sentenceBudgetTrace?.find(item => item.characters === source.length);
+          assert(sourceTrace, 'Native hover must actually reach sentence segmentation');
+          if (alignmentStress) {
+            assert.equal(sourceTrace.reads, fixture.expectedHighlight ? 256 : baseline ? 9000 : 257);
+            assert(sourceTrace.closed);
+            if (!fixture.expectedHighlight && !baseline) assert.equal(result.sentenceBudgetTrace.length, 1);
+          }
+        } finally {await budgetSession.detach();}
+      }
       result.initialRequests = translatedRequests - before;
       assert.equal(result.hostMutations, 0); assert(result.originalPreserved && result.originalTextIdentity);
       assert.equal(provider.requestCount(), translatedRequests, 'Passive highlight must not request translation');
       await page.screenshot({path: path.join(artifactsDir, fixture.id + '.png')});
-      if (verifyActions) {
+      if (verifyActions && fixture.expectedHighlight) {
         const actions = page.locator('#fluent-read-sentence-actions');
         const entry = actions.getByRole('button', {name: '句子操作', exact: true});
         await entry.waitFor({state: 'visible'}); assert.equal(await actions.getByRole('toolbar').count(), 0);
@@ -160,7 +220,7 @@ async function main() {
       result.restoreClearedHighlight = true; result.extraRequests = provider.requestCount() - translatedRequests;
       await page.close();
     }
-    report.passed = report.cases.every(result => result.highlighted) && report.consoleErrors.length === 0;
+    report.passed = report.cases.every(result => result.highlighted === result.expectedHighlight) && report.consoleErrors.length === 0;
     report.unexpectedNetworkRequests = unexpectedNetwork.length; assert.equal(unexpectedNetwork.length, 0);
     if (!baseline) assert(report.passed);
   } catch (error) {report.error = error.stack; process.exitCode = 1;}
