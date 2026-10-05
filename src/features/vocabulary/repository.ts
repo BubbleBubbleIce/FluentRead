@@ -1,7 +1,7 @@
 /**
  * @file src/features/vocabulary/repository.ts
  * 文件职责：实现 FluentRead 本地单词与句子收藏的 Dexie 持久化仓库，负责多语种记录清洗、兼容旧词条的唯一身份、上下文合并、复习调度、删除撤销以及安全导入导出。
- * 主要内容：定义数据库 schema、语言和 URL 规范化、掌握状态/间隔算法，提供收藏增删查改、独立解释更新、review、按解释时间合并的 JSON 导入和导出。
+ * 主要内容：定义数据库 schema、语言和 URL 规范化、掌握状态/间隔算法，提供收藏增删查改、独立解释更新、review、按解释时间合并的 JSON 导入和导出；语境候选保留八条，导入时间逐个归约，避免全数组排序及无界实参。
  * 模块边界：仓库只拥有本地 IndexedDB 数据与领域不变量，不处理 runtime 消息或渲染界面；后台 handler 负责权限和广播，learningModel 提供纯会话模型，敏感上下文默认不导出。
  */
 import Dexie, { type Table } from 'dexie';
@@ -230,17 +230,32 @@ export function mergeVocabularyContexts(
 ): VocabularyContext[] {
   const byIdentity = new Map<string, VocabularyContext>();
 
-  for (const context of [...existing, ...incoming]) {
-    const identity = contextIdentity(context);
-    const previous = byIdentity.get(identity);
-    if (!previous || context.capturedAt >= previous.capturedAt) {
-      byIdentity.set(identity, { ...context });
+  for (const contexts of [existing, incoming]) {
+    for (const context of contexts) {
+      const identity = contextIdentity(context);
+      const previous = byIdentity.get(identity);
+      if (!previous || context.capturedAt >= previous.capturedAt) {
+        byIdentity.set(identity, { ...context });
+      }
     }
   }
 
-  return [...byIdentity.values()]
-    .sort((left, right) => left.capturedAt - right.capturedAt)
-    .slice(-VOCABULARY_ENTRY_MAX_CONTEXTS);
+  // Map 保留身份的首次出现位置；只维护八条候选，并列时仍选后出现的身份。
+  const newest: VocabularyContext[] = [];
+  for (const context of byIdentity.values()) {
+    // 仓库输入已经清洗；公开 helper 对未清洗时间继续保持旧排序行为。
+    if (!Number.isFinite(context.capturedAt)) {
+      return [...byIdentity.values()]
+        .sort((left, right) => left.capturedAt - right.capturedAt)
+        .slice(-VOCABULARY_ENTRY_MAX_CONTEXTS);
+    }
+    if (newest.length === VOCABULARY_ENTRY_MAX_CONTEXTS && context.capturedAt < newest[0].capturedAt) continue;
+    let position = newest.length;
+    while (position > 0 && newest[position - 1].capturedAt > context.capturedAt) position -= 1;
+    newest.splice(position, 0, context);
+    if (newest.length > VOCABULARY_ENTRY_MAX_CONTEXTS) newest.shift();
+  }
+  return newest;
 }
 
 function mergeTranslations(
@@ -845,11 +860,10 @@ function sanitizeImportEntry(value: unknown, now: number): SanitizedImportEntry 
     : [];
   const masteryLevel = sanitizeMasteryLevel(value.masteryLevel);
   const reviewCount = sanitizeCount(value.reviewCount, 0);
-  const latestChildUpdate = Math.max(
-    initialUpdatedAt,
-    ...Object.values(translations).map((snapshot) => snapshot.updatedAt),
-    ...contexts.map((context) => context.capturedAt),
-  );
+  // 导入文件里的子记录数可能很大，逐个归约避免展开为无界函数实参。
+  let latestChildUpdate = initialUpdatedAt;
+  for (const snapshot of Object.values(translations)) latestChildUpdate = Math.max(latestChildUpdate, snapshot.updatedAt);
+  for (const context of contexts) latestChildUpdate = Math.max(latestChildUpdate, context.capturedAt);
   const createdAt = Math.min(initialCreatedAt, latestChildUpdate);
   const updatedAt = latestChildUpdate;
   const id = isUuid(value.id) ? value.id : createUuid();

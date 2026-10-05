@@ -30,6 +30,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   db.close();
   await db.delete();
 });
@@ -82,6 +83,40 @@ function reviewLog(
     nextReviewAt: reviewedAt,
   };
 }
+
+describe('large vocabulary import and bounded context selection', () => {
+  it('imports a below-warning-size collection with 150000 contexts without overflowing the call stack', async () => {
+    const original = await repository.upsert(baseInput(), NOW);
+    const exported = await repository.exportData({includePrivateContext:true,now:NOW});
+    exported.entries[0].contexts = Array.from({length:150_000},(_,i)=>({text:`Synthetic context ${i}.`,capturedAt:NOW+i}));
+    const raw = JSON.stringify(exported); expect(Buffer.byteLength(raw)).toBeLessThan(20*1024*1024);
+    await repository.clear();
+    await expect(repository.importData(JSON.parse(raw),NOW)).resolves.toMatchObject({inserted:1,updated:0});
+    const restored = await repository.get(original.id);
+    expect(restored?.contexts.map(context=>context.text)).toEqual(Array.from({length:8},(_,i)=>`Synthetic context ${149_992+i}.`));
+    expect(restored?.updatedAt).toBe(NOW+149_999);
+  });
+  it('retains stable timestamp ties, first-identity order and last equal-time snapshots without mutating inputs', () => {
+    const contexts = Array.from({length:12},(_,i)=>Object.freeze({text:`Context ${i}.`,capturedAt:NOW,sourceUrl:`https://example.test/${i}`}));
+    const replacement = Object.freeze({...contexts[5],pageTitle:'Updated snapshot'});
+    const incoming = Object.freeze([replacement,Object.freeze({...contexts[1],capturedAt:NOW+1})]);
+    const result = mergeVocabularyContexts(Object.freeze(contexts),incoming);
+    expect(result.map(context=>context.text)).toEqual(['Context 5.','Context 6.','Context 7.','Context 8.','Context 9.','Context 10.','Context 11.','Context 1.']);
+    expect(result[0].pageTitle).toBe('Updated snapshot'); expect(result[0]).not.toBe(replacement);
+    result[0].text='Detached result';expect(replacement.text).toBe('Context 5.');
+  });
+  it('preserves the public merge helper ordering for uncleaned nonfinite timestamps', () => {
+    const contexts = Array.from({length:12},(_,i)=>({text:`Raw context ${i}.`,capturedAt:i===5 ? Number.NaN : i===9 ? Infinity : i}));
+    expect(mergeVocabularyContexts([],contexts)).toEqual([...contexts].sort((a,b)=>a.capturedAt-b.capturedAt).slice(-8));
+  });
+  it('does not perform a full-array sort to retain eight of 5000 sanitized contexts', () => {
+    const contexts = Object.freeze(Array.from({length:5000},(_,i)=>Object.freeze({text:`Context ${i}.`,capturedAt:NOW+(i*2879+197)%5000})));
+    const expected = [...contexts].sort((a,b)=>a.capturedAt-b.capturedAt).slice(-8);
+    const sort = vi.spyOn(Array.prototype,'sort');
+    expect(mergeVocabularyContexts([],contexts)).toEqual(expected);
+    expect(sort).not.toHaveBeenCalled();sort.mockRestore();
+  });
+});
 
 describe('vocabulary repository sanitizer edges', () => {
   it('accepts null-prototype records and rejects malformed context, language, and URL values', () => {

@@ -11795,6 +11795,527 @@
       "referenceRepositoriesChanged": false,
       "pushed": false,
       "merged": false
+    },
+    {
+      "name": "nineteenth-large-vocabulary-import-and-bounded-context-retention",
+      "batch": "nineteenth",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 153,
+        "sourceReadFunctionBodies": 2439,
+        "pendingFiles": 665,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 4,
+      "newStaticTestDefinitions": 4,
+      "newOptionalNativePhases": 1,
+      "oldSourceRun": {
+        "executedCases": 11,
+        "passed": 9,
+        "failed": 2,
+        "scope": "Three new cases before mutation.150000contexts actual import crashes RangeError and5000context full-sort assertion fails; stable tie/snapshot regression case passes. Later nonfinite helper case added after patch."
+      },
+      "implementation": {
+        "import": "Iterative Math.max over translation and context timestamps rather than unbounded argument expansion and temporary mapped timestamp arrays. Preserve same finite timestamp maximum, child update and transactional import rules.",
+        "retention": "Deduplicate through original full identity Map, clone snapshots at input time, preserve first identity insertion order and last equal-time replacement. Maintain8ascending candidates with stable tie insertion. Do not concatenate full inputs or copy/sort all values for sanitized times; public helper nonfinite timestamp fallback uses original sort. Map memory still grows, not total constant space.",
+        "removed": "Two map callbacks removed, production bodies95to93; no API/behavior deletion or newly unused function claim."
+      },
+      "strictCoverage": {
+        "files": 2,
+        "executedCases": 40,
+        "modules": {
+          "src/features/vocabulary/repository.ts": {
+            "statements": 100,
+            "branches": 100,
+            "functions": 100,
+            "lines": 100
+          }
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0
+      },
+      "affectedTests": {
+        "files": 4,
+        "executedCases": 46,
+        "passed": true,
+        "scope": "13background handler,26Book setup/lifecycle,3study lifecycle,4Book static contracts; no full regression."
+      },
+      "architecture": {
+        "affectedFiles": 3,
+        "executedCases": 817,
+        "passed": true,
+        "ownership": {
+          "executedCases": 9,
+          "passed": 7,
+          "failed": 2,
+          "remainingExecutableOmissions": 15,
+          "unownedDocumentationTools": 3,
+          "wholeGatePassed": false
+        }
+      },
+      "checks": {
+        "typecheck": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed; no actual Firefox runtime",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testSuiteAudit": {
+          "files": 466,
+          "staticRegisteredDefinitions": 6166,
+          "passed": true
+        },
+        "docsBuild": "passed",
+        "docsCheck": {
+          "ok": true,
+          "pages": 77,
+          "links": 3955,
+          "anchors": 741,
+          "images": 154
+        }
+      },
+      "contextDifferentialAndTiming": {
+        "scope": "Immutable eighteenth repository versus current public merge. Identity, stable timestamps, selected snapshot and detached output. Counters separate from timings. Map retains all unique identities; not constant total memory. Node numbers are not full import/UI latency.",
+        "baselineSourceSha256": "d07904263cbbf1ee58954fd5bbed78e1218c471c7cda8db0b35742ae128b6572",
+        "differentialCases": 6000,
+        "malformedTimestampCases": 537,
+        "work": [
+          {
+            "id": "stored-eight-plus-eight",
+            "rawContexts": 16,
+            "sortWork": {
+              "baseline": {
+                "fullArraySortCalls": 1,
+                "sortComparisons": 40
+              },
+              "final": {
+                "fullArraySortCalls": 0,
+                "sortComparisons": 0
+              }
+            },
+            "selected": 8
+          },
+          {
+            "id": "5000-mixed-timestamps",
+            "rawContexts": 5000,
+            "sortWork": {
+              "baseline": {
+                "fullArraySortCalls": 1,
+                "sortComparisons": 54202
+              },
+              "final": {
+                "fullArraySortCalls": 0,
+                "sortComparisons": 0
+              }
+            },
+            "selected": 8
+          },
+          {
+            "id": "150000-import-contexts",
+            "rawContexts": 150000,
+            "sortWork": {
+              "baseline": {
+                "fullArraySortCalls": 1,
+                "sortComparisons": 2073924
+              },
+              "final": {
+                "fullArraySortCalls": 0,
+                "sortComparisons": 0
+              }
+            },
+            "selected": 8
+          }
+        ],
+        "timing": [
+          {
+            "id": "stored-eight-plus-eight",
+            "medianMs": {
+              "baseline": 0.011500000000069122,
+              "final": 0.013208999999960724
+            },
+            "samplesMs": {
+              "baseline": [
+                0.013666999999941254,
+                0.011541999999963082,
+                0.011209000000008018,
+                0.01466700000014498,
+                0.011124999999992724,
+                0.011374999999816282,
+                0.011500000000069122
+              ],
+              "final": [
+                0.013666999999941254,
+                0.013832999999976892,
+                0.012541999999939435,
+                0.0126669999999649,
+                0.012582999999949607,
+                0.013249999999970896,
+                0.013208999999960724
+              ]
+            }
+          },
+          {
+            "id": "5000-mixed-timestamps",
+            "medianMs": {
+              "baseline": 3.690334000000121,
+              "final": 3.072041000000354
+            },
+            "samplesMs": {
+              "baseline": [
+                3.851791999999932,
+                3.4343340000000353,
+                3.8234999999999673,
+                3.6994999999999436,
+                3.690334000000121,
+                3.5749590000000353,
+                3.418333999999959
+              ],
+              "final": [
+                3.47199999999998,
+                2.9270830000000387,
+                3.007374999999911,
+                3.543333999999959,
+                2.937333999999737,
+                3.2887500000001637,
+                3.072041000000354
+              ]
+            }
+          },
+          {
+            "id": "150000-import-contexts",
+            "medianMs": {
+              "baseline": 189.4464590000007,
+              "final": 146.619917
+            },
+            "samplesMs": {
+              "baseline": [
+                182.49249999999984,
+                187.59320899999966,
+                201.59795799999938,
+                183.49387500000012,
+                189.4464590000007,
+                213.288458,
+                193.0552090000001
+              ],
+              "final": [
+                147.9317920000003,
+                146.2228329999998,
+                145.99624999999924,
+                150.42500000000018,
+                146.8479580000003,
+                146.619917,
+                144.25633300000027
+              ]
+            }
+          }
+        ]
+      },
+      "browser": {
+        "baseline": {
+          "passed": true,
+          "cases": [
+            {
+              "id": "default-off-with-existing-saved-entries",
+              "status": "passed"
+            },
+            {
+              "id": "setting-label-follows-cross-page-interface-language",
+              "status": "passed"
+            },
+            {
+              "id": "inline-matching-protected-content-original-text-and-geometry",
+              "status": "passed"
+            },
+            {
+              "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+              "status": "passed"
+            },
+            {
+              "id": "keyboard-entry-and-escape-without-model-request",
+              "status": "passed"
+            },
+            {
+              "id": "unapproved-sentence-context-disables-explanation",
+              "status": "passed"
+            },
+            {
+              "id": "explicit-current-context-only-and-unchanged-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dark-and-mobile-clamped-layout",
+              "status": "passed"
+            },
+            {
+              "id": "close-cancels-delayed-stream-without-resurrection",
+              "status": "passed"
+            },
+            {
+              "id": "model-failure-and-explicit-retry",
+              "status": "passed"
+            },
+            {
+              "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dynamic-text-stale-card-and-late-shadow-root",
+              "status": "passed"
+            },
+            {
+              "id": "scroll-discovers-later-reading",
+              "status": "passed"
+            },
+            {
+              "id": "visit-pause-keeps-global-preference",
+              "status": "passed"
+            },
+            {
+              "id": "cross-page-delete-removes-all-corresponding-marks",
+              "status": "passed"
+            },
+            {
+              "id": "master-toggle-and-site-disable-clear-and-restore",
+              "status": "passed"
+            },
+            {
+              "id": "permanent-disable-persists-across-reload",
+              "status": "passed"
+            },
+            {
+              "id": "continuous-chinese-saved-study-and-review-context",
+              "status": "passed"
+            },
+            {
+              "id": "large-collection-file-import-and-management-recovery",
+              "status": "reproduced"
+            },
+            {
+              "id": "anki-reserves-management-action-during-confirmation",
+              "status": "passed"
+            },
+            {
+              "id": "learning-tab-unmounts-collection-before-real-export-response",
+              "status": "passed"
+            },
+            {
+              "id": "closed-book-rejects-late-anki-download",
+              "status": "passed"
+            },
+            {
+              "id": "remounted-anki-both-privacy-choices-and-persistent-data-preserved",
+              "status": "passed"
+            },
+            {
+              "id": "cancel-then-confirm-clear-on-temporary-collection",
+              "status": "passed"
+            }
+          ],
+          "passedPhases": 23,
+          "reproducedPhases": 1,
+          "contentSha256": "aa9cbdcb02575299d3c32db1860cc11778ecd4899d3553a4c90d640c8f31b0a8",
+          "javascriptAssetsSha256": "4143cfaeaaf5914e20788659515ca79065663dea06566b645b3baaf65d7a0b84",
+          "pageErrors": [],
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "backgroundWindowVerified": true,
+          "studyContext": {
+            "displayedContext": [
+              "我每天学习中文。"
+            ],
+            "displayedCloze": [
+              "我每天____中文。"
+            ],
+            "storedDataPreserved": true,
+            "additionalModelRequests": 0,
+            "evidence": "Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request."
+          },
+          "largeImport": {
+            "fileBytes": 10539965,
+            "rawContexts": 150000,
+            "retainedContexts": null,
+            "stackOverflowReproduced": true,
+            "priorDataPreservedOnFailure": true,
+            "modelRequests": 0,
+            "evidence": "Production options file input change, actual import IPC and persistent store. Below20MiB warning threshold; no timing assertion."
+          },
+          "bookActions": {
+            "lateDownloads": 0,
+            "busyDuringConfirmation": true,
+            "backendExportSucceeded": true,
+            "actualBookUnmounted": true,
+            "evidence": "Native buttons and learning-center tab, real export IPC held until after unmount; callback/Promise delivery instrumentation, not timing."
+          },
+          "screenshotsGenerated": 7
+        },
+        "final": {
+          "passed": true,
+          "cases": [
+            {
+              "id": "default-off-with-existing-saved-entries",
+              "status": "passed"
+            },
+            {
+              "id": "setting-label-follows-cross-page-interface-language",
+              "status": "passed"
+            },
+            {
+              "id": "inline-matching-protected-content-original-text-and-geometry",
+              "status": "passed"
+            },
+            {
+              "id": "click-current-and-saved-sentence-without-model-or-host-event-interference",
+              "status": "passed"
+            },
+            {
+              "id": "keyboard-entry-and-escape-without-model-request",
+              "status": "passed"
+            },
+            {
+              "id": "unapproved-sentence-context-disables-explanation",
+              "status": "passed"
+            },
+            {
+              "id": "explicit-current-context-only-and-unchanged-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dark-and-mobile-clamped-layout",
+              "status": "passed"
+            },
+            {
+              "id": "close-cancels-delayed-stream-without-resurrection",
+              "status": "passed"
+            },
+            {
+              "id": "model-failure-and-explicit-retry",
+              "status": "passed"
+            },
+            {
+              "id": "translate-restore-retranslate-excludes-translations-and-preserves-review-data",
+              "status": "passed"
+            },
+            {
+              "id": "dynamic-text-stale-card-and-late-shadow-root",
+              "status": "passed"
+            },
+            {
+              "id": "scroll-discovers-later-reading",
+              "status": "passed"
+            },
+            {
+              "id": "visit-pause-keeps-global-preference",
+              "status": "passed"
+            },
+            {
+              "id": "cross-page-delete-removes-all-corresponding-marks",
+              "status": "passed"
+            },
+            {
+              "id": "master-toggle-and-site-disable-clear-and-restore",
+              "status": "passed"
+            },
+            {
+              "id": "permanent-disable-persists-across-reload",
+              "status": "passed"
+            },
+            {
+              "id": "continuous-chinese-saved-study-and-review-context",
+              "status": "passed"
+            },
+            {
+              "id": "large-collection-file-import-and-management-recovery",
+              "status": "passed"
+            },
+            {
+              "id": "anki-reserves-management-action-during-confirmation",
+              "status": "passed"
+            },
+            {
+              "id": "learning-tab-unmounts-collection-before-real-export-response",
+              "status": "passed"
+            },
+            {
+              "id": "closed-book-rejects-late-anki-download",
+              "status": "passed"
+            },
+            {
+              "id": "remounted-anki-both-privacy-choices-and-persistent-data-preserved",
+              "status": "passed"
+            },
+            {
+              "id": "cancel-then-confirm-clear-on-temporary-collection",
+              "status": "passed"
+            }
+          ],
+          "passedPhases": 24,
+          "reproducedPhases": 0,
+          "contentSha256": "aa9cbdcb02575299d3c32db1860cc11778ecd4899d3553a4c90d640c8f31b0a8",
+          "javascriptAssetsSha256": "91b9fd77b9f1ab416fb73dc73d1f27fa31c5cb7bdfd24d4114f3eb0e4d09647b",
+          "pageErrors": [],
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "backgroundWindowVerified": true,
+          "studyContext": {
+            "displayedContext": [
+              "我每天学习中文。"
+            ],
+            "displayedCloze": [
+              "我每天____中文。"
+            ],
+            "storedDataPreserved": true,
+            "additionalModelRequests": 0,
+            "evidence": "Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request."
+          },
+          "largeImport": {
+            "fileBytes": 10539965,
+            "rawContexts": 150000,
+            "retainedContexts": 8,
+            "stackOverflowReproduced": false,
+            "priorDataPreservedOnFailure": false,
+            "modelRequests": 0,
+            "evidence": "Production options file input change, actual import IPC and persistent store. Below20MiB warning threshold; no timing assertion."
+          },
+          "bookActions": {
+            "lateDownloads": 0,
+            "busyDuringConfirmation": true,
+            "backendExportSucceeded": true,
+            "actualBookUnmounted": true,
+            "evidence": "Native buttons and learning-center tab, real export IPC held until after unmount; callback/Promise delivery instrumentation, not timing."
+          },
+          "screenshotsGenerated": 7
+        },
+        "cleanupVerified": true,
+        "temporaryProfileProcessesAfterRun": 0,
+        "screenshotsInspected": "Final settled clear screenshot, no import-state screenshot. Import proof comes from actual file input, toast and persistent store assertions."
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/vocabulary/background/index.ts"
+        ],
+        "newFunctionBodies": 0,
+        "changedFiles": [
+          "src/features/vocabulary/repository.ts"
+        ],
+        "netProductionFunctionBodyChange": -2
+      },
+      "scopeBoundary": "Node/fake IndexedDB and actual production file input IPC/IndexedDB in temporary non-frontmost visible Edge with local SSE. Node pure merge timing alternates7rounds after own build/test/browser jobs ended; no full import/browser speed ratio or universal latency proof. Full uniqueness Map and sanitation remain significant large-input costs. No live provider, actualFirefox, device/store/release proof.",
+      "cachedIntegrationDebt": {
+        "ref": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "postBaselineCommits": 24,
+        "remoteFreshnessVerified": false
+      },
+      "remaining": [
+        "665pending source files and whole ownership gaps",
+        "Protocol familiar status omission and redundant mirror contracts await type reproduction",
+        "Large-import sanitizer, full identity Map memory and remaining aggregate work",
+        "Highlighter deep longtasks and Range/geometry/wide-owner/ancestor-mutation/scroll order",
+        "Whole-root remount123–151ms; section preview/restore",
+        "Index5k compilation and single NFC/native DOM calls; reading group memory; possible asynchronous publisher feedback",
+        "Cached main post-baseline commits require integration/re-review"
+      ],
+      "referenceRepositoriesChanged": false,
+      "pushed": false,
+      "merged": false
     }
   ]
 }

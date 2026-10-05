@@ -18,6 +18,8 @@ const studyContext = process.argv.includes('--study-context');
 const studyContextBaseline = process.argv.includes('--study-context-baseline');
 const bookActions = process.argv.includes('--book-actions');
 const bookActionsBaseline = process.argv.includes('--book-actions-baseline');
+const largeImport = process.argv.includes('--large-import');
+const largeImportBaseline = process.argv.includes('--large-import-baseline');
 if (!packages || !helperPath) throw new Error('Provide --playwright-root and --focus-safe-helper');
 const {chromium} = require(path.join(path.resolve(packages), 'playwright'));
 const helper = require(path.resolve(helperPath));
@@ -70,7 +72,7 @@ async function main() {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const report = {ok: false, readingStress, readingBaseline, readingPerformance, studyContext, studyContextBaseline, bookActions, bookActionsBaseline, cases: [], screenshots: [], consoleErrors: [],
+  const report = {ok: false, readingStress, readingBaseline, readingPerformance, studyContext, studyContextBaseline, bookActions, bookActionsBaseline, largeImport, largeImportBaseline, cases: [], screenshots: [], consoleErrors: [],
     buildSha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex'),
     evidenceBoundary: 'Production extension and real Edge with local HTML and synthetic model responses; optional verified isolated-world reading counters are work evidence, not timing. No live model or Firefox runtime quality claim.'};
   const javascriptFiles = [];
@@ -220,6 +222,34 @@ async function main() {
       report.studyContextResult = {displayedContext, displayedCloze, storedDataPreserved:true, additionalModelRequests:0,
         evidence:'Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request.'};
       report.cases.push({id:'continuous-chinese-saved-study-and-review-context', status:studyContextBaseline ? 'reproduced' : 'passed'});
+    }
+    if (largeImport) {
+      const stored = await snapshot(); assert.equal(stored.data.length,1); const requestCount=requests.length;
+      const exported = await send(options,{type:'fluentReadVocabularyBook',action:'exportData',options:{includePrivateContext:true}});
+      assert.equal(exported.success,true); const fixture=exported.data;
+      const baseTime=fixture.entries[0].updatedAt;
+      fixture.entries[0].contexts=Array.from({length:150_000},(_,i)=>({text:`Synthetic import context ${i}.`,capturedAt:baseTime+i+1,
+        ...(i>=149_992 ? {sourceUrl:`https://synthetic-import.invalid/${i}`} : {})}));
+      const bytes=Buffer.from(JSON.stringify(fixture)); assert(bytes.length<20*1024*1024);
+      // 使用真实文件输入的 change 路径；只导入本次临时 profile 的合成数据。
+      await options.locator('input[aria-label="导入收藏文件"]').setInputFiles({name:'synthetic-large-collection.json',mimeType:'application/json',buffer:bytes});
+      if (largeImportBaseline) {
+        await until(async()=> (await options.locator('.book-toast').innerText()).includes('Maximum call stack size'),'Old large import did not reproduce stack overflow');
+        assert.deepEqual(await snapshot(),stored);
+      } else {
+        await until(async()=> (await snapshot()).data[0]?.contexts.at(-1)?.capturedAt===baseTime+150_000,'Large import did not persist newest context');
+        const entry=(await snapshot()).data[0];
+        assert.equal(entry.contexts.length,8); assert.equal(entry.updatedAt,baseTime+150_000);
+        assert.deepEqual(entry.contexts.map(context=>context.text),Array.from({length:8},(_,i)=>`Synthetic import context ${149_992+i}.`));
+        assert.deepEqual(entry.translations,stored.data[0].translations); assert.equal(entry.reviewCount,stored.data[0].reviewCount);
+      }
+      const more=options.locator('.book-more > summary'); await more.click();
+      await until(async()=>!await options.getByRole('button',{name:'导出到 Anki',exact:true}).isDisabled(),'Large import did not release management actions');
+      await more.click(); assert.equal(requests.length,requestCount);
+      report.largeImportResult={fileBytes:bytes.length,rawContexts:150_000,retainedContexts:largeImportBaseline ? null:8,
+        stackOverflowReproduced:largeImportBaseline,priorDataPreservedOnFailure:largeImportBaseline,modelRequests:0,
+        evidence:'Production options file input change, actual import IPC and persistent store. Below20MiB warning threshold; no timing assertion.'};
+      report.cases.push({id:'large-collection-file-import-and-management-recovery',status:largeImportBaseline?'reproduced':'passed'});
     }
     if (bookActions) {
       // 延迟真实 IPC 响应，保留后台正常完成；不把测试插桩当作性能测量。
