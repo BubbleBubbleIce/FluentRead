@@ -20,6 +20,16 @@ function canvas() {
 beforeEach(()=>{vi.useFakeTimers();readers.length=0;vi.stubGlobal('FileReader',Reader);});
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();});
 describe('图片与 OCR 共用异步无损编码',()=>{
+    it.each(['blob','reader'])('调用者的 %s 编码预算与超时文案在开始时冻结',async phase=>{
+        const image=canvas(),budget={timeoutMs:100,message:'图片读取超时'};
+        const outcome=encodeImageCanvas(image.canvas,undefined,budget).then(result=>({result}),error=>({error}));
+        budget.timeoutMs=30000;budget.message='迟到改动';
+        if(phase==='reader')image.encoded();
+        await vi.advanceTimersByTimeAsync(99);expect(vi.getTimerCount()).toBe(1);
+        await vi.advanceTimersByTimeAsync(1);expect(await outcome).toMatchObject({error:{message:'图片读取超时'}});
+        if(phase==='blob'){image.encoded();expect(readers).toHaveLength(0);}else expect(readers[0].abort).toHaveBeenCalledOnce();
+        expect(vi.getTimerCount()).toBe(0);
+    });
     it('沿用 PNG data URL，不同步压缩且完成后释放读取事件与超时',async()=>{
         const image=canvas(),result=encodeImageCanvas(image.canvas);
         expect(image.toBlob).toHaveBeenCalledWith(expect.any(Function),'image/png');

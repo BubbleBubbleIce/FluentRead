@@ -77,6 +77,25 @@ function setup(bitmapSize = {width:400,height:200}) {
     const getStyle = (element: Element) => extraStyles.has(element) ? {...extraStyles.get(element), opacity: (element as HTMLElement).style.opacity || extraStyles.get(element)!.opacity, backgroundImage: (element as HTMLElement).style.backgroundImage || extraStyles.get(element)!.backgroundImage} : element === image ? {...imageStyle, opacity: image.style.opacity || imageStyle.opacity} : element === parent ? parentStyle : {opacity: '1', overflowX: 'visible', overflowY: 'visible'};
     const draw = vi.fn();
     const canvases: HTMLCanvasElement[] = [];
+    let autoEncode = true;
+    const pendingPng: BlobCallback[] = [];
+    const readers: Reader[] = [];
+    class Reader {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        readyState = 0;
+        result: string | null = null;
+        abort = vi.fn(() => {this.readyState = 2;});
+        readAsDataURL = () => {
+            this.readyState = 1;
+            void Promise.resolve().then(() => {
+                if (this.readyState !== 1) return;
+                this.result = 'data:image/png;base64,source'; this.readyState = 2; this.onload?.();
+            });
+        };
+        constructor() {readers.push(this);}
+    }
+    vi.stubGlobal('FileReader', Reader);
     vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => {
         const element = originalCreate(tag);
         if (tag === 'img') decorateStyle(element as HTMLElement);
@@ -84,6 +103,9 @@ function setup(bitmapSize = {width:400,height:200}) {
             const canvas = element as HTMLCanvasElement;
             canvas.getContext = vi.fn(() => ({drawImage: draw, getImageData: vi.fn()})) as never;
             canvas.toDataURL = () => 'data:image/png;base64,source';
+            canvas.toBlob = vi.fn((callback: BlobCallback) => {
+                if (autoEncode) callback(new Blob(['source'])); else pendingPng.push(callback);
+            }) as never;
             canvases.push(canvas);
         }
         return element;
@@ -148,7 +170,7 @@ function setup(bitmapSize = {width:400,height:200}) {
     const notify = (attributeName = 'src', type = 'attributes') => observers[0].callback([{type, attributeName, target: image} as unknown as MutationRecord], {} as MutationObserver);
     const runFrames = () => { const callbacks = Array.from(frames.values()); frames.clear(); callbacks.forEach(callback => callback(0)); };
     mountImageTranslator();
-    return {image, parent, roots, decoded, canvases, draw, imageStyle, parentStyle, observers, resizeObservers, windowObject,
+    return {image, parent, roots, decoded, canvases, draw, readers, pendingPng, imageStyle, parentStyle, observers, resizeObservers, windowObject,
         hover, button, click, bitmap, dispatch, notify, runFrames, extraStyles, imageQuery,
         addBackground: () => {
             const background = document.createElement('div'); decorateStyle(background);
@@ -161,6 +183,7 @@ function setup(bitmapSize = {width:400,height:200}) {
         scroll: () => windowHandlers.get('scroll')?.(new domWindow.Event('scroll')),
         setRect: (next: typeof rect) => {rect = next;},
         setAutoDecode: (enabled: boolean) => {autoDecode = enabled;},
+        setAutoEncode: (enabled: boolean) => {autoEncode = enabled;},
     };
 }
 
@@ -287,6 +310,29 @@ describe('图片翻译前台交互与生命周期', () => {
         unmountImageTranslator();pending.reject(new Error('context invalidated'));await flush();expect(document.getElementById('fluent-read-image-translation-root')).toBeNull();
     });
 
+    it('读取 PNG 期间取消不启动后台，迟到结果不覆盖原图且可正常重试', async () => {
+        const env = setup(); env.setAutoEncode(false); env.hover(); env.click(); await flush();
+        expect(env.button().textContent).toContain('取消'); expect(client.translate).not.toHaveBeenCalled();
+        expect(env.canvases[0]).toMatchObject({width: 400, height: 200});
+        expect(env.image.style.opacity).not.toBe('0');
+        env.click(); await flush();
+        expect(env.canvases[0]).toMatchObject({width: 0, height: 0});
+        env.pendingPng.shift()!(new Blob(['late'])); await flush();
+        expect(env.readers).toHaveLength(0); expect(env.bitmap()).toBeNull(); expect(client.translate).not.toHaveBeenCalled();
+        expect(env.image.src).toBe('https://example.test/source.png');
+        env.setAutoEncode(true); env.click(); await flush();
+        expect(client.translate).toHaveBeenCalledOnce(); expect(env.bitmap()).not.toBeNull();
+    });
+
+    it.each(['换图', '卸载'])('读取 PNG 期间%s会释放画布且迟到结果不能发往后台', async action => {
+        const env = setup(); env.setAutoEncode(false); env.hover(); env.click(); await flush();
+        expect(env.pendingPng).toHaveLength(1);
+        if (action === '换图') {env.image.src = 'https://example.test/next.png'; env.notify(); env.runFrames();}
+        else unmountImageTranslator();
+        await flush(); env.pendingPng.shift()!(new Blob(['late'])); await flush();
+        expect(env.canvases[0]).toMatchObject({width: 0, height: 0}); expect(env.readers).toHaveLength(0);
+        expect(client.translate).not.toHaveBeenCalled(); expect(env.image.style.opacity).not.toBe('0');
+    });
     it('宿主持续移除 UI 根时停止恢复循环，归还原图且允许新的主动悬停', async () => {
         const env = setup(); const background = env.addBackground();
         env.hover(); env.click(); await flush();
@@ -621,6 +667,28 @@ describe('图片翻译前台交互与生命周期', () => {
         env.click(); await flush(); vi.advanceTimersByTime(15_001); await flush();
         expect(env.button().dataset.phase).toBe('error'); expect(env.roots[0].querySelector('[role="status"]')!.textContent).toContain('译图加载超时');
         expect(env.decoded[1].onload).toBeNull();
+    });
+
+    it('原图加载错误清理等待监听，保留原图并允许加载完成后主动重试', async () => {
+        const env = setup(); Object.defineProperty(env.image, 'complete', {value: false, configurable: true}); env.hover(); env.click(); await flush();
+        env.dispatch(env.image, 'error'); await flush();
+        expect(client.translate).not.toHaveBeenCalled(); expect(env.bitmap()).toBeNull();
+        expect(env.button().dataset.phase).toBe('error');
+        expect(env.roots[0].querySelector('[role="status"]')!.textContent).toContain('图片加载失败');
+        Object.defineProperty(env.image, 'complete', {value: true, configurable: true}); env.dispatch(env.image, 'load'); await flush();
+        expect(client.translate).not.toHaveBeenCalled();
+        env.click(); await flush(); expect(client.translate).toHaveBeenCalledOnce();
+        expect(env.button().dataset.phase).toBe('translated');
+    });
+
+    it('译图解码失败清理监听并保持原图可见，重试只安装当前译图', async () => {
+        const env = setup(); env.setAutoDecode(false); env.hover(); env.click(); await flush();
+        const failed = env.decoded[0]; failed.onerror?.call(failed, new Event('error'));
+        await flush(); expect(env.bitmap()).toBeNull(); expect(env.image.style.opacity).not.toBe('0');
+        expect(failed.onload).toBeNull(); expect(failed.onerror).toBeNull();
+        expect(env.roots[0].querySelector('[role="status"]')!.textContent).toContain('图片数据无法解码');
+        env.setAutoDecode(true); env.click(); await flush();
+        expect(client.translate).toHaveBeenCalledTimes(2); expect(env.bitmap()).toBe(env.decoded[1]);
     });
 
     it('错误在悬浮时持续可见，支持重试并在离开后清理', async () => {

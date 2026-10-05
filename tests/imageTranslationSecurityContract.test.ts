@@ -98,36 +98,36 @@ describe('图片翻译跨域读取安全契约', () => {
             width: 0,
             height: 0,
             getContext: vi.fn(() => context),
-            toDataURL: vi.fn(() => 'data:image/png;base64,local'),
+            toBlob: vi.fn((callback: BlobCallback) => callback(new Blob(['local']))),
         };
+        vi.stubGlobal('FileReader', class {
+            readyState = 2; result = 'data:image/png;base64,local';
+            onload: (() => void) | null = null; onerror: (() => void) | null = null;
+            readAsDataURL() {this.onload?.();}
+        });
         vi.stubGlobal('browser', {runtime: {id: 'test-id', sendMessage, onMessage: {addListener: vi.fn(), removeListener: vi.fn()}}});
         vi.stubGlobal('document', {URL: 'https://page.example.com/', createElement: vi.fn(() => canvas)});
 
         await expect(getImageData(imageElement())).resolves.toBe('data:image/png;base64,local');
         expect(context.drawImage).toHaveBeenCalledOnce();
-        expect(context.getImageData).toHaveBeenCalledOnce();
+        expect(context.getImageData).not.toHaveBeenCalled();
         expect(sendMessage).not.toHaveBeenCalled();
     });
 
-    it.each(['pixel-read', 'serialization'] as const)(
+    it.each(['draw', 'serialization'] as const)(
         'Canvas 跨域污染在 %s 阶段失败时把 URL 交给 Offscreen 读取',
         async (failureStage) => {
             const sendMessage = vi.fn();
             const securityError = new DOMException('The canvas has been tainted', 'SecurityError');
             const context = {
-                drawImage: vi.fn(),
-                getImageData: vi.fn(() => {
-                    if (failureStage === 'pixel-read') throw securityError;
-                    return {};
-                }),
+                drawImage: vi.fn(() => {if (failureStage === 'draw') throw securityError;}),
             };
             const canvas = {
                 width: 0,
                 height: 0,
                 getContext: vi.fn(() => context),
-                toDataURL: vi.fn(() => {
+                toBlob: vi.fn(() => {
                     if (failureStage === 'serialization') throw securityError;
-                    return 'data:image/png;base64,unused';
                 }),
             };
             vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
