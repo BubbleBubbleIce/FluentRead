@@ -5,6 +5,7 @@ import {createExpressionIndex, iterateExpressionMatches, matchExpressions, reenc
 import {collectReadingGroups, scanReadingExpressions} from '@/src/features/vocabulary/content/readingText';
 import {installReencounterScanner, REENCOUNTER_HIGHLIGHT} from '@/src/features/vocabulary/content/scanner';
 import type {VocabularyEntry} from '@/src/features/vocabulary/learningModel';
+import sharedRules from '@/src/ui/styles/vocabulary-reencounter.css?inline';
 
 const saved = (term: string, id = term): ReencounterEntry => ({id, term, sourceLanguage: 'en', reference: '', savedSentence: '', savedTitle: ''});
 const find = (text: string, terms: string[]) => matchExpressions(text, createExpressionIndex(terms.map(term => saved(term))));
@@ -30,6 +31,18 @@ function dom(html: string) {
 afterEach(() => {vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks();});
 
 describe('saved expressions match real reading text', () => {
+  it('keeps full single-ASCII matching equivalent to streaming through overlap, boundaries, whitespace and literal punctuation', () => {
+    for (const [text, term] of [['aa a a', 'a a'], ['a a a', 'a a'], ['art2 2art artful art', 'art'],
+      ['art cart art2 art.', 'art'], ['art', 'art'], ['(art) x(art)y', '(art)'], ['a+b(a) a+b(a)', 'a+b(a)'],
+      ['We arrive on\n  time or ON\ttime.', 'on time'], ["don't don'ts", "don't"], ['nothing', 'art']]) {
+      const index = createExpressionIndex([saved(term),saved(term.toUpperCase(),'duplicate')]);
+      expect(matchExpressions(text,index,Infinity)).toEqual([...iterateExpressionMatches(text,index)].filter(Boolean));
+    }
+    const index = createExpressionIndex([saved('art')]); const normalize = vi.spyOn(String.prototype,'normalize'); normalize.mockClear();
+    expect(matchExpressions('art '.repeat(1000),index,Infinity)).toHaveLength(1000); expect(normalize).not.toHaveBeenCalled();
+    expect(matchExpressions('艺术 art',index,Infinity)).toEqual([{entryId:'art',start:3,end:6}]);
+    expect(normalize).toHaveBeenCalled();
+  });
   it('requires opt-in and preserves the independent collection preference', () => {
     expect(new Config().vocabularyReencounterEnabled).toBe(false);
     for (const bad of [undefined, null, 0, 'true', {}]) expect(normalizeConfig({vocabularyBookEnabled: true, vocabularyReencounterEnabled: bad}).vocabularyReencounterEnabled).toBe(false);
@@ -82,6 +95,33 @@ describe('saved expressions match real reading text', () => {
 });
 
 describe('paint-only reading text and lifecycle', () => {
+  it('reuses verified document rules, owns only missing shadow rules and preserves the shared stylesheet on disposal', async () => {
+    vi.useFakeTimers(); const {document, window} = dom('<p>art</p><div id="host"></div>');
+    const shared = document.createElement('style'); shared.id = 'fluent-read-page-styles'; shared.textContent = sharedRules; document.documentElement.append(shared);
+    const root = document.getElementById('host')!.attachShadow({mode: 'open'}); root.innerHTML = '<p>art</p>';
+    const scanner = installReencounterScanner(document, {changed: vi.fn(), open: vi.fn()});
+    scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180);
+    expect(window.CSS.highlights.get(REENCOUNTER_HIGHLIGHT)?.size).toBe(2);
+    expect(document.querySelectorAll('[data-fr-reencounter-style]')).toHaveLength(0);
+    expect(root.querySelector('[data-fr-reencounter-style]')?.textContent).toBe(sharedRules);
+    scanner.dispose(); expect(shared.isConnected).toBe(true); expect(root.querySelector('[data-fr-reencounter-style]')).toBeNull();
+  });
+  it('uses fallback drawing rules when an unrelated host stylesheet has the common id', async () => {
+    vi.useFakeTimers(); const {document} = dom('<p>art</p>'); const unrelated = document.createElement('style');
+    unrelated.id = 'fluent-read-page-styles'; unrelated.textContent = 'p {color: red}'; document.documentElement.append(unrelated);
+    const scanner = installReencounterScanner(document, {changed: vi.fn(), open: vi.fn()}); scanner.setEntries([saved('art')]);
+    await vi.advanceTimersByTimeAsync(180); expect(document.querySelector('[data-fr-reencounter-style]')?.textContent).toBe(sharedRules);
+    scanner.dispose(); expect(unrelated.isConnected).toBe(true); expect(unrelated.textContent).toBe('p {color: red}');
+  });
+  it('retires its document fallback after verified common rules arrive and restores it if those rules leave', async () => {
+    vi.useFakeTimers(); const {document, window} = dom('<p>art</p>'); const scanner = installReencounterScanner(document, {changed: vi.fn(), open: vi.fn()});
+    scanner.setEntries([saved('art')]); await vi.advanceTimersByTimeAsync(180); expect(document.querySelectorAll('[data-fr-reencounter-style]')).toHaveLength(1);
+    const shared = document.createElement('style'); shared.id = 'fluent-read-page-styles'; shared.textContent = sharedRules; document.documentElement.append(shared);
+    scanner.refresh(); await vi.advanceTimersByTimeAsync(180); expect(document.querySelectorAll('[data-fr-reencounter-style]')).toHaveLength(0);
+    expect(window.CSS.highlights.get(REENCOUNTER_HIGHLIGHT)?.size).toBe(1);
+    shared.remove(); scanner.refresh(); await vi.advanceTimersByTimeAsync(180);
+    expect(document.querySelectorAll('[data-fr-reencounter-style]')).toHaveLength(1); scanner.dispose();
+  });
   it('joins inline text, separates blocks and protected regions and leaves native nodes and markup unchanged', () => {
     const {document} = dom('<p id="a">We <em>take for</em> granted. <a href="#">art</a> art.</p><p>take</p><p>for granted</p><p>take<br>for granted</p><pre>art</pre><p hidden>art</p><p translate="no">art</p><div contenteditable>art</div><p data-display="none">art</p><p data-visibility="hidden">art</p><p data-visibility="collapse">art</p><div data-fr-translation-owned="true">art</div><p data-far>art</p><p><span></span>art</p>');
     const before = document.body.innerHTML; const native = document.querySelector('em')!.firstChild;

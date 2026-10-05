@@ -1,15 +1,14 @@
 /**
  * @file src/features/vocabulary/content/scanner.ts
  * 文件职责：在阅读期间绘制收藏表达并协调动态网页、滚动、点击与失效清理。
- * 主要内容：按约 4ms 或节点预算分帧执行只读扫描，变动时关闭过期工作，结果完成才替换绘制；及时观察新 Shadow 根，隔离 UI 通知并在关闭前完整释放资源，保留宿主点击。
+ * 主要内容：按约 4ms 或工作检查点预算分帧扫描并取消旧工作，完成后替换绘制；复用文档公共规则，仅为缺失规则及命中 Shadow 根装样式，避免再次使整页样式失效；完整释放资源并保留宿主点击。
  * 模块边界：不访问数据库、配置或模型，不截获链接、输入或选区，不记录掌握状态；生命周期和卡片展示由内容挂载器注入。
  */
 import {createExpressionIndex, type ReencounterEntry} from '../domain/reencounter';
 import {scanReadingExpressionsWork, type ReadingScan, type ReencounterOccurrence} from './readingText';
+import css from '@/src/ui/styles/vocabulary-reencounter.css?inline';
 
 export const REENCOUNTER_HIGHLIGHT = 'fluentread-vocabulary-reencounter';
-const css = `::highlight(${REENCOUNTER_HIGHLIGHT}) { text-decoration: underline dotted #c58a37; text-decoration-thickness: 1px; text-underline-offset: 3px; }
-@media (prefers-color-scheme: dark) { ::highlight(${REENCOUNTER_HIGHLIGHT}) { text-decoration-color: #e9b766; } }`;
 type PaintWindow = Window & typeof globalThis & {Highlight?: new (...ranges: Range[]) => Set<Range>; CSS?: {highlights?: Map<string, Set<Range>>}};
 export interface ReencounterScanner {
   setEntries: (entries: readonly ReencounterEntry[]) => void;
@@ -101,12 +100,14 @@ export function installReencounterScanner(document: Document, callbacks: {
     paint?.clear();
     occurrences = result.occurrences.length ? result.occurrences : empty;
     const roots = new Set(result.roots);
+    // 核对实际规则内容，不能因宿主恰好使用相同 id 就跳过必要绘制。
+    const sharedRules = document.getElementById('fluent-read-page-styles')?.textContent?.includes(css);
     const paintedRoots = new Set<Document | ShadowRoot>();
     for (const occurrence of occurrences) paintedRoots.add(occurrence.root);
     for (const [root, observer] of observers) if (!roots.has(root)) { observer.disconnect(); observers.delete(root); }
-    for (const [root, style] of styles) if (!paintedRoots.has(root)) { style.remove(); styles.delete(root); }
+    for (const [root, style] of styles) if (!paintedRoots.has(root) || (root === document && sharedRules)) { style.remove(); styles.delete(root); }
     for (const root of roots) {
-      if (paint && paintedRoots.has(root) && !styles.has(root)) {
+      if (paint && paintedRoots.has(root) && !(root === document && sharedRules) && !styles.has(root)) {
         const style = document.createElement('style');
         style.setAttribute('data-fr-reencounter-style', 'true'); style.textContent = css;
         (root.nodeType === 9 ? document.documentElement : root).appendChild(style);

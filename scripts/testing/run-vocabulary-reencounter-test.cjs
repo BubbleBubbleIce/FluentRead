@@ -14,6 +14,8 @@ const packages = arg('playwright-root'); const helperPath = arg('focus-safe-help
 const readingStress = process.argv.includes('--reading-stress');
 const readingBaseline = process.argv.includes('--reading-baseline');
 const readingPerformance = process.argv.includes('--reading-performance');
+const studyContext = process.argv.includes('--study-context');
+const studyContextBaseline = process.argv.includes('--study-context-baseline');
 if (!packages || !helperPath) throw new Error('Provide --playwright-root and --focus-safe-helper');
 const {chromium} = require(path.join(path.resolve(packages), 'playwright'));
 const helper = require(path.resolve(helperPath));
@@ -66,7 +68,7 @@ async function main() {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const report = {ok: false, readingStress, readingBaseline, readingPerformance, cases: [], screenshots: [], consoleErrors: [],
+  const report = {ok: false, readingStress, readingBaseline, readingPerformance, studyContext, studyContextBaseline, cases: [], screenshots: [], consoleErrors: [],
     buildSha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex'),
     evidenceBoundary: 'Production extension and real Edge with local HTML and synthetic model responses; optional verified isolated-world reading counters are work evidence, not timing. No live model or Firefox runtime quality claim.'};
   let session; let page;
@@ -181,6 +183,33 @@ async function main() {
     await ui.locator('.reencounter-entry').click(); await ui.getByText('标记选项',{exact:true}).click(); await ui.getByRole('button',{name:'关闭所有网页标记',exact:true}).click();
     await until(async()=>(await read(options)).vocabularyReencounterEnabled===false,'Permanent disable not saved'); await until(async()=>await ui.count()===0,'Permanent disable left UI'); assert.deepEqual(await marks(),[]);
     await page.reload(); await wait(400); assert.deepEqual(await marks(),[]); assert.equal(await ui.count(),0); record('permanent-disable-persists-across-reload');
+    if (studyContext) {
+      // 仅清理本次临时 profile 的合成词条；通过实际收藏、学习及复习 UI 验证持久化链路。
+      for (const entry of (await snapshot()).data) assert.equal((await send(options, {type:'fluentReadVocabularyBook', action:'remove', entryId:entry.id})).success, true);
+      const saved = await send(options, {type:'fluentReadVocabularyBook', action:'upsert', input:{term:'学习', translation:'study', sourceLanguage:'zh-CN', targetLanguage:'en', kind:'expression', context:{text:'我每天学习中文。', pageTitle:'Synthetic Chinese reading', sourceUrl:`${url}/synthetic-study`}}});
+      assert.equal(saved.success, true);
+      const stored = await snapshot(); const requestCount = requests.length;
+      await options.reload(); await options.locator('.vocabulary-book').waitFor();
+      await options.locator('.entry-open').filter({hasText:'学习'}).click();
+      await options.locator('.word-study').waitFor();
+      const displayedContext = await options.locator('.study-source blockquote').allTextContents();
+      if (studyContextBaseline) {assert.deepEqual(displayedContext, []); assert((await options.locator('.study-source').innerText()).includes('没有可用的原句'));}
+      else assert.deepEqual(displayedContext, ['我每天学习中文。']);
+      const studyShot = path.join(artifacts, 'chinese-study-context.png'); await options.screenshot({path:studyShot}); report.screenshots.push(studyShot);
+      await options.locator('.study-header button').click(); await options.locator('.start-review').click();
+      await options.locator('.review-card').waitFor();
+      const displayedCloze = await options.locator('.cloze-context').allTextContents();
+      if (studyContextBaseline) {assert.deepEqual(displayedCloze, []); assert.equal(await options.locator('.review-prompt h3').innerText(), '学习');}
+      else assert.deepEqual(displayedCloze, ['我每天____中文。']);
+      const reviewShot = path.join(artifacts, 'chinese-review-cloze.png'); await options.screenshot({path:reviewShot}); report.screenshots.push(reviewShot);
+      await options.locator('.reveal-button').click(); await options.locator('.review-answer').waitFor();
+      assert.equal(await options.locator('.answer-context').innerText(), '我每天学习中文。');
+      await options.locator('.review-header button').click();
+      assert.deepEqual(await snapshot(), stored); assert.equal(requests.length, requestCount);
+      report.studyContextResult = {displayedContext, displayedCloze, storedDataPreserved:true, additionalModelRequests:0,
+        evidence:'Actual production upsert, persistent store, options study and review UI; no review rating or automatic model request.'};
+      report.cases.push({id:'continuous-chinese-saved-study-and-review-context', status:studyContextBaseline ? 'reproduced' : 'passed'});
+    }
     if (readingPerformance) {
       for (const entry of (await snapshot()).data) assert.equal((await send(options, {type:'fluentReadVocabularyBook', action:'remove', entryId:entry.id})).success, true);
       const saved = await send(options, {type:'fluentReadVocabularyBook', action:'upsert', input:{term:'bank', translation:'合成河岸', sourceLanguage:'en', targetLanguage:'zh-CN'}});
@@ -217,10 +246,13 @@ async function main() {
           const root = document.querySelector('#reading-performance'); const paint = CSS.highlights.get('fluentread-vocabulary-reencounter');
           return {paintAtMs:state.paintAt, heartbeatSamples:state.heartbeats, maxHeartbeatGapMs:Math.max(...state.heartbeats),
             hostFramesBeforePaint:state.frames.length, longTasks:state.longTasks, paintedRanges:paint.size,
+            documentDrawingStyles:document.querySelectorAll('[data-fr-reencounter-style]').length,
+            commonDrawingRulePresent:document.getElementById('fluent-read-page-styles').textContent.includes('::highlight(fluentread-vocabulary-reencounter)'),
             allPaintedOriginal: [...paint].every(range=>range.startContainer === window.performanceSource && range.toString()==='bank'),
             sourcePreserved:root.innerHTML === window.performanceMarkup && root.querySelector('p').firstChild===window.performanceSource};
         }));
         assert.equal(samples.at(-1).paintedRanges, 300); assert(samples.at(-1).allPaintedOriginal); assert(samples.at(-1).sourcePreserved);
+        assert.equal(samples.at(-1).documentDrawingStyles, samples.at(-1).commonDrawingRulePresent ? 0 : 1);
         if (run === 0) await shot('large-nonempty-reading');
         await persist(options, {vocabularyReencounterEnabled:false}); await until(async()=>await ui.count()===0, 'Performance toggle left UI');
         assert.deepEqual(await marks(), []); await wait(300);

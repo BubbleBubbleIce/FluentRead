@@ -3,7 +3,7 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 817,
+    "files": 818,
     "functions": 14585,
     "groups": {
       "entrypoints/background.ts": {
@@ -84,7 +84,7 @@
       "src/app": {
         "files": 101,
         "functions": 1167,
-        "lines": 11403
+        "lines": 11404
       },
       "src/core/config": {
         "files": 52,
@@ -252,9 +252,9 @@
         "lines": 12778
       },
       "src/features/vocabulary": {
-        "files": 20,
+        "files": 21,
         "functions": 392,
-        "lines": 4105
+        "lines": 4136
       },
       "src/features/writing-assistant": {
         "files": 17,
@@ -568,7 +568,7 @@
     },
     {
       "file": "src/app/content/pageStyles.ts",
-      "sha256": "f99ea3af1670c473ec5380515139dca8bae718e1fb2742f3e3fc645f6be31479",
+      "sha256": "74129728cc068e9774116f1b89b4bfc50b879e21430cb599ee9fd7aeb29a3b89",
       "functionBodies": 4,
       "status": "source-read-and-traced"
     },
@@ -1072,20 +1072,26 @@
     },
     {
       "file": "src/features/vocabulary/content/scanner.ts",
-      "sha256": "b8f7ad1acee72b36215ff4c5283bb9bc596616bd6b04bb6635336fc4a7ddc197",
+      "sha256": "81a78f4800ef684d74c0d5b4a4fc435de13b8f38fcb7c4b5bebdb85116f62536",
       "functionBodies": 23,
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/vocabulary/domain/expressionMatcher.ts",
+      "sha256": "2b2b56b84d044ed6e6637650f1ca30f5ed1d55d19075b5ce5eece819f4f081da",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/vocabulary/domain/reencounter.ts",
-      "sha256": "2b7a3b824957f2aa0c8653893791c75f9fd77c189a929c320b9fc1f180e9eb44",
-      "functionBodies": 12,
+      "sha256": "a871dc4f8ea614413d8f1556ecee16e48da15c363806d46e0a5261f84357926e",
+      "functionBodies": 6,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/features/vocabulary/learningModel.ts",
-      "sha256": "9001ca27e430d13b7725c69e6c292078ffd78d0ff08ac62148fdbf422b4dee97",
-      "functionBodies": 29,
+      "sha256": "c56d8e765efd91b1b3fdcbf4608019d9d3876b50a79daeeadaa9d8f702f95373",
+      "functionBodies": 27,
       "status": "source-read-and-traced"
     },
     {
@@ -1122,6 +1128,12 @@
       "file": "src/features/vocabulary/ui/SentenceActions.vue",
       "sha256": "cf3b9887f0f675a861def4621bbd7af217ef8a595d894f2d4ce7881de7d13cc5",
       "functionBodies": 26,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/ui/VocabularyBook.vue",
+      "sha256": "25becc11ba6fbf680225654399121de0f5156dba23ee326950db4de9bbbf7add",
+      "functionBodies": 101,
       "status": "source-read-and-traced"
     },
     {
@@ -1844,7 +1856,6 @@
     "src/features/video-subtitle/transcriptionCache.ts",
     "src/features/vocabulary/background/index.ts",
     "src/features/vocabulary/repository.ts",
-    "src/features/vocabulary/ui/VocabularyBook.vue",
     "src/features/writing-assistant/background.ts",
     "src/features/writing-assistant/client.ts",
     "src/features/writing-assistant/content.ts",
@@ -2020,7 +2031,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Investigate remaining native nonempty reading long tasks after cooperative traversal; index compilation, single DOM/NFC calls, final painting, shadow leases and delayed callback feedback. Continue highlight Range/geometry/wide-owner work, ancestor mutation and scroll/pointer order; section preview/restore and synchronous remount. Review all pending modules and cached main changes.",
+    "Reproduce VocabularyBook delayed confirmation, concurrent action and post-unmount export/clear candidates. Continue highlighter Range/geometry/ancestor mutations, whole-root remount, section preview/restore, vocabulary index compilation and single-call budgets. Reconcile cached main changes and all pending modules.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2031,12 +2042,12 @@
   ],
   "verificationDebt": [
     "Architecture ownership now has15existing executable-module coverage omissions and3unowned documentation tools. Four actually100%-covered reencounter modules are registered; removed redundant strict entry for layout.ts pure barrel, with zero executable bodies. Preserve thresholds; whole repository gate still fails.",
-    "Cached local origin/main d0dbcad7 includes nineteen post-baseline commits in image, docs, Google reliability, cloud deletion and service-status UI. Reconcile and re-review before full-goal completion. Tracking ref may change concurrently; no remote freshness or release claim."
+    "Last read-only cached origin/main snapshot f77697d0 contains24post-baseline commits, including image/docs/Google/cloud deletion/service-status/DeepLX and settings in-page navigation. Integrate and re-review before full-goal completion. Ref may update concurrently; no remote freshness proof."
   ],
   "progress": {
-    "sourceReadFiles": 147,
-    "sourceReadFunctionBodies": 2236,
-    "pendingFiles": 670,
+    "sourceReadFiles": 149,
+    "sourceReadFunctionBodies": 2337,
+    "pendingFiles": 669,
     "goalComplete": false
   },
   "observations": [
@@ -2159,6 +2170,21 @@
       "file": "src/features/vocabulary/background/handler.ts",
       "status": "source-read-and-callers-traced; further-protocol-review-pending",
       "issue": "Reviewed all validators, config/incognito reencounter gating, minimal list/get snapshots, write broadcasts, broadcast failures, ACK and error mapping. Composition callers and relevant handler tests traced. Repository coverage and full per-action/incognito/error behavior require continuing source review; no new handler correctness guarantee."
+    },
+    {
+      "file": "src/features/vocabulary/domain/expressionMatcher.ts",
+      "status": "fixed-and-verified; bounded-reading-contract-preserved",
+      "issue": "Shared matcher without model cycle. Study supports continuous Han/kana, canonical accents, typography and whitespace with original coordinates. Infinity single-ASCII fast path shares word classification, escaped literals and overlap semantics; finite limits/cooperative iterator never probe full input.42000matcher and6000ASCIIcloze differentials pass. Removed legacy general regex helper and repeated selected-context scan."
+    },
+    {
+      "file": "src/features/vocabulary/content/scanner.ts",
+      "status": "controlled-native-toggle-long-task-fixed; broader-rendering-performance-open",
+      "issue": "Native primitive isolation identifies reinserting document Highlight rules as additional style invalidation in30k-element fixture. Share common rules and verify CSS payload rather than just id; own missing document fallback and hit Shadow rules. Final production samples have no document fallback or long tasks for this workload. No universal startup/layout latency proof."
+    },
+    {
+      "file": "src/features/vocabulary/ui/VocabularyBook.vue",
+      "status": "source-read-and-traced; async-confirmation-candidates-await-reproduction",
+      "issue": "Complete template/script/styles and101function bodies inspected; traced store messages, load generations, reviews, speech cleanup and file management. Anki export and clear await confirmation/menu tick without subsequent lifecycle/busy checks; several action completions can update local state after unmount. Source candidates, not yet proved production bugs; reproduce controlled component races before changing behavior."
     }
   ]
 }

@@ -23,6 +23,8 @@ export default defineConfig({
         maxWorkers,
         minWorkers: 1,
         fileParallelism: false,
+        // 按真实规则内容验证共享词书样式，与普通测试配置一致。
+        css: {include: [/vocabulary-reencounter\.css/]},
         include: [
             'tests/webDavBackup.test.ts',
             'tests/webDavHttpIntegration.test.ts',
@@ -821,6 +823,7 @@ export default defineConfig({
                 'src/features/vocabulary/content/scanner.ts',
                 'src/features/vocabulary/content/reencounter.ts',
                 'src/features/vocabulary/domain/reencounter.ts',
+                'src/features/vocabulary/domain/expressionMatcher.ts',
                 'src/platform/http/errors.ts',
                 'src/platform/http/runtime.ts',
                 'src/platform/shadow-ui/pageBridgeCore.ts',

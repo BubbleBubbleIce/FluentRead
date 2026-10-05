@@ -19,5 +19,7 @@ export default defineConfig({
         maxWorkers,
         minWorkers: 1,
         fileParallelism: false,
+        // 词书扫描器按真实规则内容确认共享样式，不能用默认空 CSS 代替。
+        css: {include: [/vocabulary-reencounter\.css/]},
     },
 });

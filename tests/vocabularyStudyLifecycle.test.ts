@@ -21,7 +21,7 @@ afterEach(async () => {
   delete (globalThis as Record<string, unknown>)[KEY];
 });
 
-async function mountStudy() {
+async function mountStudy(overrides: Partial<VocabularyEntry> = {}) {
   const calls: StreamCall[] = [];
   const entry: VocabularyEntry = {
     id:'sentence-a', kind:'sentence', term:'Good ideas deserve attention.', updatedAt:10,
@@ -29,6 +29,7 @@ async function mountStudy() {
     createdAt:10, lastSeenAt:10, encounterCount:1, masteryLevel:0, status:'new', nextReviewAt:10, lastReviewedAt:null, reviewCount:0, lapseCount:0, schemaVersion:1,
     contexts:[{text:'Good ideas deserve attention. Practice makes progress.', capturedAt:10}],
     translations:{'zh-hans':{text:'好想法值得关注。', updatedAt:10}},
+    ...overrides,
   };
   const props = runtime.reactive({entry, reference:'好想法值得关注。'});
   const sendMessage = vi.fn(async (message: {note: string}) => ({success:true, data:{...props.entry, note:message.note, noteUpdatedAt:11, updatedAt:11}}));
@@ -78,6 +79,19 @@ async function mountStudy() {
 }
 
 describe('saved sentence explanation lifecycle', () => {
+  it('grounds an explicit Chinese expression request in its latest useful saved sentence and cancels it when that sentence changes', async () => {
+    const contexts = [{text:'我每天学习中文。', capturedAt:10}, {text:'学习', capturedAt:11}, {text:'这是无关的原句。', capturedAt:12}];
+    const {panel,props,calls,sendMessage,finish,tick} = await mountStudy({kind:'expression', term:'学习', sourceLanguage:'zh-CN', contexts});
+    expect(calls).toHaveLength(0); expect(panel.context.text).toBe(contexts[0].text);
+    panel.run('understand');
+    expect(calls[0].request.selection).toEqual({text:'学习', context:'我每天学习中文。', sentence:''});
+    expect(calls[0].request.studyMode).toBe('understand');
+    props.entry = {...props.entry,contexts:[{text:'明天继续学习。', capturedAt:13}]}; await tick();
+    expect(calls[0].cancel).toHaveBeenCalledOnce(); finish('Late previous explanation',calls[0]);
+    expect(panel.explanation).toBe(''); expect(calls).toHaveLength(1);
+    panel.run('understand'); expect(calls[1].request.selection.context).toBe('明天继续学习。');
+    expect(sendMessage).not.toHaveBeenCalled(); expect(contexts.map(context=>context.text)).toEqual(['我每天学习中文。','学习','这是无关的原句。']);
+  });
   it('generates only on demand and preserves reading while saving a separate note', async () => {
     const {panel,props,calls,sendMessage,finish,tick} = await mountStudy();
     expect(calls).toHaveLength(0); expect(sendMessage).not.toHaveBeenCalled();

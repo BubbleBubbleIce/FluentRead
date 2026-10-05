@@ -1,0 +1,14 @@
+/**
+ * @file src/ui/styles/vocabulary-reencounter.css
+ * 文件职责：声明收藏表达的原生 Highlight 外观，供文档公共样式及独立 Shadow 根共享。
+ * 主要内容：只装饰 FluentRead 专属范围，使用浅深主题下可读的点状下划线。
+ * 模块边界：没有范围时不改变任何宿主元素；文档规则随公共页面样式清理，独立根的规则由扫描器按命中生命周期拥有。
+ */
+::highlight(fluentread-vocabulary-reencounter) {
+  text-decoration: underline dotted #c58a37;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+@media (prefers-color-scheme: dark) {
+  ::highlight(fluentread-vocabulary-reencounter) {text-decoration-color: #e9b766;}
+}
