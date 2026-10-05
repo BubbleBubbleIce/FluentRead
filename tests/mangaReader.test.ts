@@ -567,6 +567,46 @@ describe('漫画站点适配与 DOM 生命周期', () => {
         f.reader.toggle();expect(f.ports.restore).toHaveBeenCalledWith(f.image);
         f.image.remove();f.reader.schedule();f.run();expect(f.reader.status().available).toBe(false);f.reader.dispose();
     });
+
+    it('附近页排序每页只测量一次，不在比较器中重复读取布局', () => {
+        const warm = vi.fn(), f = readerFixture(false, undefined, undefined, undefined, warm);
+        const images = [f.image]; const measure = vi.fn();
+        for (let index = 1; index < 240; index++) {
+            const image = f.document.createElement('img') as HTMLImageElement;
+            image.className = 'zao-image'; image.src = `blob:layout-${index}`;
+            Object.defineProperties(image, {complete: {value: true}, naturalWidth: {value: 800}, naturalHeight: {value: 1200}});
+            f.image.parentElement!.append(image); images.push(image);
+        }
+        images.forEach((image, index) => {
+            const top = (239 - index) * 3;
+            image.getBoundingClientRect = () => {
+                measure(image);
+                return {left: 0, right: 800, top, bottom: top + 1200, width: 800, height: 1200} as DOMRect;
+            };
+        });
+        f.reader.schedule(); f.run();
+        expect(warm).toHaveBeenLastCalledWith(images.slice(-12).reverse());
+        // 发现后的正文快照和会话回调后的预合成各读一次；排序不读 DOM。
+        expect(measure).toHaveBeenCalledTimes(480); expect(f.ports.translate).not.toHaveBeenCalled();
+        f.reader.dispose();
+    });
+
+    it('未就绪页不为预合成再读一次布局，也不强制加载原图', () => {
+        const warm = vi.fn(), f = readerFixture(false, undefined, undefined, undefined, warm);
+        Object.defineProperty(f.image, 'complete', {value: false});
+        const measure = vi.spyOn(f.image, 'getBoundingClientRect');
+        f.reader.schedule(); f.run();
+        expect(measure).toHaveBeenCalledOnce(); expect(warm).toHaveBeenLastCalledWith([]);
+        expect(f.image.src).toBe('blob:page-1'); expect(f.ports.translate).not.toHaveBeenCalled(); f.reader.dispose();
+    });
+
+    it('会话通知改变宿主几何后使用新位置挑选预合成页，下一帧再次测量', () => {
+        const warm = vi.fn(), f = readerFixture(false, undefined, undefined, undefined, warm);
+        f.ports.changed.mockImplementationOnce(() => f.setRect({left: 4000, right: 4800}));
+        f.reader.schedule(); f.run(); expect(warm).toHaveBeenLastCalledWith([]);
+        f.setRect({left: 0, right: 800}); f.reader.schedule(); f.run();
+        expect(warm).toHaveBeenLastCalledWith([f.image]); f.reader.dispose();
+    });
     it('预合成按可见优先与几何距离排序，左右一屏和容量都有边界',()=>{
         const warm=vi.fn(),f=readerFixture(true,undefined,undefined,undefined,warm);
         const near=f.document.createElement('img'),far=f.document.createElement('img');

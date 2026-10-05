@@ -1,7 +1,7 @@
 /**
  * @file src/features/image-translation/content/mangaReader.ts
  * 文件职责：把漫画站点的正文图片、超长图分段、可读画布、公开背景图和页面生命周期接入同一连续翻译会话。
- * 主要内容：按站点规则发现正文，圈选页发布区域入口；已确认的 GANMA 路径内页码和 Mangahub 正整数查询页码不视为换章，其他查询参数仍参与章节身份，来源授权保留完整地址；已开启的同章哔哩哔哩会话在可见的原站加载提示期间保留等待，不识别空像素；按位置判断可见页，来源重绘更新身份，当前页优先的有界队列与附近页共享像素预算，换章、隐藏和卸载清理监听器。
+ * 主要内容：按站点规则发现正文，圈选页发布区域入口；已确认的 GANMA 路径内页码和 Mangahub 正整数查询页码不视为换章，其他查询参数仍参与章节身份，来源授权保留完整地址；已开启的同章哔哩哔哩会话在可见的原站加载提示期间保留等待，不识别空像素；按位置判断可见页，会话通知后一次测量就绪的附近图片并按数值排序；来源重绘更新身份，当前页优先的有界队列与附近页共享像素预算，换章、隐藏和卸载清理监听器。
  * 模块边界：只检查已展示正文，不抓取章节、不读取站点私有数据或绕过访问限制；图片与画布的读取、翻译、缓存和原图恢复通过注入端口复用图片运行时。
  */
 import {createMangaSession, type MangaTranslationStatus} from './mangaSession';
@@ -252,12 +252,20 @@ export function createMangaReader(ports: {
                 prefetch: upcoming.has(page.image) || (document.hidden && page.visible)})),
         });
         // 仅重建已完成页面，前后一屏内按可见页优先；不因轻量容量扩大付费预译窗口。
-        const warmPages = candidates.flatMap(page => isImage(page.image) ? [{...page, image: page.image}] : []);
-        ports.warm?.(warmPages.filter(page => {
-            const rect = page.image.getBoundingClientRect();
-            return page.ready && rect.right > -window.innerWidth && rect.left < 2 * window.innerWidth
-                && rect.bottom > -window.innerHeight && rect.top < 2 * window.innerHeight;
-        }).sort((a, b) => Number(b.visible) - Number(a.visible) || Math.abs(a.image.getBoundingClientRect().top) - Math.abs(b.image.getBoundingClientRect().top)).slice(0, normalizeMangaCachePages(ports.cachePages?.())).map(page => page.image));
+        if (ports.warm) {
+            const nearbyPages: Array<{image: HTMLImageElement; visible: boolean; distance: number}> = [];
+            // refresh 端口可能归还宿主样式，故在其后测量；以下排序期间不再调用 DOM 或会话端口。
+            for (const page of candidates) {
+                if (!page.ready || !isImage(page.image)) continue;
+                const rect = page.image.getBoundingClientRect();
+                if (rect.right > -window.innerWidth && rect.left < 2 * window.innerWidth
+                    && rect.bottom > -window.innerHeight && rect.top < 2 * window.innerHeight) {
+                    nearbyPages.push({image: page.image, visible: page.visible, distance: Math.abs(rect.top)});
+                }
+            }
+            nearbyPages.sort((a, b) => Number(b.visible) - Number(a.visible) || a.distance - b.distance);
+            ports.warm(nearbyPages.slice(0, normalizeMangaCachePages(ports.cachePages?.())).map(page => page.image));
+        }
         ports.canvas?.update();
         ports.background?.update();
         ports.segments?.update();

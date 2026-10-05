@@ -1,8 +1,7 @@
 /**
  * @file src/features/image-translation/content/runtime.ts
- * 文件职责：实现网页图片翻译的独立悬浮/右键入口、可信目标快照、异步请求所有权和图片、长图分段、可读画布及公开背景图的漫画连续模式，保持宿主资源与翻页交互不变。
- * 显示约束：宿主大图查看器或浮层遮住原图时撤下译层与文字面板，归还原图显示权；遮挡解除后复用已解码结果，不取消仍属于当前图片的请求。
- * 主要内容：漫画俄语和韩语仅在已确认下载后准备既有语言包，准备语言包时操作条显示真实下载百分比；单图失败提供模型与服务导航，译图操作条随指针隐藏并保留键盘入口；识别方式和漫画有效源语言纳入缓存身份，自动模式使用已确认的路径提示、手动语言优先，切换后不复用旧结果；在封闭 Shadow DOM 中挂载原生译图，跟随图片盒模型与祖先裁切；合并布局更新，默认 12 张可配置的快速缓存和 100 页/16 MiB 二进制局部结果，靠近视口时直接预合成画布，无文字页只保留轻量完成标记；图片重载、独立服务及模型变化使结果失效，漫画返页复用结果不等待其他页推理；预合成不得撤下当前译图，单页反馈展示真实阶段与进度，隐藏漫画操作条，换图、取消与卸载时释放资源。
+ * 文件职责：实现网页图片翻译的独立悬浮/右键入口、可信目标快照、异步请求所有权和单图及漫画连续模式的原图/译图切换，保持宿主图片与响应式图片资源不变。
+ * 主要内容：单图识别方式纳入缓存身份，切换后不复用旧结果；在封闭 Shadow DOM 中挂载原生译图，跟随图片盒模型与祖先裁切；合并布局更新，默认 12 张可配置的快速缓存和 100 页/16 MiB 二进制局部结果，靠近视口时直接预合成画布，无文字页只保留轻量完成标记；漫画状态以订阅快照发送并隔离同步异常，避免订阅变化重复递送或阻断请求和卸载；图片重载、独立服务及模型变化使结果失效，漫画返页复用结果不等待其他页推理；预合成不得撤下当前译图，单页反馈展示真实阶段与进度，隐藏漫画操作条，换图、取消与卸载时释放资源。
  * 模块边界：本运行时在读取预算内异步编码页面允许访问的 Canvas，污染画布先走网页 CORS，再按剩余预算授权后台读取当前任务图片；共用 PNG 编码器处理取消/迟到结果，识别、文本翻译、图像修复与语言包管理位于 background/services，控件交互由 controls 模块提供。
  */
 import {imageTranslationFailureCode, imageLocalFailureMessage, type ImageLocalFailure} from '../failure';
@@ -204,9 +203,14 @@ let mangaSegments: ReturnType<typeof createMangaImageSegments> | null = null;
 let mangaStatus: MangaTranslationStatus = {available: false, active: false, pending: false, errors: 0};
 const mangaListeners = new Set<(status: MangaTranslationStatus) => void>();
 
+function notifyMangaListener(listener: (status: MangaTranslationStatus) => void, status: MangaTranslationStatus): void {
+    try {listener({...status});}
+    catch { /* 界面订阅失败不能阻止其他订阅、翻译调度或原图归还。 */ }
+}
+
 export function subscribeMangaTranslation(listener: (status: MangaTranslationStatus) => void): () => void {
     mangaListeners.add(listener);
-    listener({...mangaStatus});
+    notifyMangaListener(listener, mangaStatus);
     return () => { mangaListeners.delete(listener); };
 }
 
@@ -219,7 +223,10 @@ function publishMangaStatus(status: MangaTranslationStatus): void {
     mangaStatus = {...status, message: status.pending ? ('message' in status ? status.message : mangaStatus.message) : undefined,
         progress: status.pending ? ('progress' in status ? status.progress : mangaStatus.progress) : undefined,
         stage: status.pending ? ('stage' in status ? status.stage : mangaStatus.stage) : undefined};
-    mangaListeners.forEach(listener => listener({...mangaStatus}));
+    const snapshot = mangaStatus;
+    for (const listener of Array.from(mangaListeners)) {
+        if (mangaListeners.has(listener)) notifyMangaListener(listener, snapshot);
+    }
 }
 
 function imageTranslationAllowed(manga: boolean): boolean {

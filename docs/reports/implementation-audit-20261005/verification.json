@@ -15279,6 +15279,1323 @@
         ],
         "boundary": "Read existing shared cached refs only; external change is not integrated or live remote freshness proof. Rewritten5de9history had tree identical to original import; e093cloud backup copy now changes tree. No blind merge/rebase or remote write."
       }
+    },
+    {
+      "batch": "twenty-fifth",
+      "name": "manga-status-subscription-isolation-and-ready-page-geometry",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 187,
+        "sourceReadFunctionBodies": 3140,
+        "pendingFiles": 634,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 24,
+      "newStaticTestDefinitions": 19,
+      "oldSourceRun": {
+        "baselineRevision": "615e2fa8e1916014aa28288f819fc7d9255a4fbb",
+        "selectedCases": 6,
+        "failed": 5,
+        "passed": 1,
+        "skippedUnrelated": 232,
+        "reason": "Immutable original runtime/reader via Vite pre-transform. Sync subscription fault interrupts unmount, live Set duplicates new recipient, initial throw loses cleanup,240rect reads958 rather than480 and unready warm rereads box. Post-session geometry-change preservation already passed old source."
+      },
+      "implementation": {
+        "statusDelivery": "Snapshot recipients/status; each independent status copy; skip unsubscribed recipients, initial delivery once for new listeners; isolate synchronous initial/ongoing listener errors so caller obtains cleanup and unmount restores host.",
+        "geometry": "Post-session measure ready candidates once, sort visible then absolute top numerically with stable ties; no DOM calls in comparator, nextframe remeasures.",
+        "productionFunctionBodyDelta": -1,
+        "thresholdChanges": false,
+        "newIgnores": 0,
+        "boundary": "No async subscriber rejection/reentrant callback recursion guarantee; no OCR/provider/permissions changes."
+      },
+      "affectedTests": {
+        "files": 22,
+        "cases": 593,
+        "passed": true,
+        "unhandledErrors": 0
+      },
+      "strictCoverage": {
+        "passed": false,
+        "modules": 25,
+        "total": {
+          "statements": 99.72,
+          "branches": 98.54,
+          "functions": 100,
+          "lines": 99.72
+        },
+        "runtime": {
+          "statements": 98.98,
+          "branches": 94.8,
+          "functions": 100,
+          "lines": 98.98
+        },
+        "otherModulesFour100": 24,
+        "thresholdChanges": false,
+        "newIgnores": 0,
+        "uncoveredRuntimeLocations": {
+          "statements": [
+            {
+              "start": {
+                "line": 155,
+                "column": 0
+              },
+              "end": {
+                "line": 155,
+                "column": 77
+              }
+            },
+            {
+              "start": {
+                "line": 156,
+                "column": 0
+              },
+              "end": {
+                "line": 156,
+                "column": 13
+              }
+            },
+            {
+              "start": {
+                "line": 507,
+                "column": 0
+              },
+              "end": {
+                "line": 507,
+                "column": 27
+              }
+            },
+            {
+              "start": {
+                "line": 508,
+                "column": 0
+              },
+              "end": {
+                "line": 508,
+                "column": 15
+              }
+            },
+            {
+              "start": {
+                "line": 509,
+                "column": 0
+              },
+              "end": {
+                "line": 509,
+                "column": 5
+              }
+            },
+            {
+              "start": {
+                "line": 659,
+                "column": 0
+              },
+              "end": {
+                "line": 659,
+                "column": 95
+              }
+            },
+            {
+              "start": {
+                "line": 660,
+                "column": 0
+              },
+              "end": {
+                "line": 660,
+                "column": 42
+              }
+            },
+            {
+              "start": {
+                "line": 661,
+                "column": 0
+              },
+              "end": {
+                "line": 661,
+                "column": 9
+              }
+            },
+            {
+              "start": {
+                "line": 949,
+                "column": 0
+              },
+              "end": {
+                "line": 949,
+                "column": 157
+              }
+            },
+            {
+              "start": {
+                "line": 950,
+                "column": 0
+              },
+              "end": {
+                "line": 950,
+                "column": 19
+              }
+            },
+            {
+              "start": {
+                "line": 951,
+                "column": 0
+              },
+              "end": {
+                "line": 951,
+                "column": 9
+              }
+            }
+          ],
+          "branches": [
+            {
+              "start": {
+                "line": 137,
+                "column": 48
+              },
+              "end": {
+                "line": 137,
+                "column": 73
+              }
+            },
+            {
+              "start": {
+                "line": 142,
+                "column": 39
+              },
+              "end": {
+                "line": 142,
+                "column": 46
+              }
+            },
+            {
+              "start": {
+                "line": 144,
+                "column": 60
+              },
+              "end": {
+                "line": 144,
+                "column": 67
+              }
+            },
+            {
+              "start": {
+                "line": 147,
+                "column": 97
+              },
+              "end": {
+                "line": 147,
+                "column": 111
+              }
+            },
+            {
+              "start": {
+                "line": 154,
+                "column": 64
+              },
+              "end": {
+                "line": 156,
+                "column": 13
+              }
+            },
+            {
+              "start": {
+                "line": 159,
+                "column": 38
+              },
+              "end": {
+                "line": 159,
+                "column": 55
+              }
+            },
+            {
+              "start": {
+                "line": 169,
+                "column": 29
+              },
+              "end": {
+                "line": 169,
+                "column": 130
+              }
+            },
+            {
+              "start": {
+                "line": 179,
+                "column": 62
+              },
+              "end": {
+                "line": 179,
+                "column": 86
+              }
+            },
+            {
+              "start": {
+                "line": 250,
+                "column": 121
+              },
+              "end": {
+                "line": 250,
+                "column": 134
+              }
+            },
+            {
+              "start": {
+                "line": 430,
+                "column": 29
+              },
+              "end": {
+                "line": 430,
+                "column": 43
+              }
+            },
+            {
+              "start": {
+                "line": 490,
+                "column": 27
+              },
+              "end": {
+                "line": 490,
+                "column": 41
+              }
+            },
+            {
+              "start": {
+                "line": 506,
+                "column": 34
+              },
+              "end": {
+                "line": 509,
+                "column": 5
+              }
+            },
+            {
+              "start": {
+                "line": 530,
+                "column": 30
+              },
+              "end": {
+                "line": 530,
+                "column": 66
+              }
+            },
+            {
+              "start": {
+                "line": 669,
+                "column": 133
+              },
+              "end": {
+                "line": 669,
+                "column": 140
+              }
+            },
+            {
+              "start": {
+                "line": 671,
+                "column": 82
+              },
+              "end": {
+                "line": 671,
+                "column": 89
+              }
+            },
+            {
+              "start": {
+                "line": 673,
+                "column": 72
+              },
+              "end": {
+                "line": 673,
+                "column": 79
+              }
+            },
+            {
+              "start": {
+                "line": 734,
+                "column": 4
+              },
+              "end": {
+                "line": 734,
+                "column": 6
+              }
+            },
+            {
+              "start": {
+                "line": 741,
+                "column": 24
+              },
+              "end": {
+                "line": 741,
+                "column": 54
+              }
+            },
+            {
+              "start": {
+                "line": 743,
+                "column": 24
+              },
+              "end": {
+                "line": 743,
+                "column": 52
+              }
+            },
+            {
+              "start": {
+                "line": 776,
+                "column": 28
+              },
+              "end": {
+                "line": 776,
+                "column": 50
+              }
+            },
+            {
+              "start": {
+                "line": 851,
+                "column": 27
+              },
+              "end": {
+                "line": 851,
+                "column": 41
+              }
+            },
+            {
+              "start": {
+                "line": 867,
+                "column": 34
+              },
+              "end": {
+                "line": 867,
+                "column": 71
+              }
+            },
+            {
+              "start": {
+                "line": 875,
+                "column": 113
+              },
+              "end": {
+                "line": 875,
+                "column": 120
+              }
+            },
+            {
+              "start": {
+                "line": 877,
+                "column": 125
+              },
+              "end": {
+                "line": 877,
+                "column": 149
+              }
+            },
+            {
+              "start": {
+                "line": 910,
+                "column": 54
+              },
+              "end": {
+                "line": 910,
+                "column": 61
+              }
+            },
+            {
+              "start": {
+                "line": 916,
+                "column": 50
+              },
+              "end": {
+                "line": 916,
+                "column": 57
+              }
+            },
+            {
+              "start": {
+                "line": 921,
+                "column": 50
+              },
+              "end": {
+                "line": 921,
+                "column": 57
+              }
+            },
+            {
+              "start": {
+                "line": 937,
+                "column": 18
+              },
+              "end": {
+                "line": 937,
+                "column": 42
+              }
+            },
+            {
+              "start": {
+                "line": 946,
+                "column": 121
+              },
+              "end": {
+                "line": 946,
+                "column": 130
+              }
+            },
+            {
+              "start": {
+                "line": 948,
+                "column": 50
+              },
+              "end": {
+                "line": 951,
+                "column": 9
+              }
+            },
+            {
+              "start": {
+                "line": 954,
+                "column": 55
+              },
+              "end": {
+                "line": 954,
+                "column": 157
+              }
+            },
+            {
+              "start": {
+                "line": 966,
+                "column": 55
+              },
+              "end": {
+                "line": 966,
+                "column": 79
+              }
+            },
+            {
+              "start": {
+                "line": 928,
+                "column": 58
+              },
+              "end": {
+                "line": 928,
+                "column": 65
+              }
+            },
+            {
+              "start": {
+                "line": 929,
+                "column": 88
+              },
+              "end": {
+                "line": 929,
+                "column": 121
+              }
+            },
+            {
+              "start": {
+                "line": 1143,
+                "column": 71
+              },
+              "end": {
+                "line": 1143,
+                "column": 90
+              }
+            },
+            {
+              "start": {
+                "line": 1150,
+                "column": 36
+              },
+              "end": {
+                "line": 1150,
+                "column": 62
+              }
+            }
+          ]
+        },
+        "debt": "Twenty-fifth full25module image gate remains failed: runtime statements/lines98.98 branches94.8 functions100;593affected assertions pass,24other modules four100. No ignores, exclusions or threshold changes. Warm queue races, late compose/request/source/disconnect guards and remaining geometry/mutation cases still need meaningful validation."
+      },
+      "nativeFunctionComparison": {
+        "passed": true,
+        "baselineRevision": "615e2fa8e1916014aa28288f819fc7d9255a4fbb",
+        "baselineSourcesExact": true,
+        "currentSourcesMatch": true,
+        "unchangedDependenciesMatchBaseline": true,
+        "sourceSha256": {
+          "src/core/config/mangaSiteCatalog.ts": "b83880bb16aad5c5174a0cbe75cdf2cff687ca42016101c46f24226f5943109c",
+          "src/core/config/manga.ts": "57bf56cbb53f2292f1ee8590746676339092015a5e2500ba93475f25583ca5dd",
+          "src/features/image-translation/content/imageLoads.ts": "f7a53174e90481d1741921652a12e565373e81f2cb577d6e1eb241783ea2713a",
+          "src/features/image-translation/content/mangaSession.ts": "48d40b674ed902e18015d8e27817bd7532bb0b886b4739fc42b9185ee5390bb3",
+          "src/features/image-translation/content/mangaReader.ts": {
+            "baseline": "18cd7bea289aa3174e6bf637bc406ec64b09bb33bd02f0a2f7fe86862db3ed3a",
+            "current": "ec31ccee5cd1daa5f480f6479febe884e7b9104ef30eab0bdd4f01850100afaf"
+          },
+          "src/features/image-translation/content/runtime.ts": {
+            "baseline": "7ba20432f7daa2663101c37ba3dea26dd09e781b95e358d579cf893dd13a5aee",
+            "current": "4c1e7bcf9fe390b60cf164ea61153e63fa12db6055e3a5652054e0f27336271e"
+          }
+        },
+        "statusExtractedSha256": {
+          "baseline": "6b7044e81bccfe4ec76786ec82b4f876f3fba47eb9984b1a42af01008b029300",
+          "current": "e3f5d6161a11827e9082f4be36d915a0b8f2c5a7be7531513a953b117eb49aad"
+        },
+        "harnessSha256": "029c859bb8bd46072c10864267d9c6c5c806ab0f981847044f30e86ffec00633",
+        "cases": [
+          {
+            "count": 240,
+            "differential": [
+              {
+                "offset": 0,
+                "capacity": 1,
+                "warmIndices": [
+                  230
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 12,
+                "warmIndices": [
+                  230,
+                  231,
+                  232,
+                  233,
+                  234,
+                  235,
+                  236,
+                  237,
+                  238,
+                  239,
+                  220,
+                  221
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 24,
+                "warmIndices": [
+                  230,
+                  231,
+                  232,
+                  233,
+                  234,
+                  235,
+                  236,
+                  237,
+                  238,
+                  239,
+                  220,
+                  221,
+                  222,
+                  223,
+                  224,
+                  225,
+                  226,
+                  227,
+                  228,
+                  229,
+                  210,
+                  211,
+                  212,
+                  213
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 500,
+                "capacity": 1,
+                "warmIndices": [
+                  150
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 500,
+                "capacity": 12,
+                "warmIndices": [
+                  150,
+                  151,
+                  152,
+                  153,
+                  154,
+                  155,
+                  156,
+                  157,
+                  158,
+                  159,
+                  160,
+                  161
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 500,
+                "capacity": 24,
+                "warmIndices": [
+                  150,
+                  151,
+                  152,
+                  153,
+                  154,
+                  155,
+                  156,
+                  157,
+                  158,
+                  159,
+                  160,
+                  161,
+                  162,
+                  163,
+                  164,
+                  165,
+                  166,
+                  167,
+                  168,
+                  169,
+                  140,
+                  141,
+                  142,
+                  143
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 1,
+                "warmIndices": [
+                  230
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 12,
+                "warmIndices": [
+                  230,
+                  231,
+                  232,
+                  233,
+                  234,
+                  235,
+                  236,
+                  237,
+                  238,
+                  239,
+                  220,
+                  221
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 24,
+                "warmIndices": [
+                  230,
+                  231,
+                  232,
+                  233,
+                  234,
+                  235,
+                  236,
+                  237,
+                  238,
+                  239,
+                  220,
+                  221,
+                  222,
+                  223,
+                  224,
+                  225,
+                  226,
+                  227,
+                  228,
+                  229,
+                  210,
+                  211,
+                  212,
+                  213
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 240
+                }
+              }
+            ],
+            "geometryReads": {
+              "baseline": 2620,
+              "current": 480
+            },
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "timing": {
+              "baseline": {
+                "medianMs": 1.9000000953674316,
+                "samples": [
+                  3.5999999046325684,
+                  1.8000001907348633,
+                  4.699999809265137,
+                  1.700000286102295,
+                  1.9000000953674316,
+                  1.9000000953674316,
+                  1.700000286102295,
+                  1.6999998092651367,
+                  1.9000000953674316
+                ]
+              },
+              "current": {
+                "medianMs": 1.1999998092651367,
+                "samples": [
+                  3.4000000953674316,
+                  2.5,
+                  1.0999999046325684,
+                  1.0999999046325684,
+                  1.200000286102295,
+                  1.0999999046325684,
+                  1.200000286102295,
+                  1.0999999046325684,
+                  1.1999998092651367
+                ]
+              }
+            },
+            "hostAttributesPreserved": true,
+            "inactiveTranslationCalls": 0
+          },
+          {
+            "count": 1200,
+            "differential": [
+              {
+                "offset": 0,
+                "capacity": 1,
+                "warmIndices": [
+                  1190
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 12,
+                "warmIndices": [
+                  1190,
+                  1191,
+                  1192,
+                  1193,
+                  1194,
+                  1195,
+                  1196,
+                  1197,
+                  1198,
+                  1199,
+                  1180,
+                  1181
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 24,
+                "warmIndices": [
+                  1190,
+                  1191,
+                  1192,
+                  1193,
+                  1194,
+                  1195,
+                  1196,
+                  1197,
+                  1198,
+                  1199,
+                  1180,
+                  1181,
+                  1182,
+                  1183,
+                  1184,
+                  1185,
+                  1186,
+                  1187,
+                  1188,
+                  1189,
+                  1170,
+                  1171,
+                  1172,
+                  1173
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 500,
+                "capacity": 1,
+                "warmIndices": [
+                  1110
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 500,
+                "capacity": 12,
+                "warmIndices": [
+                  1110,
+                  1111,
+                  1112,
+                  1113,
+                  1114,
+                  1115,
+                  1116,
+                  1117,
+                  1118,
+                  1119,
+                  1120,
+                  1121
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 500,
+                "capacity": 24,
+                "warmIndices": [
+                  1110,
+                  1111,
+                  1112,
+                  1113,
+                  1114,
+                  1115,
+                  1116,
+                  1117,
+                  1118,
+                  1119,
+                  1120,
+                  1121,
+                  1122,
+                  1123,
+                  1124,
+                  1125,
+                  1126,
+                  1127,
+                  1128,
+                  1129,
+                  1100,
+                  1101,
+                  1102,
+                  1103
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 1,
+                "warmIndices": [
+                  1190
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 12,
+                "warmIndices": [
+                  1190,
+                  1191,
+                  1192,
+                  1193,
+                  1194,
+                  1195,
+                  1196,
+                  1197,
+                  1198,
+                  1199,
+                  1180,
+                  1181
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              },
+              {
+                "offset": 0,
+                "capacity": 24,
+                "warmIndices": [
+                  1190,
+                  1191,
+                  1192,
+                  1193,
+                  1194,
+                  1195,
+                  1196,
+                  1197,
+                  1198,
+                  1199,
+                  1180,
+                  1181,
+                  1182,
+                  1183,
+                  1184,
+                  1185,
+                  1186,
+                  1187,
+                  1188,
+                  1189,
+                  1170,
+                  1171,
+                  1172,
+                  1173
+                ],
+                "status": {
+                  "available": true,
+                  "active": false,
+                  "pending": false,
+                  "errors": 0,
+                  "completed": 0,
+                  "prefetching": false,
+                  "ahead": 0,
+                  "pageCount": 1200
+                }
+              }
+            ],
+            "geometryReads": {
+              "baseline": 4596,
+              "current": 2400
+            },
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "timing": {
+              "baseline": {
+                "medianMs": 4.799999713897705,
+                "samples": [
+                  5.400000095367432,
+                  5,
+                  4.799999713897705,
+                  5.099999904632568,
+                  4.599999904632568,
+                  4.5,
+                  4.5,
+                  4.900000095367432,
+                  4.300000190734863
+                ]
+              },
+              "current": {
+                "medianMs": 3.8000001907348633,
+                "samples": [
+                  4.299999713897705,
+                  3.9000000953674316,
+                  3.5999999046325684,
+                  3.8000001907348633,
+                  4,
+                  3.5999999046325684,
+                  3.3000001907348633,
+                  3.9000000953674316,
+                  3.5
+                ]
+              }
+            },
+            "hostAttributesPreserved": true,
+            "inactiveTranslationCalls": 0
+          }
+        ],
+        "statusDelivery": [
+          {
+            "version": "baseline",
+            "newSubscriberDeliveries": 2,
+            "initialThrow": true,
+            "initialListenerCountAfterCleanup": 1,
+            "publishThrow": true,
+            "healthyDeliveries": 0
+          },
+          {
+            "version": "current",
+            "newSubscriberDeliveries": 1,
+            "initialThrow": false,
+            "initialListenerCountAfterCleanup": 0,
+            "publishThrow": false,
+            "healthyDeliveries": 1
+          }
+        ],
+        "timingBoundary": "Full scheduled mangaReader refresh including real native geometry, styles, actual inactive mangaSession refresh and injected small identity/warm/status ports. Cached discovered DOM; input creation/decode, IO settling, output differential and counters excluded. No OCR/provider/full-runtime timing or whole-machine-idle claim.",
+        "pageErrors": [],
+        "cleanupErrors": [],
+        "profileRemoved": true,
+        "backgroundWindowVerified": true
+      },
+      "timingBoundary": "All earlier own test/build handles ended before native25timing; no own other build/test/inventory/browser during benchmark.3warmups9alternating samples per actualreader version; native RAF callback only, cached discovery, real DOM/style geometry and actual inactive session with small injected identity/warm/status ports. Separate counters/output checks. No full pipeline/OCR/network speed or whole-machine-idle claim.",
+      "browser": {
+        "passed": true,
+        "phases": 22,
+        "cases": [
+          "HAR technical identifiers stay unchanged without requests; repeated primary XSRF failures are skipped",
+          "missing languages exposes preparation action",
+          "real language download, OCR, translation and replacement",
+          "independent viewport reader preserves recognized original alongside translation",
+          "restore and redisplay reuse result without requests or source mutation",
+          "scroll retains same decoded bitmap",
+          "second image hover survives unrelated live DOM updates",
+          "DOM geometry matches source: contain-padding-border",
+          "DOM geometry matches source: cover-padding-border",
+          "DOM geometry matches source: none-padding-border",
+          "DOM geometry matches source: ancestor-clipping",
+          "DOM geometry matches source: ancestor-scroll-clipping",
+          "dynamic source change removes old translation",
+          "loading Cancel retains the same attached hovered focused row and button during progress",
+          "cancel never installs a late result",
+          "retry works after cancellation",
+          "injected offscreen channel closure retries once with a fresh request and installs a valid bitmap",
+          "transparent PNG hides original letters while translated bitmap remains visible",
+          "restoring transparent source releases only the extension opacity lease",
+          "host opacity change removes old replacement and preserves the host value",
+          "image removal cleans overlay",
+          "consumed cancellation ID can be cancelled again across real Offscreen routing without starting OCR/provider"
+        ],
+        "javascriptAssetsSha256": "762930ebdc4f333c4ef45df6452b2ec571e431a5975717a9e5f6c270921143a4",
+        "actualArtifactsMatch": true,
+        "screenshotsGenerated": 15,
+        "screenshotsInspected": [
+          "03-complete-text",
+          "08-cancel-hover-stability"
+        ],
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "backgroundWindowVerified": true,
+        "profileRemoved": true,
+        "scopedRemainingProfileProcesses": {
+          "nativeReaderProfiles": 0,
+          "imageFlowProfiles": 0
+        },
+        "pageErrors": [],
+        "cleanupErrors": [],
+        "boundary": "Actual latest Chrome production/native Tesseract and language data, deterministic Google protocols/HAR; ordinary image22phases, no packaged manga engine/status-fault injection, live provider quality, real Firefox runtime/accounts/devices/store release proof."
+      },
+      "fixtureCorrections": [
+        "Reader mutual-open test initially clicked first image restore action; changed to explicit second image translation action and checked two requests.",
+        "Hover re-entry initially assumed180ms idle state was retained through600ms away; changed to translated retained state and checked no extra request/observer.",
+        "First production fixture command lacked required dependency paths; startup failed before browser/profile creation. Supplied known bundled runtime/helper arguments; final22phases passed."
+      ],
+      "checks": {
+        "compile": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 466,
+          "staticDefinitions": 6253
+        },
+        "architecture": {
+          "files": 4,
+          "cases": 829,
+          "passedCases": 827,
+          "failedCases": 2,
+          "unchangedExecutableOwnershipOmissions": 15,
+          "unchangedDocToolOmissions": 3
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/image-translation/content/mangaReader.ts",
+          "src/features/image-translation/content/mangaSession.ts",
+          "src/core/config/manga.ts",
+          "src/core/config/mangaSiteCatalog.ts"
+        ],
+        "newFunctionBodies": 61,
+        "changedFiles": [
+          "src/features/image-translation/content/mangaReader.ts",
+          "src/features/image-translation/content/runtime.ts"
+        ],
+        "inventoryFiles": 821,
+        "inventoryFunctions": 14698,
+        "cachedIntegratedPendingSources": [
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/handlers/webDavBackup.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/config/catalog.ts",
+          "src/core/config/freeTranslation.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WebDavBackup.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceCatalogItem.vue",
+          "src/features/settings/ui/services/freeTranslationChecks.ts",
+          "src/platform/google-drive/api.ts",
+          "src/platform/webdav/api.ts",
+          "src/providers/translation/free-extra-web.ts",
+          "src/providers/translation/free-web.ts",
+          "src/services/config/cloudBackupClient.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/config/webDavBackup.ts"
+        ]
+      },
+      "cachedMain": {
+        "snapshot": "e0939fe9f16a125b310f51663fd194bb5c52f2cb",
+        "lastOriginalImported": "f77697d0e8e08fb74b1c5a689aa1c36b3fa9d2ab",
+        "additionalChange": "60a57d79087157d9102432d0fd1cb787bf093f35",
+        "pendingIntegrationFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/webdav.md",
+          "docs/guide/privacy.md",
+          "docs/guide/webdav.md",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/features/settings/ui/RemoteConfigSync.vue"
+        ],
+        "boundary": "Read existing shared cached refs only; external change is not integrated or live remote freshness proof. Rewritten5de9history had tree identical to original import; e093cloud backup copy now changes tree. No blind merge/rebase or remote write."
+      },
+      "remaining": "634pending files; runtime strict coverage/mutation/identity/clip/status-array and broader OCR/draw/architecture chains remain. Goal active; user primary and reference projects untouched, no publishing."
     }
   ]
 }
