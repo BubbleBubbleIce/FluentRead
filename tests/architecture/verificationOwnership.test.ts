@@ -181,8 +181,6 @@ const BUILD_ONLY_SRC_ALLOWLIST = new Set([
     'src/features/full-page-translation/ui/translationIndicators.ts',
     // options composition root 只注册 Element Plus 组件、图标、全局样式并挂载 Vue；由组件契约与双浏览器构建验证。
     'src/app/options/index.ts',
-    // 界面皮肤应用只设置扩展页面根节点 data 属性；纯归一化由 strict coverage 验证，真实跨页面效果由隔离 UI 回归验证。
-    'src/ui/interfaceAppearance.ts',
     // popup composition root 等待配置就绪再注册 Vue/Element Plus 并挂载；由 popup 契约、逐帧启动回归和双浏览器构建验证。
     'src/app/popup/index.ts',
     // 抽屉入口只重导出 Element Plus 组件和 CSS；由 popup 启动/抽屉浏览器回归与双浏览器构建验证。

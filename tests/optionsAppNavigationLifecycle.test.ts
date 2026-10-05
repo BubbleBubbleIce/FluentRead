@@ -18,7 +18,7 @@ afterEach(async () => {
   delete (globalThis as Record<string, unknown>)[TEST_KEY];
 });
 
-async function mountOptions(hash = '#settings-selection', ready = Promise.resolve()) {
+async function mountOptions(hash = '#settings-selection', ready = Promise.resolve(), appearanceRoot?: HTMLElement) {
   const location = {hash};
   const windowEvents = new EventTarget();
   const mediaAdd = vi.fn();
@@ -27,6 +27,7 @@ async function mountOptions(hash = '#settings-selection', ready = Promise.resolv
   const windowScrollTo = vi.fn();
   const unsubscribeConfig = vi.fn();
   const theme = vi.fn(), skin = vi.fn(), font = vi.fn();
+  const releaseAppearance = vi.fn(), registerAppearance = vi.fn(() => releaseAppearance);
   const replaceState = vi.fn((_state: unknown, _unused: string, nextHash: string) => {
     location.hash = nextHash;
   });
@@ -42,7 +43,7 @@ async function mountOptions(hash = '#settings-selection', ready = Promise.resolv
     config: {interfaceSkin: 'default'},
     configReady: ready,
     subscribeConfig: () => unsubscribeConfig,
-    theme, skin, font,
+    theme, skin, font, registerAppearance,
   };
   const mocks: Plugin = {
     name: 'options-navigation-lifecycle-mocks',
@@ -58,7 +59,7 @@ async function mountOptions(hash = '#settings-selection', ready = Promise.resolv
       if (id === '\0options-child-component') return 'export default {render: () => null};';
       if (id === '\0options-i18n') return 'export const useUiI18n = () => ({t: key => key, translateLegacy: text => text});';
       if (id === '\0options-config') return `export const {config, configReady, subscribeConfig} = globalThis.${TEST_KEY};`;
-      if (id === '\0options-appearance') return `export const {theme: applyInterfaceTheme, skin: applyInterfaceSkin, font: applyInterfaceFont} = globalThis.${TEST_KEY};export const setInterfaceAppearanceRoot = () => {};`;
+      if (id === '\0options-appearance') return `export const {theme: applyInterfaceTheme, skin: applyInterfaceSkin, font: applyInterfaceFont, registerAppearance: registerInterfaceAppearanceRoot} = globalThis.${TEST_KEY};`;
       return null;
     },
   };
@@ -80,6 +81,7 @@ async function mountOptions(hash = '#settings-selection', ready = Promise.resolv
   let state!: {activeSection: string; query: string; activeItem: {id: string}; selectSection: (id: string, target?: string) => void; activePanel: string; activePanels: {id: string}[]; contentComponentProps: {activePanel?: string}; selectPanel: (id: string) => void; isGroupOpen: (index: number) => boolean; toggleGroup: (index: number) => void; settingsContentElement: {scrollTo: typeof scrollTo} | null};
   const app = renderer.createApp({
     setup: () => () => runtime.h(component, {
+      appearanceRoot,
       ref: (instance: any) => { if (instance) state = instance.$.setupState; },
     }),
   });
@@ -94,10 +96,16 @@ async function mountOptions(hash = '#settings-selection', ready = Promise.resolv
     windowEvents.dispatchEvent(new Event('hashchange'));
     await runtime.nextTick();
   };
-  return {state, location, navigateHash, replaceState, scrollTo, windowScrollTo, addEventListener, removeEventListener, mediaAdd, mediaRemove, unsubscribeConfig, theme, skin, font};
+  return {state, location, navigateHash, replaceState, scrollTo, windowScrollTo, addEventListener, removeEventListener, mediaAdd, mediaRemove, unsubscribeConfig, theme, skin, font, registerAppearance, releaseAppearance};
 }
 
 describe('OptionsApp mounted hash navigation', () => {
+  it('registers the explicit appearance root and releases only its returned handle once', async () => {
+    const root = {} as HTMLElement;
+    const {registerAppearance, releaseAppearance} = await mountOptions('#settings-interface', Promise.resolve(), root);
+    expect(registerAppearance).toHaveBeenCalledWith(root);expect(releaseAppearance).not.toHaveBeenCalled();
+    unmount?.();unmount = undefined;expect(releaseAppearance).toHaveBeenCalledTimes(1);
+  });
   it.each(['resolve', 'reject'] as const)('ignores configReady %s after unmount instead of changing a subsequent appearance owner', async outcome => {
     let resolveReady!: () => void, rejectReady!: (error: unknown) => void;
     const ready = new Promise<void>((resolve, reject) => {resolveReady = resolve;rejectReady = reject;});

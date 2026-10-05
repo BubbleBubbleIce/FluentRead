@@ -1,7 +1,7 @@
 /**
  * @file src/services/interfaceFonts.ts
  * 文件职责：在扩展自有页面按需下载、验证并缓存已选择的界面字体。
- * 主要内容：有界流式下载、固定 SHA-256 校验、备用源重试、首屏前仅从缓存注册字体、按字体清理共享资源安全的缓存和切换取消。
+ * 主要内容：有界流式下载与校验、备用源重试、去重首屏缓存和字体注册；按字体排队清除共享资源，等待此前仍在写入的任务，切换取消不阻塞于失效的网络或流清理。
  * 模块边界：不读取业务配置或凭据，不注入宿主网页；DOM 字体注册由调用方提供。
  */
 import {interfaceFontOptions, type InterfaceFont} from '@/src/core/config/interfaceAppearance'
@@ -49,8 +49,29 @@ export async function verifyInterfaceFont(asset: InterfaceFontAsset, data: Array
 export function createInterfaceFontLoader(deps: Dependencies) {
   let active: {font: InterfaceFont; controller: AbortController; promise: Promise<void>} | undefined
   const installed = new Map<string, boolean>()
+  const installing = new Map<string, Promise<void>>()
+  const cachedLoads = new Map<InterfaceFont, Promise<boolean>>()
+  const pendingTasks = new Set<Promise<unknown>>()
+  const pendingClears = new Map<InterfaceFont, Promise<void>>()
   let clearing: Promise<void> | undefined
   let lastState: InterfaceFontLoadState | undefined
+
+  function track<T>(promise: Promise<T>): Promise<T> {
+    pendingTasks.add(promise)
+    void promise.then(() => pendingTasks.delete(promise), () => pendingTasks.delete(promise))
+    return promise
+  }
+
+  function install(asset: InterfaceFontAsset, data: ArrayBuffer, persistent: boolean): Promise<void> {
+    if (installed.has(asset.file)) return Promise.resolve()
+    const existing = installing.get(asset.file)
+    if (existing) return existing
+    const promise = Promise.resolve().then(() => deps.install(asset, data))
+      .then(() => {installed.set(asset.file, persistent)})
+      .finally(() => {installing.delete(asset.file)})
+    installing.set(asset.file, promise)
+    return promise
+  }
 
   async function download(asset: InterfaceFontAsset, signal: AbortSignal, preferred: InterfaceFontSourceId | undefined,
     progress: (loaded: number, source: InterfaceFontSourceId) => void): Promise<ArrayBuffer> {
@@ -58,15 +79,19 @@ export function createInterfaceFontLoader(deps: Dependencies) {
     for (const source of sources) {
       if (signal.aborted) throw aborted()
       const controller = new AbortController()
-      const cancel = () => controller.abort()
+      let rejectInterrupted!: (reason: DOMException) => void
+      const interrupted = new Promise<never>((_resolve, reject) => {rejectInterrupted = reject})
+      const cancel = () => {controller.abort();rejectInterrupted(aborted())}
+      // fetch、流读取或摘要端口即使忽略取消，也不能让选择和备用源无限等待。
+      const step = <T>(operation: () => Promise<T>): Promise<T> => Promise.race([Promise.resolve().then(operation), interrupted])
       signal.addEventListener('abort', cancel, {once: true})
       const timer = setTimeout(cancel, deps.timeoutMs ?? 25000)
       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
       try {
         progress(0, source.id)
-        const response = await deps.fetch(getInterfaceFontUrl(source.id, asset.file), {
+        const response = await step(() => deps.fetch(getInterfaceFontUrl(source.id, asset.file), {
           signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store',
-        })
+        }))
         if (!response.ok || !response.body) throw new Error('Font source unavailable')
         const length = response.headers.get('content-length')
         if (length && Number(length) > asset.bytes) throw new Error('Font response too large')
@@ -74,7 +99,7 @@ export function createInterfaceFontLoader(deps: Dependencies) {
         const data = new Uint8Array(asset.bytes)
         let offset = 0
         while (true) {
-          const chunk = await reader.read()
+          const chunk = await step(() => reader!.read())
           if (chunk.done) break
           if (offset + chunk.value.byteLength > asset.bytes) throw new Error('Font response too large')
           data.set(chunk.value, offset)
@@ -82,15 +107,15 @@ export function createInterfaceFontLoader(deps: Dependencies) {
           progress(offset, source.id)
         }
         if (offset !== asset.bytes) throw new Error('Incomplete font response')
-        await verifyInterfaceFont(asset, data.buffer, deps.digest)
-        if (signal.aborted || controller.signal.aborted) throw aborted()
+        await step(() => verifyInterfaceFont(asset, data.buffer, deps.digest))
         return data.buffer
       } catch {
         if (signal.aborted) throw aborted()
       } finally {
         clearTimeout(timer)
         signal.removeEventListener('abort', cancel)
-        await reader?.cancel().catch(() => {})
+        // 原生 abort 会释放流；不等待可能永远不返回的取消端口。
+        try {void reader?.cancel().catch(() => {})} catch { /* 关闭失败不阻塞下一来源。 */ }
         controller.abort()
       }
     }
@@ -145,10 +170,9 @@ export function createInterfaceFontLoader(deps: Dependencies) {
           }
         }
         if (signal.aborted) throw aborted()
-        await deps.install(asset, data)
-        installed.set(asset.file, persisted)
+        await install(asset, data, persisted)
         state.loaded = complete + asset.bytes
-        state.persistent &&= persisted
+        state.persistent &&= installed.get(asset.file)!
         publish()
       }
       state.status = 'ready'
@@ -161,43 +185,49 @@ export function createInterfaceFontLoader(deps: Dependencies) {
 
   return {
     /** 新页面首屏前注册已下载字体；缺失或损坏时立即返回，不等待网络下载。 */
-    async loadCached(font: InterfaceFont): Promise<boolean> {
-      const assets = getInterfaceFontAssets(font).filter(asset => !installed.has(asset.file))
-      if (!assets.length) return true
-      try {
-        const cache = await deps.openCache()
-        const verified: Array<{asset: InterfaceFontAsset; data: ArrayBuffer}> = []
-        for (const asset of assets) {
-          const response = await cache.match(cacheKey(asset))
-          if (!response) return false
-          const data = await response.arrayBuffer()
-          await verifyInterfaceFont(asset, data, deps.digest)
-          verified.push({asset, data})
+    loadCached(font: InterfaceFont): Promise<boolean> {
+      const existing = cachedLoads.get(font)
+      if (existing) return existing
+      const promise = Promise.resolve(clearing).catch(() => {}).then(async () => {
+        const assets = getInterfaceFontAssets(font).filter(asset => !installed.has(asset.file))
+        if (!assets.length) return true
+        try {
+          const cache = await deps.openCache()
+          const verified: Array<{asset: InterfaceFontAsset; data: ArrayBuffer}> = []
+          for (const asset of assets) {
+            const response = await cache.match(cacheKey(asset))
+            if (!response) return false
+            const data = await response.arrayBuffer()
+            await verifyInterfaceFont(asset, data, deps.digest)
+            verified.push({asset, data})
+          }
+          for (const {asset, data} of verified) await install(asset, data, true)
+          return true
+        } catch {
+          return false
         }
-        for (const {asset, data} of verified) {
-          await deps.install(asset, data)
-          installed.set(asset.file, true)
-        }
-        return true
-      } catch {
-        return false
-      }
+      }).finally(() => {if (cachedLoads.get(font) === promise) cachedLoads.delete(font)})
+      cachedLoads.set(font, promise)
+      return track(promise)
     },
     load(font: InterfaceFont, preferred?: InterfaceFontSourceId, retry = false): Promise<void> {
       if (active?.font === font && !retry) return active.promise
       active?.controller.abort()
       const controller = new AbortController()
-      const promise = Promise.resolve(clearing).catch(() => {}).then(() => run(font, controller.signal, preferred))
+      const promise = Promise.allSettled([clearing, ...cachedLoads.values()]).then(() => run(font, controller.signal, preferred))
       active = {font, controller, promise}
-      return promise
+      return track(promise)
     },
     clearFont(font: InterfaceFont): Promise<void> {
       if (font === 'system') return Promise.resolve()
-      if (clearing) return clearing
-      // 先等待当前下载完成，避免清除后迟到的写入又把同一字体放回缓存。
-      const pending = active?.promise
-      clearing = (async () => {
-        await pending
+      const existing = pendingClears.get(font)
+      if (existing) return existing
+      // 捕获此前所有任务，包括已被新选择替换、但仍在写缓存的旧下载。
+      const pending = [...pendingTasks, clearing]
+      if (active?.font === font) active = undefined
+      cachedLoads.delete(font)
+      const promise = (async () => {
+        await Promise.allSettled(pending)
         const cache = await deps.openCache()
         const keys = new Set((await cache.keys()).map(request => request.url))
         const cachedFonts = interfaceFontOptions
@@ -211,8 +241,13 @@ export function createInterfaceFontLoader(deps: Dependencies) {
           lastState = {...lastState, persistent: false}
           deps.onState(lastState)
         }
-      })().finally(() => { clearing = undefined })
-      return clearing
+      })().finally(() => {
+        pendingClears.delete(font)
+        if (clearing === promise) clearing = undefined
+      })
+      pendingClears.set(font, promise)
+      clearing = promise
+      return promise
     },
   }
 }

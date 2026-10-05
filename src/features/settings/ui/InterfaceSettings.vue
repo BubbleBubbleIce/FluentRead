@@ -1,7 +1,7 @@
 <!--
  * @file src/features/settings/ui/InterfaceSettings.vue
  * 文件职责：组织译文样式、界面风格、动画加载效果、菜单栏布局与界面字体及逐句高亮外观分组，其中网页译文样式排在第一位。
- * 主要内容：连续展示译文样式、与真实菜单栏同宽的皮肤预览、菜单栏布局、动画及紧凑字体卡片，风格卡片的缩略图用各皮肤登记的配色画出一个极简菜单栏，通过预览和显隐列表编排区域与快捷入口；字体下载、重试和逐项清除都在对应字体卡片内完成，清除按钮展示排除共享文件后的可释放容量。
+ * 主要内容：连续展示译文样式、与真实菜单栏同宽的皮肤预览、菜单栏布局、动画及紧凑字体卡片，风格卡片的缩略图用各皮肤登记的配色画出一个极简菜单栏，通过预览和显隐列表编排区域与快捷入口；字体下载、重试和逐项清除都在对应字体卡片内完成，清除按钮展示排除共享文件后的可释放容量；清除确认框绑定当前页面、配置及选中字体，隐藏、缓存停用或配置变更时关闭，迟到结果不写回新配置或显示旧反馈。
  * 模块边界：本组件只负责界面配置的展示与双向绑定，不直接读写浏览器存储、不负责主题模式，也不关闭翻译功能本身；界面皮肤由 Options composition root 统一应用，译文样式的细节由 TranslationStyleSettings 负责。
 -->
 <template>
@@ -231,7 +231,7 @@
             </div>
             <div v-else-if="font.value === interfaceFontLoadState.font && interfaceFontLoadState.status === 'error'" class="interface-font-card-status is-error" role="status" aria-live="polite" :data-status="interfaceFontLoadState.status">
               <span>{{ fontStatusText }}</span>
-              <button type="button" @click.stop.prevent="retryInterfaceFont()">{{ t('settings.interface.font.retry') }}</button>
+              <button type="button" @click.stop.prevent="selectInterfaceFont(font.value)">{{ t('settings.interface.font.retry') }}</button>
             </div>
             <template v-else>
               <span v-if="font.value === props.config.interfaceFont" class="interface-font-action is-active">
@@ -250,7 +250,7 @@
               v-if="canClearFont(font.value)"
               type="button"
               class="interface-font-clear"
-              :disabled="clearingFont === font.value"
+              :disabled="clearingFont !== null"
               :aria-label="`${t('settings.interface.font.clear', {size: clearFontSize(font.value)})} · ${t(font.labelKey)}`"
               :title="`${t('settings.interface.font.clear', {size: clearFontSize(font.value)})} · ${t(font.labelKey)}`"
               @click.stop.prevent="confirmClearFont(font.value)"
@@ -269,12 +269,19 @@
     </div>
   </SettingsGroup>
 </SettingsPanel>
+  <el-dialog v-model="fontClearDialogOpen" :title="t('settings.interface.font.clearConfirmTitle')" width="min(460px, calc(100vw - 32px))" append-to-body destroy-on-close>
+    <p>{{ t('settings.interface.font.clearConfirmMessage', {font: pendingFontLabel}) }}</p>
+    <template #footer>
+      <el-button @click="fontClearActions.cancel">{{ t('settings.interface.font.clearConfirmCancel') }}</el-button>
+      <el-button type="primary" @click="fontClearActions.confirm">{{ t('settings.interface.font.clearConfirmButton') }}</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
 import SettingsPanel from './components/SettingsPanel.vue'
-import {computed, onMounted, ref} from 'vue'
-import {ElMessage, ElMessageBox} from 'element-plus'
+import {computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch} from 'vue'
+import {ElMessage} from 'element-plus'
 import type {Config} from '@/src/core/config/model'
 import {
   DEFAULT_POPUP_MODULE_ORDER,
@@ -305,13 +312,19 @@ import SentenceHighlightStyleSettings from './SentenceHighlightStyleSettings.vue
 import SettingsGroup from './components/SettingsGroup.vue'
 import SettingsItem from './components/SettingsItem.vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   config: Config
   activePanel?: string
-}>()
+  active?: boolean
+}>(), {active: true})
 const {t, translateLegacy} = useUiI18n()
+const viewActive = ref(true)
+const settingsActive = computed(() => viewActive.value && props.active)
+const fontEditorActive = computed(() => settingsActive.value && (!props.activePanel || props.activePanel === 'font'))
+const layoutEditorActive = computed(() => settingsActive.value && (!props.activePanel || props.activePanel === 'layout'))
 const activeLayoutPanel = ref<'popupModule' | 'quickFeature'>('popupModule')
 function handleLayoutTabKeydown(event: KeyboardEvent) {
+  if (!layoutEditorActive.value) return
   if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
   event.preventDefault()
   activeLayoutPanel.value = event.key === 'Home' ? 'popupModule'
@@ -322,8 +335,8 @@ function handleLayoutTabKeydown(event: KeyboardEvent) {
 }
 const selectedSkinOption = computed(() => getInterfaceSkinOption(props.config.interfaceSkin))
 const selectedFontOption = computed(() => getInterfaceFontOption(props.config.interfaceFont))
-onMounted(() => { void refreshInterfaceFontAvailability() })
 function selectInterfaceFont(font: InterfaceFont) {
+  if (!fontEditorActive.value) return
   if (font === props.config.interfaceFont) {
     if (interfaceFontLoadState.value.status === 'error') retryInterfaceFont()
     return
@@ -331,6 +344,30 @@ function selectInterfaceFont(font: InterfaceFont) {
   props.config.interfaceFont = font
 }
 const clearingFont = ref<InterfaceFont | null>(null)
+const fontClearDialogOpen = ref(false)
+let clearVersion = 0
+type FontClearOperation = {font: InterfaceFont; config: Config; selectedFont: InterfaceFont; version: number; label: string}
+const pendingClear = ref<FontClearOperation | null>(null)
+const pendingFontLabel = computed(() => pendingClear.value?.label || '')
+const fontClearActions = computed(() => {
+  const operation = pendingClear.value
+  return {confirm: () => performClearFont(operation), cancel: () => {
+    if (pendingClear.value === operation) closeFontClearDialog()
+  }}
+})
+function closeFontClearDialog(): void {pendingClear.value = null;fontClearDialogOpen.value = false}
+function isCurrentClear(operation: FontClearOperation): boolean {
+  return fontEditorActive.value && operation.version === clearVersion && operation.config === props.config
+    && operation.selectedFont === props.config.interfaceFont
+}
+watch(() => [fontEditorActive.value, props.config, props.config.interfaceFont], () => {
+  clearVersion++;closeFontClearDialog()
+}, {flush: 'sync'})
+watch(fontClearDialogOpen, open => {if (!open) pendingClear.value = null}, {flush: 'sync'})
+watch(fontEditorActive, active => {if (active) void refreshInterfaceFontAvailability()}, {immediate: true})
+onActivated(() => {viewActive.value = true})
+onDeactivated(() => {viewActive.value = false})
+onBeforeUnmount(() => {viewActive.value = false})
 function clearFontSize(font: InterfaceFont): string {
   const bytes = getClearableInterfaceFontAssets(font, cachedInterfaceFonts.value).reduce((sum, asset) => sum + asset.bytes, 0)
   if (bytes < 1024) return `${bytes} B`
@@ -343,30 +380,24 @@ function canClearFont(font: InterfaceFont): boolean {
     && getClearableInterfaceFontAssets(font, cachedInterfaceFonts.value).length > 0
     && !(interfaceFontLoadState.value.font === font && interfaceFontLoadState.value.status === 'loading')
 }
-async function confirmClearFont(font: InterfaceFont): Promise<void> {
-  if (!canClearFont(font) || clearingFont.value) return
+function confirmClearFont(font: InterfaceFont): void {
+  if (!fontEditorActive.value || !canClearFont(font) || clearingFont.value || fontClearDialogOpen.value) return
   const option = interfaceFontOptions.find(item => item.value === font)
   const label = option ? t(option.labelKey) : font
+  pendingClear.value = {font, config: props.config, selectedFont: props.config.interfaceFont, version: ++clearVersion, label}
+  fontClearDialogOpen.value = true
+}
+async function performClearFont(operation: FontClearOperation | null = pendingClear.value): Promise<void> {
+  if (!operation || operation !== pendingClear.value || !fontClearDialogOpen.value || clearingFont.value || !isCurrentClear(operation) || !canClearFont(operation.font)) return
+  clearingFont.value = operation.font
+  closeFontClearDialog()
   try {
-    await ElMessageBox.confirm(
-      t('settings.interface.font.clearConfirmMessage', {font: label}),
-      t('settings.interface.font.clearConfirmTitle'),
-      {
-        confirmButtonText: t('settings.interface.font.clearConfirmButton'),
-        cancelButtonText: t('settings.interface.font.clearConfirmCancel'),
-        type: 'warning',
-      },
-    )
+    await clearInterfaceFont(operation.font)
+    if (!isCurrentClear(operation)) return
+    if (props.config.interfaceFont === operation.font) props.config.interfaceFont = 'system'
+    ElMessage({message: t('settings.interface.font.clearSuccess', {font: operation.label}), type: 'success', duration: 1800})
   } catch {
-    return
-  }
-  clearingFont.value = font
-  try {
-    await clearInterfaceFont(font)
-    if (props.config.interfaceFont === font) props.config.interfaceFont = 'system'
-    ElMessage({message: t('settings.interface.font.clearSuccess', {font: label}), type: 'success', duration: 1800})
-  } catch {
-    ElMessage({message: t('settings.interface.font.clearFailed', {font: label}), type: 'error', duration: 2200})
+    if (isCurrentClear(operation)) ElMessage({message: t('settings.interface.font.clearFailed', {font: operation.label}), type: 'error', duration: 2200})
   } finally {
     clearingFont.value = null
   }
@@ -400,10 +431,12 @@ const popupQuickFeatureEditorItems = computed(() => popupQuickFeatureOptions.map
 })))
 
 function setPopupModuleOrder(order: string[]) {
+  if (!layoutEditorActive.value) return
   props.config.popupModuleOrder = normalizePopupModuleOrder(order)
 }
 
 function setPopupModuleVisibility(moduleId: string, visible: boolean) {
+  if (!layoutEditorActive.value) return
   const module = popupModuleOptions.find((item) => item.id === moduleId)
   if (!module?.visibilityKey) return
   props.config.interfaceVisibility = withInterfaceVisibility(
@@ -414,10 +447,12 @@ function setPopupModuleVisibility(moduleId: string, visible: boolean) {
 }
 
 function setPopupQuickFeatureOrder(order: string[]) {
+  if (!layoutEditorActive.value) return
   props.config.popupQuickFeatureOrder = normalizePopupQuickFeatureOrder(order)
 }
 
 function setPopupQuickFeatureVisibility(featureId: string, visible: boolean) {
+  if (!layoutEditorActive.value) return
   const feature = popupQuickFeatureOptions.find((item) => item.id === featureId)
   if (!feature) return
   props.config.popupQuickFeatureVisibility = withPopupQuickFeatureVisibility(

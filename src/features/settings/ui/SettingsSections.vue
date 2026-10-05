@@ -373,7 +373,7 @@
     </section>
 
     <section v-if="hasVisitedSection('settings-interface')" v-show="props.activeSection === 'settings-interface'" id="settings-interface" class="settings-section">
-      <InterfaceSettings :config="config" :active-panel="props.activePanel" />
+      <InterfaceSettings :config="config" :active-panel="props.activePanel" :active="viewActive && props.activeSection === 'settings-interface'" />
     </section>
 
     <section v-if="hasVisitedSection('settings-translation')" v-show="props.activeSection === 'settings-translation'" class="settings-section settings-section-continuation">

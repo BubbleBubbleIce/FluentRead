@@ -290,10 +290,10 @@ describe('options UI composition architecture', () => {
     expect(source('src/features/vocabulary/ui/public.ts')).toContain("from './VocabularyBook.vue'")
     expect(settingsSections).not.toContain('@/entrypoints/')
     expect(settingsSections).toContain('<style scoped src="./settings-sections.css"></style>')
-    expect(settingsSections).toContain('<InterfaceSettings :config="config" :active-panel="props.activePanel" />')
+    expect(settingsSections).toContain("<InterfaceSettings :config=\"config\" :active-panel=\"props.activePanel\" :active=\"viewActive && props.activeSection === 'settings-interface'\" />")
     expect(settingsSections).toContain('data-config-field="to"')
-    expect(activeSectionSource(settingsSections, 'settings-general')).not.toContain('<InterfaceSettings :config="config" :active-panel="props.activePanel" />')
-    expect(activeSectionSource(settingsSections, 'settings-interface')).toContain('<InterfaceSettings :config="config" :active-panel="props.activePanel" />')
+    expect(activeSectionSource(settingsSections, 'settings-general')).not.toContain("<InterfaceSettings :config=\"config\" :active-panel=\"props.activePanel\" :active=\"viewActive && props.activeSection === 'settings-interface'\" />")
+    expect(activeSectionSource(settingsSections, 'settings-interface')).toContain("<InterfaceSettings :config=\"config\" :active-panel=\"props.activePanel\" :active=\"viewActive && props.activeSection === 'settings-interface'\" />")
     expect(activeSectionSource(settingsSections, 'settings-interface')).toContain('id="settings-interface"')
     expect(settingsGroupTitles(interfaceSettings)).toEqual([
       "translateLegacy('界面与弹窗')",
@@ -306,7 +306,8 @@ describe('options UI composition architecture', () => {
     expect(interfaceSettings).not.toContain('interface-font-advanced')
     expect(interfaceSettings).toContain('interface-font-card-status')
     expect(interfaceSettings).toContain('clearInterfaceFont')
-    expect(interfaceSettings).toContain('ElMessageBox.confirm')
+    expect(interfaceSettings).toContain('<el-dialog v-model="fontClearDialogOpen"')
+    expect(interfaceSettings).toContain('isCurrentClear(operation)')
     expect(interfaceSettings).toContain("props.config.interfaceFont = 'system'")
     expect(writingSettings).not.toContain('WritingFlowDemo')
     expect(writingSettings).not.toContain('writing.demo.')

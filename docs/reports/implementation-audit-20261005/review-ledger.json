@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 825,
-    "functions": 14802,
+    "functions": 14837,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -83,7 +83,7 @@
       },
       "src/app": {
         "files": 101,
-        "functions": 1169,
+        "functions": 1170,
         "lines": 11476
       },
       "src/core/config": {
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 81,
-        "functions": 1439,
-        "lines": 19102
+        "functions": 1455,
+        "lines": 19137
       },
       "src/features/share-card": {
         "files": 7,
@@ -273,8 +273,8 @@
       },
       "src/services": {
         "files": 54,
-        "functions": 952,
-        "lines": 11721
+        "functions": 966,
+        "lines": 11756
       },
       "src/shared": {
         "files": 8,
@@ -283,8 +283,8 @@
       },
       "src/ui": {
         "files": 16,
-        "functions": 145,
-        "lines": 3863
+        "functions": 149,
+        "lines": 3894
       },
       "userscript/SettingsPanel.vue": {
         "files": 1,
@@ -616,8 +616,8 @@
     },
     {
       "file": "src/app/options/OptionsApp.vue",
-      "sha256": "a790044c3061fdedf360a137e07cb471a92d3d10e2f662ba7ee64441eb280e4f",
-      "functionBodies": 51,
+      "sha256": "328d4f2c16659fbdc4fc6d3e0d13fc67cf48a9642e9968b4a30d5023cf5e4214",
+      "functionBodies": 52,
       "status": "source-read-and-traced"
     },
     {
@@ -642,6 +642,18 @@
       "file": "src/app/translation/visionProbeRuntime.ts",
       "sha256": "d024916c66722501c0a223591fac734b7d760ce52d09cdefe65d0e828c4c62ab",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/interfaceAppearance.ts",
+      "sha256": "69da4d75e54c7d5606181868d5f96232213afe284d38aee513d1f318931db54f",
+      "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/interfaceFontAssets.ts",
+      "sha256": "4065308565a2c01735d8768f09a65c49625671c21b4428f4b03b6e205f9fc314",
+      "functionBodies": 10,
       "status": "source-read-and-traced"
     },
     {
@@ -1419,6 +1431,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/InterfaceSettings.vue",
+      "sha256": "2dddea106e4aee424a65ecaec9fa9d78b640caa0011e25b0ae777f1e16ff37ea",
+      "functionBodies": 39,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/LearningCenter.vue",
       "sha256": "33d9429320ccb41c8d9974b3482c547779706fb08a0c2bd999a5cd7134fd0e9c",
       "functionBodies": 5,
@@ -1438,7 +1456,7 @@
     },
     {
       "file": "src/features/settings/ui/SettingsSections.vue",
-      "sha256": "3d9f42b9dd129a57c25fad6594ef1383e9f070205c986db8822fa22c57a6ac10",
+      "sha256": "91fd623ab2ff87cd903d0a39a7cdad7c69dd4f16a5b3d0b8447c34f1967e9926",
       "functionBodies": 166,
       "status": "source-read-and-traced"
     },
@@ -1689,6 +1707,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/services/interfaceFonts.ts",
+      "sha256": "36979503b74fccb40c45f10f77c23bf84d405db1cbd0b3b91d4699d9a4e783a4",
+      "functionBodies": 48,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/services/model-usage/aggregation.ts",
       "sha256": "8643926b906eda4874f57d0bb7197425cdf921e618acafa26248c224d3f8d38b",
       "functionBodies": 30,
@@ -1905,6 +1929,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/ui/interfaceAppearance.ts",
+      "sha256": "d5d400f78bd780173ca8bb752da5f644c2ead9b9c1b5f9ea83842725238cb668",
+      "functionBodies": 32,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/ui/view-model/serviceCatalog.ts",
       "sha256": "3df8ce76f457388c3e0648c1fbfcaa200ea698d36ee22c938462c2d1f129303c",
       "functionBodies": 15,
@@ -2025,8 +2055,6 @@
     "src/core/config/freeTranslation.ts",
     "src/core/config/harness.ts",
     "src/core/config/inputTranslation.ts",
-    "src/core/config/interfaceAppearance.ts",
-    "src/core/config/interfaceFontAssets.ts",
     "src/core/config/localTranslation.ts",
     "src/core/config/localTts.ts",
     "src/core/config/model.ts",
@@ -2230,7 +2258,6 @@
     "src/features/settings/ui/HarnessPromptSettings.vue",
     "src/features/settings/ui/HarnessSettings.vue",
     "src/features/settings/ui/InputTranslationSettings.vue",
-    "src/features/settings/ui/InterfaceSettings.vue",
     "src/features/settings/ui/LearningMemoryManager.vue",
     "src/features/settings/ui/LocalDataManagement.vue",
     "src/features/settings/ui/LocalTranslationModelSettings.vue",
@@ -2440,7 +2467,6 @@
     "src/services/harness/sessionTypes.ts",
     "src/services/harness/sessions.ts",
     "src/services/harness/usage.ts",
-    "src/services/interfaceFonts.ts",
     "src/services/translation/types.ts",
     "src/services/writing/runtime.ts",
     "src/shared/function/sha256.ts",
@@ -2456,7 +2482,6 @@
     "src/ui/components/UiLanguageSelector.vue",
     "src/ui/components/UiSelect.vue",
     "src/ui/i18n.ts",
-    "src/ui/interfaceAppearance.ts",
     "src/ui/translationLoadingIndicator.ts",
     "src/ui/view-model/aiContext.ts",
     "src/ui/view-model/serviceLibrary.ts",
@@ -2498,7 +2523,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue584pending source/function chains; next inspect active model-vision requests and hidden service settings, shared appearance-root and font async ownership/clear queue, then remaining settings/input/area/section/config UI and existing image runtime strict/performance debt. After every source/function is reviewed and issues resolved, rebase onto freshly verified latest main, review whole code chains again, resolve resulting findings, verify and merge the exact reviewed head. Goal active; no premature rebase or merge.",
+    "Continue579pending source/function chains; next inspect active model-vision requests and hidden service settings, then remaining settings/input/area/section/config UI and existing image runtime strict/performance debt. Font task/cache-clear/root/dialog ownership audited in37; validate any further partial cache failure or oversized cached-body concerns before treating them as findings. After every source/function is reviewed and related issues resolved, rebase onto freshly verified latest main, review whole resulting code chains again, resolve resulting findings, verify and merge the exact reviewed head. Goal active; final integration not started.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2524,12 +2549,13 @@
     "Thirty-third:18new full source reviews424function bodies;225reviewed/599pending. Fixed stats clear-vs-queued-flush new-generation loss and coalesced pending flush work; indexed model usage retention avoids full-row hydration; bounded8locale caches replace repeated Intl constructors, eliminating formatUnit wrapper. Both Vue dashboard resets ignore late completion after unmount and release only owned inert state.12modules four100/111cases,6integration files138cases,27production UI assertion flows and native old/new source work-count comparisons pass. Initial stats browser pagination fixture could inherit partial-cache source from random first row; new53rows explicitly network. Architecture gate still has14executable/3documentation ownership debts; unrelated image-runtime strict gap remains. Userscript resource pin1c4482cc remains local/unpublished. Date/time/remaining UI formatting, active-panel handoff, closed-shadow statistics dialog/query root, huge-import validation and duplicate stats event contracts remain separate review/validation work; no whole-goal or provider-quality guarantee.",
     "Thirty-fourth: five new full reviews43function bodies;230reviewed/594pending. Paragraph DOM recursion removed,500sibling translation ownership probes124750to499, duplicate reader wrappers consolidated. Clipboard late fallback/notices stop after abort/disable/newer request; native focus/backward selection and owned cleanup verified. Multiple ranges checked through Selection port, not live Firefox. Settings provisional mutation/rollback replaced by owned draft; both reserved entries and quick profiles check default fallback conflicts. Five strict modules four100/65cases; actual compiled settings9cases; six related files96cases;13production native flows. Two existing architecture failures remain13executable/3doc tools without ownership. Native fixture uses controlled Microsoft/clipboard ports, no OS clipboard writes or provider quality proof. Rapid-copy notice stacking is observed and next priority; active-section ownership still needs parent-chain tracing. Language resource pin unchanged local/unpublished.",
     "Thirty-fifth: five new complete reviews256function bodies;235reviewed4287bodies589pending. Bounded three-notice queue, keyed copy feedback, signal cleanup, pending reveal coalescing and unchanged-DOM update; native500notices/RAFs/timers500to1,500identical feedback mutations0. Settings KeepAlive/active props close recording and suspend active-dependent children; canceled duplicate/late navigation and hydration, coalesced latest-state tab broadcast with rejection handling, removed no-op service filter. New34executed cases29static definitions;11affected files241cases; five strict modules four100/121cases, new permanent notice owner. Actual compiled SFC lifecycle tests plus19production and7native flows. Two existing architecture failures remain13unowned executable/3doc tools. Controlled Microsoft/clipboard ports, native Edge only; builds do not prove live Firefox or provider/OS clipboard behavior. Language resource pin unchanged local/unpublished.",
-    "Thirty-sixth:6new complete source reviews73function bodies;241files4354bodies584pending. New66executed cases42static definitions,16affected files472cases. Actual old-head leaf/subscription52cases44fail8pass and dialog17cases4fail13pass, immutable baselines/restoration retained. Three strict modules all4dimensions100/38cases; new permanent draft/subscription owners, old subscription exemption removed. Native actual Vue strategy work1000to0, production recorder/prompt20flows including immediate close persistence; initial focus guard stopped/cleaned profile, first config poll caught intermediate mode ACK, native dialog clear and recording-before100ms exposed actual bugs and were repaired. ModelVisionSettings active request/hidden service subscriptions and shared appearance/font/clear lifecycle remain pending. Final latest-main rebase, whole-chain review/fixes and merge explicitly requested, deferred until whole audit complete."
+    "Thirty-sixth:6new complete source reviews73function bodies;241files4354bodies584pending. New66executed cases42static definitions,16affected files472cases. Actual old-head leaf/subscription52cases44fail8pass and dialog17cases4fail13pass, immutable baselines/restoration retained. Three strict modules all4dimensions100/38cases; new permanent draft/subscription owners, old subscription exemption removed. Native actual Vue strategy work1000to0, production recorder/prompt20flows including immediate close persistence; initial focus guard stopped/cleaned profile, first config poll caught intermediate mode ACK, native dialog clear and recording-before100ms exposed actual bugs and were repaired. ModelVisionSettings active request/hidden service subscriptions and shared appearance/font/clear lifecycle remain pending. Final latest-main rebase, whole-chain review/fixes and merge explicitly requested, deferred until whole audit complete.",
+    "Thirty-seventh:5new complete source reviews153function bodies plus existing Options callback+1;246files4508bodies579pending. New61executed cases45static definitions,9affected files392cases. Immutable original3source comparison90cases44fail46pass before final added keyboard guard; that guard separately passed final integration. Four strict modules all4dimensions100/74cases; permanent appearance bridge owner added and build-only exemption removed. Native6flows show10concurrent warm jobs reads/digests/installs20to2 without HTTP, distinct clears/race/root/prepare/owned FontFace behavior. Production15flows/5inspected screenshots, actual cache/crypto/FontFace/config; all font HTTP locally fixed assets. First production detected retained FontFace2to3 and was repaired/rebuilt/reverified2to2; preserved failed report/screens/source/build evidence. Existing architecture debt13executables/3docs and image runtime gaps persist. Final latest-main rebase, whole-chain review/fixes/verification and merge still pending whole audit."
   ],
   "progress": {
-    "sourceReadFiles": 241,
-    "sourceReadFunctionBodies": 4354,
-    "pendingFiles": 584,
+    "sourceReadFiles": 246,
+    "sourceReadFunctionBodies": 4508,
+    "pendingFiles": 579,
     "goalComplete": false
   },
   "observations": [
@@ -3130,6 +3156,26 @@
       "file": "src/features/settings/ui/FloatingBallSettings.vue",
       "status": "fixed-or-reviewed-and-verified-thirty-sixth",
       "issue": "FloatingBallSettings six bodies and SettingsPanel template fully traced; existing normalization and visibility contracts need no changes. Corrected existing config-save test fixture missing disposed from batch35 and retained/demonstrated in-flight ACK, exit handoff and no autosave after dispose assertions."
+    },
+    {
+      "file": "src/services/interfaceFonts.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-seventh",
+      "issue": "Font clears are deduplicated per font and serialized across fonts; wait for all earlier in-flight tasks including aborted/replaced jobs still in uncancellable Cache.put. Clear invalidates its active/cached load, and fresh post-clear load waits deletion. Same-font cached preparations share work; per-file install promises and installed fast paths prevent duplicate parse/registration across overlapping schemes. Cancellation/timeout races cover fetch, reader.read and digest even for noncooperative ports; reader cancellation is not awaited and synchronous throws/rejections are caught. Removed redundant post-verification abort check; parent abort still checked before cache write/install."
+    },
+    {
+      "file": "src/ui/interfaceAppearance.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-seventh",
+      "issue": "Owned root registration returns an idempotent release; old-root release cannot unset a newer root, and releasing the latest returns to a previous live root. First-screen preparation captures its target/request before await, so late cached results cannot switch a new page or superseded selection. Retry shares request validation and removes the redundant load-then-apply chain; UI boundaries catch unexpected loader rejection. Production clear/reselect exposed retained FontFace registrations2to3. Track actual owned faces by file and delete only successful-clear exclusive faces, preserving shared and foreign faces. Reverified native old/new owned release0to1 and production clear/reselect remains2. Asset manifest/source/shared fallback policy fully traced unchanged; corrected outdated system-font fallback comment."
+    },
+    {
+      "file": "src/features/settings/ui/InterfaceSettings.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-seventh",
+      "issue": "InterfaceSettings owns its confirmation dialog and action token. Hidden section, KeepAlive deactivation, unmount, configuration identity/font/panel changes reject old open/select/confirm/result writes. Confirm rechecks eligibility; already confirmed cache cleanup completes but stale toast/config writes are skipped. All clear buttons disabled during one clear; hidden layout setters and keyboard callbacks reject late work. Availability refresh active only; parent propagates active lifetime."
+    },
+    {
+      "file": "src/core/config/interfaceFontAssets.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-seventh",
+      "issue": "Production clear/reselect exposed retained FontFace registrations2to3. Track actual owned faces by file and delete only successful-clear exclusive faces, preserving shared and foreign faces. Reverified native old/new owned release0to1 and production clear/reselect remains2. Asset manifest/source/shared fallback policy fully traced unchanged; corrected outdated system-font fallback comment."
     }
   ],
   "finalDelivery": {

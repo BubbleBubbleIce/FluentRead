@@ -1,7 +1,7 @@
 <!--
  @file src/app/options/OptionsApp.vue
  文件职责：实现扩展 Options 页的顶层布局，组织设置导航、全局搜索结果和学习中心入口，并把选中分区交给对应 feature UI。
- 主要内容：侧栏展示品牌与多语言宣传语；关于页以随界面语言显示产品名的宽幅品牌介绍、项目链接卡片、开源项目下方的微信交流按钮和独立赞赏区组织内容，联系二维码与赞赏码在当前页弹窗展示；渲染默认展开的分组侧栏、窄屏分类选择和全局搜索；普通设置连续展示并提供顶部滚动定位导航，服务目录使用完整工作区，统计与网站规则按任务保留视图切换，复用 settingsNavigation 的项目解析/过滤逻辑，在 SettingsSections 与 LearningCenter 之间切换并重置内容区滚动，同步 URL hash 的深链接与前进后退导航，兼容模型用量迁入翻译统计后的旧链接。
+ 主要内容：侧栏展示品牌与多语言宣传语；关于页以随界面语言显示产品名的宽幅品牌介绍、项目链接卡片、开源项目下方的微信交流按钮和独立赞赏区组织内容，联系二维码与赞赏码在当前页弹窗展示；渲染默认展开的分组侧栏、窄屏分类选择和全局搜索；普通设置连续展示并提供顶部滚动定位导航，服务目录使用完整工作区，统计与网站规则按任务保留视图切换，复用 settingsNavigation 的项目解析/过滤逻辑，在 SettingsSections 与 LearningCenter 之间切换并重置内容区滚动，同步 URL hash 的深链接与前进后退导航，兼容模型用量迁入翻译统计后的旧链接；界面根节点注册在卸载时只释放本页面句柄。
  模块边界：组件负责页面壳、导航状态和主题、界面皮肤根属性同步，不定义具体配置字段、不直接写 browser.storage，也不实现词汇仓库；设置表单、收藏与阅读记录业务由各 feature 组件拥有。
 -->
 <template>
@@ -199,7 +199,7 @@ import {
   configReady,
   subscribeConfig,
 } from '@/src/services/config/store'
-import {applyInterfaceFont, applyInterfaceSkin, applyInterfaceTheme, setInterfaceAppearanceRoot} from '@/src/ui/interfaceAppearance'
+import {applyInterfaceFont, applyInterfaceSkin, applyInterfaceTheme, registerInterfaceAppearanceRoot} from '@/src/ui/interfaceAppearance'
 import {browserCapabilities} from '@/src/platform/browser/capabilities'
 
 const props = defineProps<{
@@ -290,7 +290,7 @@ function handleSystemThemeChange(): void {
 let searchRevealGeneration = 0
 let cancelPendingSearchReveal: (() => void) | null = null
 
-if (props.appearanceRoot) setInterfaceAppearanceRoot(props.appearanceRoot)
+const releaseInterfaceAppearanceRoot = props.appearanceRoot ? registerInterfaceAppearanceRoot(props.appearanceRoot) : () => {}
 
 const navigation = navigationItems
 const contentComponentProps = computed(() => activeSection.value === 'settings-vocabulary'
@@ -506,7 +506,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   disposed = true
   searchRevealGeneration += 1
-  if (props.appearanceRoot) setInterfaceAppearanceRoot(null)
+  releaseInterfaceAppearanceRoot()
   cancelPendingSearchReveal?.()
   unsubscribeInterfaceConfig()
   window.removeEventListener('hashchange', syncSectionFromHash)

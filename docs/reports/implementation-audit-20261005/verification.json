@@ -24338,6 +24338,659 @@
         "Translation/provider quality, OS clipboard, OCR execution and live model-probe behavior not tested in this batch",
         "No remote refresh, rebase or merge yet; user requested final integration after whole audit and subsequent review"
       ]
+    },
+    {
+      "batch": "thirty-seventh",
+      "name": "owned-font-tasks-cache-clear-roots-and-settings-dialogs",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 246,
+        "sourceReadFunctionBodies": 4508,
+        "pendingFiles": 579,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/services/interfaceFonts.ts",
+          "src/ui/interfaceAppearance.ts",
+          "src/core/config/interfaceFontAssets.ts",
+          "src/core/config/interfaceAppearance.ts",
+          "src/features/settings/ui/InterfaceSettings.vue"
+        ],
+        "newFunctionBodies": 153,
+        "rereadFiles": [
+          "src/app/options/OptionsApp.vue",
+          "src/features/settings/ui/SettingsSections.vue"
+        ],
+        "existingOptionsNewCallbackBodies": 1,
+        "sourceProof": {
+          "src/services/interfaceFonts.ts": {
+            "sha256": "36979503b74fccb40c45f10f77c23bf84d405db1cbd0b3b91d4699d9a4e783a4",
+            "fullyRead": true,
+            "functionBodies": 48,
+            "review": "Complete source, callers and lifecycle traced; prior reviewed bodies retained for reread entries"
+          },
+          "src/ui/interfaceAppearance.ts": {
+            "sha256": "d5d400f78bd780173ca8bb752da5f644c2ead9b9c1b5f9ea83842725238cb668",
+            "fullyRead": true,
+            "functionBodies": 32,
+            "review": "Complete source, callers and lifecycle traced; prior reviewed bodies retained for reread entries"
+          },
+          "src/core/config/interfaceFontAssets.ts": {
+            "sha256": "4065308565a2c01735d8768f09a65c49625671c21b4428f4b03b6e205f9fc314",
+            "fullyRead": true,
+            "functionBodies": 10,
+            "review": "Complete source, callers and lifecycle traced; prior reviewed bodies retained for reread entries"
+          },
+          "src/core/config/interfaceAppearance.ts": {
+            "sha256": "69da4d75e54c7d5606181868d5f96232213afe284d38aee513d1f318931db54f",
+            "fullyRead": true,
+            "functionBodies": 24,
+            "review": "Complete source, callers and lifecycle traced; prior reviewed bodies retained for reread entries"
+          },
+          "src/features/settings/ui/InterfaceSettings.vue": {
+            "sha256": "2dddea106e4aee424a65ecaec9fa9d78b640caa0011e25b0ae777f1e16ff37ea",
+            "fullyRead": true,
+            "functionBodies": 39,
+            "review": "Complete source, callers and lifecycle traced; prior reviewed bodies retained for reread entries"
+          },
+          "src/app/options/OptionsApp.vue": {
+            "sha256": "328d4f2c16659fbdc4fc6d3e0d13fc67cf48a9642e9968b4a30d5023cf5e4214",
+            "fullyRead": true,
+            "functionBodies": 52,
+            "review": "Complete source, callers and lifecycle traced; prior reviewed bodies retained for reread entries"
+          },
+          "src/features/settings/ui/SettingsSections.vue": {
+            "sha256": "91fd623ab2ff87cd903d0a39a7cdad7c69dd4f16a5b3d0b8447c34f1967e9926",
+            "fullyRead": true,
+            "functionBodies": 166,
+            "review": "Complete source, callers and lifecycle traced; prior reviewed bodies retained for reread entries"
+          }
+        }
+      },
+      "implementation": {
+        "changes": [
+          "Font clears are deduplicated per font and serialized across fonts; wait for all earlier in-flight tasks including aborted/replaced jobs still in uncancellable Cache.put. Clear invalidates its active/cached load, and fresh post-clear load waits deletion. Same-font cached preparations share work; per-file install promises and installed fast paths prevent duplicate parse/registration across overlapping schemes.",
+          "Cancellation/timeout races cover fetch, reader.read and digest even for noncooperative ports; reader cancellation is not awaited and synchronous throws/rejections are caught. Removed redundant post-verification abort check; parent abort still checked before cache write/install.",
+          "Owned root registration returns an idempotent release; old-root release cannot unset a newer root, and releasing the latest returns to a previous live root. First-screen preparation captures its target/request before await, so late cached results cannot switch a new page or superseded selection. Retry shares request validation and removes the redundant load-then-apply chain; UI boundaries catch unexpected loader rejection.",
+          "InterfaceSettings owns its confirmation dialog and action token. Hidden section, KeepAlive deactivation, unmount, configuration identity/font/panel changes reject old open/select/confirm/result writes. Confirm rechecks eligibility; already confirmed cache cleanup completes but stale toast/config writes are skipped. All clear buttons disabled during one clear; hidden layout setters and keyboard callbacks reject late work. Availability refresh active only; parent propagates active lifetime.",
+          "Production clear/reselect exposed retained FontFace registrations2to3. Track actual owned faces by file and delete only successful-clear exclusive faces, preserving shared and foreign faces. Reverified native old/new owned release0to1 and production clear/reselect remains2. Asset manifest/source/shared fallback policy fully traced unchanged; corrected outdated system-font fallback comment."
+        ],
+        "languageResourcePin": "1c4482cc43d3c5ca79cf8aa8ca0973319920a9c1",
+        "published": false
+      },
+      "newTests": {
+        "executedCases": 61,
+        "staticDefinitions": 45,
+        "baselineHead": "570c18e127dd80435cf7821fafada05a23d5e874",
+        "oldSourceFailures": {
+          "files": 3,
+          "failed": 44,
+          "passed": 46,
+          "cases": 90,
+          "beforeFinalKeyboardTestAdded": true
+        },
+        "finalKeyboardGuard": "Added one actual SFC keyboard callback case after old-source comparison; included in final392pass/type/test-audit verification",
+        "fixtureCorrections": [
+          "Old clear test incorrectly required different-font calls to share one promise; same-font sharing retained",
+          "Linkedom dataset formatter replaced with individual field checks; actual registry kind minimal used",
+          "Native crypto completion drained before checking timeout fallback; next source must start before stalled port release",
+          "New visible config/font may start a new confirmation; only old operation remains invalid"
+        ],
+        "baselineCompatibility": "Legacy root registration adapter and modern-only API checks avoid attributing missing new API to old product defects"
+      },
+      "strictCoverage": {
+        "passed": true,
+        "testFiles": 3,
+        "cases": 74,
+        "modules": {
+          "src/core/config/interfaceAppearance.ts": {
+            "lines": {
+              "total": 420,
+              "covered": 420,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 13,
+              "covered": 13,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 420,
+              "covered": 420,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 52,
+              "covered": 52,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/interfaceFontAssets.ts": {
+            "lines": {
+              "total": 41,
+              "covered": 41,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 41,
+              "covered": 41,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/services/interfaceFonts.ts": {
+            "lines": {
+              "total": 213,
+              "covered": 213,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 16,
+              "covered": 16,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 213,
+              "covered": 213,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 146,
+              "covered": 146,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/ui/interfaceAppearance.ts": {
+            "lines": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 19,
+              "covered": 19,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 69,
+              "covered": 69,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "thresholds": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "newPermanentModules": [
+          "src/ui/interfaceAppearance.ts"
+        ],
+        "removedBuildOnlyExemption": "src/ui/interfaceAppearance.ts"
+      },
+      "integration": {
+        "passed": true,
+        "files": 9,
+        "cases": 392,
+        "overlapsStrictAndSfc": true,
+        "compiledSfcSetupCases": 44,
+        "compiledSfcBoundary": "Actual compiled setup/watch/KeepAlive with null render and controlled boundary ports; actual client templates separately verified in production"
+      },
+      "nativeSourceComparison": {
+        "passed": true,
+        "results": {
+          "before": {
+            "warm": {
+              "allReady": true,
+              "samePromise": false,
+              "matches": 20,
+              "digests": 20,
+              "installs": 20,
+              "fetches": 0
+            },
+            "clear": {
+              "remaining": 1
+            },
+            "race": {
+              "remaining": 1
+            },
+            "rootRelease": {
+              "document": "compact",
+              "newRoot": null
+            },
+            "prepare": {
+              "documentFont": "inter",
+              "newRootFont": "system",
+              "stateFont": "inter"
+            },
+            "faceClear": {
+              "released": 0,
+              "foreignRetained": true
+            },
+            "cacheCleanup": true
+          },
+          "after": {
+            "warm": {
+              "allReady": true,
+              "samePromise": true,
+              "matches": 2,
+              "digests": 2,
+              "installs": 2,
+              "fetches": 0
+            },
+            "clear": {
+              "remaining": 0
+            },
+            "race": {
+              "remaining": 0
+            },
+            "rootRelease": {
+              "document": null,
+              "newRoot": "compact"
+            },
+            "prepare": {
+              "documentFont": null,
+              "newRootFont": "system",
+              "stateFont": "system"
+            },
+            "faceClear": {
+              "released": 1,
+              "foreignRetained": true
+            },
+            "cacheCleanup": true
+          }
+        },
+        "assertions": [
+          "10concurrent warm preparations: native cache reads, digests and FontFace installs20to2",
+          "different-font clears execute separately and free the final shared resource",
+          "replaced download cannot restore cache after deletion",
+          "old-root release cannot clear the current root registration",
+          "late first-screen preparation neither targets a new page nor starts an obsolete selection",
+          "cache clear releases only the owned exclusive FontFace and preserves foreign/shared faces"
+        ],
+        "oldNewBundleSha256": {
+          "font-before-thirty-seventh.js": "6ee0fe4c5a43deb0b0f94069a6642694296fa403045c8c934cabc616c6493a1f",
+          "font-after-thirty-seventh.js": "5784a77f32722a47486d022d6ddf4d7020cc47bf4bae3b0a0c3ca3a8b894f288"
+        },
+        "browserClosed": true,
+        "profileRemoved": true,
+        "scope": "Actual original/current modules in native Edge with native Cache/Response/crypto/FontFace; local immutable assets and controlled cache-write gates. Work counts, not whole-page timing."
+      },
+      "browser": {
+        "passed": true,
+        "assertionFlows": 15,
+        "assertions": [
+          "system font startup has no font downloads or cache assets",
+          "trusted selection downloads only Inter and shared Chinese, verifies, registers and persists",
+          "cancel retains font and both cached assets",
+          "confirmation closes across settings-general and does not reopen or delete",
+          "confirmation closes across settings-about and does not reopen or delete",
+          "confirmation closes across settings-vocabulary and does not reopen or delete",
+          "external font change closes confirmation without clearing cached assets",
+          "same-page cached reselect has no duplicate font download",
+          "confirmed clear removes only exclusive Latin asset and resets selected font",
+          "reselect after clearing downloads Latin once and preserves Chinese fallback",
+          "shared Chinese has no destructive clear action while the Latin scheme needs it",
+          "English dark font settings and confirmation fit 1280px viewport",
+          "English dark font settings and confirmation fit 390px viewport",
+          "new popup prepares verified local font before display without new HTTP downloads",
+          "clear and reselect release the owned FontFace rather than accumulating duplicate registrations"
+        ],
+        "scope": "Production Chrome extension in isolated Edge; actual font loader, crypto, FontFace, Cache and config persistence. All font HTTP responses use local pinned assets; no live CDN/probe/provider.",
+        "screenshotsGenerated": 5,
+        "screenshotsInspected": [
+          "font-confirm-1280.png",
+          "font-settings-dark-1280.png",
+          "font-confirm-dark-1280.png",
+          "font-settings-dark-390.png",
+          "font-confirm-dark-390.png"
+        ],
+        "errors": [],
+        "browserClosed": true,
+        "profileRemoved": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "visible": true,
+          "hidden": false,
+          "centered": true,
+          "windowState": "normal",
+          "displayTarget": "secondary",
+          "browserFrontmost": false
+        },
+        "finalBrowserFrontmost": false,
+        "requests": [
+          "Inter.woff2",
+          "NotoSansSC.woff2",
+          "Inter.woff2"
+        ],
+        "initialFontFaces": 2,
+        "reselectedFontFaces": 2,
+        "productionJavascriptSha256": "e6636215e33d80b7db5380e5cd541c0bfe3e6fbeeb1ba9bd3b7712ad9ceda558",
+        "actualRegressionFoundAndFixed": "Clearing and reselecting accumulated owned FontFace2to3; exclusive face release repaired and final2to2",
+        "failedInitialEvidence": "Private thirty-seventh-before-face-release-fix preserves original failure report/screenshots, build logs, source and comparison snapshots",
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-font-audit-native-": 0,
+            "fluentread-font-audit-production-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        }
+      },
+      "architecture": {
+        "files": 3,
+        "cases": 911,
+        "passed": 909,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3,
+        "initialCommandCorrection": "Initial third requested filename did not exist; correct browserFocusSafety included in final3file run"
+      },
+      "externalMain": {
+        "primaryHead": "510683f2d60985bb4494d6a9cf9ada2bb3b83acf",
+        "primaryClean": true,
+        "cachedOrigin": "4b34f3d9ac3326ba0b4bc7ee35190078a006b376",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "primaryHeadChangedSincePriorBatch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/en/guide/webpage-translation.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/guide/webpage-translation.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/reports/settings-ui-polish-20261006/README.md",
+          "docs/reports/settings-ui-polish-20261006/cloud-compatibility-report.json",
+          "docs/reports/settings-ui-polish-20261006/cloud-delete-loading.png",
+          "docs/reports/settings-ui-polish-20261006/delete-loading-report.json",
+          "docs/reports/settings-ui-polish-20261006/key-policy-menu.png",
+          "docs/reports/settings-ui-polish-20261006/layout-report.json",
+          "docs/reports/settings-ui-polish-20261006/learning-level.png",
+          "docs/reports/settings-ui-polish-20261006/reading-desktop.png",
+          "docs/reports/settings-ui-polish-20261006/request-limits.png",
+          "docs/reports/settings-ui-polish-20261006/resources-current.png",
+          "docs/reports/settings-ui-polish-20261006/resources-management.png",
+          "docs/reports/settings-ui-polish-20261006/resources-tesseract.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-dark-390.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-light-1440.png",
+          "docs/reports/settings-ui-polish-20261006/site-preference-menu.png",
+          "docs/reports/settings-ui-polish-20261006/speech-unified.png",
+          "docs/reports/settings-ui-polish-20261006/tooltip-selectable.png",
+          "docs/reports/settings-ui-polish-20261006/vision-single-result.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-drive-version-compat-ui-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-settings-layout-polish-test.cjs",
+          "scripts/testing/run-settings-reading-menu-ui-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/cloudSync.ts",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/localTts.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/image-translation/ui/image-ocr-settings.css",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/LocalTranslationModelSettings.vue",
+          "src/features/settings/ui/LocalTtsSettings.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/FieldHelp.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/services/ModelVisionSettings.vue",
+          "src/features/settings/ui/services/RequestLimitSettings.vue",
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/settings/ui/settings-sections.css",
+          "src/features/settings/ui/site-rule-workspace.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/google-drive/api.ts",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/platform/webdav/api.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/backgroundGoogleDriveSync.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/googleDriveApi.test.ts",
+          "tests/i18n.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/webDavApi.test.ts",
+          "tests/webDavBackup.test.ts",
+          "tests/webDavHttpIntegration.test.ts",
+          "tests/webDavProperties.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.e66b7ea53ace2cc3.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.af00cb4d384a4548.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/ja-JP.1691d1c911d69419.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.3efdea50649f4cd2.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.8d66f666ac96d59f.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts"
+        ],
+        "pendingFileCount": 224,
+        "cachedOriginChangedSincePriorBatch": true
+      },
+      "finalDelivery": {
+        "status": "pending-full-audit",
+        "requestedByUser": true,
+        "steps": [
+          "Complete all source/function/chain review and related fixes/performance/tests",
+          "Rebase onto then-latest verified main and reconcile changed/new source review",
+          "Review the whole resulting code and functional chains, resolve all related findings and verify",
+          "Merge the verified reviewed head using the repository delivery workflow"
+        ],
+        "performed": false
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 479,
+          "staticDefinitions": 6557
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Source read and focused verification do not establish all functions reviewed or whole-goal bug-free performance",
+        "Native cache/digest/install counts are work counts, not CPU or whole-page latency ratios",
+        "Font HTTP uses locally pinned fixtures, not live CDN reliability proof; no live provider/OCR/model/OS clipboard tested",
+        "Actual production Chrome/Edge templates and persistence verified; Firefox/userscript builds are not actual browser/manager proof",
+        "ModelVisionSettings requests/hidden service subscriptions, image runtime strict gaps and remaining579source reviews pending",
+        "No remote refresh, rebase or merge yet; final integration explicitly authorized after full audit and whole-chain review"
+      ]
     }
   ]
 }

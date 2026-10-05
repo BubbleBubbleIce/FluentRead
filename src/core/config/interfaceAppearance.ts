@@ -408,7 +408,7 @@ export function normalizeInterfaceSkin(value: unknown): InterfaceSkin {
   return getInterfaceSkinOption(value).value
 }
 
-/** 只接受内置字体栈，未知值稳定回到 Inter 方案。 */
+/** 只接受内置字体栈，未知值稳定回到默认系统字体。 */
 export function normalizeInterfaceFont(value: unknown): InterfaceFont {
   return getInterfaceFontOption(value).value
 }

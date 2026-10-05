@@ -3,7 +3,7 @@ import {resolve} from 'node:path'
 import {webcrypto} from 'node:crypto'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {interfaceFontOptions} from '@/src/core/config/interfaceAppearance'
-import {getClearableInterfaceFontAssets, getInterfaceFontAssets, getInterfaceFontUrl, interfaceFontSources, INTERFACE_FONT_REVISION} from '@/src/core/config/interfaceFontAssets'
+import {getClearableInterfaceFontAssets, getInterfaceFontAssets, getInterfaceFontUrl, interfaceFontSources, INTERFACE_FONT_REVISION, type InterfaceFontAsset} from '@/src/core/config/interfaceFontAssets'
 import {createInterfaceFontLoader, getCachedInterfaceFonts, verifyInterfaceFont, type InterfaceFontLoadState} from '@/src/services/interfaceFonts'
 
 const digest = (data: ArrayBuffer) => webcrypto.subtle.digest('SHA-256', data)
@@ -21,8 +21,8 @@ function harness() {
     fetch: vi.fn(async (url: RequestInfo | URL, _init?: RequestInit) => new Response(bytes(String(url).split('/').at(-1)!))),
     openCache: vi.fn(async () => cache as unknown as Cache),
     digest,
-    install: vi.fn(async () => {}),
-    onState: (state: InterfaceFontLoadState) => states.push(state),
+    install: vi.fn(async (_asset: InterfaceFontAsset, _data: ArrayBuffer) => {}),
+    onState: (state: InterfaceFontLoadState) => {states.push(state)},
     timeoutMs: 1000,
   }
   return {deps, cache, entries, states, loader: createInterfaceFontLoader(deps)}
@@ -314,14 +314,160 @@ describe('字体缓存维护', () => {
     expect(h.states.at(-1)).toMatchObject({font: 'inter', status: 'ready', persistent: true})
   })
 
-  it('清除系统字体不访问缓存，并发清除复用同一个清理任务', async () => {
+  it('清除系统字体不访问缓存，并发清除同一字体复用同一个清理任务', async () => {
     const h = harness()
     await h.loader.clearFont('system')
     expect(h.deps.openCache).not.toHaveBeenCalled()
     await h.loader.load('inter')
     const clear = h.loader.clearFont('inter')
-    expect(h.loader.clearFont('noto-sans-sc')).toBe(clear)
+    expect(h.loader.clearFont('inter')).toBe(clear)
     await clear
     expect(h.states.at(-1)).toMatchObject({font: 'inter', status: 'ready', persistent: false})
+  })
+})
+
+describe('字体任务队列和不可协作端口', () => {
+  it('不同字体的并发清除分别执行，共享资源在前一方案移除后才释放', async () => {
+    const h = harness();await h.loader.load('inter')
+    const latin = h.loader.clearFont('inter');const chinese = h.loader.clearFont('noto-sans-sc')
+    expect(chinese).not.toBe(latin)
+    await Promise.all([latin, chinese]);expect(h.entries.size).toBe(0)
+    expect(h.cache.delete).toHaveBeenCalledTimes(2)
+  })
+  it('旧下载在不可取消的缓存写入中被替换，清除仍等待它，迟到写入不能复活缓存', async () => {
+    const h = harness();let release!: () => void
+    h.cache.put.mockImplementationOnce(async (key, response) => {
+      await new Promise<void>(resolve => {release = resolve});h.entries.set(key, response.clone())
+    })
+    const old = h.loader.load('noto-sans-sc');await vi.waitFor(() => expect(release).toBeTypeOf('function'))
+    await h.loader.load('system');let completed = false
+    const clear = h.loader.clearFont('noto-sans-sc').then(() => {completed = true})
+    await Promise.resolve();await Promise.resolve();expect(completed).toBe(false)
+    release();await Promise.all([old, clear]);expect(h.entries.size).toBe(0)
+  })
+  it('首屏缓存注册和清除有顺序，清除后同一字体的重新选择可以重新下载', async () => {
+    const h = harness();await h.loader.load('noto-sans-sc');const reopened = createInterfaceFontLoader(h.deps)
+    let release!: () => void;h.deps.install.mockImplementationOnce(() => new Promise<void>(resolve => {release = resolve}))
+    const warm = reopened.loadCached('noto-sans-sc');await vi.waitFor(() => expect(release).toBeTypeOf('function'))
+    let cleared = false;const clear = reopened.clearFont('noto-sans-sc').then(() => {cleared = true})
+    await Promise.resolve();await Promise.resolve();expect(cleared).toBe(false)
+    release();await Promise.all([warm, clear]);expect(h.entries.size).toBe(0)
+    h.deps.fetch.mockClear();await reopened.load('noto-sans-sc');expect(h.deps.fetch).toHaveBeenCalledOnce()
+  })
+  it('100 次相同首屏准备只读取、校验与注册每个文件一次', async () => {
+    const h = harness();await h.loader.load('inter');const reopened = createInterfaceFontLoader(h.deps)
+    h.cache.match.mockClear();h.deps.install.mockClear()
+    const jobs = Array.from({length: 100}, () => reopened.loadCached('inter'))
+    expect(jobs.every(promise => promise === jobs[0])).toBe(true)
+    expect((await Promise.all(jobs)).every(Boolean)).toBe(true)
+    expect(h.cache.match).toHaveBeenCalledTimes(2);expect(h.deps.install).toHaveBeenCalledTimes(2)
+  })
+  it('缓存准备期间正常选择不重复注册，重叠方案共享一条字体注册任务', async () => {
+    const h = harness();await h.loader.load('inter');const reopened = createInterfaceFontLoader(h.deps)
+    h.deps.install.mockClear();let release!: () => void
+    h.deps.install.mockImplementationOnce(() => new Promise<void>(resolve => {release = resolve}))
+    const warm = reopened.loadCached('inter');await vi.waitFor(() => expect(release).toBeTypeOf('function'))
+    const selected = reopened.load('inter');release();await Promise.all([warm, selected])
+    expect(h.deps.install).toHaveBeenCalledTimes(2)
+    h.deps.install.mockClear();await reopened.clearFont('inter')
+    await reopened.load('inter');expect(h.states.at(-1)).toMatchObject({status: 'ready'})
+    expect(h.deps.install).toHaveBeenCalledOnce()
+  })
+  it('清除当前方案后不复用已经完成但内容已删除的加载任务', async () => {
+    const h = harness();const first = h.loader.load('noto-sans-sc');await first
+    await h.loader.clearFont('noto-sans-sc');h.deps.fetch.mockClear()
+    const next = h.loader.load('noto-sans-sc');expect(next).not.toBe(first);await next
+    expect(h.deps.fetch).toHaveBeenCalledOnce();expect(h.states.at(-1)).toMatchObject({persistent: true})
+  })
+  it('首个清理失败不吞掉队尾请求，同字体锁与加载屏障均释放', async () => {
+    const h = harness();await h.loader.load('inter');h.deps.openCache.mockRejectedValueOnce(new Error('blocked'))
+    const failed = h.loader.clearFont('inter');const next = h.loader.clearFont('inter')
+    expect(next).toBe(failed);const tail = h.loader.clearFont('noto-sans-sc')
+    await expect(failed).rejects.toThrow('blocked');await tail
+    await h.loader.clearFont('inter');await h.loader.clearFont('noto-sans-sc');expect(h.entries.size).toBe(0)
+    await h.loader.load('system');expect(h.states.at(-1)?.status).toBe('system')
+  })
+  it.each(['fetch', 'read', 'digest'] as const)('%s 不响应 AbortSignal 也在有界超时内切换备用源', async stage => {
+    vi.useFakeTimers();const h = harness();const asset = getInterfaceFontAssets('noto-sans-sc')[0]
+    let release!: (value: any) => void
+    const stalled = new Promise<any>(resolve => {release = resolve});let entered = false
+    const block = () => {entered = true;return stalled}
+    if (stage === 'fetch') h.deps.fetch.mockImplementationOnce(block)
+    if (stage === 'read') {
+      const response = new Response('placeholder')
+      vi.spyOn(response, 'body', 'get').mockReturnValue({getReader: () => ({read: block,
+        cancel: () => Promise.resolve()})} as unknown as ReadableStream<Uint8Array>)
+      h.deps.fetch.mockResolvedValueOnce(response)
+    }
+    if (stage === 'digest') h.deps.digest = vi.fn().mockImplementationOnce(block).mockImplementation(digest)
+    // digest 的 mock 在 loader 创建后设置时，需要用当前端口重新装配。
+    const loader = createInterfaceFontLoader(h.deps)
+    const job = loader.load('noto-sans-sc')
+    await vi.waitFor(() => expect(entered).toBe(true))
+    await vi.advanceTimersByTimeAsync(1050)
+    try {expect(h.deps.fetch).toHaveBeenCalledTimes(2)
+    } finally {
+      release(stage === 'fetch' ? new Response(bytes(asset.file)) : stage === 'read' ? {done: true} : await digest(bytes(asset.file)))
+      await job
+    }
+    expect(h.states.at(-1)?.status).toBe('ready');expect(vi.getTimerCount()).toBe(0)
+  })
+  it('流 cancel 不返回时也不阻塞成功下载和下一次选择', async () => {
+    const h = harness();const data = new Uint8Array(bytes('NotoSansSC.woff2'));const response = new Response('placeholder')
+    let release!: () => void;const stalled = new Promise<void>(resolve => {release = resolve})
+    const reader = {read: vi.fn().mockResolvedValueOnce({done: false, value: data}).mockResolvedValue({done: true}),
+      cancel: vi.fn(() => stalled)}
+    vi.spyOn(response, 'body', 'get').mockReturnValue({getReader: () => reader} as unknown as ReadableStream<Uint8Array>)
+    h.deps.fetch.mockResolvedValueOnce(response);let done = false
+    const job = h.loader.load('noto-sans-sc').then(() => {done = true})
+    await vi.waitFor(() => expect(reader.cancel).toHaveBeenCalledOnce())
+    await new Promise(resolve => setImmediate(resolve))
+    try {expect(done).toBe(true);expect(h.states.at(-1)?.status).toBe('ready')}
+    finally {release();await job}
+    await h.loader.load('system');expect(h.states.at(-1)?.status).toBe('system')
+  })
+  it('同时准备共享中文的两套缓存只调用一次中文解析注册', async () => {
+    const h = harness();await h.loader.load('inter');const reopened = createInterfaceFontLoader(h.deps)
+    let release!: () => void;h.deps.install.mockClear();h.deps.install.mockImplementation(async asset => {
+      if (asset.file === 'NotoSansSC.woff2') await new Promise<void>(resolve => {release = resolve})
+    })
+    const latin = reopened.loadCached('inter');const chinese = reopened.loadCached('noto-sans-sc')
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'))
+    await vi.waitFor(() => expect(h.deps.install).toHaveBeenCalledTimes(2))
+    release();expect(await latin).toBe(true);expect(await chinese).toBe(true)
+    expect(h.deps.install.mock.calls.filter(([asset]) => asset.file === 'NotoSansSC.woff2')).toHaveLength(1)
+  })
+  it('读取开始后共享字体先由另一方案注册，迟到的完整缓存准备不会再次注册', async () => {
+    const h = harness();await h.loader.load('inter');const reopened = createInterfaceFontLoader(h.deps)
+    const original = h.cache.match.getMockImplementation()!;let release!: () => void
+    h.cache.match.mockImplementationOnce(async key => {await new Promise<void>(resolve => {release = resolve});return original(key)})
+    h.deps.install.mockClear();const latin = reopened.loadCached('inter')
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'));expect(await reopened.loadCached('noto-sans-sc')).toBe(true)
+    release();expect(await latin).toBe(true);expect(h.deps.install).toHaveBeenCalledTimes(2)
+  })
+  it('清除排队后新首屏准备等待删除，不复用之前正在注册的缓存任务', async () => {
+    const h = harness();await h.loader.load('noto-sans-sc');const reopened = createInterfaceFontLoader(h.deps)
+    let release!: () => void;h.deps.install.mockImplementationOnce(() => new Promise<void>(resolve => {release = resolve}))
+    const old = reopened.loadCached('noto-sans-sc');await vi.waitFor(() => expect(release).toBeTypeOf('function'))
+    const clear = reopened.clearFont('noto-sans-sc');const current = reopened.loadCached('noto-sans-sc')
+    expect(current).not.toBe(old);release();await Promise.all([old, clear]);expect(await current).toBe(false)
+    expect(h.entries.size).toBe(0)
+  })
+  it.each(['throw', 'reject'])('流清理 %s 不隐藏成功下载或产生未处理拒绝', async kind => {
+    const h = harness();const data = new Uint8Array(bytes('NotoSansSC.woff2'));const response = new Response('placeholder')
+    const reader = {read: vi.fn().mockResolvedValueOnce({done: false, value: data}).mockResolvedValue({done: true}),
+      cancel: () => {if (kind === 'throw') throw new Error('cancel failed');return Promise.reject(new Error('cancel denied'))}}
+    vi.spyOn(response, 'body', 'get').mockReturnValue({getReader: () => reader} as unknown as ReadableStream<Uint8Array>)
+    h.deps.fetch.mockResolvedValueOnce(response);await h.loader.load('noto-sans-sc')
+    expect(h.states.at(-1)?.status).toBe('ready');expect(h.deps.fetch).toHaveBeenCalledOnce()
+  })
+  it('状态端口拒绝导致的失败任务从队列释放，后续清除和首屏缓存准备仍可恢复', async () => {
+    const h = harness();let rejectState = true
+    h.deps.onState = () => {if (rejectState) throw new Error('view disposed')}
+    const loader = createInterfaceFontLoader(h.deps);await expect(loader.load('system')).rejects.toThrow('view disposed')
+    rejectState = false;await loader.clearFont('inter');expect(await loader.loadCached('system')).toBe(true)
+    h.deps.openCache.mockRejectedValueOnce(new Error('clear denied'))
+    const failed = loader.clearFont('inter');const cached = loader.loadCached('system')
+    await expect(failed).rejects.toThrow('clear denied');expect(await cached).toBe(true)
   })
 })

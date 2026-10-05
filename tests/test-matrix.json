@@ -463,7 +463,9 @@
       "tests/paragraphCopySettingsLifecycle.test.ts",
       "tests/settingsSectionsLifecycle.test.ts",
       "tests/translationRecorderLifecycle.test.ts",
-      "tests/visionProbeStatusLifecycle.test.ts"
+      "tests/visionProbeStatusLifecycle.test.ts",
+      "tests/interfaceAppearanceLifecycle.test.ts",
+      "tests/interfaceSettingsLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",
