@@ -339,7 +339,8 @@
       "tests/sentenceActionsMount.test.ts",
       "tests/freeOfficialWebProviders.test.ts",
       "tests/translationShortcutSettings.test.ts",
-      "tests/numberFormat.test.ts"
+      "tests/numberFormat.test.ts",
+      "tests/hotkeyDraft.test.ts"
     ],
     "functional": [
       "tests/translationCenterComponent.test.ts",
@@ -460,7 +461,9 @@
       "tests/customHotkeyInputLifecycle.test.ts",
       "tests/usageDashboardLifecycle.test.ts",
       "tests/paragraphCopySettingsLifecycle.test.ts",
-      "tests/settingsSectionsLifecycle.test.ts"
+      "tests/settingsSectionsLifecycle.test.ts",
+      "tests/translationRecorderLifecycle.test.ts",
+      "tests/visionProbeStatusLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

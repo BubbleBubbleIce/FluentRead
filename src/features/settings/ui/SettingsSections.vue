@@ -197,9 +197,9 @@
     <section v-if="hasVisitedSection('settings-image-translation')" v-show="props.activeSection === 'settings-image-translation'" id="settings-image-translation" class="settings-section image-translation-settings">
       <MangaSettings v-if="props.activeSection === 'settings-image-translation'" v-model:image-enabled="imageTranslationEnabled" :settings="config" :available="browserCapabilities.imageTranslation" :service-options="availableServiceOptions">
         <div id="settings-area-translation" data-settings-anchor="area" :data-settings-anchor-label="t('area.settings.title')">
-          <AreaTranslationSettings :config="config" :service-options="availableServiceOptions" :enabled="selectionAreaTranslationEnabled" :active="props.activeSection === 'settings-image-translation'" :show-ocr="false" compact @update:enabled="selectionAreaTranslationEnabled = $event" />
+          <AreaTranslationSettings :config="config" :service-options="availableServiceOptions" :enabled="selectionAreaTranslationEnabled" :active="viewActive && props.activeSection === 'settings-image-translation'" :show-ocr="false" compact @update:enabled="selectionAreaTranslationEnabled = $event" />
         </div>
-      <template #resources><ImageOcrSettings v-if="props.activeSection === 'settings-image-translation'" compact embedded :active="config.imageTranslationOcrEngine === 'tesseract'" v-model:source-language="config.from" /></template>
+      <template #resources><ImageOcrSettings v-if="viewActive && props.activeSection === 'settings-image-translation'" compact embedded :active="config.imageTranslationOcrEngine === 'tesseract'" v-model:source-language="config.from" /></template>
       </MangaSettings>
     </section>
     <section v-if="hasVisitedSection('settings-video')" v-show="props.activeSection === 'settings-video'" id="settings-video" class="settings-section">
@@ -433,10 +433,10 @@
 
     <section v-if="hasVisitedSection('settings-translation')" v-show="props.activeSection === 'settings-translation'" class="settings-section settings-section-continuation">
 <SettingsPanel name="paragraph-copy" id="paragraph-copy-settings" :active="props.activePanel">
-      <ParagraphCopySettings :config="config" :active="viewActive && props.activeSection === 'settings-translation'" />
+      <ParagraphCopySettings :config="config" :active="viewActive && props.activeSection === 'settings-translation' && (!props.activePanel || props.activePanel === 'paragraph-copy')" />
     </SettingsPanel>
     <SettingsPanel name="section-translation" id="section-translation-settings" :active="props.activePanel">
-      <SectionTranslationSettings :config="config" />
+      <SectionTranslationSettings :config="config" :active="viewActive && props.activeSection === 'settings-translation' && (!props.activePanel || props.activePanel === 'section-translation')" />
     </SettingsPanel>
     <SettingsPanel name="excluded-languages" id="excluded-language-settings" :active="props.activePanel">
       <ExcludedLanguageSettings v-model="config.excludedLanguages" />

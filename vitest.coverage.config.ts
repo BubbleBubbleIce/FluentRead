@@ -30,6 +30,8 @@ export default defineConfig({
         css: {include: [/vocabulary-reencounter\.css/]},
         include: [
             'tests/pageNotice.test.ts',
+            'tests/hotkeyDraft.test.ts',
+            'tests/visionProbeStatusLifecycle.test.ts',
             'tests/translationShortcutSettings.test.ts',
             'tests/customHotkeyInputLifecycle.test.ts',
             'tests/webDavBackup.test.ts',
@@ -432,6 +434,8 @@ export default defineConfig({
             reporter: ['text', 'json-summary', 'html'],
             include: [
                 'src/features/page-notice/content/notice.ts',
+                'src/features/settings/ui/useHotkeyDraft.ts',
+                'src/features/settings/ui/services/useVisionProbeStatus.ts',
                 'src/features/settings/ui/useTranslationShortcutSettings.ts',
                 'src/ui/components/CustomHotkeyInput.vue',
                 'src/core/config/cloudSync.ts',

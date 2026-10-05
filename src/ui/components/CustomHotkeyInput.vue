@@ -1,7 +1,7 @@
 <!--
  @file src/ui/components/CustomHotkeyInput.vue
  文件职责：提供可复用的自定义快捷键对话框，支持键盘录制、预设选择、冲突校验、清除与无障碍确认流程。
- 主要内容：通过 Teleport 渲染模态层，接收显示、当前值与业务校验 props，单计时器完成键盘录制；关闭、重开、配置变化与卸载清理旧录制，确认前重验冲突，异步焦点只归当前弹窗所有，发出 update、confirm、cancel。
+ 主要内容：通过 Teleport 渲染模态层，接收显示、当前值与业务校验 props，单计时器完成键盘录制；录制未完成时拒绝确认旧值，关闭、重开、配置变化与卸载清理旧录制，清除和确认均校验业务冲突，异步焦点只归当前弹窗所有，发出 update、confirm、cancel。
  模块边界：组件只产生规范化快捷键值，不持久化配置、不绑定具体悬浮或划词动作，也不注册页面级永久监听；调用方决定上下文和保存策略，解析规则归 core/hotkey。
 -->
 <template>
@@ -203,8 +203,7 @@ const displayHotkey = computed(() => {
 
 // 检查是否可以确认
 const canConfirm = computed(() => {
-  return currentHotkey.value === 'none' ||
-         Boolean(parsedHotkey.value?.isValid && !errorMessage.value);
+  return !isRecording.value && (currentHotkey.value === 'none' || Boolean(parsedHotkey.value?.isValid)) && !errorMessage.value;
 });
 
 // 推荐的快捷键
@@ -285,7 +284,12 @@ function validateCurrentHotkey(hotkeyString: string) {
   errorMessage.value = '';
   conflictWarning.value = '';
 
-  if (!hotkeyString || hotkeyString === 'none') return;
+  if (!hotkeyString) return;
+  if (hotkeyString === 'none') {
+    // 清除可能回到业务默认组合，是否被占用由调用方决定。
+    errorMessage.value = props.validate?.(hotkeyString) || '';
+    return;
+  }
 
   const parsed = parseHotkey(hotkeyString);
 
@@ -407,8 +411,7 @@ function selectPreset(value: string) {
 function clearHotkey() {
   currentHotkey.value = 'none';
   stopRecording();
-  errorMessage.value = '';
-  conflictWarning.value = '';
+  validateCurrentHotkey(currentHotkey.value);
 }
 
 // 确认

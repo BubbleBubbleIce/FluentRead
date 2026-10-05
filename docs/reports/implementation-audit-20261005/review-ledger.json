@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 824,
-    "functions": 14782,
+    "files": 825,
+    "functions": 14802,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -222,9 +222,9 @@
         "lines": 5248
       },
       "src/features/settings": {
-        "files": 80,
-        "functions": 1419,
-        "lines": 19062
+        "files": 81,
+        "functions": 1439,
+        "lines": 19102
       },
       "src/features/share-card": {
         "files": 7,
@@ -284,7 +284,7 @@
       "src/ui": {
         "files": 16,
         "functions": 145,
-        "lines": 3860
+        "lines": 3863
       },
       "userscript/SettingsPanel.vue": {
         "files": 1,
@@ -1407,6 +1407,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/AreaTranslationSettings.vue",
+      "sha256": "4b374d6b1d52937c30d9794f87cc73fe4a7588ff0fc842989f9745c89c7d37a7",
+      "functionBodies": 30,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/FloatingBallSettings.vue",
+      "sha256": "6d79504282b71030f196afdfc6b5ac333d93f4639eabc14b944f9bc734aff2f9",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/LearningCenter.vue",
       "sha256": "33d9429320ccb41c8d9974b3482c547779706fb08a0c2bd999a5cd7134fd0e9c",
       "functionBodies": 5,
@@ -1414,13 +1426,19 @@
     },
     {
       "file": "src/features/settings/ui/ParagraphCopySettings.vue",
-      "sha256": "9465ea8ab6e4145e41d816773382b3bfef4ba6631ee610fc9a5733d990d7b629",
-      "functionBodies": 16,
+      "sha256": "63f5c2e843ba10943ef72457fbc2d50729cd4878a1c6e659955071334ee6fcec",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/SectionTranslationSettings.vue",
+      "sha256": "4c6792bd619bd300542b597728675986df8d5b4a14aad96c53a7816a51840e42",
+      "functionBodies": 12,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/features/settings/ui/SettingsSections.vue",
-      "sha256": "295746ad83afe4aeeee5fa759d427b0abd5baae8028f5c5a2655dd488769eaf2",
+      "sha256": "3d9f42b9dd129a57c25fad6594ef1383e9f070205c986db8822fa22c57a6ac10",
       "functionBodies": 166,
       "status": "source-read-and-traced"
     },
@@ -1428,6 +1446,12 @@
       "file": "src/features/settings/ui/components/SegmentedControl.vue",
       "sha256": "0e821017a194a05426b1b902c6ef584d57f746bdf45b49b604e7e59492436c7c",
       "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/SettingsPanel.vue",
+      "sha256": "b52e2e3349c83231e86c0748f0495d43f76a16196315ab4f5e3192c348dc6c16",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -1446,6 +1470,18 @@
       "file": "src/features/settings/ui/services/modelOptions.ts",
       "sha256": "bd33a14292ef2cbf38ffdce4ea5efb2f0c4da57a1931ca690984f28e433c0d04",
       "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/services/useVisionProbeStatus.ts",
+      "sha256": "bba83e2566792c376af834e99638a7f268f48179e4b7f9fd353a0281d4ade400",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/useHotkeyDraft.ts",
+      "sha256": "2e5354445a7770efce1c90ea5ab15663a8f2fd15c0ed64fe8aedfaf37215c5f3",
+      "functionBodies": 11,
       "status": "source-read-and-traced"
     },
     {
@@ -1864,7 +1900,7 @@
     },
     {
       "file": "src/ui/components/CustomHotkeyInput.vue",
-      "sha256": "9093093faadb9eaf4b81318e4519e87cadc93496f5678070943f3083256dabf1",
+      "sha256": "063be95747f0dc30d3db7759b42b4e6b5af4e66713c9fe0da30cce732ec08474",
       "functionBodies": 26,
       "status": "source-read-and-traced"
     },
@@ -2185,13 +2221,11 @@
     "src/features/settings/model/siteAdaptationEditor.ts",
     "src/features/settings/model/sitePreferences.ts",
     "src/features/settings/ui/AlwaysTranslateSites.vue",
-    "src/features/settings/ui/AreaTranslationSettings.vue",
     "src/features/settings/ui/CloudConfigBackup.vue",
     "src/features/settings/ui/ConfigManagement.vue",
     "src/features/settings/ui/ContextMenuSettings.vue",
     "src/features/settings/ui/ExcludedLanguageSettings.vue",
     "src/features/settings/ui/FeatureServiceSettings.vue",
-    "src/features/settings/ui/FloatingBallSettings.vue",
     "src/features/settings/ui/GoogleDriveSync.vue",
     "src/features/settings/ui/HarnessPromptSettings.vue",
     "src/features/settings/ui/HarnessSettings.vue",
@@ -2206,7 +2240,6 @@
     "src/features/settings/ui/QuickTranslationProfiles.vue",
     "src/features/settings/ui/ReadingAssistanceSettings.vue",
     "src/features/settings/ui/RemoteConfigSync.vue",
-    "src/features/settings/ui/SectionTranslationSettings.vue",
     "src/features/settings/ui/SelectionSettings.vue",
     "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
     "src/features/settings/ui/SettingsNavigationIcon.vue",
@@ -2226,7 +2259,6 @@
     "src/features/settings/ui/components/PopupLayoutPreviewItem.vue",
     "src/features/settings/ui/components/SettingsGroup.vue",
     "src/features/settings/ui/components/SettingsItem.vue",
-    "src/features/settings/ui/components/SettingsPanel.vue",
     "src/features/settings/ui/components/TranslationColorField.vue",
     "src/features/settings/ui/components/TranslationStylePreview.vue",
     "src/features/settings/ui/components/WritingStylePreview.vue",
@@ -2244,7 +2276,6 @@
     "src/features/settings/ui/services/ServiceConfiguration.vue",
     "src/features/settings/ui/services/apiKeyTypes.ts",
     "src/features/settings/ui/services/freeTranslationChecks.ts",
-    "src/features/settings/ui/services/useVisionProbeStatus.ts",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
     "src/features/share-card/content/runtime.ts",
     "src/features/share-card/core.ts",
@@ -2467,7 +2498,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue589pending source/function chains, including other retained settings dialogs and polling plus shared appearance-root ownership, settings deferred callbacks, input/area/section and config UI. Pending external source reconciliation and image runtime strict100/performance debt remain. Notice/copy feedback and this batch settings scopes are verified, not a whole-goal completion.",
+    "Continue584pending source/function chains; next inspect active model-vision requests and hidden service settings, shared appearance-root and font async ownership/clear queue, then remaining settings/input/area/section/config UI and existing image runtime strict/performance debt. After every source/function is reviewed and issues resolved, rebase onto freshly verified latest main, review whole code chains again, resolve resulting findings, verify and merge the exact reviewed head. Goal active; no premature rebase or merge.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2492,12 +2523,13 @@
     "Thirty-second: 133main changes reconciled, section picker/core/public fully read. New dynamic nested shadow roots are observed with150-element scan batches, insertion scans only new subtrees, and stop/selection changes cancel queued work. UI exclusion crosses ShadowRoot hosts; layout ancestor traversal stops at512 and redundant ancestor UI checks removed. Old-source7regressions fail;12files308cases and9modules four100 pass.23files883integration cases pass separately with overlap. Native production16cases pass;two dynamic-shadow paragraphs preserve source and requests remain stable for1000ms. Existing14executable/3documentation ownership debts and previously measured image-runtime strict-100 gap remain. Shadow-host text preview still uses light DOM and may be blank; no whole-goal completion or live-provider claim. Local1c4482cc language pin verified but unpublished.",
     "Thirty-third:18new full source reviews424function bodies;225reviewed/599pending. Fixed stats clear-vs-queued-flush new-generation loss and coalesced pending flush work; indexed model usage retention avoids full-row hydration; bounded8locale caches replace repeated Intl constructors, eliminating formatUnit wrapper. Both Vue dashboard resets ignore late completion after unmount and release only owned inert state.12modules four100/111cases,6integration files138cases,27production UI assertion flows and native old/new source work-count comparisons pass. Initial stats browser pagination fixture could inherit partial-cache source from random first row; new53rows explicitly network. Architecture gate still has14executable/3documentation ownership debts; unrelated image-runtime strict gap remains. Userscript resource pin1c4482cc remains local/unpublished. Date/time/remaining UI formatting, active-panel handoff, closed-shadow statistics dialog/query root, huge-import validation and duplicate stats event contracts remain separate review/validation work; no whole-goal or provider-quality guarantee.",
     "Thirty-fourth: five new full reviews43function bodies;230reviewed/594pending. Paragraph DOM recursion removed,500sibling translation ownership probes124750to499, duplicate reader wrappers consolidated. Clipboard late fallback/notices stop after abort/disable/newer request; native focus/backward selection and owned cleanup verified. Multiple ranges checked through Selection port, not live Firefox. Settings provisional mutation/rollback replaced by owned draft; both reserved entries and quick profiles check default fallback conflicts. Five strict modules four100/65cases; actual compiled settings9cases; six related files96cases;13production native flows. Two existing architecture failures remain13executable/3doc tools without ownership. Native fixture uses controlled Microsoft/clipboard ports, no OS clipboard writes or provider quality proof. Rapid-copy notice stacking is observed and next priority; active-section ownership still needs parent-chain tracing. Language resource pin unchanged local/unpublished.",
-    "Thirty-fifth: five new complete reviews256function bodies;235reviewed4287bodies589pending. Bounded three-notice queue, keyed copy feedback, signal cleanup, pending reveal coalescing and unchanged-DOM update; native500notices/RAFs/timers500to1,500identical feedback mutations0. Settings KeepAlive/active props close recording and suspend active-dependent children; canceled duplicate/late navigation and hydration, coalesced latest-state tab broadcast with rejection handling, removed no-op service filter. New34executed cases29static definitions;11affected files241cases; five strict modules four100/121cases, new permanent notice owner. Actual compiled SFC lifecycle tests plus19production and7native flows. Two existing architecture failures remain13unowned executable/3doc tools. Controlled Microsoft/clipboard ports, native Edge only; builds do not prove live Firefox or provider/OS clipboard behavior. Language resource pin unchanged local/unpublished."
+    "Thirty-fifth: five new complete reviews256function bodies;235reviewed4287bodies589pending. Bounded three-notice queue, keyed copy feedback, signal cleanup, pending reveal coalescing and unchanged-DOM update; native500notices/RAFs/timers500to1,500identical feedback mutations0. Settings KeepAlive/active props close recording and suspend active-dependent children; canceled duplicate/late navigation and hydration, coalesced latest-state tab broadcast with rejection handling, removed no-op service filter. New34executed cases29static definitions;11affected files241cases; five strict modules four100/121cases, new permanent notice owner. Actual compiled SFC lifecycle tests plus19production and7native flows. Two existing architecture failures remain13unowned executable/3doc tools. Controlled Microsoft/clipboard ports, native Edge only; builds do not prove live Firefox or provider/OS clipboard behavior. Language resource pin unchanged local/unpublished.",
+    "Thirty-sixth:6new complete source reviews73function bodies;241files4354bodies584pending. New66executed cases42static definitions,16affected files472cases. Actual old-head leaf/subscription52cases44fail8pass and dialog17cases4fail13pass, immutable baselines/restoration retained. Three strict modules all4dimensions100/38cases; new permanent draft/subscription owners, old subscription exemption removed. Native actual Vue strategy work1000to0, production recorder/prompt20flows including immediate close persistence; initial focus guard stopped/cleaned profile, first config poll caught intermediate mode ACK, native dialog clear and recording-before100ms exposed actual bugs and were repaired. ModelVisionSettings active request/hidden service subscriptions and shared appearance/font/clear lifecycle remain pending. Final latest-main rebase, whole-chain review/fixes and merge explicitly requested, deferred until whole audit complete."
   ],
   "progress": {
-    "sourceReadFiles": 235,
-    "sourceReadFunctionBodies": 4287,
-    "pendingFiles": 589,
+    "sourceReadFiles": 241,
+    "sourceReadFunctionBodies": 4354,
+    "pendingFiles": 584,
     "goalComplete": false
   },
   "observations": [
@@ -3073,6 +3105,42 @@
       "file": "src/features/settings/ui/services/modelOptions.ts",
       "status": "fixed-or-reviewed-and-verified-thirty-fifth",
       "issue": "Read and traced all fifteen bodies; existing three behavioral tests verify active/custom/built-in model dedupe, provider switch, thinking and counts; four-dimensional strict coverage100. No changes needed to this source."
+    },
+    {
+      "file": "src/features/settings/ui/useHotkeyDraft.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-sixth",
+      "issue": "Shared owned hotkey draft for paragraph/section/area: preserve saved preset until confirm, close on active/KeepAlive/unmount/config/field/context change, reject stale open/preset/confirm, release draft before writes. Removed duplicated paragraph lifecycle and obsolete provisional mutation/previousHotkey rollback in other leaves. Area can still edit disabled-feature preferences."
+    },
+    {
+      "file": "src/features/settings/ui/AreaTranslationSettings.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-sixth",
+      "issue": "Default-key conflict validation includes clearing and existing custom selection; area now reserves enabled paragraph copy. Actual recording dialog calls business validation for none, displays blocking error and revalidates before confirm. While recording/key-release debounce is incomplete, confirmation cannot submit an existing old hotkey. Owned area prompt keeps live save but rejects late writes after hidden/KeepAlive/unmount/config/enable changes. Root propagates active lifetime to section/area and OCR child; paragraph/section respect explicitly supplied visible panel while legacy all-panels behavior remains."
+    },
+    {
+      "file": "src/features/settings/ui/services/useVisionProbeStatus.ts",
+      "status": "fixed-or-reviewed-and-verified-thirty-sixth",
+      "issue": "Vision cache subscriptions/reads/expiry work active only, cancel by generation/revision, ignore old callbacks/reads and refresh on activation. Hidden result avoids config identity evaluation. Native1000hidden config edits plus late callbacks change actual strategy input reads1000to0; initial hidden listener/read1to0 and hidden expiry task1to0."
+    },
+    {
+      "file": "src/ui/components/CustomHotkeyInput.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-sixth",
+      "issue": "Default-key conflict validation includes clearing and existing custom selection; area now reserves enabled paragraph copy. Actual recording dialog calls business validation for none, displays blocking error and revalidates before confirm. While recording/key-release debounce is incomplete, confirmation cannot submit an existing old hotkey."
+    },
+    {
+      "file": "src/features/settings/ui/FloatingBallSettings.vue",
+      "status": "fixed-or-reviewed-and-verified-thirty-sixth",
+      "issue": "FloatingBallSettings six bodies and SettingsPanel template fully traced; existing normalization and visibility contracts need no changes. Corrected existing config-save test fixture missing disposed from batch35 and retained/demonstrated in-flight ACK, exit handoff and no autosave after dispose assertions."
     }
-  ]
+  ],
+  "finalDelivery": {
+    "status": "pending-full-audit",
+    "requestedByUser": true,
+    "steps": [
+      "Complete all source/function/chain review and related fixes/performance/tests",
+      "Rebase onto then-latest verified main and reconcile changed/new source review",
+      "Review the whole resulting code and functional chains, resolve all related findings and verify",
+      "Merge the verified reviewed head using the repository delivery workflow"
+    ],
+    "performed": false
+  }
 }

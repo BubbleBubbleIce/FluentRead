@@ -78,6 +78,25 @@ describe('真实快捷键录制组件生命周期', () => {
         expect(emitted).not.toHaveBeenCalledWith('confirm', 'F10');
         expect(doc.querySelector('[role="alert"]')?.textContent).toContain(conflict);
     });
+    it('清除录制立即校验业务默认键的占用，拒绝确认并显示原因，冲突解除后允许清除', async () => {
+        await mount('F10');let conflict = 'default key already occupied';
+        props.validate = value => value === 'none' ? conflict : '';await settle();click('.clear-button');await settle();
+        expect(state.canConfirm).toBe(false);expect(doc.querySelector('[role="alert"]')?.textContent).toContain(conflict);
+        state.handleConfirm();expect(emitted).not.toHaveBeenCalledWith('confirm', 'none');
+        conflict = '';state.handleConfirm();expect(emitted).toHaveBeenCalledWith('confirm', 'none');
+    });
+    it('清除后的冲突迟到变化也在确认前重新校验，不能沿用之前的有效状态', async () => {
+        await mount('F10');let conflict = '';props.validate = value => value === 'none' ? conflict : '';await settle();
+        click('.clear-button');await settle();expect(state.canConfirm).toBe(true);conflict = 'new default conflict';
+        click('.primary-button');await settle();expect(emitted).not.toHaveBeenCalledWith('confirm', 'none');
+        expect(doc.querySelector('[role="alert"]')?.textContent).toContain(conflict);
+    });
+    it.each(['F10', 'none'])('编辑已有 %s 时，录制完成前不能确认旧值；完成后提交新组合', async saved => {
+        await mount(saved);await record('q');expect(vi.getTimerCount()).toBe(1);
+        expect(state.canConfirm).toBe(false);state.handleConfirm();expect(emitted).not.toHaveBeenCalledWith('confirm', saved);
+        vi.advanceTimersByTime(100);await settle();expect(state.canConfirm).toBe(true);click('.primary-button');
+        expect(emitted).toHaveBeenCalledWith('confirm', 'Alt+Q');expect(vi.getTimerCount()).toBe(0);
+    });
     it('关闭后的延迟焦点恢复不能抢走另一个已聚焦控件', async () => {
         await mount('F10'); expect(active).toBe(root);
         props.modelValue = false;

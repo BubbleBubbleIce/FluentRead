@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, onActivated, onBeforeUnmount, onDeactivated, ref, watch} from 'vue';
+import {computed, defineAsyncComponent} from 'vue';
 import {Edit} from '@element-plus/icons-vue';
 import {ElMessage} from 'element-plus';
 import type {Config} from '@/src/core/config/model';
@@ -59,6 +59,7 @@ import {
     inputBoxTranslationTriggerHotkey,
 } from '@/src/core/config/quickTranslation';
 import {useUiI18n} from '@/src/ui/i18n';
+import {useHotkeyDraft} from './useHotkeyDraft';
 import SettingsGroup from './components/SettingsGroup.vue';
 import SettingsItem from './components/SettingsItem.vue';
 
@@ -66,36 +67,13 @@ const CustomHotkeyInput = defineAsyncComponent(() => import('@/src/ui/components
 
 const props = withDefaults(defineProps<{config: Config; active?: boolean}>(), {active: true});
 const {t, translateLegacy} = useUiI18n();
-const showCustomHotkeyDialog = ref(false);
-let viewActive = true;
-let draft: {config: Config; hotkey: string; customHotkey: string} | null = null;
+const {active: hotkeyEditorActive, showCustomHotkeyDialog, isCurrentDraft, openCustomHotkeyDialog, closeCustomHotkeyDialog, commitHotkeyDraft} = useHotkeyDraft(
+    () => props.config, {mode: 'paragraphCopyHotkey', custom: 'customParagraphCopyHotkey'}, () => props.active && props.config.paragraphCopyEnabled,
+);
 const hotkeyDisplayName = computed(() => paragraphCopyHotkeyDisplayName(
     props.config.paragraphCopyHotkey,
     props.config.customParagraphCopyHotkey,
 ));
-
-function isCurrentDraft(): boolean {
-    return viewActive && props.active && draft !== null && draft.config === props.config && props.config.paragraphCopyEnabled
-        && draft.hotkey === props.config.paragraphCopyHotkey && draft.customHotkey === props.config.customParagraphCopyHotkey;
-}
-
-function closeCustomHotkeyDialog(): void {
-    showCustomHotkeyDialog.value = false;
-    draft = null;
-}
-
-function openCustomHotkeyDialog(): void {
-    if (!viewActive || !props.active || !props.config.paragraphCopyEnabled || isCurrentDraft()) return;
-    draft = {config: props.config, hotkey: props.config.paragraphCopyHotkey, customHotkey: props.config.customParagraphCopyHotkey};
-    showCustomHotkeyDialog.value = true;
-}
-
-watch(() => [props.active, props.config, props.config.paragraphCopyEnabled, props.config.paragraphCopyHotkey, props.config.customParagraphCopyHotkey], () => {
-    if (draft && !isCurrentDraft()) closeCustomHotkeyDialog();
-});
-onActivated(() => {viewActive = true;});
-onDeactivated(() => {viewActive = false;closeCustomHotkeyDialog();});
-onBeforeUnmount(() => {viewActive = false;closeCustomHotkeyDialog();});
 
 /** 列出已被其他功能占用的快捷键，避免一次按键同时触发复制和翻译。 */
 function reservedHotkeyOwners(): {hotkey: string; feature: string}[] {
@@ -140,37 +118,20 @@ function findHotkeyConflict(hotkey: string): string {
 }
 
 function handleHotkeyChange(value: string): void {
-    if (!viewActive || !props.active || !props.config.paragraphCopyEnabled) return;
-    if (value !== 'custom') {
-        const conflict = findHotkeyConflict(value);
-        if (conflict) {
-            ElMessage.warning(conflict);
-            return;
-        }
-        closeCustomHotkeyDialog();
-        props.config.paragraphCopyHotkey = value;
-        return;
-    }
-    // 未录制时保留已保存的入口，直到确认才提交；取消或外部改动无需回写旧配置。
-    if (!props.config.customParagraphCopyHotkey) {
-        openCustomHotkeyDialog();
-        return;
-    }
+    if (!hotkeyEditorActive.value) return;
+    if (value === 'custom' && !props.config.customParagraphCopyHotkey) {openCustomHotkeyDialog();return;}
+    const conflict = findHotkeyConflict(value === 'custom' ? props.config.customParagraphCopyHotkey : value);
+    if (conflict) {ElMessage.warning(conflict);return;}
     closeCustomHotkeyDialog();
-    props.config.paragraphCopyHotkey = 'custom';
+    props.config.paragraphCopyHotkey = value;
 }
 
 function handleCustomHotkeyConfirm(hotkey: string): void {
-    if (!isCurrentDraft()) {
-        closeCustomHotkeyDialog();
-        return;
-    }
+    if (!isCurrentDraft()) {closeCustomHotkeyDialog();return;}
     const canonical = canonicalizeHotkey(hotkey);
     if (findHotkeyConflict(canonical)) return;
-    // 清除自定义组合键等于放弃自定义入口；段落复制没有别的触发方式，因此回到默认预设而不是停用。
-    props.config.customParagraphCopyHotkey = canonical;
-    props.config.paragraphCopyHotkey = canonical ? 'custom' : DEFAULT_PARAGRAPH_COPY_HOTKEY;
-    closeCustomHotkeyDialog();
+    // 清除录制回到默认入口；提交前同样校验默认组合的占用。
+    if (!commitHotkeyDraft(canonical ? 'custom' : DEFAULT_PARAGRAPH_COPY_HOTKEY, canonical)) return;
     ElMessage({message: t('paragraphCopy.settings.hotkeySet', {shortcut: hotkeyDisplayName.value}), type: 'success', duration: 2000});
 }
 

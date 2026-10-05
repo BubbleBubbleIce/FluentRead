@@ -1,7 +1,7 @@
 <!--
  * @file src/features/settings/ui/AreaTranslationSettings.vue
  * 文件职责：提供图片翻译内的圈选区域设置，组织触发快捷键、识别与翻译的常用选择，并按需提供提示词和本地语言包设置。
- * 主要内容：紧凑模式只展示一个开关标题，直接呈现快捷键和识别方式；复用设置行和品牌按钮，提供预设与自定义录制的圈选快捷键及占用提示，显示当前模型识图能力，通过独立编辑弹窗修改识图提示词，将 OCR 语言设置收纳在可展开区域。
+ * 主要内容：紧凑模式只展示一个开关标题，详细选项按需展开；复用设置行和品牌按钮，提供预设与自定义录制的圈选快捷键及占用提示，显示当前模型识图能力，通过所属编辑弹窗即时修改识图提示词；隐藏、配置变更或缓存停用时释放草稿、缓存监听和 OCR 子界面。
  * 模块边界：只修改父级配置并发出开关事件；配置持久化由 SettingsSections 负责，快捷键解析与归一化归 core，不截图、不调用模型、不下载识别资源。
  -->
 <template>
@@ -18,7 +18,7 @@
         <div v-if="props.config.selectionAreaHotkey === 'custom'" class="area-hotkey-custom">
           <span v-if="props.config.customSelectionAreaHotkey" class="area-hotkey-text" data-i18n-ignore>{{ hotkeyDisplayName }}</span>
           <span v-else class="area-hotkey-text area-hotkey-placeholder">{{ t('area.settings.hotkeyCustomEmpty') }}</span>
-          <el-button size="small" type="text" :aria-label="t('area.settings.hotkeyEdit')" :title="t('area.settings.hotkeyEdit')" @click="showCustomHotkeyDialog = true">
+          <el-button size="small" type="text" :aria-label="t('area.settings.hotkeyEdit')" :title="t('area.settings.hotkeyEdit')" @click="openCustomHotkeyDialog">
             <el-icon><Edit /></el-icon>
           </el-button>
         </div>
@@ -49,20 +49,20 @@
       </el-select>
     </SettingsItem>
     <SettingsItem v-if="prefersVision" :label="t('area.settings.visionPrompt')" :description="t('area.settings.visionPromptDescription')">
-      <el-button plain @click="promptEditorOpen = true">{{ t('area.settings.editVisionPrompt') }}</el-button>
+      <el-button plain @click="openVisionPromptEditor">{{ t('area.settings.editVisionPrompt') }}</el-button>
     </SettingsItem>
     </div>
   </SettingsGroup>
   <details v-if="props.showOcr !== false" class="area-ocr-details" :open="!prefersVision">
     <summary>{{ t('area.settings.ocrDetails') }}</summary>
-    <ImageOcrSettings v-if="props.active" id-prefix="area" v-model:source-language="props.config.from" />
+    <ImageOcrSettings v-if="hotkeyEditorActive" id-prefix="area" v-model:source-language="props.config.from" />
   </details>
   <el-dialog v-model="promptEditorOpen" :title="t('area.settings.visionPrompt')" width="min(640px, calc(100vw - 32px))" append-to-body destroy-on-close>
     <p class="area-prompt-description">{{ t('area.settings.visionPromptDescription') }}</p>
-    <el-input v-model="props.config.areaVisionPrompt" data-testid="area-vision-prompt" type="textarea" :rows="8" :aria-label="t('area.settings.visionPrompt')" />
+    <el-input :model-value="props.config.areaVisionPrompt" data-testid="area-vision-prompt" type="textarea" :rows="8" :aria-label="t('area.settings.visionPrompt')" @update:model-value="updateVisionPrompt" />
     <template #footer>
       <div class="area-prompt-actions">
-        <el-button text @click="props.config.areaVisionPrompt = DEFAULT_AREA_VISION_PROMPT">{{ t('area.settings.restorePrompt') }}</el-button>
+        <el-button text @click="updateVisionPrompt(DEFAULT_AREA_VISION_PROMPT)">{{ t('area.settings.restorePrompt') }}</el-button>
         <el-button type="primary" @click="promptEditorOpen = false">{{ t('area.settings.promptDone') }}</el-button>
       </div>
     </template>
@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 import FeatureEnableCard from '@/src/ui/components/FeatureEnableCard.vue';
-import {computed, defineAsyncComponent, ref} from 'vue';
+import {computed, defineAsyncComponent, ref, watch} from 'vue';
 import {Edit} from '@element-plus/icons-vue';
 import {ElMessage} from 'element-plus';
 import type {Config} from '@/src/core/config/model';
@@ -91,6 +91,7 @@ import {
 } from '@/src/core/config/areaTranslation';
 import {canonicalizeHotkey, resolveConfiguredHotkey} from '@/src/core/hotkey';
 import {resolveSectionTranslationHotkey} from '@/src/core/config/sectionTranslation';
+import {resolveParagraphCopyHotkey} from '@/src/core/config/paragraphCopy';
 import {
     findEnabledQuickTranslationHotkeyConflict,
     quickTranslationActionKey,
@@ -101,6 +102,7 @@ import {getTranslationServiceUnavailableMessage} from '@/src/services/translatio
 import {ImageOcrSettings} from '@/src/features/image-translation/public';
 import {useVisionProbeStatus} from './services/useVisionProbeStatus';
 import {useUiI18n} from '@/src/ui/i18n';
+import {useHotkeyDraft} from './useHotkeyDraft';
 import SettingsGroup from './components/SettingsGroup.vue';
 import SettingsItem from './components/SettingsItem.vue';
 
@@ -116,8 +118,9 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{'update:enabled': [enabled: boolean]}>();
 const {t, translateLegacy} = useUiI18n();
-const showCustomHotkeyDialog = ref(false);
-let previousHotkey = '';
+const {active: hotkeyEditorActive, showCustomHotkeyDialog, isCurrentDraft, openCustomHotkeyDialog, closeCustomHotkeyDialog, commitHotkeyDraft} = useHotkeyDraft(
+    () => props.config, {mode: 'selectionAreaHotkey', custom: 'customSelectionAreaHotkey'}, () => props.active && browserCapabilities.areaTranslation, () => props.enabled,
+);
 const hotkeyDisplayName = computed(() => areaTranslationHotkeyDisplayName(
     props.config.selectionAreaHotkey,
     props.config.customSelectionAreaHotkey,
@@ -141,17 +144,23 @@ function reservedHotkeyOwners(): {hotkey: string; feature: string}[] {
                 : '',
             feature: t('sectionTranslation.settings.title'),
         },
+        {
+            hotkey: props.config.paragraphCopyEnabled
+                ? resolveParagraphCopyHotkey(props.config.paragraphCopyHotkey, props.config.customParagraphCopyHotkey)
+                : '',
+            feature: t('paragraphCopy.settings.title'),
+        },
         {hotkey: inputBoxTranslationTriggerHotkey(props.config.inputBoxTranslationTrigger), feature: translateLegacy('输入框翻译')},
     ];
 }
 
 /** 供自定义录制对话框实时校验；返回空字符串表示可以使用。 */
 function findHotkeyConflict(hotkey: string): string {
-    const identity = canonicalizeHotkey(hotkey).toLocaleLowerCase();
-    if (!identity) return '';
+    const resolved = canonicalizeHotkey(hotkey) || DEFAULT_AREA_TRANSLATION_HOTKEY;
+    const identity = resolved.toLocaleLowerCase();
     const owner = reservedHotkeyOwners().find(item => canonicalizeHotkey(item.hotkey).toLocaleLowerCase() === identity);
     if (owner) return t('area.settings.hotkeyConflict', {feature: owner.feature});
-    const profile = findEnabledQuickTranslationHotkeyConflict(props.config.quickTranslationProfiles, hotkey);
+    const profile = findEnabledQuickTranslationHotkeyConflict(props.config.quickTranslationProfiles, resolved);
     if (!profile) return '';
     return t('quickTranslation.conflictProfile', {
         group: t(`quickTranslation.heading.${quickTranslationActionKey(profile.action)}`),
@@ -159,37 +168,25 @@ function findHotkeyConflict(hotkey: string): string {
 }
 
 function handleHotkeyChange(value: string): void {
-    if (value !== 'custom') {
-        const conflict = findHotkeyConflict(value);
-        if (conflict) {
-            ElMessage.warning(conflict);
-            return;
-        }
-        props.config.selectionAreaHotkey = value;
-        return;
-    }
-    // 还没有录制过自定义组合键时记住原值，取消录制即可恢复，不会让圈选失去入口。
-    if (!props.config.customSelectionAreaHotkey) previousHotkey = props.config.selectionAreaHotkey;
-    props.config.selectionAreaHotkey = 'custom';
-    if (!props.config.customSelectionAreaHotkey) showCustomHotkeyDialog.value = true;
+    if (!hotkeyEditorActive.value) return;
+    if (value === 'custom' && !props.config.customSelectionAreaHotkey) {openCustomHotkeyDialog();return;}
+    const conflict = findHotkeyConflict(value === 'custom' ? props.config.customSelectionAreaHotkey : value);
+    if (conflict) {ElMessage.warning(conflict);return;}
+    closeCustomHotkeyDialog();
+    props.config.selectionAreaHotkey = value;
 }
 
 function handleCustomHotkeyConfirm(hotkey: string): void {
+    if (!isCurrentDraft()) {closeCustomHotkeyDialog();return;}
     const canonical = canonicalizeHotkey(hotkey);
-    if (canonical && findHotkeyConflict(canonical)) return;
-    // 清除自定义组合键等于放弃自定义入口；圈选没有别的触发方式，因此回到默认预设而不是停用。
-    props.config.customSelectionAreaHotkey = canonical;
-    props.config.selectionAreaHotkey = canonical ? 'custom' : DEFAULT_AREA_TRANSLATION_HOTKEY;
-    showCustomHotkeyDialog.value = false;
-    previousHotkey = '';
+    if (findHotkeyConflict(canonical)) return;
+    // 清除录制回到默认入口；提交前同样校验默认组合的占用。
+    if (!commitHotkeyDraft(canonical ? 'custom' : DEFAULT_AREA_TRANSLATION_HOTKEY, canonical)) return;
     ElMessage({message: t('area.settings.hotkeySet', {shortcut: hotkeyDisplayName.value}), type: 'success', duration: 2000});
 }
 
 function handleCustomHotkeyCancel(): void {
-    if (!props.config.customSelectionAreaHotkey) {
-        props.config.selectionAreaHotkey = previousHotkey || DEFAULT_AREA_TRANSLATION_HOTKEY;
-    }
-    previousHotkey = '';
+    closeCustomHotkeyDialog();
 }
 const service = computed(() => props.config.areaTranslationService || props.config.service);
 const model = computed(() => resolveConfiguredModel(props.config.model[service.value], props.config.customModel[service.value]));
@@ -197,10 +194,25 @@ const serviceDescription = computed(() => model.value
   ? `${props.serviceOptions.find(item => item.value === service.value)?.label || service.value} · ${model.value}`
   : t('area.settings.serviceDescription'));
 const {result: visionStatus} = useVisionProbeStatus(() => props.config, () => service.value,
-    () => model.value);
+    () => model.value, () => hotkeyEditorActive.value);
 const capability = computed(() => visionStatus.value.capability);
 const prefersVision = computed(() => props.config.areaRecognitionMode === 'prefer-vision');
 const promptEditorOpen = ref(false);
+let promptConfig: Config | null = null;
+let promptEnabled = false;
+function openVisionPromptEditor(): void {
+    if (!hotkeyEditorActive.value) return;
+    promptConfig = props.config;promptEnabled = props.enabled;promptEditorOpen.value = true;
+}
+function updateVisionPrompt(value: string): void {
+    if (!promptEditorOpen.value || !hotkeyEditorActive.value || promptConfig !== props.config || promptEnabled !== props.enabled) return;
+    promptConfig.areaVisionPrompt = value;
+}
+watch(() => [hotkeyEditorActive.value, props.config, props.enabled, promptEditorOpen.value], () => {
+    if (!hotkeyEditorActive.value || promptConfig !== props.config || promptEnabled !== props.enabled || !promptEditorOpen.value) {
+        promptConfig = null;promptEditorOpen.value = false;
+    }
+}, {flush: 'sync'});
 const capabilityMessageKey = computed(() => capability.value === 'supported'
   ? 'area.settings.capabilitySupported'
   : capability.value === 'unsupported' ? 'area.settings.capabilityUnsupported' : 'area.settings.capabilityUnknown');

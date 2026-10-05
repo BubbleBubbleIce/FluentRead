@@ -153,8 +153,6 @@ function isCoverageExemptSrcModule(path: string): boolean {
 const BUILD_ONLY_SRC_ALLOWLIST = new Set([
     // 识图探测 composition 只接线共享 broker 与本地存储；策略、消息、编码严格覆盖并由隔离浏览器验证。
     'src/app/translation/visionProbeRuntime.ts',
-    // Vue 缓存订阅与过期计时仅绑定 core 严格覆盖策略；真实设置页验证卸载与同步。
-    'src/features/settings/ui/services/useVisionProbeStatus.ts',
     // 后台同步 composition root 仅装配已有配置端口；协议和事务经严格覆盖，真实端口由隔离浏览器专项验证。
     'src/app/background/googleDriveSyncRuntime.ts',
     'src/app/background/webDavBackupRuntime.ts',
