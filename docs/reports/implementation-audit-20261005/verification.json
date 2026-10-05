@@ -7525,6 +7525,370 @@
         "anchors": 741,
         "images": 154
       }
+    },
+    {
+      "name": "thirteenth-sliced-sentence-highlight-and-subscriber-cleanup",
+      "baseCommit": "88f7df03a08f4536cbfdb49119621794b7a5b8d9",
+      "scope": "Fully read and traced 11 further files across sentence actions, learning mounts, shadow UI and sentence alignment; re-reviewed changed highlight. 681 source files remain pending; goal active.",
+      "reviewProgress": {
+        "sourceReadFiles": 136,
+        "sourceReadFunctionBodies": 2088,
+        "pendingFiles": 681,
+        "goalComplete": false
+      },
+      "inventory": {
+        "files": 817,
+        "functionBodies": 14580,
+        "additionalReadFiles": 11,
+        "additionalReadBodies": 62,
+        "rewrittenCallbackBodiesRemoved": 5,
+        "netReadBodyIncrease": 57
+      },
+      "strictCoverage": {
+        "status": "passed",
+        "testFiles": 6,
+        "testCases": 87,
+        "modules": [
+          "src/features/full-page-translation/content/sentenceHighlight.ts",
+          "src/app/content/bilingualSentenceHighlight.ts"
+        ],
+        "percent": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        },
+        "thresholdsUnchanged": true,
+        "include": [
+          "tests/bilingualSentenceHighlight.test.ts",
+          "tests/sentenceActionsInteraction.test.ts",
+          "tests/sentenceActionsMount.test.ts",
+          "tests/contentRuntimeLifecycle.test.ts",
+          "tests/issue146EmbeddedFrames.test.ts",
+          "tests/userscriptUnsupportedCapabilities.test.ts"
+        ]
+      },
+      "additionalAffectedSuites": {
+        "status": "passed",
+        "testFiles": 1,
+        "testCases": 93,
+        "scope": "browser isolation and deterministic transport contract; runner added to existing parameterized cases"
+      },
+      "totalAffectedCases": 180,
+      "newExecutedCases": 18,
+      "newRegisteredCaseDefinitions": 14,
+      "regressionEvidence": {
+        "publicBaselineCases": 28,
+        "publicBaselineFailures": 6,
+        "laterCasesNotBaselineTested": 6,
+        "scope": "Public install/sync/subscribe lifecycle in controlled DOM mocks; 20,000 actual nested elements, sparse source/translation, early character limit, partial cancellation, subscriber exception/reentry/unsubscribe."
+      },
+      "implementation": {
+        "collector": "Iterative cursor, nonempty Text runs, shared 100,000 UTF16 limit during collection, 16,384 nodes per slice with time check every 64 nodes at approximately 4ms. Not a hard whole-chain deadline.",
+        "rangeLookup": "Binary search skips non-overlapping runs; early geometry exit and fewer array copies.",
+        "lifecycle": "Observe while collecting; cancel partial work on mutation/scroll/leave/disable; clear private state before publication, isolate callback errors, prevent obsolete notifications and disposed flush continuation."
+      },
+      "fixtureRepair": {
+        "cleanup": "Use complete focus-safe launcher close rather than context.close; ten previous task temporary browser roots removed before authoritative clean paired runs. All pre-cleanup performance measurements excluded.",
+        "earlyDiagnosticsExcluded": [
+          "serialized provider function instead of URL",
+          "incorrect one-request assumption for 200 sentences",
+          "host DOM creation crash at 12,000 depth before highlighter",
+          "moving original Text invalidated wrapper",
+          "deep original source inserted before translation produced no wrapper"
+        ],
+        "retainedCleanRunFailure": {
+          "passed": false,
+          "stage": "translation-side highlight after scroll and immediate pointer",
+          "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+          "completedCases": [
+            {
+              "id": "sparse",
+              "emptyNodes": 50000,
+              "sentences": 200,
+              "highlighted": true,
+              "highlightLatencyMs": 113,
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 30.90000009536743,
+              "hostMutations": 0,
+              "originalPreserved": true,
+              "originalTextIdentity": true,
+              "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+              "initialRequests": 2
+            }
+          ],
+          "disposition": "Keep failure evidence. Wait two animation frames after scrolling for stable-hover fixture only; no production event ordering fix or rapid-scroll guarantee."
+        }
+      },
+      "controlledBaseline": {
+        "passed": true,
+        "buildSha256": "76159a0a5b4d18ccd59dc88cae33b3078452a3716ab91c2f5561956bb3f54fbf",
+        "verifyActions": false,
+        "cases": [
+          {
+            "id": "sparse",
+            "emptyNodes": 50000,
+            "sentences": 200,
+            "highlighted": true,
+            "highlightLatencyMs": 104,
+            "longTasksMs": [
+              92
+            ],
+            "maxHeartbeatGapMs": 98.80000019073486,
+            "hostMutations": 0,
+            "originalPreserved": true,
+            "originalTextIdentity": true,
+            "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+            "initialRequests": 2,
+            "restoredOriginal": {
+              "textExact": true,
+              "sameTextNode": true
+            },
+            "restoreClearedHighlight": true,
+            "extraRequests": 0
+          },
+          {
+            "id": "deep",
+            "depth": 2000,
+            "sentences": 3,
+            "highlighted": true,
+            "highlightLatencyMs": 120,
+            "longTasksMs": [],
+            "maxHeartbeatGapMs": 65.40000009536743,
+            "hostMutations": 0,
+            "originalPreserved": true,
+            "originalTextIdentity": true,
+            "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+            "initialRequests": 1,
+            "restoredOriginal": {
+              "textExact": true,
+              "sameTextNode": true
+            },
+            "restoreClearedHighlight": true,
+            "extraRequests": 0
+          }
+        ],
+        "consoleErrors": [],
+        "unexpectedNetworkRequests": 0
+      },
+      "controlledBrowser": {
+        "evidence": "Production Chrome MV3 build loaded in a separate background Edge session; real Alt+T and native pointer, local deterministic Microsoft transport; host appends empty nodes/branch after translation preserving original Text. Sequential runs after all build/test jobs initiated by this audit batch exited. No machine-wide idle guarantee or CPU attribution.",
+        "runs": [
+          {
+            "passed": true,
+            "buildSha256": "43236570d2cb44c76176e62a30c2265c6ead53184179154781e8d986181d2fc3",
+            "verifyActions": true,
+            "cases": [
+              {
+                "id": "sparse",
+                "emptyNodes": 50000,
+                "sentences": 200,
+                "highlighted": true,
+                "highlightLatencyMs": 155,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 34.40000009536743,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+                "initialRequests": 2,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              },
+              {
+                "id": "deep",
+                "depth": 2000,
+                "sentences": 3,
+                "highlighted": true,
+                "highlightLatencyMs": 65,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 64,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+                "initialRequests": 1,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              }
+            ],
+            "consoleErrors": [],
+            "unexpectedNetworkRequests": 0
+          },
+          {
+            "passed": true,
+            "buildSha256": "43236570d2cb44c76176e62a30c2265c6ead53184179154781e8d986181d2fc3",
+            "verifyActions": true,
+            "cases": [
+              {
+                "id": "sparse",
+                "emptyNodes": 50000,
+                "sentences": 200,
+                "highlighted": true,
+                "highlightLatencyMs": 108,
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 27.5,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+                "initialRequests": 2,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              },
+              {
+                "id": "deep",
+                "depth": 2000,
+                "sentences": 3,
+                "highlighted": true,
+                "highlightLatencyMs": 72,
+                "longTasksMs": [
+                  50,
+                  50
+                ],
+                "maxHeartbeatGapMs": 68.09999990463257,
+                "hostMutations": 0,
+                "originalPreserved": true,
+                "originalTextIdentity": true,
+                "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+                "initialRequests": 1,
+                "bothDirectionsAndCompactActions": true,
+                "restoredOriginal": {
+                  "textExact": true,
+                  "sameTextNode": true
+                },
+                "restoreClearedHighlight": true,
+                "extraRequests": 0
+              }
+            ],
+            "consoleErrors": [],
+            "unexpectedNetworkRequests": 0
+          }
+        ],
+        "additionalCleanRun": {
+          "passed": true,
+          "buildSha256": "43236570d2cb44c76176e62a30c2265c6ead53184179154781e8d986181d2fc3",
+          "verifyActions": true,
+          "cases": [
+            {
+              "id": "sparse",
+              "emptyNodes": 50000,
+              "sentences": 200,
+              "highlighted": true,
+              "highlightLatencyMs": 117,
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 21.200000286102295,
+              "hostMutations": 0,
+              "originalPreserved": true,
+              "originalTextIdentity": true,
+              "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+              "initialRequests": 2,
+              "bothDirectionsAndCompactActions": true,
+              "restoredOriginal": {
+                "textExact": true,
+                "sameTextNode": true
+              },
+              "restoreClearedHighlight": true,
+              "extraRequests": 0
+            },
+            {
+              "id": "deep",
+              "depth": 2000,
+              "sentences": 3,
+              "highlighted": true,
+              "highlightLatencyMs": 69,
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 65.90000009536743,
+              "hostMutations": 0,
+              "originalPreserved": true,
+              "originalTextIdentity": true,
+              "highlightedText": "Sentence 0 keeps useful reading context.测试译文：Sentence 0 keeps useful reading context.",
+              "initialRequests": 1,
+              "bothDirectionsAndCompactActions": true,
+              "restoredOriginal": {
+                "textExact": true,
+                "sameTextNode": true
+              },
+              "restoreClearedHighlight": true,
+              "extraRequests": 0
+            }
+          ],
+          "consoleErrors": [],
+          "unexpectedNetworkRequests": 0
+        },
+        "representativeScreenshotsInspected": 8,
+        "originalSourcePreserved": true,
+        "originalTextIdentityPreserved": true,
+        "nativeActions": "Both sides expose delayed compact entry and matching play button after click; no actual speech/clipboard/save effects asserted.",
+        "nativeDeepBoundary": "2,000 nested empty elements; does not prove real 20,000 deep text-bearing source. Public 20,000 depth proof is controlled unit fixture only."
+      },
+      "comparison": {
+        "sparse": "Clean baseline 92ms long task and 98.8ms heartbeat gap; settled finals no long tasks and 34.4/27.5ms gaps. First paint 155/108ms vs baseline 104ms, scheduling/poll included, no universal speedup claim.",
+        "deep": "Clean baseline heartbeat 65.4ms; settled finals 64/68.1ms and second run two 50ms long tasks. Not fixed responsiveness.",
+        "measurement": "First-highlight latency includes native input, rAF and polling; LongTask observer spans source highlight and 850ms dwell. No CPU profiler attribution this batch."
+      },
+      "openPerformanceIssue": [
+        "Deep DOM still records two 50ms long tasks and 64-68.1ms heartbeat gaps.",
+        "Sentence alignment enumerates all native segments before 256 sentence cap; eager Range creation/geometry and wide owner lookup need profiling.",
+        "Ancestor mutation storms and rapid scroll/pointer cancellation ordering require dedicated reproduction.",
+        "Previous twelfth-batch 123-151ms whole-root synchronous remount remains unresolved and was not remeasured this batch."
+      ],
+      "affectedArchitecture": {
+        "status": "passed",
+        "testFiles": 3,
+        "testCases": 815,
+        "wholeRepositoryGatePassed": false
+      },
+      "typeCheck": "passed",
+      "chromeBuild": "passed",
+      "firefoxBuild": "passed; build-only evidence",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "ok",
+        "files": 466,
+        "registeredCases": 6103,
+        "parameterExpansionsIncluded": false
+      },
+      "artifactHashes": {
+        "content": "43236570d2cb44c76176e62a30c2265c6ead53184179154781e8d986181d2fc3",
+        "background": "9ee6d3de1b978a142fc3457dc39741cf347c5894fcf97cbdaf471729709408a8",
+        "manifest": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844"
+      },
+      "integrationDebt": "Six cached post-baseline image/docs main commits and existing 19 executable/3 documentation verification ownership gaps remain before whole-goal completion. No remote freshness proof.",
+      "liveProviderValidated": false,
+      "firefoxRuntimeValidated": false,
+      "touchDeviceValidated": false,
+      "temporaryBrowserCleanup": {
+        "matchingTemporaryBrowserProcesses": 0,
+        "checkedAfterEachCleanRun": true,
+        "method": "full launcher.close then exact task process exit verification"
+      },
+      "docsBuild": "passed",
+      "docsCheck": {
+        "status": "passed",
+        "pages": 77,
+        "links": 3955,
+        "anchors": 741,
+        "images": 154
+      },
+      "referenceRepositoriesUsed": false,
+      "goalComplete": false
     }
   ]
 }

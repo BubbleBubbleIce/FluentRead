@@ -38,6 +38,7 @@ describe('后台翻译夹具资源隔离', () => {
 const FOCUS_SAFE_SCRIPTS = [
     'scripts/testing/run-manga-entry-ui-test.cjs',
     'scripts/testing/run-manga-translation-test.cjs',
+    'scripts/testing/run-sentence-highlight-responsiveness.cjs',
     'scripts/run-cache-settings-test.cjs',
     'scripts/run-selection-trigger-test.cjs',
     'scripts/run-full-page-translation-test.cjs',

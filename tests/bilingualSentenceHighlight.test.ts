@@ -300,3 +300,118 @@ describe('paint-only bilingual hover lifecycle', () => {
         syncBilingualSentenceHighlight(f.document, false); expect(f.registry.has(BILINGUAL_HIGHLIGHT_NAME)).toBe(true);
     });
 });
+
+describe('large bilingual owners through the public hover lifecycle', () => {
+    afterEach(() => {vi.unstubAllGlobals(); vi.restoreAllMocks();});
+    function deepFixture(depth = 20_000) {
+        const f = fixture();
+        const owner = f.document.querySelector('#owner')!;
+        const text = owner.firstChild!;
+        const root = f.document.createElement('span');
+        let leaf = root;
+        for (let i = 0; i < depth; i++) {
+            const next = f.document.createElement('span'); leaf.append(next); leaf = next;
+        }
+        leaf.append(text); owner.prepend(root);
+        return f;
+    }
+    function finish(f: ReturnType<typeof fixture>) {
+        let frames = 0;
+        while (f.frames.size) {expect(++frames).toBeLessThan(1000); f.flush();}
+        return frames;
+    }
+    it('highlights 20,000 nested elements without recursion and yields before completing the owner', () => {
+        vi.spyOn(performance, 'now').mockReturnValue(0);
+        const f = deepFixture(); const dispose = installBilingualSentenceHighlight(f.document);
+        const text = f.document.querySelector('#owner')!.textContent;
+        expect(() => f.move()).not.toThrow();
+        expect(f.highlighted()).toEqual([]);
+        expect(f.frames.size).toBe(1);
+        expect(finish(f)).toBeGreaterThanOrEqual(1);
+        expect(f.highlighted()).toEqual(['First.', '一句。']);
+        expect(f.document.querySelector('#owner')!.textContent).toBe(text);
+        dispose();
+    });
+    it('yields over empty text nodes without creating zero-length ranges or losing readable text', () => {
+        vi.spyOn(performance, 'now').mockReturnValue(0);
+        const f = fixture(); const owner = f.document.querySelector('#owner')!;
+        const nodes = f.document.createDocumentFragment();
+        for (let i = 0; i < 20_000; i++) nodes.append(f.document.createTextNode(''));
+        owner.prepend(nodes);
+        const ranges = vi.spyOn(f.document, 'createRange');
+        const dispose = installBilingualSentenceHighlight(f.document);
+        f.move(); expect(f.frames.size).toBe(1);
+        finish(f); expect(f.highlighted()).toEqual(['First.', '一句。']);
+        expect(ranges).toHaveBeenCalledTimes(4);
+        f.move('.fluent-read-bilingual-content', 45, 35);
+        expect(f.highlighted()).toEqual(['Second.', '二句。']);
+        expect(ranges).toHaveBeenCalledTimes(4);
+        dispose();
+    });
+    it('stops oversized collection before visiting the tail or collecting the translation', () => {
+        const f = fixture('<p id="owner">' + 'x'.repeat(100_001) + '<b id="tail">Unvisited.</b><span class="fluent-read-bilingual-content" data-fr-translation-owned="true">译文。</span></p>');
+        const style = vi.mocked(f.window.getComputedStyle);
+        const read = vi.fn(style);
+        vi.stubGlobal('getComputedStyle', read);
+        const dispose = installBilingualSentenceHighlight(f.document);
+        f.move(); finish(f);
+        expect(f.highlighted()).toEqual([]);
+        expect(read.mock.calls.map(([element]) => (element as Element).id)).toEqual(['owner']);
+        dispose();
+    });
+    it('yields while collecting a sparse translation and invalidates both maps when it changes', () => {
+        vi.spyOn(performance, 'now').mockReturnValue(0);
+        const f = fixture(); const wrapper = f.document.querySelector('.fluent-read-bilingual-content')!;
+        const nodes = f.document.createDocumentFragment();
+        for (let i = 0; i < 20_000; i++) nodes.append(f.document.createTextNode(''));
+        wrapper.prepend(nodes);
+        const dispose = installBilingualSentenceHighlight(f.document);
+        f.move(); expect(f.frames.size).toBe(1); expect(f.highlighted()).toEqual([]);
+        f.mutate(wrapper); expect(f.frames.size).toBe(0);
+        f.move('.fluent-read-bilingual-content', 45, 35); finish(f);
+        expect(f.highlighted()).toEqual(['Second.', '二句。']); dispose();
+    });
+    it('counts line breaks against the shared limit and rejects excess translation text', () => {
+        for (const html of [
+            '<p id="owner">' + 'x'.repeat(100_000) + '<br><span class="fluent-read-bilingual-content" data-fr-translation-owned="true">译文。</span></p>',
+            '<p id="owner">' + 'x'.repeat(99_999) + '<span class="fluent-read-bilingual-content" data-fr-translation-owned="true">译文。</span></p>',
+        ]) {
+            const f = fixture(html); const dispose = installBilingualSentenceHighlight(f.document);
+            f.move(); finish(f); expect(f.highlighted()).toEqual([]); dispose();
+        }
+    });
+    it('cancels partial work on mutation, scroll and disable, then rebuilds from the latest source', () => {
+        vi.spyOn(performance, 'now').mockReturnValue(0);
+        const f = deepFixture();
+        syncBilingualSentenceHighlight(f.document, true);
+        for (const cancel of [() => f.mutate(), () => f.document.dispatchEvent(new f.window.Event('scroll'))]) {
+            f.move(); expect(f.frames.size).toBe(1); cancel(); expect(f.frames.size).toBe(0);
+        }
+        f.move(); syncBilingualSentenceHighlight(f.document, false);
+        expect(f.frames.size).toBe(0); expect(f.highlighted()).toEqual([]);
+        let leaf = f.document.querySelector('#owner > span')!;
+        while (leaf.firstElementChild) leaf = leaf.firstElementChild;
+        leaf.firstChild!.textContent = 'Changed. Second.';
+        syncBilingualSentenceHighlight(f.document, true); f.move(); finish(f);
+        expect(f.highlighted()).toEqual(['Changed.', '一句。']);
+        syncBilingualSentenceHighlight(f.document, false);
+    });
+    it('uses the latest side and pointer while collecting, and abandons work when the pointer leaves', () => {
+        vi.spyOn(performance, 'now').mockReturnValue(0);
+        const f = deepFixture();
+        const dispose = installBilingualSentenceHighlight(f.document);
+        f.move(); f.move('.fluent-read-bilingual-content', 45, 35); finish(f);
+        expect(f.highlighted()).toEqual(['Second.', '二句。']);
+        f.mutate(); f.move(); f.move('#outside');
+        expect(f.frames.size).toBe(0); expect(f.highlighted()).toEqual([]);
+        dispose();
+    });
+    it('yields when a style read uses the frame time budget and finishes both sides on later frames', () => {
+        let time = 0;
+        vi.spyOn(performance, 'now').mockImplementation(() => time += 5);
+        const f = deepFixture(256); const dispose = installBilingualSentenceHighlight(f.document);
+        f.move(); expect(f.frames.size).toBe(1); expect(f.highlighted()).toEqual([]);
+        expect(finish(f)).toBeGreaterThan(1);
+        expect(f.highlighted()).toEqual(['First.', '一句。']); dispose(); dispose();
+    });
+});

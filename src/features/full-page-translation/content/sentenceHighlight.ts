@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/content/sentenceHighlight.ts
  * 文件职责：在双语段落中定位鼠标下的句子，并同步绘制原文和译文的文字范围。
- * 主要内容：只读收集文字、按句对齐、逐帧合并指针事件，使用原生 Highlight 绘制；普通悬停仅改变文字高亮，离开、选择、滚动、节点变化和卸载时释放范围与监听器。
+ * 主要内容：分帧只读遍历并提前限制文字量，排除空文本、按坐标索引句子范围，逐帧合并指针事件并使用原生 Highlight 绘制；离开、选择、滚动、节点变化和卸载时取消收集并释放范围与监听器。
  * 模块边界：仅消费 renderer 已有的双语容器，不拆分宿主文本、不更改排版、不调用 provider；旧浏览器缺少绘制能力时安全停用。
  */
 import {alignBilingualSentences, type SentenceSpan} from '@/src/core/translation/sentenceAlignment';
@@ -17,32 +17,56 @@ type HighlightView = Window & typeof globalThis & {
     CSS?: {highlights?: Map<string, Set<Range>>};
 };
 
-function collectText(root: Element): TextMap {
-    const map: TextMap = {text: '', runs: []};
-    const visit = (node: Node): void => {
-        if (node.nodeType === 3) {
-            const start = map.text.length;
-            map.text += (node as Text).data;
-            map.runs.push({node: node as Text, start, end: map.text.length});
-        } else if (node.nodeType === 1) {
-            const element = node as Element;
-            if (element !== root && element.matches(excludedSelector)) return;
-            const style = root.ownerDocument.defaultView!.getComputedStyle(element);
-            if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return;
-            if (element.tagName === 'BR') map.text += '\n';
-            else for (const child of Array.from(element.childNodes)) visit(child);
+function textCollector(root: Element, maxLength: number): () => TextMap | null | undefined {
+    const chunks: string[] = [];
+    const runs: TextRun[] = [];
+    const siblings: Node[] = [];
+    let length = 0;
+    let next: Node | undefined = root;
+    return () => {
+        const started = performance.now();
+        // 深层和稀疏段落仍完整收集；每帧限制节点数与时间，不能仅靠末尾字符检查。
+        for (let steps = 0; next && steps < 16_384; steps++) {
+            if (steps && steps % 64 === 0 && performance.now() - started >= 4) break;
+            const node: Node = next;
+            if (node !== root && node.nextSibling) siblings.push(node.nextSibling);
+            next = siblings.pop();
+            let text = '';
+            if (node.nodeType === 3) text = (node as Text).data;
+            else if (node.nodeType === 1) {
+                const element = node as Element;
+                if (element !== root && element.matches(excludedSelector)) continue;
+                const style = root.ownerDocument.defaultView!.getComputedStyle(element);
+                if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') continue;
+                if (element.tagName === 'BR') text = '\n';
+                else if (element.firstChild) {
+                    if (next) siblings.push(next);
+                    next = element.firstChild;
+                }
+            }
+            if (!text) continue;
+            if (text.length > maxLength - length) return null;
+            chunks.push(text);
+            if (node.nodeType === 3) runs.push({node: node as Text, start: length, end: length + text.length});
+            length += text.length;
         }
+        return next ? undefined : {text: chunks.join(''), runs};
     };
-    visit(root);
-    return map;
 }
 
 function rangesFor(map: TextMap, span: SentenceSpan): Range[] {
     const ranges: Range[] = [];
-    for (const run of map.runs) {
+    let first = 0;
+    let last = map.runs.length;
+    while (first < last) {
+        const middle = (first + last) >>> 1;
+        if (map.runs[middle].end <= span.start) first = middle + 1;
+        else last = middle;
+    }
+    for (let index = first; index < map.runs.length && map.runs[index].start < span.end; index++) {
+        const run = map.runs[index];
         const start = Math.max(span.start, run.start);
         const end = Math.min(span.end, run.end);
-        if (start >= end) continue;
         const range = run.node.ownerDocument.createRange();
         range.setStart(run.node, start - run.start);
         range.setEnd(run.node, end - run.start);
@@ -56,7 +80,9 @@ function ownerFor(target: Element): Element | null {
     if (translation) return translation.parentElement;
     if (target.closest(excludedSelector)) return null;
     for (let owner: Element | null = target; owner; owner = owner.parentElement) {
-        if (Array.from(owner.children).some(child => child.matches(wrapperSelector))) return owner;
+        for (let child = owner.firstElementChild; child; child = child.nextElementSibling) {
+            if (child.matches(wrapperSelector)) return owner;
+        }
     }
     return null;
 }
@@ -67,7 +93,11 @@ export function installBilingualSentenceHighlight(document: Document): () => voi
     if (!view?.Highlight || !registry) return () => undefined;
     const paint = new view.Highlight();
     let owner: Element | null = null;
+    let ownerTarget: Element | null = null;
+    let installed = true;
     let pairs: Pair[] = [];
+    let collecting: {wrapper: Element; source: () => TextMap | null | undefined; sourceMap?: TextMap;
+        translation?: () => TextMap | null | undefined} | undefined;
     let active: Pair | undefined;
     let pending: {event: PointerEvent; target: Element | null} | null = null;
     let frame: number | null = null;
@@ -79,7 +109,9 @@ export function installBilingualSentenceHighlight(document: Document): () => voi
         paint.clear();
         active = undefined;
         owner = null;
+        ownerTarget = null;
         pairs = [];
+        collecting = undefined;
         pending = null;
         if (frame !== null) view!.cancelAnimationFrame(frame);
         frame = null;
@@ -88,29 +120,55 @@ export function installBilingualSentenceHighlight(document: Document): () => voi
     const flush = (): void => {
         frame = null;
         const point = pending;
-        pending = null;
         if (!point || point.event.buttons || document.getSelection()?.isCollapsed === false) return clear();
         const {event, target: hit} = point;
-        const nextOwner = hit && ownerFor(hit);
+        if (!installed) return;
+        const nextOwner = hit && (hit === ownerTarget ? owner : ownerFor(hit));
         if (!nextOwner?.isConnected) return clear();
         if (nextOwner !== owner) {
             clear();
+            if (!installed) return;
             owner = nextOwner;
             const wrappers = Array.from(owner.children).filter(child => child.matches(wrapperSelector));
             if (wrappers.length !== 1) return clear();
-            const source = collectText(owner);
-            const translation = collectText(wrappers[0]);
-            if (source.text.length + translation.text.length > 100_000) return clear();
+            collecting = {wrapper: wrappers[0], source: textCollector(owner, 100_000)};
+            pending = point;
+            // 收集期间也观察，避免跨帧使用已经变更或脱离页面的节点。
+            observer.observe(document, {subtree: true, childList: true, characterData: true, attributes: true});
+        }
+        ownerTarget = hit;
+        if (collecting) {
+            const source = collecting.sourceMap ?? collecting.source();
+            if (source === null) return clear();
+            if (source === undefined) {frame = view.requestAnimationFrame(flush); return;}
+            collecting.sourceMap = source;
+            collecting.translation ??= textCollector(collecting.wrapper, 100_000 - source.text.length);
+            const translation = collecting.translation();
+            if (translation === null) return clear();
+            if (translation === undefined) {frame = view.requestAnimationFrame(flush); return;}
             pairs = alignBilingualSentences(source.text, translation.text).map(pair => ({
                 source: rangesFor(source, pair.source), translation: rangesFor(translation, pair.translation),
             }));
-            // 只在鼠标所在段落有缓存时观察，包含祖先移除整个段落的情况。
-            observer.observe(document, {subtree: true, childList: true, characterData: true, attributes: true});
+            collecting = undefined;
         }
-        const pair = pairs.find(pair => [...pair.source, ...pair.translation].some(range =>
-            Array.from(range.getClientRects()).some(rect => rect.width > 0 && rect.height > 0
-                && event.clientX >= rect.left && event.clientX <= rect.right
-                && event.clientY >= rect.top && event.clientY <= rect.bottom)));
+        pending = null;
+        let hitSentence: {pair: Pair} | undefined;
+        for (const pair of pairs) {
+            for (const side of ['source', 'translation'] as const) {
+                for (const range of pair[side]) {
+                    for (const rect of range.getClientRects()) {
+                        if (rect.width > 0 && rect.height > 0 && event.clientX >= rect.left && event.clientX <= rect.right
+                            && event.clientY >= rect.top && event.clientY <= rect.bottom) {
+                            hitSentence = {pair}; break;
+                        }
+                    }
+                    if (hitSentence) break;
+                }
+                if (hitSentence) break;
+            }
+            if (hitSentence) break;
+        }
+        const pair = hitSentence?.pair;
         if (pair !== active) {
             paint.clear();
             active = pair;
@@ -135,6 +193,8 @@ export function installBilingualSentenceHighlight(document: Document): () => voi
     view.addEventListener('resize', clear);
     view.addEventListener('pagehide', clear);
     return () => {
+        if (!installed) return;
+        installed = false;
         clear();
         document.removeEventListener('pointermove', move, true);
         document.removeEventListener('pointerout', leave, true);

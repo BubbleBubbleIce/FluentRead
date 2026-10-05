@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14585,
+    "functions": 14580,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -153,8 +153,8 @@
       },
       "src/features/full-page-translation": {
         "files": 50,
-        "functions": 913,
-        "lines": 11349
+        "functions": 908,
+        "lines": 11414
       },
       "src/features/glossary": {
         "files": 3,
@@ -513,6 +513,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/content/bilingualSentenceHighlight.ts",
+      "sha256": "262fca9e4e0442c7bb4efbded732a019558fb635a42d46f7a223ee03ff6d801a",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/content/embeddedFrameRuntime.ts",
       "sha256": "9c52b4c9639b8626f54322ebb8f351344578c5f064d7a564983f4cb87e1e38a6",
       "functionBodies": 29,
@@ -528,6 +534,12 @@
       "file": "src/app/content/featureRegistry.ts",
       "sha256": "f7e6c6ce57bdc03d51ebe92f3f19b4b7ebd60e35d53cf914894648ed3fa017c8",
       "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/content/learningFeatures.ts",
+      "sha256": "0a0bb5134504de726af2278bb822201898c338e6a785302a6467b304dd81a571",
+      "functionBodies": 5,
       "status": "source-read-and-traced"
     },
     {
@@ -660,6 +672,12 @@
       "file": "src/core/translation/resultValidation.ts",
       "sha256": "e8ff90be7a33ae6091c203349831a33106f8a434755c2c877d0425b710f7c809",
       "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/translation/sentenceAlignment.ts",
+      "sha256": "8449f632b04868bd291190ea4d7502e92a167c5f1314bb97589fac83ec33a244",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -862,8 +880,8 @@
     },
     {
       "file": "src/features/full-page-translation/content/sentenceHighlight.ts",
-      "sha256": "140d0e6fbf5f800d8a48cc0362e0205db98dd058d2b54b150bd47553c847ca9d",
-      "functionBodies": 24,
+      "sha256": "617e2162271ab69114658250f9ac14981cbfcd71743c32c4d7337cd95d5b1341",
+      "functionBodies": 19,
       "status": "source-read-and-traced"
     },
     {
@@ -1017,6 +1035,42 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/vocabulary/content.ts",
+      "sha256": "04bf60b998cf2e208f9fe10e7d31a557672bf7ae51984da01f295b1a80d04862",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/content/public.ts",
+      "sha256": "14b58b6c3e03157d0dc37cac6c423a80330e13f8c43a4b0d660cfedb8be76f2c",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/content/reencounter.ts",
+      "sha256": "9887579104b620da1ca04ff6fea33efdf09574f09f17e114d200741357288926",
+      "functionBodies": 19,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/public.ts",
+      "sha256": "96b5e2f8588720fca23cecd714825a074f03f448ba061e1fc6f77d126fe94276",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/ui/SentenceActions.vue",
+      "sha256": "cf3b9887f0f675a861def4621bbd7af217ef8a595d894f2d4ce7881de7d13cc5",
+      "functionBodies": 26,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/vocabulary/ui/public.ts",
+      "sha256": "f7d4ccf2083bb3d0eb1d2f85f57f2457043767c349a06c45b881dfbc22b42534",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/platform/browser/actionIcon.ts",
       "sha256": "4d0a83e2be918ef6a47837364051bf85b33d3de0eb7d18cf4849f7c3cdbd6643",
       "functionBodies": 3,
@@ -1032,6 +1086,18 @@
       "file": "src/platform/http/runtime.ts",
       "sha256": "d7f2296a755c41816ecb284187c81d1c330f5e47fac0b5ceb69a1f500493a8e7",
       "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/shadow-ui/index.ts",
+      "sha256": "9cfca5114e6d2d4d93fa4b9cc82ab96fb8f4efb0a45c51f18da8d800b254d7a3",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/shadow-ui/vue.ts",
+      "sha256": "980838f25338499a4f93c4b38a3a281ee2d6e708f33e0c08faf83e1d04e14b36",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -1280,11 +1346,9 @@
     "src/app/background/webDavBackupRuntime.ts",
     "src/app/background/writingRuntime.ts",
     "src/app/content/areaContextMenuResponse.ts",
-    "src/app/content/bilingualSentenceHighlight.ts",
     "src/app/content/cacheMessage.ts",
     "src/app/content/features.ts",
     "src/app/content/hotkeyRuntime.ts",
-    "src/app/content/learningFeatures.ts",
     "src/app/content/messageRuntime.ts",
     "src/app/content/qqMailFrameRuntime.ts",
     "src/app/content/shadowBridge.ts",
@@ -1428,7 +1492,6 @@
     "src/core/translation/localInference.ts",
     "src/core/translation/prompts.ts",
     "src/core/translation/registry.ts",
-    "src/core/translation/sentenceAlignment.ts",
     "src/core/translation/types.ts",
     "src/core/translation/visionProbeImage.ts",
     "src/features/area-translation/background/handlers.ts",
@@ -1715,24 +1778,18 @@
     "src/features/video-subtitle/transcriptionCache.ts",
     "src/features/vocabulary/background/handler.ts",
     "src/features/vocabulary/background/index.ts",
-    "src/features/vocabulary/content.ts",
-    "src/features/vocabulary/content/public.ts",
     "src/features/vocabulary/content/readingText.ts",
-    "src/features/vocabulary/content/reencounter.ts",
     "src/features/vocabulary/content/reencounterState.ts",
     "src/features/vocabulary/content/scanner.ts",
     "src/features/vocabulary/domain/reencounter.ts",
     "src/features/vocabulary/learningModel.ts",
     "src/features/vocabulary/protocol.ts",
-    "src/features/vocabulary/public.ts",
     "src/features/vocabulary/repository.ts",
     "src/features/vocabulary/ui/CollectionEntry.vue",
     "src/features/vocabulary/ui/ReencounterPanel.vue",
     "src/features/vocabulary/ui/SavedExplanation.vue",
-    "src/features/vocabulary/ui/SentenceActions.vue",
     "src/features/vocabulary/ui/VocabularyBook.vue",
     "src/features/vocabulary/ui/VocabularyStudy.vue",
-    "src/features/vocabulary/ui/public.ts",
     "src/features/writing-assistant/background.ts",
     "src/features/writing-assistant/client.ts",
     "src/features/writing-assistant/content.ts",
@@ -1765,10 +1822,8 @@
     "src/platform/offscreen/extensionClient.ts",
     "src/platform/offscreen/firefoxDocument.ts",
     "src/platform/offscreen/localTranslation.ts",
-    "src/platform/shadow-ui/index.ts",
     "src/platform/shadow-ui/pageBridge.ts",
     "src/platform/shadow-ui/pageBridgeCore.ts",
-    "src/platform/shadow-ui/vue.ts",
     "src/platform/storage/configEncryption.ts",
     "src/platform/storage/configRepository.ts",
     "src/platform/storage/configStorage.ts",
@@ -1910,10 +1965,10 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Fix sentenceHighlight collectText recursion and sparse-text work before claiming a bounded hover chain; then measure section preview/restore totals and continue the full repository audit. Native whole-root remount long tasks and latest-main integration remain open.",
+    "Profile remaining sentence alignment/range creation, wide owner lookup and deep-DOM long tasks; reproduce ancestor mutation storms and rapid scroll/pointer cancellation ordering; section preview/restore totals, native whole-root remount and every pending module plus latest-main integration remain open. Current highlight recursion, sparse-text records and subscriber teardown failures are fixed within the stated fixtures.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
-    "Scaled narrow-scroll reading anchors now have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces, within-element text-line anchors, and source-level sentence-highlight traversal failures.",
+    "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
     "Selection/hover/input translation lifecycle",
     "Image/area/document/video pipelines",
     "Config persistence, synchronization and providers",
@@ -1924,9 +1979,9 @@
     "Local origin/main tracking ref f94225c3 includes six post-baseline image/docs commits. Reconcile and re-review that source before full-goal completion; the current audit inventory remains based on fd4fac88. No remote freshness or release claim."
   ],
   "progress": {
-    "sourceReadFiles": 125,
-    "sourceReadFunctionBodies": 2031,
-    "pendingFiles": 692,
+    "sourceReadFiles": 136,
+    "sourceReadFunctionBodies": 2088,
+    "pendingFiles": 681,
     "goalComplete": false
   },
   "observations": [
@@ -2012,8 +2067,13 @@
     },
     {
       "file": "src/features/full-page-translation/content/sentenceHighlight.ts",
-      "status": "source-level-deep-traversal-and-sparse-text-work-reproduced; public-path/native-verification-and-fix-pending",
-      "issue": "The actual private collectText body, compiled unchanged and exposed only by a synthetic-DOM harness, throws RangeError on a 20,000-level tree. A 20,000-empty-Text fixture reads 20,001 text values and stores 20,001 runs for only 16 characters. The 100,000-character gate runs after collection; this is source-level evidence, not a native latency measurement."
+      "status": "fixed-and-verified-with-performance-debt",
+      "issue": "Public install path reproduces deep traversal overflow and subscriber teardown exceptions/reentry. Iterative sliced collection, early shared character gate, nonempty run index and safe disposal pass strict tests. After temporary-browser cleanup, sparse source baseline has a 92ms long task; both settled final runs have none, with first highlight 155/108ms versus baseline104ms. Deep empty branch still has 64-68.1ms heartbeat gaps and two 50ms long tasks in the repeated final run. Wide owner lookup, eager alignment/range/geometry work, unrelated ancestor mutation storms and rapid scroll/pointer ordering remain open. Stable-hover native fixture waits for scroll events after one retained timeout. Not a whole-chain bound."
+    },
+    {
+      "file": "src/core/translation/sentenceAlignment.ts",
+      "status": "source-reviewed-performance-investigation-pending",
+      "issue": "sentenceSpans eagerly enumerates all native segments before alignBilingualSentences applies its 256-sentence cap. Profile and reproduce work before changing the contract; no native regression claim yet."
     }
   ]
 }
