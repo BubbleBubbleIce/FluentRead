@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 817,
-    "functions": 14584,
+    "functions": 14585,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -153,8 +153,8 @@
       },
       "src/features/full-page-translation": {
         "files": 50,
-        "functions": 912,
-        "lines": 11314
+        "functions": 913,
+        "lines": 11349
       },
       "src/features/glossary": {
         "files": 3,
@@ -465,9 +465,21 @@
   },
   "reviewed": [
     {
+      "file": "src/app/background/badgeRuntime.ts",
+      "sha256": "7795aae2a324408e4a637cd7010fea663e25898135afef2207da0458e5b12e03",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/cacheCleanup.ts",
       "sha256": "7b3a9e88921a8775610f732d647d84a62cd0402cb22e666de04defd3714fcd91",
       "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/fullPageTranslationState.ts",
+      "sha256": "8dd4e8cd772b6fad08f808ca3bf565349d3ef722443f5e6c028597d49b3bc245",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -480,6 +492,24 @@
       "file": "src/app/background/messageRouter.ts",
       "sha256": "df82a43487059237ec614c4847a3a043a0bf0e628482641a9415ab5477ca6741",
       "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/runtime.ts",
+      "sha256": "1af2f074dd5141534ebff837c8e77bfe866563704210b69239c0c0bda67f08eb",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/tabTranslationQuery.ts",
+      "sha256": "8db48631af75e7a038415781f3aa576a8719774da7bfeaed89850adfa7c8997f",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/tabTranslationState.ts",
+      "sha256": "22e5dfbac3f37c48cd5f35f6cb24a29368f98a7370dbe529e6ae89a952436edf",
+      "functionBodies": 7,
       "status": "source-read-and-traced"
     },
     {
@@ -669,6 +699,42 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/floating-ball/content/runtime.ts",
+      "sha256": "973587eeefd888b5b6524e387ab2165b704f060d6afbb95482a25cf210d656ed",
+      "functionBodies": 23,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/background/embeddedFrameHandlers.ts",
+      "sha256": "cd38dfab78d5094727cbc79beb571326e55dcbe72666ccf6c1d2601613906298",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/background/index.ts",
+      "sha256": "993731454672ccca295827e1eea8cc72c4fc18489eab7733059ea792efd08fca",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/background/neteaseMailFrameHandlers.ts",
+      "sha256": "16cbfdd6a23afc5ebf156b3339bb34d3d6b365b835653ee153ce9ec1f9a45a65",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/background/qqMailFrameHandlers.ts",
+      "sha256": "b0b04bd3cb49f56413d6a152bd9f02339ef80f2711ae6ef5ddeeb2774e62ad03",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/background/stateHandlers.ts",
+      "sha256": "ae98e7f1a1dfbf1a0ee1ae95c970ebe1d011a0e44b5155c422f70180b446307c",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/full-page-translation/content/bilingualRemount.ts",
       "sha256": "7820c1edaafd9a1a2244784b8b3614d7aed8fd792efaa5c092afa4985780bbd1",
       "functionBodies": 37,
@@ -789,6 +855,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/content/sectionTranslation.ts",
+      "sha256": "7b6759c94ba7e2a691574cba8260e4e8cb39b6e55efb28a70ba1ba9b6f553f72",
+      "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/content/sentenceHighlight.ts",
+      "sha256": "140d0e6fbf5f800d8a48cc0362e0205db98dd058d2b54b150bd47553c847ca9d",
+      "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/full-page-translation/content/sourceStability.ts",
       "sha256": "ea0598e659d445b1ca6527392a603e91b2a14815f86ccb398d8e644efea40dfd",
       "functionBodies": 3,
@@ -808,7 +886,7 @@
     },
     {
       "file": "src/features/full-page-translation/content/stateNotification.ts",
-      "sha256": "bc75d0ccd57c2aabab7f4670a41002fca57ebc919f743644f228b69c91dd0a20",
+      "sha256": "9e33daa011c2b51a726734ac5053e5f52b2d17441bd45a1eddad7eb51ddca7bb",
       "functionBodies": 6,
       "status": "source-read-and-traced"
     },
@@ -849,15 +927,81 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/full-page-translation/core/errorMessage.ts",
+      "sha256": "884b5efbf5daccb6db52a7e206f54e7062c8cd737133bd6fc26ada9dd335a894",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/core/hostMarkers.ts",
+      "sha256": "7ceb3ac37b87082b8051ccbc4e4ae61c326b5335b23dc69a92576541668178a6",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/embeddedFrames.ts",
+      "sha256": "d3035b54f06e15932e33887c037f279e3f2beb81802ad361bb27915a472eea78",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/highlight/public.ts",
+      "sha256": "f543e973c724a3351bba66cebebfa2c804dc12a70d50d4a815ac0b3915ef7fcf",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/neteaseMailFrames.ts",
+      "sha256": "b1b667cf014255df98d07514dd5dc5254a1a17ef0a11eae5c73acf572f65d08f",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/full-page-translation/progress.ts",
-      "sha256": "e0080105b045f353001e2761971a23dc599dd977a5f7557f57a0bb24bd9e0fb5",
-      "functionBodies": 12,
+      "sha256": "c04c6145746276f174ee6f8c986dab2f9105589004577ad3a74628495d50b909",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/public.ts",
+      "sha256": "d345838f27549458f2d639c6cfda9b2f679833328a3fd5e9843e81485ffd1bf9",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/qqMailFrames.ts",
+      "sha256": "ac9b24964c793a830ff6a4253334f5495d69eafd5d8e38f3400ca091d50c423a",
+      "functionBodies": 10,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/features/full-page-translation/toolbarStatus.ts",
       "sha256": "a3b436d26de5aaddf12bb72ec20a865ffa0775e009877f74ed43d2170b9ee2be",
       "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/ui/TranslationProgressPanel.vue",
+      "sha256": "9c24749284a971f8f7d2eb01f9b8b13eccfc5248b75251e4962cf34a8e481662",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/ui/modalProgressHint.ts",
+      "sha256": "27c6a9448487dad9a8df611c1f050d490104a4b97e52fe106185263b6ea26423",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/ui/progressPanelVisibility.ts",
+      "sha256": "0d65d19bd318e18f0d0987474a3b518466573418d76ba1f8656c6ee98c7e3647",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/full-page-translation/ui/translationIndicators.ts",
+      "sha256": "c4881d565ed7dc83af1128100b82fe1ddaca830b641636fe620beb4747c72c98",
+      "functionBodies": 15,
       "status": "source-read-and-traced"
     },
     {
@@ -870,6 +1014,12 @@
       "file": "src/features/hover-translation/public.ts",
       "sha256": "24e9ac5214001ce6d5c0cfb22e8a58a8341ed0e1cc5a31b0ac9d2e172d079602",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/browser/actionIcon.ts",
+      "sha256": "4d0a83e2be918ef6a47837364051bf85b33d3de0eb7d18cf4849f7c3cdbd6643",
+      "functionBodies": 3,
       "status": "source-read-and-traced"
     },
     {
@@ -1088,7 +1238,6 @@
     "integrations/obsidian/vault.ts",
     "integrations/obsidian/vite.config.ts",
     "src/app/background/areaRuntime.ts",
-    "src/app/background/badgeRuntime.ts",
     "src/app/background/capabilityRegistry.ts",
     "src/app/background/configAutoBackupRuntime.ts",
     "src/app/background/configMessageHandlers.ts",
@@ -1106,7 +1255,6 @@
     "src/app/background/handlers/configStorage.ts",
     "src/app/background/handlers/connectionTest.ts",
     "src/app/background/handlers/freeTranslationWeights.ts",
-    "src/app/background/handlers/fullPageTranslationState.ts",
     "src/app/background/handlers/googleDriveSync.ts",
     "src/app/background/handlers/imageTranslation.ts",
     "src/app/background/handlers/inputTranslation.ts",
@@ -1128,9 +1276,6 @@
     "src/app/background/providerRuntime.ts",
     "src/app/background/requestHeaderRuntime.ts",
     "src/app/background/retiredContentScripts.ts",
-    "src/app/background/runtime.ts",
-    "src/app/background/tabTranslationQuery.ts",
-    "src/app/background/tabTranslationState.ts",
     "src/app/background/thunderbirdMessageRuntime.ts",
     "src/app/background/webDavBackupRuntime.ts",
     "src/app/background/writingRuntime.ts",
@@ -1306,29 +1451,10 @@
     "src/features/document-translation/services/binary.ts",
     "src/features/document-translation/services/translation.ts",
     "src/features/document-translation/ui/pdfPreview.ts",
-    "src/features/floating-ball/content/runtime.ts",
     "src/features/floating-ball/position.ts",
     "src/features/floating-ball/public.ts",
     "src/features/floating-ball/types.ts",
     "src/features/floating-ball/ui/FloatingBall.vue",
-    "src/features/full-page-translation/background/embeddedFrameHandlers.ts",
-    "src/features/full-page-translation/background/index.ts",
-    "src/features/full-page-translation/background/neteaseMailFrameHandlers.ts",
-    "src/features/full-page-translation/background/qqMailFrameHandlers.ts",
-    "src/features/full-page-translation/background/stateHandlers.ts",
-    "src/features/full-page-translation/content/sectionTranslation.ts",
-    "src/features/full-page-translation/content/sentenceHighlight.ts",
-    "src/features/full-page-translation/core/errorMessage.ts",
-    "src/features/full-page-translation/core/hostMarkers.ts",
-    "src/features/full-page-translation/embeddedFrames.ts",
-    "src/features/full-page-translation/highlight/public.ts",
-    "src/features/full-page-translation/neteaseMailFrames.ts",
-    "src/features/full-page-translation/public.ts",
-    "src/features/full-page-translation/qqMailFrames.ts",
-    "src/features/full-page-translation/ui/TranslationProgressPanel.vue",
-    "src/features/full-page-translation/ui/modalProgressHint.ts",
-    "src/features/full-page-translation/ui/progressPanelVisibility.ts",
-    "src/features/full-page-translation/ui/translationIndicators.ts",
     "src/features/glossary/public.ts",
     "src/features/glossary/ui/BuiltinGlossaries.vue",
     "src/features/glossary/ui/GlossarySettings.vue",
@@ -1624,7 +1750,6 @@
     "src/features/writing-assistant/ui/WritingPopover.vue",
     "src/features/writing-assistant/ui/WritingStyleEditor.vue",
     "src/features/writing-assistant/ui/WritingSurface.vue",
-    "src/platform/browser/actionIcon.ts",
     "src/platform/browser/capabilities.ts",
     "src/platform/browser/chromeTranslationPreparationRequest.ts",
     "src/platform/browser/ids.ts",
@@ -1785,9 +1910,10 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
+    "Fix sentenceHighlight collectText recursion and sparse-text work before claiming a bounded hover chain; then measure section preview/restore totals and continue the full repository audit. Native whole-root remount long tasks and latest-main integration remain open.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
-    "Scaled narrow-scroll reading anchors now have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces, within-element text-line anchors, and source-level notification reentrancy failures.",
+    "Scaled narrow-scroll reading anchors now have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces, within-element text-line anchors, and source-level sentence-highlight traversal failures.",
     "Selection/hover/input translation lifecycle",
     "Image/area/document/video pipelines",
     "Config persistence, synchronization and providers",
@@ -1798,9 +1924,9 @@
     "Local origin/main tracking ref f94225c3 includes six post-baseline image/docs commits. Reconcile and re-review that source before full-goal completion; the current audit inventory remains based on fd4fac88. No remote freshness or release claim."
   ],
   "progress": {
-    "sourceReadFiles": 100,
-    "sourceReadFunctionBodies": 1841,
-    "pendingFiles": 717,
+    "sourceReadFiles": 125,
+    "sourceReadFunctionBodies": 2031,
+    "pendingFiles": 692,
     "goalComplete": false
   },
   "observations": [
@@ -1876,13 +2002,18 @@
     },
     {
       "file": "src/features/full-page-translation/content/stateNotification.ts",
-      "status": "source-level-exception-reproduced; production-reachability-and-fix-pending",
-      "issue": "Isolated current-source Node fixtures inject throwing document CustomEvent constructor or dispatchEvent. Both make notifyFullPageTranslationState throw before sending background state; each has zero background messages. Normal browser transport failures are already guarded. Add committed lifecycle regressions and DOM-notification isolation; current fixture is not a real-page reproduction."
+      "status": "fixed; strict-unit-and-controlled-native-fault-fixture-verified",
+      "issue": "Isolated current-source Node fixtures inject throwing document CustomEvent constructor or dispatchEvent. Both make notifyFullPageTranslationState throw before sending background state; each has zero background messages. Normal browser transport failures are already guarded. Add committed lifecycle regressions and DOM-notification isolation; current fixture is not a real-page reproduction. Twelfth batch isolates document errors and suppresses obsolete outer notifications after a reentrant lifecycle update. Native isolated-world dispatch failure reproduced a stale success badge after restore in the unchanged baseline; final ten lifecycle failures keep content, background messages and native badges consistent."
     },
     {
       "file": "src/features/full-page-translation/progress.ts",
-      "status": "source-level-reentrant-notification-reproduced; ownership-and-fix-pending",
-      "issue": "An isolated current-source subscriber starts a new progress session while notified. With an external 25-reentry stop, 26 starts produce synchronous callback depth 26. This demonstrates recursive notification shape, not production UI reachability or an unbounded browser run. Review real subscribers/session ownership and preserve latest-state semantics before fixing notification reentrancy."
+      "status": "fixed; strict-unit-and-Vue-component-verified; current-consumers-read-only",
+      "issue": "An isolated current-source subscriber starts a new progress session while notified. With an external 25-reentry stop, 26 starts produce synchronous callback depth 26. This demonstrates recursive notification shape, not production UI reachability or an unbounded browser run. Review real subscribers/session ownership and preserve latest-state semantics before fixing notification reentrancy. Twelfth batch uses an iterative notification queue, per-wave state identities and publisher exclusion to prevent self/cyclic update echoes and duplicate initialization. Read-only observers receive the latest state; no currently traced UI subscriber writes progress."
+    },
+    {
+      "file": "src/features/full-page-translation/content/sentenceHighlight.ts",
+      "status": "source-level-deep-traversal-and-sparse-text-work-reproduced; public-path/native-verification-and-fix-pending",
+      "issue": "The actual private collectText body, compiled unchanged and exposed only by a synthetic-DOM harness, throws RangeError on a 20,000-level tree. A 20,000-empty-Text fixture reads 20,001 text values and stores 20,001 runs for only 16 characters. The 100,000-character gate runs after collection; this is source-level evidence, not a native latency measurement."
     }
   ]
 }

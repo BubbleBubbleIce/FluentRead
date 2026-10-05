@@ -1,7 +1,7 @@
 /**
  * @file src/features/full-page-translation/progress.ts
  * 文件职责：提供全文翻译进度的独立内存状态源，以 sessionId 隔离新旧翻译任务，并向多个 UI 订阅者安全发布发现、完成和失败计数。
- * 主要内容：定义 FullPageTranslationProgress，包含开始、增量更新、结束、活动工作与紧凑状态判定、快照读取和订阅 API；数值会归一化，通知时复制状态，并隔离单个 listener 的异常。
+ * 主要内容：定义进度、会话与订阅 API；数值归一化，通知以队列交付独立快照并隔离异常，同一轮内写入状态的订阅者不再接收更新回声，其他观察者取得最新状态。
  * 模块边界：该模块不访问 DOM、配置或浏览器存储，也不决定任务调度；content/runtime 负责更新进度，TranslationProgressPanel.vue 只订阅快照，状态仅存活于当前运行上下文。
  */
 export interface FullPageTranslationProgress {
@@ -18,6 +18,11 @@ export interface FullPageTranslationProgress {
 type FullPageTranslationProgressListener = (progress: FullPageTranslationProgress) => void;
 
 const listeners = new Set<FullPageTranslationProgressListener>();
+const pendingListeners = new Set<FullPageTranslationProgressListener>();
+const publishingListeners = new Set<FullPageTranslationProgressListener>();
+const deliveredSnapshots = new Map<FullPageTranslationProgressListener, FullPageTranslationProgress>();
+let notifying = false;
+let currentListener: FullPageTranslationProgressListener | null = null;
 let nextSessionId = 0;
 let progress: FullPageTranslationProgress = {
   sessionId: 0,
@@ -43,8 +48,35 @@ function deliverProgress(listener: FullPageTranslationProgressListener): void {
   }
 }
 
+function flushProgressListeners(): void {
+  if (notifying) return;
+  notifying = true;
+  try {
+    while (pendingListeners.size > 0) {
+      const listener = pendingListeners.values().next().value!;
+      pendingListeners.delete(listener);
+      currentListener = listener;
+      deliveredSnapshots.set(listener, progress);
+      deliverProgress(listener);
+      currentListener = null;
+    }
+  } finally {
+    currentListener = null;
+    pendingListeners.clear();
+    publishingListeners.clear();
+    deliveredSnapshots.clear();
+    notifying = false;
+  }
+}
+
 function notifyProgressListeners(): void {
-  listeners.forEach(deliverProgress);
+  // 订阅者通常只读；发生同步写入时允许更新状态，但不向本轮写入者回送通知，
+  // 从而截断自身及多个订阅者间的反馈。只读 UI 仍会按最新快照追上变更。
+  if (currentListener) publishingListeners.add(currentListener);
+  for (const listener of listeners) {
+    if (!publishingListeners.has(listener) && deliveredSnapshots.get(listener) !== progress) pendingListeners.add(listener);
+  }
+  flushProgressListeners();
 }
 
 function normalizeCount(value: number): number {
@@ -134,12 +166,15 @@ export function getFullPageTranslationProgress(): FullPageTranslationProgress {
   return cloneProgress();
 }
 
+/** 空闲时同步交付初始快照；通知中的订阅加入当前队列，同一状态不重复初始化。 */
 export function subscribeFullPageTranslationProgress(
   listener: FullPageTranslationProgressListener,
 ): () => void {
   listeners.add(listener);
-  deliverProgress(listener);
+  if (deliveredSnapshots.get(listener) !== progress && !publishingListeners.has(listener)) pendingListeners.add(listener);
+  flushProgressListeners();
   return () => {
     listeners.delete(listener);
+    pendingListeners.delete(listener);
   };
 }

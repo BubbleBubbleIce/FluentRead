@@ -1,8 +1,40 @@
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {getFullPageTranslationStateRevision, notifyFullPageTranslationState, getTranslationToolbarStatus, notifyTranslationToolbarStatus} from '@/src/features/full-page-translation/content/stateNotification';
 
 const install = (value: Record<string, unknown> | undefined) => {if (value === undefined) delete (globalThis as Record<string, unknown>).browser; else (globalThis as Record<string, unknown>).browser = value;};
+afterEach(() => vi.unstubAllGlobals());
 describe('full-page state notification', () => {
+    it.each(['constructor', 'dispatch', 'defaultView'] as const)('continues background synchronization when document %s throws', (failure) => {
+        const Custom = vi.fn(function() {if (failure === 'constructor') throw new Error('unavailable constructor'); return {type: 'event'};});
+        const dispatchEvent = vi.fn(() => {if (failure === 'dispatch') throw new Error('unavailable dispatch');});
+        const document = {dispatchEvent, get defaultView() {if (failure === 'defaultView') throw new Error('detached document'); return {CustomEvent: Custom};}};
+        const sendMessage = vi.fn();
+        vi.stubGlobal('document', document);
+        vi.stubGlobal('browser', {runtime: {sendMessage}});
+        const before = getFullPageTranslationStateRevision();
+        expect(() => notifyFullPageTranslationState(true)).not.toThrow();
+        expect(getFullPageTranslationStateRevision()).toBe(before + 1);
+        expect(sendMessage).toHaveBeenLastCalledWith({type: 'fullPageTranslationState', isTranslated: true, toolbarStatus: 'translating'});
+        expect(() => notifyFullPageTranslationState(false)).not.toThrow();
+        expect(getFullPageTranslationStateRevision()).toBe(before + 2);
+        expect(sendMessage).toHaveBeenLastCalledWith({type: 'fullPageTranslationState', isTranslated: false, toolbarStatus: 'idle'});
+    });
+    it.each([false, true])('does not send an obsolete state after a lifecycle listener changes the session (throw=%s)', (throwAfterRestore) => {
+        const Custom = vi.fn(function(_this: unknown) {return {};});
+        let dispatched = false;
+        vi.stubGlobal('document', {defaultView: {CustomEvent: Custom}, dispatchEvent: () => {
+            if (dispatched) return;
+            dispatched = true;
+            notifyFullPageTranslationState(false);
+            if (throwAfterRestore) throw new Error('listener dispatch failed');
+        }});
+        const sendMessage = vi.fn();
+        vi.stubGlobal('browser', {runtime: {sendMessage}});
+        const before = getFullPageTranslationStateRevision();
+        expect(() => notifyFullPageTranslationState(true)).not.toThrow();
+        expect(getFullPageTranslationStateRevision()).toBe(before + 2);
+        expect(sendMessage.mock.calls).toEqual([[{type: 'fullPageTranslationState', isTranslated: false, toolbarStatus: 'idle'}]]);
+    });
     it('deduplicates result updates without replaying lifecycle events or advancing session revision', () => {
         const sendMessage = vi.fn(); install({runtime: {sendMessage}});
         notifyFullPageTranslationState(true); const revision = getFullPageTranslationStateRevision();

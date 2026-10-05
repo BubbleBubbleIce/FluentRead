@@ -59,6 +59,7 @@ function wordCard(definitions: Array<{definition: string; example?: string; tran
 describe('后台 feature handlers', () => {
     it('输入框翻译严格验证 payload，并保留原文本与 provider 结果', async () => {
         const config = new Config();
+        config.service = 'microsoft';
         const translate = vi.fn(async (_request: unknown) => ' 译文 ');
         const handler = createInputBoxTranslationHandler({
             ready: Promise.resolve(),

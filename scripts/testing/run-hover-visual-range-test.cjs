@@ -21,6 +21,8 @@ if(gestureOnly && !gestureLifecycle)throw new Error('--gesture-only requires --g
 const nestedViewport = process.argv.includes('--nested-viewport');
 const nestedOnly = process.argv.includes('--nested-only');
 if(nestedOnly && !nestedViewport)throw new Error('--nested-only requires --nested-viewport');
+const notificationFailure = process.argv.includes('--notification-failure');
+if(notificationFailure && !nestedViewport)throw new Error('--notification-failure requires --nested-viewport');
 const nestedCycles = Number(arg('nested-cycles','5'));
 assert.ok(Number.isInteger(nestedCycles) && nestedCycles>0 && nestedCycles<=20,'Nested cycles must be an integer from 1 to 20');
 const nestedScale = Number(arg('nested-scale','1'));
@@ -117,7 +119,52 @@ async function patchFixtureConfig(setup, patch, sequence) {
   },{patch,sequence});
 }
 
-async function runNestedViewport(context, setup, provider, port) {
+async function injectNotificationFailure(context, page, setup, worker) {
+  const session=await context.newCDPSession(page), worlds=[];
+  session.on('Runtime.executionContextCreated',({context})=>worlds.push(context));
+  await session.send('Runtime.enable');
+  const extensionId=new URL(setup.url()).host;
+  let worldId;
+  for(const world of worlds.filter(world=>world.auxData?.isDefault===false)) {
+    const candidate=await session.send('Runtime.evaluate',{contextId:world.id,returnByValue:true,
+      expression:'typeof chrome !== "undefined" && chrome.runtime ? chrome.runtime.id : null'});
+    if(candidate.result.value===extensionId){worldId=world.id;break;}
+  }
+  assert.ok(worldId,'Failure injection must target the extension isolated world');
+  const injected=await session.send('Runtime.evaluate',{contextId:worldId,returnByValue:true,expression:`(() => {
+    const dispatch=document.dispatchEvent;
+    window.__frAuditNotificationFailures=[];
+    document.dispatchEvent=function(event) {
+      if(event.type==='fluentread-translation-started'||event.type==='fluentread-translation-ended') {
+        window.__frAuditNotificationFailures.push(event.type);
+        throw new Error('Fixture document notification unavailable');
+      }
+      return Reflect.apply(dispatch,this,[event]);
+    };
+    return true;
+  })()`});
+  assert.equal(injected.result.value,true);
+  report.notificationFailure={realm:'extension-isolated-world',phases:[]};
+  return {
+    async snapshot(name) {
+      const state=await setup.evaluate(async url=>{
+        const tab=(await chrome.tabs.query({})).find(tab=>tab.url===url);
+        if(typeof tab?.id!=='number')throw new Error('Fixture tab unavailable');
+        return {content:await chrome.tabs.sendMessage(tab.id,{type:'getFullPageTranslationState'}),
+          badge:await chrome.action.getBadgeText({tabId:tab.id})};
+      },page.url());
+      const failures=await session.send('Runtime.evaluate',{contextId:worldId,returnByValue:true,
+        expression:'window.__frAuditNotificationFailures.length'});
+      const messages=await worker.evaluate(()=>globalThis.__frAuditStateMessages);
+      const snapshot={name,...state,injectedFailures:failures.result.value,messages};
+      report.notificationFailure.phases.push(snapshot);
+      return snapshot;
+    },
+    close:()=>session.detach(),
+  };
+}
+
+async function runNestedViewport(context, setup, provider, port, worker) {
   await patchFixtureConfig(setup,{hotkey:'Control',floatingBallHotkey:'Alt+T',fullPageTranslationMode:'all',
     mouseHoverTranslationDelay:0,useCache:true,quickTranslationProfiles:[]},6);
   const page=await newPageWithoutForeground(context);
@@ -140,6 +187,7 @@ async function runNestedViewport(context, setup, provider, port) {
     window.scrollTo(0,0);
   },{value,nestedScale});
   await activateExtensionTabWithoutForeground(context,page);await page.waitForTimeout(500);
+  const notifications=notificationFailure?await injectNotificationFailure(context,page,setup,worker):null;
   const result={cycles:nestedCycles,scale:nestedScale,phases:[]};report.nestedViewportChecks=result;
   const requestStart=provider.requestCount();
   const before=await page.evaluate(()=>({top:document.getElementById('reading').getBoundingClientRect().top,
@@ -196,11 +244,19 @@ async function runNestedViewport(context, setup, provider, port) {
     assert.equal(original,value,'Above-viewport source remains exact');
     if(translate)assert.ok(Math.abs(reading.scrollTop-before.scrollTop)>1,'Nested scroll offset actually compensates added translation height');
     else assert.ok(Math.abs(reading.scrollTop-before.scrollTop)<=0.5,'Restore returns the original nested offset');
+    if(notifications) {
+      const snapshot=await notifications.snapshot(name);
+      assert.equal(snapshot.content.isTranslated,translate,'Content session matches the gesture despite document failure');
+      assert.equal(snapshot.content.toolbarStatus,translate?'translated':'idle');
+      assert.equal(snapshot.badge,translate?'✓':'','Native toolbar matches the content session despite document failure');
+      assert.equal(snapshot.injectedFailures,result.phases.length,'Each lifecycle notification actually failed in the extension realm');
+    }
     if(name==='translate')result.initialRequests=provider.requestCount()-requestStart;
   }
   result.requests=provider.requestCount()-requestStart;
   assert.equal(result.requests,result.initialRequests,'Full-page retranslation reuses settled results');
   result.originalPreserved=true;result.readingPositionPreserved=true;result.restoreAndRetranslate=true;
+  await notifications?.close();
   await page.close();
 }
 
@@ -220,6 +276,15 @@ async function runNestedViewport(context, setup, provider, port) {
     report.launchMode=launched.launchMode;report.focusPolicy=launched.focusPolicy;
     report.windowPlacement=Object.fromEntries(['mode','visible','hidden','windowState','displayTarget','browserFrontmost'].map(key=>[key,launched.windowPlacement?.[key]]));
     const worker=context.serviceWorkers().find(worker=>worker.url().startsWith('chrome-extension://')) || await context.waitForEvent('serviceworker');
+    if(notificationFailure)await worker.evaluate(()=>{
+      globalThis.__frAuditStateMessages=[];
+      chrome.runtime.onMessage.addListener((message,sender)=>{
+        if(message?.type==='fullPageTranslationState'||message?.type==='siteExtensionDisabledState')globalThis.__frAuditStateMessages.push({
+          type:message.type,isTranslated:message.isTranslated,isDisabled:message.isDisabled,
+          toolbarStatus:message.toolbarStatus,frameId:sender.frameId,
+        });
+      });
+    });
     await installTranslationFixtureOnWorker(worker,{translationUrl:provider.translationUrl,blockedUrl:provider.blockedUrl});
     const setup=await newPageWithoutForeground(context);
     await setup.goto(`chrome-extension://${new URL(worker.url()).host}/icon/128.png`);
@@ -354,7 +419,7 @@ async function runNestedViewport(context, setup, provider, port) {
       result.reenabledGestureWorks=true;result.originalPreserved=true;
       await page.close();
     }
-    if(nestedViewport)await runNestedViewport(context,setup,provider,server.address().port);
+    if(nestedViewport)await runNestedViewport(context,setup,provider,server.address().port,worker);
     await setup.close();
     assert.deepEqual(report.consoleErrors,[]);report.ok=true;
     assert.equal(report.buildSha256,sha256(path.join(extensionDir,'content-scripts/content.js')),'Build changed during browser evidence');

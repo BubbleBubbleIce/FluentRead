@@ -5592,6 +5592,1939 @@
       },
       "docsBuild": "passed",
       "docsCheck": "passed"
+    },
+    {
+      "name": "twelfth-progress-notification-and-state-consumers",
+      "baseCommit": "61479952fce70f710171221a3a4aa2d4c482b2bf",
+      "scope": "Fully read and traced 25 further files (remaining full-page source, floating-ball subscription, state relay/store and native badge lifecycle). 692 source files remain pending. Current UI progress consumers are read-only. Goal stays active.",
+      "reviewProgress": {
+        "sourceReadFiles": 125,
+        "sourceReadFunctionBodies": 2031,
+        "pendingFiles": 692,
+        "goalComplete": false
+      },
+      "strictCoverage": {
+        "status": "passed",
+        "testFiles": 8,
+        "testCases": 339,
+        "modules": [
+          "progress.ts",
+          "content/stateNotification.ts",
+          "ui/modalProgressHint.ts"
+        ],
+        "percent": {
+          "lines": 100,
+          "statements": 100,
+          "functions": 100,
+          "branches": 100
+        },
+        "thresholdsUnchanged": true
+      },
+      "additionalAffectedSuites": {
+        "status": "passed",
+        "testFiles": 12,
+        "testCases": 315,
+        "groups": [
+          {
+            "files": 6,
+            "cases": 103,
+            "scope": "state handlers/store, frame relay, host markers and errors"
+          },
+          {
+            "files": 5,
+            "cases": 123,
+            "scope": "badge/icon, context menu and QQ/NetEase frame lifecycle"
+          },
+          {
+            "files": 1,
+            "cases": 89,
+            "scope": "browser isolation and deterministic transport contract"
+          }
+        ]
+      },
+      "newExecutedCases": 15,
+      "newRegisteredCaseDefinitions": 12,
+      "baselineTestRepairs": {
+        "baselineCommit": "61479952fce70f710171221a3a4aa2d4c482b2bf",
+        "baselineFailedCases": 2,
+        "scope": "Unchanged committed source snapshot reproduces hard-coded Microsoft default and removed area settings section expectations. Test now explicitly configures Microsoft and expects the registered image-translation alias; production behavior unchanged."
+      },
+      "regressionEvidence": {
+        "sourceBaselineFailures": 9,
+        "selfResubscribeBaselineFailure": true,
+        "queueContract": "Idle subscriptions synchronously initialize; subscriptions during delivery join the current queue and do not replay an identical state. A listener that publishes is excluded from echoes in that wave; read-only observers catch up to the latest state. No asynchronous retry loop.",
+        "exceptionContract": "Document constructor/dispatch/property errors do not skip background synchronization. A newer lifecycle revision supersedes an outer pending notification.",
+        "cleanup": "Unused modal phase field removed; detached label reference released."
+      },
+      "fixtureRepair": {
+        "relativeWorkerAssetFailure": "icon/16.png threw Invalid URL in the previous transport wrapper. Resolve inspection against worker location and leave extension fetch inputs unchanged.",
+        "contractTestPassed": true,
+        "excludedNativeDiagnostics": 4,
+        "comparisonPolicy": "Blank badges from pre-repair diagnostic runs are excluded. Baseline and final notification comparisons both use the corrected fixture."
+      },
+      "controlledBaseline": {
+        "buildSha256": "0cee1394cd69bf3db8cb16e1cbfacb1388e338e9f82c2a313c6a75eb5a48914f",
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "expectedNegativeResult": true,
+        "phases": [
+          {
+            "name": "translate",
+            "content": {
+              "status": "success",
+              "isTranslated": true,
+              "isSiteDisabled": false,
+              "toolbarStatus": "translated"
+            },
+            "badge": "✓",
+            "injectedFailures": 1,
+            "messages": [
+              {
+                "type": "siteExtensionDisabledState",
+                "isDisabled": false,
+                "frameId": 0
+              },
+              {
+                "type": "fullPageTranslationState",
+                "isTranslated": true,
+                "toolbarStatus": "translated",
+                "frameId": 0
+              }
+            ]
+          },
+          {
+            "name": "restore",
+            "content": {
+              "status": "success",
+              "isTranslated": false,
+              "isSiteDisabled": false,
+              "toolbarStatus": "idle"
+            },
+            "badge": "✓",
+            "injectedFailures": 2,
+            "messages": [
+              {
+                "type": "siteExtensionDisabledState",
+                "isDisabled": false,
+                "frameId": 0
+              },
+              {
+                "type": "fullPageTranslationState",
+                "isTranslated": true,
+                "toolbarStatus": "translated",
+                "frameId": 0
+              }
+            ]
+          }
+        ],
+        "sourceAndViewportAssertionsBeforeNegativeCheck": true,
+        "screenshotsInspected": 2
+      },
+      "controlledBrowser": {
+        "ok": true,
+        "buildSha256": "76159a0a5b4d18ccd59dc88cae33b3078452a3716ab91c2f5561956bb3f54fbf",
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "provider": "local deterministic Microsoft transport",
+        "notificationFailure": {
+          "realm": "extension-isolated-world",
+          "phases": [
+            {
+              "name": "translate",
+              "content": {
+                "status": "success",
+                "isTranslated": true,
+                "isSiteDisabled": false,
+                "toolbarStatus": "translated"
+              },
+              "badge": "✓",
+              "injectedFailures": 1,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "restore",
+              "content": {
+                "status": "success",
+                "isTranslated": false,
+                "isSiteDisabled": false,
+                "toolbarStatus": "idle"
+              },
+              "badge": "",
+              "injectedFailures": 2,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "retranslate-1",
+              "content": {
+                "status": "success",
+                "isTranslated": true,
+                "isSiteDisabled": false,
+                "toolbarStatus": "translated"
+              },
+              "badge": "✓",
+              "injectedFailures": 3,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "restore-1",
+              "content": {
+                "status": "success",
+                "isTranslated": false,
+                "isSiteDisabled": false,
+                "toolbarStatus": "idle"
+              },
+              "badge": "",
+              "injectedFailures": 4,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "retranslate-2",
+              "content": {
+                "status": "success",
+                "isTranslated": true,
+                "isSiteDisabled": false,
+                "toolbarStatus": "translated"
+              },
+              "badge": "✓",
+              "injectedFailures": 5,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "restore-2",
+              "content": {
+                "status": "success",
+                "isTranslated": false,
+                "isSiteDisabled": false,
+                "toolbarStatus": "idle"
+              },
+              "badge": "",
+              "injectedFailures": 6,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "retranslate-3",
+              "content": {
+                "status": "success",
+                "isTranslated": true,
+                "isSiteDisabled": false,
+                "toolbarStatus": "translated"
+              },
+              "badge": "✓",
+              "injectedFailures": 7,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "restore-3",
+              "content": {
+                "status": "success",
+                "isTranslated": false,
+                "isSiteDisabled": false,
+                "toolbarStatus": "idle"
+              },
+              "badge": "",
+              "injectedFailures": 8,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "retranslate-4",
+              "content": {
+                "status": "success",
+                "isTranslated": true,
+                "isSiteDisabled": false,
+                "toolbarStatus": "translated"
+              },
+              "badge": "✓",
+              "injectedFailures": 9,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                }
+              ]
+            },
+            {
+              "name": "restore-4",
+              "content": {
+                "status": "success",
+                "isTranslated": false,
+                "isSiteDisabled": false,
+                "toolbarStatus": "idle"
+              },
+              "badge": "",
+              "injectedFailures": 10,
+              "messages": [
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "siteExtensionDisabledState",
+                  "isDisabled": false,
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translating",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": true,
+                  "toolbarStatus": "translated",
+                  "frameId": 0
+                },
+                {
+                  "type": "fullPageTranslationState",
+                  "isTranslated": false,
+                  "toolbarStatus": "idle",
+                  "frameId": 0
+                }
+              ]
+            }
+          ]
+        },
+        "nestedViewport": {
+          "cycles": 5,
+          "scale": 0.75,
+          "phases": [
+            {
+              "name": "translate",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 26.90000009536743,
+              "readBefore": {
+                "scrollTop": 300,
+                "readingRelativeTop": 377.21484375,
+                "gapRelativeTop": 2.21484375,
+                "sourceHeight": 203.96484375
+              },
+              "maxReadingShiftPx": 0.111328125,
+              "maxDocumentScrollPx": 0,
+              "samples": 37,
+              "scrollTop": 607,
+              "readingRelativeTop": 377.326171875,
+              "gapRelativeTop": 2.326171875,
+              "sourceHeight": 434.326171875
+            },
+            {
+              "name": "restore",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 21.899999618530273,
+              "readBefore": {
+                "scrollTop": 607,
+                "readingRelativeTop": 377.326171875,
+                "gapRelativeTop": 2.326171875,
+                "sourceHeight": 434.326171875
+              },
+              "maxReadingShiftPx": 0.111328125,
+              "maxDocumentScrollPx": 0,
+              "samples": 31,
+              "scrollTop": 300,
+              "readingRelativeTop": 377.21484375,
+              "gapRelativeTop": 2.21484375,
+              "sourceHeight": 203.96484375
+            },
+            {
+              "name": "retranslate-1",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 23.200000286102295,
+              "readBefore": {
+                "scrollTop": 300,
+                "readingRelativeTop": 377.21484375,
+                "gapRelativeTop": 2.21484375,
+                "sourceHeight": 203.96484375
+              },
+              "maxReadingShiftPx": 0.111328125,
+              "maxDocumentScrollPx": 0,
+              "samples": 35,
+              "scrollTop": 607,
+              "readingRelativeTop": 377.326171875,
+              "gapRelativeTop": 2.326171875,
+              "sourceHeight": 434.326171875
+            },
+            {
+              "name": "restore-1",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.199999809265137,
+              "readBefore": {
+                "scrollTop": 607,
+                "readingRelativeTop": 377.326171875,
+                "gapRelativeTop": 2.326171875,
+                "sourceHeight": 434.326171875
+              },
+              "maxReadingShiftPx": 0,
+              "maxDocumentScrollPx": 0,
+              "samples": 30,
+              "scrollTop": 300,
+              "readingRelativeTop": 377.21484375,
+              "gapRelativeTop": 2.21484375,
+              "sourceHeight": 203.96484375
+            },
+            {
+              "name": "retranslate-2",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.5,
+              "readBefore": {
+                "scrollTop": 300,
+                "readingRelativeTop": 377.21484375,
+                "gapRelativeTop": 2.21484375,
+                "sourceHeight": 203.96484375
+              },
+              "maxReadingShiftPx": 0.111328125,
+              "maxDocumentScrollPx": 0,
+              "samples": 34,
+              "scrollTop": 607,
+              "readingRelativeTop": 377.326171875,
+              "gapRelativeTop": 2.326171875,
+              "sourceHeight": 434.326171875
+            },
+            {
+              "name": "restore-2",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22,
+              "readBefore": {
+                "scrollTop": 607,
+                "readingRelativeTop": 377.326171875,
+                "gapRelativeTop": 2.326171875,
+                "sourceHeight": 434.326171875
+              },
+              "maxReadingShiftPx": 0,
+              "maxDocumentScrollPx": 0,
+              "samples": 31,
+              "scrollTop": 300,
+              "readingRelativeTop": 377.21484375,
+              "gapRelativeTop": 2.21484375,
+              "sourceHeight": 203.96484375
+            },
+            {
+              "name": "retranslate-3",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.800000190734863,
+              "readBefore": {
+                "scrollTop": 300,
+                "readingRelativeTop": 377.21484375,
+                "gapRelativeTop": 2.21484375,
+                "sourceHeight": 203.96484375
+              },
+              "maxReadingShiftPx": 0.111328125,
+              "maxDocumentScrollPx": 0,
+              "samples": 34,
+              "scrollTop": 607,
+              "readingRelativeTop": 377.326171875,
+              "gapRelativeTop": 2.326171875,
+              "sourceHeight": 434.326171875
+            },
+            {
+              "name": "restore-3",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.100000381469727,
+              "readBefore": {
+                "scrollTop": 607,
+                "readingRelativeTop": 377.326171875,
+                "gapRelativeTop": 2.326171875,
+                "sourceHeight": 434.326171875
+              },
+              "maxReadingShiftPx": 0,
+              "maxDocumentScrollPx": 0,
+              "samples": 30,
+              "scrollTop": 300,
+              "readingRelativeTop": 377.21484375,
+              "gapRelativeTop": 2.21484375,
+              "sourceHeight": 203.96484375
+            },
+            {
+              "name": "retranslate-4",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.09999990463257,
+              "readBefore": {
+                "scrollTop": 300,
+                "readingRelativeTop": 377.21484375,
+                "gapRelativeTop": 2.21484375,
+                "sourceHeight": 203.96484375
+              },
+              "maxReadingShiftPx": 0.111328125,
+              "maxDocumentScrollPx": 0,
+              "samples": 35,
+              "scrollTop": 607,
+              "readingRelativeTop": 377.326171875,
+              "gapRelativeTop": 2.326171875,
+              "sourceHeight": 434.326171875
+            },
+            {
+              "name": "restore-4",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.09999990463257,
+              "readBefore": {
+                "scrollTop": 607,
+                "readingRelativeTop": 377.326171875,
+                "gapRelativeTop": 2.326171875,
+                "sourceHeight": 434.326171875
+              },
+              "maxReadingShiftPx": 0,
+              "maxDocumentScrollPx": 0,
+              "samples": 30,
+              "scrollTop": 300,
+              "readingRelativeTop": 377.21484375,
+              "gapRelativeTop": 2.21484375,
+              "sourceHeight": 203.96484375
+            }
+          ],
+          "initialScrollTop": 300,
+          "initialRequests": 3,
+          "requests": 3,
+          "originalPreserved": true,
+          "readingPositionPreserved": true,
+          "restoreAndRetranslate": true
+        },
+        "hoverCases": [
+          {
+            "id": "giant-tail",
+            "originalCharacters": 135120,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 62.299999713897705
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.199999809265137
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 29.800000190734863
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 38.299999713897705
+              }
+            ],
+            "sourceChunkCharacters": 1550,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "empty-nodes",
+            "originalCharacters": 6240,
+            "emptyNodes": 20000,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 41.5
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.699999809265137
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.199999809265137
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.5
+              }
+            ],
+            "sourceChunkCharacters": 1560,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          },
+          {
+            "id": "long-token",
+            "originalCharacters": 9100,
+            "emptyNodes": 0,
+            "phases": [
+              {
+                "name": "translate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 43.69999980926514
+              },
+              {
+                "name": "continuous-hover",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.199999809265137
+              },
+              {
+                "name": "restore",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 22.699999809265137
+              },
+              {
+                "name": "retranslate",
+                "longTasksMs": [],
+                "maxHeartbeatGapMs": 21.700000286102295
+              }
+            ],
+            "sourceChunkCharacters": 1600,
+            "hitInSourceChunk": true,
+            "markerPreserved": true,
+            "requests": 2,
+            "hostClicks": 1,
+            "originalPreserved": true,
+            "restoreAndRetranslate": true,
+            "continuousHoverNoRepeatedRequests": true
+          }
+        ],
+        "gestureLifecycle": {
+          "phases": [
+            {
+              "name": "long-press-arbitration",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 30.59999990463257
+            },
+            {
+              "name": "delayed-hover-abort",
+              "longTasksMs": [],
+              "maxHeartbeatGapMs": 22.59999990463257
+            }
+          ],
+          "arbitrationDispatchMs": 34,
+          "wrappersAfterLongPressDeadline": 1,
+          "arbitrationRequests": 1,
+          "disableDispatchMs": 25,
+          "requestsWhileDisabled": 0,
+          "reenabledGestureWorks": true,
+          "originalPreserved": true
+        },
+        "consoleErrors": [],
+        "representativeScreenshotsInspected": 6
+      },
+      "controlledFullPage": [
+        {
+          "ok": true,
+          "buildSha256": "76159a0a5b4d18ccd59dc88cae33b3078452a3716ab91c2f5561956bb3f54fbf",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "browserFrontmost": false
+          },
+          "paragraphs": 500,
+          "translationBefore": true,
+          "repeated": false,
+          "phases": [
+            {
+              "name": "translate",
+              "elapsedMs": 1970.9000000953674,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 41.30000019073486,
+              "p95HeartbeatGapMs": 27.700000286102295,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 8
+            },
+            {
+              "name": "remount-1",
+              "elapsedMs": 406.59999990463257,
+              "longTasks": [
+                {
+                  "start": 3059.3999996185303,
+                  "duration": 141
+                }
+              ],
+              "maxHeartbeatGapMs": 157.2000002861023,
+              "p95HeartbeatGapMs": 157.2000002861023,
+              "totalBlockingMs": 91,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "remount-2",
+              "elapsedMs": 405.5,
+              "longTasks": [
+                {
+                  "start": 3469.2999997138977,
+                  "duration": 133
+                }
+              ],
+              "maxHeartbeatGapMs": 159.69999980926514,
+              "p95HeartbeatGapMs": 159.69999980926514,
+              "totalBlockingMs": 83,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "remount-3",
+              "elapsedMs": 400.1000003814697,
+              "longTasks": [
+                {
+                  "start": 3883.8999996185303,
+                  "duration": 130
+                }
+              ],
+              "maxHeartbeatGapMs": 148.30000019073486,
+              "p95HeartbeatGapMs": 148.30000019073486,
+              "totalBlockingMs": 80,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "scroll-translated",
+              "elapsedMs": 1421.3000001907349,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 23.09999990463257,
+              "p95HeartbeatGapMs": 22.300000190734863,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 12
+            },
+            {
+              "name": "restore",
+              "elapsedMs": 193.09999990463257,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 34,
+              "p95HeartbeatGapMs": 34,
+              "totalBlockingMs": 0,
+              "wrappers": 0,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "retranslate-cached",
+              "elapsedMs": 7501.699999809265,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 42.80000019073486,
+              "p95HeartbeatGapMs": 23.40000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 45
+            }
+          ],
+          "remountChecks": [
+            {
+              "hostWriteMs": 6.700000286102295,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 142.90000009536743,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.12844599999999995,
+                "LayoutDuration": 0.029236999999999985,
+                "RecalcStyleDuration": 0.0024649999999999984,
+                "TaskDuration": 0.189052,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 3.5,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 135.80000019073486,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.125251,
+                "LayoutDuration": 0.028739999999999988,
+                "RecalcStyleDuration": 0.0023,
+                "TaskDuration": 0.19640599999999986,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 3.700000286102295,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 132.60000038146973,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.12101800000000007,
+                "LayoutDuration": 0.028954000000000035,
+                "RecalcStyleDuration": 0.002398000000000001,
+                "TaskDuration": 0.17589699999999997,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            }
+          ],
+          "requests": 501,
+          "items": 501,
+          "submittedChinese": [],
+          "screenshotInspected": true
+        },
+        {
+          "ok": true,
+          "buildSha256": "76159a0a5b4d18ccd59dc88cae33b3078452a3716ab91c2f5561956bb3f54fbf",
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacement": {
+            "mode": "background-visible-no-focus",
+            "browserFrontmost": false
+          },
+          "paragraphs": 500,
+          "translationBefore": false,
+          "repeated": true,
+          "phases": [
+            {
+              "name": "translate",
+              "elapsedMs": 1268.3000001907349,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 30.699999809265137,
+              "p95HeartbeatGapMs": 27,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 5
+            },
+            {
+              "name": "remount-1",
+              "elapsedMs": 426.7000002861023,
+              "longTasks": [
+                {
+                  "start": 2338.800000190735,
+                  "duration": 151
+                }
+              ],
+              "maxHeartbeatGapMs": 169.60000038146973,
+              "p95HeartbeatGapMs": 169.60000038146973,
+              "totalBlockingMs": 101,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "remount-2",
+              "elapsedMs": 402.90000009536743,
+              "longTasks": [
+                {
+                  "start": 2770.7000002861023,
+                  "duration": 134
+                }
+              ],
+              "maxHeartbeatGapMs": 150.69999980926514,
+              "p95HeartbeatGapMs": 150.69999980926514,
+              "totalBlockingMs": 84,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "remount-3",
+              "elapsedMs": 397.1000003814697,
+              "longTasks": [
+                {
+                  "start": 3177.9000000953674,
+                  "duration": 123
+                }
+              ],
+              "maxHeartbeatGapMs": 139,
+              "p95HeartbeatGapMs": 139,
+              "totalBlockingMs": 73,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "scroll-translated",
+              "elapsedMs": 1369.5999999046326,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 38.40000009536743,
+              "p95HeartbeatGapMs": 21.90000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 12
+            },
+            {
+              "name": "restore",
+              "elapsedMs": 193.80000019073486,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 30.40000009536743,
+              "p95HeartbeatGapMs": 30.40000009536743,
+              "totalBlockingMs": 0,
+              "wrappers": 0,
+              "chineseWrappers": 0,
+              "hostClicks": 1
+            },
+            {
+              "name": "retranslate-cached",
+              "elapsedMs": 7888.300000190735,
+              "longTasks": [],
+              "maxHeartbeatGapMs": 45.09999990463257,
+              "p95HeartbeatGapMs": 27.5,
+              "totalBlockingMs": 0,
+              "wrappers": 500,
+              "chineseWrappers": 0,
+              "hostClicks": 47
+            }
+          ],
+          "remountChecks": [
+            {
+              "hostWriteMs": 5.199999809265137,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 153.19999980926514,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.13850799999999996,
+                "LayoutDuration": 0.029367000000000004,
+                "RecalcStyleDuration": 0.0028680000000000008,
+                "TaskDuration": 0.2132050000000001,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 5.599999904632568,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 136.40000009536743,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.12222700000000003,
+                "LayoutDuration": 0.02759700000000001,
+                "RecalcStyleDuration": 0.0030069999999999993,
+                "TaskDuration": 0.17996499999999993,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            },
+            {
+              "hostWriteMs": 3.8000001907348633,
+              "anchorShiftPx": 0,
+              "scrollShiftPx": 0,
+              "firstFrameMs": 126.09999990463257,
+              "wrappers": 500,
+              "nested": 0,
+              "exactOutputs": true,
+              "exactPositions": true,
+              "metrics": {
+                "ScriptDuration": 0.111375,
+                "LayoutDuration": 0.028429999999999983,
+                "RecalcStyleDuration": 0.0023430000000000013,
+                "TaskDuration": 0.16638200000000003,
+                "LayoutCount": 1,
+                "RecalcStyleCount": 4
+              }
+            }
+          ],
+          "requests": 2,
+          "items": 2,
+          "submittedChinese": [],
+          "screenshotInspected": true
+        }
+      ],
+      "comparison": "Two final 500-paragraph fixtures use CPU sampling; this batch has no paired old full-page performance run. Do not infer a speedup or stable regression ratio. Native notification fault comparison uses immutable baseline and final complete extension builds.",
+      "openPerformanceIssue": {
+        "wholeRootRemountLongTasksMs": [
+          141,
+          133,
+          130,
+          151,
+          134,
+          123
+        ],
+        "giantHoverMaxHeartbeatGapMs": 62.299999713897705,
+        "performanceGoalComplete": false
+      },
+      "nextChainReproductions": {
+        "file": "src/features/full-page-translation/content/sentenceHighlight.ts",
+        "scope": "Actual private source body compiled unchanged; synthetic DOM values only. No native reachability or timing claim.",
+        "deepTreeRangeError": true,
+        "deepFixtureLevels": 20000,
+        "sparseFixtureEmptyTexts": 20000,
+        "textReads": 20001,
+        "collectedCharacters": 16,
+        "fixPending": true
+      },
+      "affectedArchitecture": {
+        "status": "passed",
+        "testFiles": 3,
+        "testCases": 815,
+        "wholeRepositoryGatePassed": false
+      },
+      "typeCheck": "passed",
+      "chromeBuild": "passed",
+      "firefoxBuild": "passed; build-only evidence",
+      "userscriptBuild": "passed",
+      "userscriptVerifier": "passed",
+      "testAudit": {
+        "status": "ok",
+        "files": 466,
+        "registeredCases": 6089
+      },
+      "artifactHashes": {
+        "content": "76159a0a5b4d18ccd59dc88cae33b3078452a3716ab91c2f5561956bb3f54fbf",
+        "background": "3d7ae0a538d574bfe7ffbc59f89b0285b496e66407cb16a313cca75f04fcafb9",
+        "manifest": "54223343e496a19bae001b835811ed037e46aa77012702140286f1947b814844"
+      },
+      "integrationDebt": "Latest image/docs main changes and existing executable ownership gaps remain for whole-goal completion.",
+      "liveProviderValidated": false,
+      "temporaryBrowserCleanup": {
+        "matchingTemporaryBrowserProcesses": 0
+      },
+      "docsBuild": "passed",
+      "docsCheck": {
+        "status": "passed",
+        "pages": 77,
+        "links": 3955,
+        "anchors": 741,
+        "images": 154
+      }
     }
   ]
 }

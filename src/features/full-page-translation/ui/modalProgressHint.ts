@@ -14,7 +14,6 @@ interface ModalHintState {
   host: HTMLElement | null;
   label: HTMLSpanElement | null;
   blocked: boolean;
-  phase: 'none' | 'translating' | 'waiting';
 }
 
 let currentModal: HTMLElement | null = null;
@@ -32,6 +31,7 @@ function isNativeModal(modal: HTMLElement | null): modal is HTMLDialogElement {
 function removeHint(state: ModalHintState): void {
   state.host?.remove();
   state.host = null;
+  state.label = null;
 }
 
 function createHint(modal: HTMLDialogElement, phase: 'translating' | 'waiting'): {host: HTMLElement; label: HTMLSpanElement} {
@@ -61,7 +61,7 @@ export function syncModalTranslationHint(
   if (currentModal !== modal) {
     if (currentState) removeHint(currentState);
     currentModal = modal;
-    currentState = modal ? {host: null, label: null, blocked: false, phase: 'none'} : null;
+    currentState = modal ? {host: null, label: null, blocked: false} : null;
   }
   if (!modal || !currentState) return;
   const state = currentState;
@@ -74,10 +74,8 @@ export function syncModalTranslationHint(
   if (phase === 'none' || !enabled) {
     removeHint(state);
     state.blocked = false;
-    state.phase = phase;
     return;
   }
-  state.phase = phase;
   if (state.host && !state.host.isConnected) {
     state.host = null;
     state.label = null;

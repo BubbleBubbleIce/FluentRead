@@ -380,6 +380,142 @@ describe('全文翻译进度', () => {
   });
 });
 
+describe('进度通知重入与订阅所有权', () => {
+  const subscriptions: (() => void)[] = [];
+  const subscribe = (listener: Parameters<typeof subscribeFullPageTranslationProgress>[0]) => {
+    const unsubscribe = subscribeFullPageTranslationProgress(listener);
+    subscriptions.push(unsubscribe);
+    return unsubscribe;
+  };
+  afterEach(() => subscriptions.splice(0).forEach(unsubscribe => unsubscribe()));
+
+  it('订阅者重启会话不会递归回调自己，其他观察者取得最新会话', () => {
+    let starts = 0, depth = 0, maximumDepth = 0;
+    subscribe(snapshot => {
+      if (!snapshot.active) return;
+      depth += 1;
+      maximumDepth = Math.max(maximumDepth, depth);
+      if (starts++ < 25) startFullPageTranslationProgress();
+      depth -= 1;
+    });
+    const observer = vi.fn();
+    subscribe(observer);
+    const first = startFullPageTranslationProgress();
+    expect(starts).toBe(1);
+    expect(maximumDepth).toBe(1);
+    expect(getFullPageTranslationProgress().sessionId).toBe(first + 1);
+    expect(observer).toHaveBeenLastCalledWith(getFullPageTranslationProgress());
+    startFullPageTranslationProgress();
+    expect(starts).toBe(2);
+    expect(observer).toHaveBeenLastCalledWith(getFullPageTranslationProgress());
+  });
+
+  it('两个订阅者互相发布时迭代交付一次写入，并让只读观察者追上最终状态', () => {
+    const observer = vi.fn();
+    subscribe(observer);
+    let writes = 0, depth = 0, maximumDepth = 0;
+    const writer = () => (snapshot: ReturnType<typeof getFullPageTranslationProgress>) => {
+      if (!snapshot.active || writes >= 20) return;
+      depth += 1;
+      maximumDepth = Math.max(maximumDepth, depth);
+      writes += 1;
+      updateFullPageTranslationProgress(snapshot.sessionId, {running: writes, queued: 0, offscreen: 0});
+      depth -= 1;
+    };
+    subscribe(writer());
+    subscribe(writer());
+    startFullPageTranslationProgress();
+    expect(writes).toBe(2);
+    expect(maximumDepth).toBe(1);
+    expect(observer).toHaveBeenLastCalledWith(getFullPageTranslationProgress());
+    expect(getFullPageTranslationProgress().running).toBe(2);
+  });
+
+  it('通知中新增订阅只初始化一次，不重复投递同一快照', () => {
+    const added = vi.fn();
+    subscribe(snapshot => {if (snapshot.active) subscribe(added);});
+    startFullPageTranslationProgress();
+    expect(added).toHaveBeenCalledTimes(1);
+    expect(added).toHaveBeenLastCalledWith(getFullPageTranslationProgress());
+  });
+
+  it('通知中取消尚未交付的订阅，不会调用已卸载的 UI', () => {
+    let remove = () => {};
+    subscribe(snapshot => {if (snapshot.active) remove();});
+    const removed = vi.fn();
+    remove = subscribe(removed);
+    removed.mockClear();
+    startFullPageTranslationProgress();
+    expect(removed).not.toHaveBeenCalled();
+  });
+
+  it('只读订阅者在回调内重新订阅自己也不会重复初始化', () => {
+    let calls = 0;
+    const reader = () => {if (++calls < 20) subscribe(reader);};
+    subscribe(reader);
+    expect(calls).toBe(1);
+    startFullPageTranslationProgress();
+    expect(calls).toBe(2);
+  });
+
+  it('相互重新订阅的观察者不会循环，已写入者也不会因重新订阅收到回声', () => {
+    let calls = 0;
+    const first = (snapshot: ReturnType<typeof getFullPageTranslationProgress>) => {
+      if (!snapshot.active || ++calls > 20) return;
+      subscribe(second);
+      updateFullPageTranslationProgress(snapshot.sessionId, {running: calls, queued: 0, offscreen: 0});
+    };
+    const second = (snapshot: ReturnType<typeof getFullPageTranslationProgress>) => {
+      if (!snapshot.active) return;
+      subscribe(first);
+      subscribe(second);
+    };
+    subscribe(first);
+    subscribe(second);
+    startFullPageTranslationProgress();
+    expect(calls).toBe(1);
+    expect(getFullPageTranslationProgress().running).toBe(1);
+  });
+
+  it('首次订阅中的更新也按队列交付，批量写入只读观察者只收到最后值', () => {
+    const sessionId = startFullPageTranslationProgress();
+    const observer = vi.fn();
+    subscribe(observer);
+    observer.mockClear();
+    let calls = 0;
+    subscribe(snapshot => {
+      if (++calls > 20) return;
+      updateFullPageTranslationProgress(snapshot.sessionId, {running: 1, queued: 2, offscreen: 3});
+      updateFullPageTranslationProgress(snapshot.sessionId, {running: 4, queued: 5, offscreen: 6});
+    });
+    expect(calls).toBe(1);
+    expect(observer.mock.calls).toEqual([[{sessionId, active: true, modalPhase: 'none', deferred: 0, running: 4, queued: 5, offscreen: 6, remaining: 11}]]);
+  });
+
+  it('写入后重新订阅自己和抛出异常不会反馈循环，后续外部发布仍可使用', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let calls = 0;
+    const writer = (snapshot: ReturnType<typeof getFullPageTranslationProgress>) => {
+      if (!snapshot.active || ++calls > 20) return;
+      finishFullPageTranslationProgress(snapshot.sessionId);
+      subscribe(writer);
+      throw new Error('failed after finish');
+    };
+    try {
+      subscribe(writer);
+      const observer = vi.fn();
+      subscribe(observer);
+      startFullPageTranslationProgress();
+      expect(calls).toBe(1);
+      expect(observer).toHaveBeenLastCalledWith(getFullPageTranslationProgress());
+      expect(getFullPageTranslationProgress().active).toBe(false);
+      startFullPageTranslationProgress();
+      expect(calls).toBe(2);
+      expect(consoleError).toHaveBeenCalledTimes(2);
+    } finally {consoleError.mockRestore();}
+  });
+});
+
 describe('进度面板组件实时订阅与显隐', () => {
   const filename = 'src/features/full-page-translation/ui/TranslationProgressPanel.vue';
   const {descriptor} = parse(readFileSync(filename, 'utf8'), {filename});
@@ -482,5 +618,26 @@ describe('进度面板组件实时订阅与显隐', () => {
     expect(vi.getTimerCount()).toBe(0);
     vi.advanceTimersByTime(1000);
     expect(state.isCompact).toBe(true);
+  });
+
+  it('其他订阅者在发布中结束任务时取消旧面板计时器，新会话仍可展开', () => {
+    let shouldFinish = true;
+    const unsubscribe = subscribeFullPageTranslationProgress(snapshot => {
+      if (shouldFinish && snapshot.running > 0) finishFullPageTranslationProgress(snapshot.sessionId);
+    });
+    try {
+      const sessionId = startFullPageTranslationProgress();
+      updateFullPageTranslationProgress(sessionId, {running: 1, queued: 1, offscreen: 0});
+      expect(state.progress.active).toBe(false);
+      expect(vi.getTimerCount()).toBe(0);
+      vi.advanceTimersByTime(1000);
+      expect(state.isVisible).toBe(false);
+      shouldFinish = false;
+      const next = startFullPageTranslationProgress();
+      updateFullPageTranslationProgress(next, {running: 1, queued: 0, offscreen: 0});
+      vi.advanceTimersByTime(180);
+      expect(state.progress.sessionId).toBe(next);
+      expect(state.isVisible).toBe(true);
+    } finally {unsubscribe();}
   });
 });

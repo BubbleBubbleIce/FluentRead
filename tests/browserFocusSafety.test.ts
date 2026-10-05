@@ -8,6 +8,33 @@ import {resolveNavigationItem, resolveRequestedSection} from '@/src/features/set
 
 const PROJECT_ROOT = resolve(__dirname, '..');
 const require = createRequire(import.meta.url);
+
+describe('后台翻译夹具资源隔离', () => {
+    it('保留扩展相对资源，仅把翻译与外部网络交给本地夹具', async () => {
+        const {installTranslationFixtureOnWorker} = require(resolve(PROJECT_ROOT, 'scripts/run-full-page-translation-test.cjs'));
+        const nativeFetch = vi.fn(async (_input: unknown, _init?: unknown) => ({ok: true}));
+        vi.stubGlobal('fetch', nativeFetch);
+        vi.stubGlobal('location', {href: 'chrome-extension://fixture/background.js'});
+        vi.stubGlobal('__fluentReadFullPageFixtureFetchInstalled', false);
+        const worker = {evaluate: async (fn: (args: unknown) => unknown, args: unknown) => fn(args)};
+        const urls = {translationUrl: 'http://127.0.0.1:1234/translate', blockedUrl: 'http://127.0.0.1:1234/blocked'};
+        try {
+            await installTranslationFixtureOnWorker(worker, urls);
+            const installed = globalThis.fetch;
+            await fetch('icon/16.png');
+            expect(nativeFetch).toHaveBeenLastCalledWith('icon/16.png', undefined);
+            await fetch('chrome-extension://fixture/icon/32.png');
+            expect(nativeFetch).toHaveBeenLastCalledWith('chrome-extension://fixture/icon/32.png', undefined);
+            const init = {method: 'POST', body: '["source"]'};
+            await fetch('https://edge.microsoft.com/translate/translatetext', init);
+            expect(nativeFetch).toHaveBeenLastCalledWith(urls.translationUrl, init);
+            await fetch('https://external.example/resource');
+            expect(nativeFetch).toHaveBeenLastCalledWith(urls.blockedUrl + '?url=https%3A%2F%2Fexternal.example%2Fresource', {method: 'GET'});
+            await installTranslationFixtureOnWorker(worker, urls);
+            expect(globalThis.fetch).toBe(installed);
+        } finally {vi.unstubAllGlobals();}
+    });
+});
 const FOCUS_SAFE_SCRIPTS = [
     'scripts/testing/run-manga-entry-ui-test.cjs',
     'scripts/testing/run-manga-translation-test.cjs',

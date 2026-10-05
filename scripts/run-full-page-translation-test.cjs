@@ -190,7 +190,8 @@ async function installTranslationFixtureOnWorker(worker, fixtureUrls) {
     const nativeFetch = globalThis.fetch.bind(globalThis);
     globalThis.fetch = (input, init) => {
       const requestUrl = typeof input === 'string' || input instanceof URL ? String(input) : input.url;
-      const parsedUrl = new URL(requestUrl);
+      // 原生工具栏图标也通过 worker.fetch 加载相对路径；它们仍由扩展原生 fetch 处理。
+      const parsedUrl = new URL(requestUrl, globalThis.location?.href);
       const isMicrosoftTranslation = parsedUrl.hostname === 'edge.microsoft.com'
         && parsedUrl.pathname === '/translate/translatetext';
       if (isMicrosoftTranslation) {
