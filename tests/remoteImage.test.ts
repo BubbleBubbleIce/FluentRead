@@ -1,6 +1,7 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
     fetchImageInOffscreen,
+    fetchPageImageForOcr,
     fetchRemoteImageForOcr,
     imageBufferToDataUrl,
     MAX_REMOTE_IMAGE_BYTES,
@@ -39,6 +40,17 @@ afterEach(() => {
 });
 
 describe('Offscreen 远程图片读取', () => {
+    it('网页 CORS 端口保留网页重定向策略、拒绝网络失败且取消后不再读取', async () => {
+        const fetchMock = vi.fn().mockResolvedValueOnce(response({bytes: [1]})).mockRejectedValueOnce(new TypeError('CORS denied'));
+        vi.stubGlobal('fetch', fetchMock);
+        const controller = new AbortController();
+        await expect(fetchPageImageForOcr('https://cdn.example.com/page.png', controller.signal)).resolves.toBe('data:image/png;base64,AQ==');
+        expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/page.png', expect.objectContaining({mode: 'cors', credentials: 'omit', redirect: 'follow', signal: expect.any(AbortSignal)}));
+        await expect(fetchPageImageForOcr('https://cdn.example.com/denied.png')).rejects.toThrow('CORS denied');
+        controller.abort();
+        await expect(fetchPageImageForOcr('https://cdn.example.com/page.png', controller.signal)).rejects.toMatchObject({name: 'AbortError'});
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
     it('接受公网 HTTPS 图片域，拒绝非 HTTPS、凭据、端口和内网目标', () => {
         expect(normalizeRemoteImageUrl('https://pbs.twimg.com/media/demo.png?format=png'))
             .toBe('https://pbs.twimg.com/media/demo.png?format=png');

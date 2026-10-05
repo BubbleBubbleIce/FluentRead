@@ -1,5 +1,5 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
-import {encodeMangaCanvas} from '@/src/features/image-translation/services/mangaEncoding';
+import {encodeImageCanvas} from '@/src/features/image-translation/services/imageEncoding';
 
 const readers: Reader[] = [];
 class Reader {
@@ -19,9 +19,9 @@ function canvas() {
 }
 beforeEach(()=>{vi.useFakeTimers();readers.length=0;vi.stubGlobal('FileReader',Reader);});
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();});
-describe('漫画异步无损编码',()=>{
+describe('图片与 OCR 共用异步无损编码',()=>{
     it('沿用 PNG data URL，不同步压缩且完成后释放读取事件与超时',async()=>{
-        const image=canvas(),result=encodeMangaCanvas(image.canvas);
+        const image=canvas(),result=encodeImageCanvas(image.canvas);
         expect(image.toBlob).toHaveBeenCalledWith(expect.any(Function),'image/png');
         image.encoded();readers[0].complete('data:image/png;base64,test');
         expect(await result).toBe('data:image/png;base64,test');expect(readers[0].onload).toBeNull();
@@ -29,19 +29,19 @@ describe('漫画异步无损编码',()=>{
     });
     it('预取消不开始压缩，编码中取消立即结束并忽略迟到 Blob',async()=>{
         const controller=new AbortController();controller.abort();const image=canvas();
-        await expect(encodeMangaCanvas(image.canvas,controller.signal)).rejects.toMatchObject({name:'AbortError'});expect(image.toBlob).not.toHaveBeenCalled();
-        const active=new AbortController(),result=encodeMangaCanvas(image.canvas,active.signal);
+        await expect(encodeImageCanvas(image.canvas,controller.signal)).rejects.toMatchObject({name:'AbortError'});expect(image.toBlob).not.toHaveBeenCalled();
+        const active=new AbortController(),result=encodeImageCanvas(image.canvas,active.signal);
         const stopped=expect(result).rejects.toMatchObject({name:'AbortError'});active.abort();await stopped;
         image.encoded();expect(readers).toHaveLength(0);expect(vi.getTimerCount()).toBe(0);
     });
     it('读取中取消释放读取器并阻止迟到事件重新完成',async()=>{
-        const image=canvas(),controller=new AbortController(),result=encodeMangaCanvas(image.canvas,controller.signal);
+        const image=canvas(),controller=new AbortController(),result=encodeImageCanvas(image.canvas,controller.signal);
         image.encoded();const late=readers[0].onerror!;
         const stopped=expect(result).rejects.toMatchObject({name:'AbortError'});controller.abort();await stopped;
         expect(readers[0].abort).toHaveBeenCalledOnce();expect(readers[0].onerror).toBeNull();late();expect(vi.getTimerCount()).toBe(0);
     });
     it.each(['blob','reader'])('在 %s 阶段超时会释放资源且丢弃迟到结果',async phase=>{
-        const image=canvas(),result=encodeMangaCanvas(image.canvas);if(phase==='reader')image.encoded();
+        const image=canvas(),result=encodeImageCanvas(image.canvas);if(phase==='reader')image.encoded();
         const failed=expect(result).rejects.toThrow('超时');await vi.advanceTimersByTimeAsync(30000);await failed;
         if(phase==='blob'){image.encoded();expect(readers).toHaveLength(0);}
         else expect(readers[0].abort).toHaveBeenCalledOnce();
@@ -51,12 +51,12 @@ describe('漫画异步无损编码',()=>{
         const image=canvas();
         if(failure==='constructor')vi.stubGlobal('FileReader',class{constructor(){throw new Error('constructor');}});
         if(failure==='encode-throw')image.toBlob.mockImplementation(()=>{throw new Error('encode');});
-        const result=encodeMangaCanvas(image.canvas),failed=expect(result).rejects.toBeInstanceOf(Error);
+        const result=encodeImageCanvas(image.canvas),failed=expect(result).rejects.toBeInstanceOf(Error);
         if(failure==='read-throw')vi.stubGlobal('FileReader',class extends Reader{constructor(){super();this.readAsDataURL.mockImplementation(()=>{throw new Error('read');});}});
         if(failure!=='encode-throw')image.encoded(failure==='null'?null:undefined);
         if(failure==='invalid-result')readers[0].complete(new ArrayBuffer(1));
         if(failure==='read-error')readers[0].onerror?.();
         await failed;expect(vi.getTimerCount()).toBe(0);
-        vi.stubGlobal('FileReader',Reader);const retry=canvas(),retried=encodeMangaCanvas(retry.canvas);retry.encoded();readers.at(-1)!.complete('ok');expect(await retried).toBe('ok');
+        vi.stubGlobal('FileReader',Reader);const retry=canvas(),retried=encodeImageCanvas(retry.canvas);retry.encoded();readers.at(-1)!.complete('ok');expect(await retried).toBe('ok');
     });
 });

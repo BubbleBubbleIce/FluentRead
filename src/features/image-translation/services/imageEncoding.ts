@@ -1,10 +1,10 @@
 /**
- * @file src/features/image-translation/services/mangaEncoding.ts
- * 文件职责：将普通图片及漫画局部译图异步编码成无损 PNG，避免同步压缩阻塞 Offscreen 的取消和进度消息。
+ * @file src/features/image-translation/services/imageEncoding.ts
+ * 文件职责：将普通图片、漫画局部译图及圈选/OCR 预处理画布异步编码成无损 PNG，避免同步压缩阻塞 Offscreen 的取消和进度消息。
  * 主要内容：沿用现有 data URL 消息协议与已翻译的错误文案；有界等待 Canvas 编码及 FileReader 转换，取消或失败时释放监听与读取器，丢弃迟到结果。
  * 模块边界：只处理调用方画布，不修改网页、图片内容、模型或消息入口；调用方负责最终释放 Canvas。
  */
-export function encodeMangaCanvas(canvas: HTMLCanvasElement, signal?: AbortSignal): Promise<string> {
+export function encodeImageCanvas(canvas: HTMLCanvasElement, signal?: AbortSignal): Promise<string> {
     return new Promise((resolve, reject) => {
         let settled = false;
         let reader: FileReader | undefined;

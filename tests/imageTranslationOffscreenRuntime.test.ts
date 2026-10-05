@@ -1,7 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mocks = vi.hoisted(() => ({recognize: vi.fn(), inpaint: vi.fn(), background: vi.fn(), draw: vi.fn(), mangaRecognize:vi.fn(), repair:vi.fn(), mangaDraw:vi.fn(), sampleManga:vi.fn(), encode:vi.fn()}));
-vi.mock('@/src/features/image-translation/services/mangaEncoding',()=>({encodeMangaCanvas:mocks.encode}));
+vi.mock('@/src/features/image-translation/services/imageEncoding',()=>({encodeImageCanvas:mocks.encode}));
 vi.mock('@/src/features/image-translation/services/mangaOcr',()=>({mangaOcrRuntime:{recognize:mocks.mangaRecognize}}));
 vi.mock('@/src/features/image-translation/services/mangaInpainting',()=>({mangaInpaintingRuntime:{repair:mocks.repair}}));
 vi.mock('@/src/features/image-translation/services/mangaRendering',()=>({drawMangaTranslations:mocks.mangaDraw,sampleMangaBackgrounds:mocks.sampleManga}));
@@ -431,6 +431,25 @@ describe('Offscreen 图片完整操作生命周期', () => {
 });
 
 describe('Offscreen 圈选裁剪生命周期', () => {
+    it.each([false, true])('圈选 OCR=%s 等待可取消的异步 PNG，不同步压缩或提前开始识别', async withOcr => {
+        imageOptions.push({width: 40, height: 20});
+        let complete!: (image: string) => void;
+        mocks.encode.mockImplementationOnce(() => new Promise<string>(resolve => {complete = resolve;}));
+        const controller = new AbortController();
+        const operation = withOcr ? translateAreaInOffscreen('image', 'en', '', selection, controller.signal)
+            : cropAreaInOffscreen('image', selection, controller.signal);
+        const outcome = operation.then(result => ({result}), error => ({error}));
+        await flushMicrotasks();
+        expect(mocks.encode).toHaveBeenCalledWith(canvases[0], controller.signal);
+        expect(canvases[0].toDataURL).not.toHaveBeenCalled();
+        expect([canvases[0].width, canvases[0].height]).toEqual([20, 10]);
+        expect(images[0].src).toBe('');
+        expect(mocks.recognize).not.toHaveBeenCalled();
+        controller.abort(); complete('late-encoded-crop');
+        expect(await outcome).toMatchObject({error: {name: 'AbortError'}});
+        expect(mocks.recognize).not.toHaveBeenCalled();
+        expect([canvases[0].width, canvases[0].height]).toEqual([0, 0]);
+    });
     it('crop-only 不调用 OCR，并在取消时释放图像与画布', async () => {
         imageOptions.push({width: 40, height: 20, naturalWidth: 40, naturalHeight: 20});
         const result = await cropAreaInOffscreen('image', selection);
@@ -480,7 +499,7 @@ describe('Offscreen 圈选裁剪生命周期', () => {
         vi.stubGlobal('document', {createElement: () => {
             const canvas = makeCanvas();
             if (stage === 'draw') canvas.context.drawImage.mockImplementation(() => controller.abort());
-            else canvas.toDataURL.mockImplementation(() => {controller.abort(); return 'cancelled-crop';});
+            else mocks.encode.mockImplementationOnce(async () => {controller.abort(); return 'cancelled-crop';});
             return canvas;
         }});
         await expect(translateAreaInOffscreen('image', 'en', '', selection, controller.signal)).rejects.toMatchObject({name: 'AbortError'});

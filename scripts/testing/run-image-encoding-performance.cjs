@@ -19,9 +19,9 @@ const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-encoding-')
         assert.equal(launched.windowPlacement.browserFrontmost, false);
         const page = await newPageWithoutForeground(launched.context);
         await page.setContent('<title>FluentRead isolated PNG benchmark</title><p>无损 PNG 编码与取消响应测试</p>');
-        const { outputText } = ts.transpileModule(fs.readFileSync(root + '/src/features/image-translation/services/mangaEncoding.ts', 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
+        const { outputText } = ts.transpileModule(fs.readFileSync(root + '/src/features/image-translation/services/imageEncoding.ts', 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
         const results = await page.evaluate(async (code) => {
-            const encode = new Function(code.replace(/^export /gm, '') + ';return encodeMangaCanvas;')();
+            const encode = new Function(code.replace(/^export /gm, '') + ';return encodeImageCanvas;')();
             const canvas = document.createElement('canvas');
             canvas.width = 2048;
             canvas.height = 2048;

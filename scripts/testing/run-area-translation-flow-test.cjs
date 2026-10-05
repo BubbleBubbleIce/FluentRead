@@ -26,6 +26,18 @@ const profileIdentity = fs.lstatSync(profileDir);
 const owner = crypto.randomUUID();
 fs.writeFileSync(path.join(profileDir, '.owner'), owner, {flag: 'wx'});
 const report = {scope: 'production extension, trusted screenshot gestures, real Tesseract, deterministic Google/OpenAI transports', cases: [], screenshots: [], errors: [], aiRequests: [], profileMode: 'automatically-created-temporary-profile'};
+const javascriptFiles = [];
+function collectJavaScript(directory) {
+  for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) collectJavaScript(file);
+    else if (file.endsWith('.js')) javascriptFiles.push(file);
+  }
+}
+collectJavaScript(extensionDir);
+const javascriptHash = crypto.createHash('sha256');
+for (const file of javascriptFiles.sort()) javascriptHash.update(path.relative(extensionDir, file)).update('\0').update(fs.readFileSync(file));
+report.javascriptAssetsSha256 = javascriptHash.digest('hex');
 const expectedSource = 'Welcome to FluentRead\nRead every word in your language\nKeep numbers 123 and names unchanged';
 const translation = '欢迎使用流畅阅读\n用自己的语言读懂每一个字\n保留数字 123 和名称';
 let aiMalformed = false;
@@ -135,22 +147,36 @@ function cer(actual, expected) {
   await patch({on: true, selectionAreaEnabled: true, disableImageTranslator: true, disableSelectionTranslator: true, from: 'en', to: 'zh-Hans', service: 'google', areaTranslationService: '', areaTranslationMode: 'standard', areaRecognitionMode: 'ocr'});
   await worker.evaluate(({translation}) => {
     const original = globalThis.fetch.bind(globalThis);
-    globalThis.__areaFixture = {requests: [], aborted: 0, delay: 300};
+    globalThis.__areaFixture = {requests: [], endpointHosts: [], aborted: 0, delay: 300};
     globalThis.fetch = async (input, options) => {
       const url = String(typeof input === 'string' ? input : input.url || input);
-      if (url.includes('/_/TranslateWebserverUi/data/batchexecute')) {
-        const rpc = JSON.parse(new URLSearchParams(options.body).get('f.req'))[0][0];
-        const origin = JSON.parse(rpc[1])[0][0]; globalThis.__areaFixture.requests.push(origin);
+      const hostname = new URL(url).hostname;
+      const html = hostname === 'translate-pa.googleapis.com';
+      const list = hostname === 'translate.googleapis.com';
+      const rpc = url.includes('/_/TranslateWebserverUi/data/batchexecute');
+      if (html || list || rpc) {
+        const records = rpc ? JSON.parse(new URLSearchParams(options.body).get('f.req'))[0] : null;
+        const origins = html ? JSON.parse(options.body)[0][0].map(text => text.replace(/^<pre>([\s\S]*)<\/pre>$/, '$1')
+          .replace(/&(amp|lt|gt|quot|#39);/g, (_entity, code) => ({amp:'&',lt:'<',gt:'>',quot:'"','#39':"'"})[code]))
+          : list ? new URLSearchParams(options.body).getAll('q') : records.map(record => JSON.parse(record[1])[0][0]);
+        assertPayload(origins);
+        globalThis.__areaFixture.requests.push(...origins);
+        globalThis.__areaFixture.endpointHosts.push(hostname);
         await new Promise((resolve, reject) => {
           const signal = options.signal;
           const abort = () => {globalThis.__areaFixture.aborted += 1; clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(new DOMException('Aborted', 'AbortError'));};
           const timer = setTimeout(() => {signal?.removeEventListener('abort', abort); resolve();}, globalThis.__areaFixture.delay);
           if (signal?.aborted) abort(); else signal?.addEventListener('abort', abort, {once:true});
         });
-        const entry = [null,null,null,null,null,[[translation]]];
-        return new Response(JSON.stringify([['wrb.fr','MkEWBc',JSON.stringify([null,[[entry]]])]]), {status:200});
+        const texts = origins.map(() => translation);
+        if (html) return new Response(JSON.stringify([texts]), {status:200});
+        if (list) return new Response(JSON.stringify(texts), {status:200});
+        return new Response(JSON.stringify(texts.map((text, index) => ['wrb.fr','MkEWBc',
+          JSON.stringify([null,[[[null,null,null,null,null,[[text]]]]]]),null,null,null,records[index][3]])), {status:200});
       }
+      if (/^translate(?:-pa)?\.google(?:apis)?\./.test(hostname)) throw new Error('Unexpected translation endpoint in deterministic area fixture');
       return original(input, options);
+      function assertPayload(origins) {if (!origins.length || origins.some(origin => typeof origin !== 'string')) throw new Error('Unexpected Google area payload');}
     };
   }, {translation});
   const languageStart = Date.now();
@@ -266,6 +292,7 @@ function cer(actual, expected) {
   await patch({animations:false}); await wait(()=>ui("return !!this.querySelector('.fr-area-spinner.fr-area-static')")); assert.equal(await ui("return getComputedStyle(this.querySelector('.fr-area-spinner')).animationName"),'none'); assert.ok(await ui("return this.querySelector('.fr-area-loading').textContent.includes('正在')"));
   await patch({animations:true}); await wait(()=>ui("return this.querySelector('.fr-area-spinner')&&!this.querySelector('.fr-area-spinner.fr-area-static')")); await clickText('取消'); report.cases.push(currentCase);
   currentCase='disabled cleanup'; await patch({selectionAreaEnabled:false}); await wait(async()=>!(await page.locator('#fluent-read-area-translator-container').count())); report.cases.push(currentCase);
+  report.googleEndpointHosts = await worker.evaluate(() => globalThis.__areaFixture.endpointHosts);
   assert.deepEqual(report.errors,[]); report.success=true;
 })().catch(async error=>{report.success=false;report.failure={case:currentCase,message:error.stack};process.exitCode=1;if(page)await shot('failure').catch(()=>{});}).finally(async()=>{
   let closed = !launchAttempted;

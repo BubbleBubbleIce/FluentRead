@@ -440,7 +440,7 @@
       "tests/mangaOcr.test.ts",
       "tests/mangaOcrAssets.test.ts",
       "tests/mangaInpainting.test.ts",
-      "tests/mangaEncoding.test.ts",
+      "tests/imageEncoding.test.ts",
       "tests/mangaGpu.test.ts",
       "tests/mangaSessionFallback.test.ts",
       "tests/mangaOnnxBuild.test.ts",

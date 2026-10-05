@@ -6,6 +6,8 @@ const {recognize, ensureLanguages, clearModels, removeFiles, createRuntime, tess
     prefetchModels: vi.fn(async () => {}),
 }));
 vi.mock('@/src/features/image-translation/services/ocrModelDownload', () => ({prefetchOcrModelFiles: prefetchModels}));
+const encode = vi.hoisted(() => vi.fn());
+vi.mock('@/src/features/image-translation/services/imageEncoding', () => ({encodeImageCanvas: encode}));
 vi.mock('@/src/features/image-translation/services/ocrWorkerRuntime', () => ({
     createOcrWorkerRuntime: createRuntime,
 }));
@@ -60,6 +62,7 @@ describe('图片 OCR 处理与结果缓存', () => {
     });
     beforeEach(async () => {
         vi.resetModules();
+        encode.mockReset().mockResolvedValue('scaled-image');
         recognize.mockReset().mockResolvedValue(blockResult());
         ensureLanguages.mockReset().mockResolvedValue(undefined);
         createRuntime.mockReset().mockReturnValue({recognize, ensureLanguages, clearModels});
@@ -230,6 +233,27 @@ describe('图片 OCR 处理与结果缓存', () => {
         expect(context.fillRect).not.toHaveBeenCalled();
     });
 
+    it.each([false, true])('圈选借用解码图=%s 在异步编码中保留画布、释放自有解码图，取消不启动 Worker', async borrowed => {
+        const controller = new AbortController();
+        const decoded = {naturalWidth: 100, naturalHeight: 100, src: 'borrowed-image'} as HTMLImageElement;
+        let complete!: (image: string) => void;
+        encode.mockImplementationOnce(() => new Promise<string>(resolve => {complete = resolve;}));
+        const operation = recognizeImage('encode-pending', 'en', controller.signal, {profile: 'area',
+            ...(borrowed ? {decodedImage: decoded} : {})});
+        const outcome = operation.then(result => ({result}), error => ({error}));
+        for (let index = 0; index < 8; index++) await Promise.resolve();
+        expect(encode).toHaveBeenCalledOnce();
+        expect(canvas.toDataURL).not.toHaveBeenCalled();
+        expect(canvas).toMatchObject({width: 220, height: 220});
+        expect(recognize).not.toHaveBeenCalled();
+        if (borrowed) expect(decoded.src).toBe('borrowed-image'); else expect(sources[0].src).toBe('');
+        controller.abort(); complete('late-encoded-image');
+        expect(await outcome).toMatchObject({error: {name: 'AbortError'}});
+        expect(recognize).not.toHaveBeenCalled();
+        expect(canvas).toMatchObject({width: 0, height: 0});
+        expect(decoded.src).toBe('borrowed-image');
+    });
+
     it('圈选小图放大加边后映回坐标，与普通图片分开缓存且不重复识别', async () => {
         await recognizeImage('same', 'en');
         const lines = await recognizeImage('same', 'en', undefined, {profile: 'area'});
@@ -309,7 +333,7 @@ describe('图片 OCR 处理与结果缓存', () => {
         expect(sources[0]).toMatchObject({src: '', onload: null, onerror: null});
         onImageCreated = undefined;
         const encoding = new AbortController();
-        canvas.toDataURL.mockImplementationOnce(() => { encoding.abort(); return 'encoded'; });
+        encode.mockImplementationOnce(async () => { encoding.abort(); return 'encoded'; });
         await expect(recognizeImage('encoded-abort', 'en', encoding.signal, {profile: 'area'}))
             .rejects.toMatchObject({name: 'AbortError'});
         expect(sources[1].src).toBe('');
@@ -321,7 +345,7 @@ describe('图片 OCR 处理与结果缓存', () => {
         dimensions = {width: 8000, height: 1000};
         if (stage === 'context') canvas.getContext.mockReturnValueOnce(null);
         if (stage === 'drawing') context.drawImage.mockImplementationOnce(() => { throw new Error('draw failed'); });
-        if (stage === 'encoding') canvas.toDataURL.mockImplementationOnce(() => { throw new Error('encode failed'); });
+        if (stage === 'encoding') encode.mockRejectedValueOnce(new Error('encode failed'));
         await expect(recognizeImage('canvas-failure', 'en')).rejects.toThrow();
         expect(canvas).toMatchObject({width: 0, height: 0});
         expect(sources[0].src).toBe('');

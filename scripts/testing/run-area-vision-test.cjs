@@ -46,23 +46,29 @@ const server = http.createServer((request, response) => {
       const payload = JSON.parse(body);
       const content = payload.messages.flatMap(m => Array.isArray(m.content) ? m.content : []);
       const image = content.find(p => p.type === 'image_url')?.image_url.url;
-      let dimensions, hash;
+      const text = payload.messages.map(m => typeof m.content === 'string' ? m.content : m.content.filter(p => p.type === 'text').map(p => p.text).join('\n')).join('\n');
+      let dimensions, hash, probe = false;
       if (image) {
         assert.match(image, /^data:image\/png;base64,/);
         const buffer = Buffer.from(image.split(',')[1], 'base64');
         const meta = await sharp(buffer).metadata();
         dimensions = {width: meta.width, height: meta.height};
-        report.lastReceivedImageDimensions=dimensions;
-        // Crop edges round outwards at fractional device pixels; allow at most one extra pixel per edge.
-        assert.ok(Math.abs(meta.width - report.expectedCropPixels.width) <= 2 && Math.abs(meta.height - report.expectedCropPixels.height) <= 2, 'only selected crop uploaded');
-        hash = crypto.createHash('sha256').update(buffer).digest('hex'); lastCropHash = hash;
+        probe = payload.model === 'unconfirmed-model' && text.includes('Read the six hexadecimal characters visible in the image');
+        if (probe) {
+          assert.deepEqual(dimensions, {width:224,height:64});
+          assert.ok(!text.includes(expectedSource), 'probe must not contain the captured page text');
+        } else {
+          report.lastReceivedImageDimensions=dimensions;
+          // Crop edges round outwards at fractional device pixels; allow at most one extra pixel per edge.
+          assert.ok(Math.abs(meta.width - report.expectedCropPixels.width) <= 2 && Math.abs(meta.height - report.expectedCropPixels.height) <= 2, 'only selected crop uploaded');
+        }
+        hash = crypto.createHash('sha256').update(buffer).digest('hex'); if (!probe) lastCropHash = hash;
       }
-      const text = payload.messages.map(m => typeof m.content === 'string' ? m.content : m.content.filter(p => p.type === 'text').map(p => p.text).join('\n')).join('\n');
-      report.requests.push({model: payload.model, vision: Boolean(image), dimensions, hash, prompt: text});
-      if (image && visionDelay) await new Promise(resolve => setTimeout(resolve, visionDelay));
-      if (image && visionFailure) {response.writeHead(401, {'content-type': 'application/json'});response.end(JSON.stringify({error:{message:'fixture auth failure'}}));return;}
+      report.requests.push({model: payload.model, vision: Boolean(image), probe, dimensions, hash, prompt: text});
+      if (image && !probe && visionDelay) await new Promise(resolve => setTimeout(resolve, visionDelay));
+      if (image && !probe && visionFailure) {response.writeHead(401, {'content-type': 'application/json'});response.end(JSON.stringify({error:{message:'fixture auth failure'}}));return;}
       response.setHeader('content-type', 'application/json');
-      response.end(JSON.stringify({id:'fixture',object:'chat.completion',created:1,model:payload.model,choices:[{index:0,message:{role:'assistant',content:image?expectedSource:translation},finish_reason:'stop'}],usage:{prompt_tokens:50,completion_tokens:30,total_tokens:80}}));
+      response.end(JSON.stringify({id:'fixture',object:'chat.completion',created:1,model:payload.model,choices:[{index:0,message:{role:'assistant',content:probe?'UNKNOWN':image?expectedSource:translation},finish_reason:'stop'}],usage:{prompt_tokens:50,completion_tokens:30,total_tokens:80}}));
     } catch (error) {report.mockServerError=error.message;response.writeHead(500);response.end(error.message);}
   });
 });
@@ -147,6 +153,9 @@ async function sourceText() {return ui("return this.querySelector('.fr-area-sour
     settings=await newPageWithoutForeground(context,30000);settings.on('pageerror',e=>report.errors.push(e.message));
     await settings.goto(`${origin}/options.html#settings-area-translation`);
     await activateExtensionTabWithoutForeground(context,settings,30000);
+    const details=settings.locator('details.area-translation-details');
+    await details.waitFor({state:'visible'});
+    if(await details.getAttribute('open')===null) await details.locator(':scope > summary').click();
     await settings.getByTestId('area-recognition-mode').waitFor();
   }
   currentCase='recognition and prompt settings persist after quick close';await openSettings();
@@ -189,7 +198,11 @@ async function sourceText() {return ui("return this.querySelector('.fr-area-sour
   await settings.getByTestId('model-vision-capability').getByRole('radio',{name:'自动判断',exact:true}).click();
   await settings.close();report.cases.push(currentCase);
   page=await newPageWithoutForeground(context,30000);page.on('pageerror',e=>report.errors.push(e.message));await page.goto(`http://127.0.0.1:${server.address().port}/`);cdp=await context.newCDPSession(page);
-  await activateExtensionTabWithoutForeground(context,page,30000);await wait(()=>ui('return true'));
+  await activateExtensionTabWithoutForeground(context,page,30000);
+  // 圈选宿主按需挂载；通过可信快捷键唤起后退出，再进入截图用例。
+  await page.waitForTimeout(500);await page.locator('h1').click();await page.keyboard.press('Shift+Z');
+  await wait(()=>ui("return !!this.querySelector('.fr-area-selecting')"));
+  await page.keyboard.press('Escape');
   currentCase='vision succeeds without OCR packs and uploads only crop';await select();await waitResult();
   assert.equal(await sourceText(),expectedSource);assert.equal(await ui("return this.querySelector('.fr-area-translation').textContent"),translation);
   assert.match(await ui("return this.querySelector('.fr-area-mode').textContent"),/模型识图/);
@@ -199,10 +212,12 @@ async function sourceText() {return ui("return this.querySelector('.fr-area-sour
   currentCase='same captured crop retranslated without image cache';const previousHash=lastCropHash;
   await page.evaluate(()=>{const c=document.querySelector('#sample');c.getContext('2d').clearRect(0,0,c.width,c.height);});await clickText('重新翻译');await waitResult();
   assert.equal(report.requests.filter(r=>r.vision).length,2);assert.equal(lastCropHash,previousHash);report.cases.push(currentCase);
-  currentCase='known unsupported and unknown model use local OCR';
+  currentCase='known unsupported and probed-unknown model use local OCR';
   for(const model of ['gpt-3.5-turbo','unconfirmed-model']) {
     await patch({model:{openai:'自定义模型'},customModel:{openai:model},modelVision:{openai:{'gpt-3.5-turbo':false}}});const count=report.requests.length;await clickText(model==='gpt-3.5-turbo'?'重新翻译':'重试');await wait(()=>ui("return !!this.querySelector('.fr-area-error-body')"));
-    assert.ok(await ui("return [...this.querySelectorAll('button')].some(n=>n.textContent.includes('下载语言包并重试'))"));assert.equal(report.requests.length,count);
+    assert.ok(await ui("return [...this.querySelectorAll('button')].some(n=>n.textContent.includes('下载语言包并重试'))"));
+    assert.equal(report.requests.length,count+(model==='unconfirmed-model'?1:0));
+    if(model==='unconfirmed-model') assert.equal(report.requests.at(-1).probe,true);
   }
   report.cases.push(currentCase);
   currentCase='explicit model capability override reaches vision';await patch({modelVision:{openai:{'unconfirmed-model':true}}});

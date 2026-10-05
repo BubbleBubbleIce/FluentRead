@@ -13788,6 +13788,849 @@
       "referenceCodeUsedInThisBatch": false,
       "pushed": false,
       "remoteMerged": false
+    },
+    {
+      "batch": "twenty-third",
+      "name": "shared-async-crop-and-ocr-png-preparation",
+      "goalStatus": "active",
+      "progress": {
+        "sourceReadFiles": 177,
+        "sourceReadFunctionBodies": 2922,
+        "pendingFiles": 644,
+        "goalComplete": false
+      },
+      "newExecutedUnitCases": 5,
+      "newStaticTestDefinitions": 3,
+      "newNativePhases": 0,
+      "oldSourceRun": {
+        "files": 2,
+        "executed": 83,
+        "passed": 79,
+        "failed": 4,
+        "reason": "Both crop modes and both owned/borrowed area OCR paths still synchronously encode and do not wait on async encoder",
+        "boundary": "Behavior contract tests, not proof that old synchronous cancellation already throws wrong error. Native queued-event diagnostics separately show old operation settles before queued abort."
+      },
+      "implementation": {
+        "encoding": "Rename common internal PNG module/function; use existing toBlob/FileReader cancellation/deadline implementation for crop and OCR prep. No duplicate wrapper or legacy alias.",
+        "ownership": "After drawing clear only owned source.src; borrowed source remains for full-image render. Canvas remains through encode await and zeroes in finally; no physical browser memory measurement.",
+        "productionFunctionBodyDelta": 0,
+        "retiredInternalExport": "encodeMangaCanvas",
+        "replacementInternalExport": "encodeImageCanvas",
+        "newIgnores": 0,
+        "thresholdChanges": false
+      },
+      "strictCoverage": {
+        "files": 14,
+        "cases": 272,
+        "modules": 16,
+        "metrics": {
+          "statements": 100,
+          "branches": 100,
+          "functions": 100,
+          "lines": 100
+        },
+        "thresholdChanges": false,
+        "newIgnores": 0,
+        "initialExpandedGate": {
+          "casesPassed": 271,
+          "failedGate": "Remote webpage CORS entry missing direct execution; lines98.81functions92.85. Add real port contract case, do not ignore or lower thresholds."
+        }
+      },
+      "nativeFunctionComparison": {
+        "baselineRevision": "142b599cda2810bba08e6141b9a2c418d24954b2",
+        "baselineSourcesExact": true,
+        "currentSourcesMatch": true,
+        "sourceSha256": {
+          "src/features/area-translation/core.ts": "16d8ca7c51bcc18e981ec687650d0a5f9a53464ca17bbf230497d2c4a96658e2",
+          "src/features/image-translation/core.ts": "61f75459501d3a4935b32097f9536397aeff66c21915840689cdfe5e234a63c8",
+          "src/features/image-translation/services/offscreenRuntime.ts": {
+            "baseline": "6018e5802fb86fa103a454cdfa80ab15a6e9e5a3b85ff84ea332ca915d6f1aa2",
+            "current": "a647b50fae80ce4486df2169d0af46a72128d052e22518f5ea481293800b46a6"
+          },
+          "src/features/image-translation/services/ocrRuntime.ts": {
+            "baseline": "683aaf48796346a72a64e434553763688948983d3cb6ca0de3756180da1e77fd",
+            "current": "0ed277b2b5a30861c0c086776c089001b81dc9d2cef6d4a820d241aae25c6378"
+          },
+          "src/features/image-translation/services/imageEncoding.ts": "620696f7d1264ff08640601f5a745dd12313527ee1ccea81d81fff995836b607"
+        },
+        "extractedSha256": {
+          "baseline": "7650bad80255a92b76aa6cd7a347c282193489a4c81d76026c5449bf3798ffbd",
+          "current": "2efb62e1acf6c2ff685c43916f03251639f314c8bcd4b3cc6a75a9b0a42206dc"
+        },
+        "harnessSha256": "b3bb5d6f635f48131baa6ed86ae28cd87b91dafed75cbc6525265c9e35aa21d8",
+        "differential": [
+          {
+            "name": "crop-full-2048",
+            "width": 2048,
+            "height": 2048,
+            "comparedBytes": 16777216,
+            "mismatches": 0,
+            "borrowedPreserved": false
+          },
+          {
+            "name": "crop-fractional-css",
+            "width": 44,
+            "height": 35,
+            "comparedBytes": 6160,
+            "mismatches": 0,
+            "borrowedPreserved": false
+          },
+          {
+            "name": "area-upscale-pad",
+            "width": 2020,
+            "height": 1020,
+            "comparedBytes": 8241600,
+            "mismatches": 0,
+            "size": {
+              "width": 2000,
+              "height": 1000,
+              "padding": 10
+            },
+            "borrowedPreserved": false
+          },
+          {
+            "name": "image-downscale",
+            "width": 2683,
+            "height": 2236,
+            "comparedBytes": 23996752,
+            "mismatches": 0,
+            "size": {
+              "width": 2683,
+              "height": 2236,
+              "padding": 0
+            },
+            "borrowedPreserved": false
+          },
+          {
+            "name": "borrowed-area-source",
+            "width": 66,
+            "height": 46,
+            "comparedBytes": 12144,
+            "mismatches": 0,
+            "size": {
+              "width": 46,
+              "height": 26,
+              "padding": 10
+            },
+            "borrowedPreserved": true
+          },
+          {
+            "name": "image-unchanged",
+            "width": 23,
+            "height": 13,
+            "comparedBytes": 1196,
+            "mismatches": 0,
+            "size": {
+              "width": 23,
+              "height": 13,
+              "padding": 0
+            },
+            "borrowedPreserved": false,
+            "outputUnchanged": true
+          }
+        ],
+        "timing": [
+          {
+            "name": "crop-full-2048",
+            "inputWidth": 2048,
+            "inputHeight": 2048,
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "summary": {
+              "baseline": {
+                "totalMs": 459.2000002861023,
+                "maxHeartbeatDelayMs": 461.30000019073486,
+                "longTaskMs": 458,
+                "longTaskSamples": 9
+              },
+              "current": {
+                "totalMs": 490,
+                "maxHeartbeatDelayMs": 107.30000019073486,
+                "longTaskMs": 93,
+                "longTaskSamples": 5
+              }
+            },
+            "samples": {
+              "baseline": [
+                {
+                  "totalMs": 478,
+                  "maxHeartbeatDelayMs": 479.40000009536743,
+                  "longTasks": 1,
+                  "longTaskMs": 382
+                },
+                {
+                  "totalMs": 447.90000009536743,
+                  "maxHeartbeatDelayMs": 450.40000009536743,
+                  "longTasks": 2,
+                  "longTaskMs": 447
+                },
+                {
+                  "totalMs": 452.5,
+                  "maxHeartbeatDelayMs": 454.80000019073486,
+                  "longTasks": 1,
+                  "longTaskMs": 354
+                },
+                {
+                  "totalMs": 763.2999997138977,
+                  "maxHeartbeatDelayMs": 765.6999998092651,
+                  "longTasks": 1,
+                  "longTaskMs": 538
+                },
+                {
+                  "totalMs": 458.7999997138977,
+                  "maxHeartbeatDelayMs": 461.2000002861023,
+                  "longTasks": 2,
+                  "longTaskMs": 458
+                },
+                {
+                  "totalMs": 776.7999997138977,
+                  "maxHeartbeatDelayMs": 779.0999999046326,
+                  "longTasks": 2,
+                  "longTaskMs": 776
+                },
+                {
+                  "totalMs": 459.2000002861023,
+                  "maxHeartbeatDelayMs": 461.30000019073486,
+                  "longTasks": 2,
+                  "longTaskMs": 459
+                },
+                {
+                  "totalMs": 459.90000009536743,
+                  "maxHeartbeatDelayMs": 462.2999997138977,
+                  "longTasks": 2,
+                  "longTaskMs": 459
+                },
+                {
+                  "totalMs": 457.59999990463257,
+                  "maxHeartbeatDelayMs": 459.90000009536743,
+                  "longTasks": 2,
+                  "longTaskMs": 457
+                }
+              ],
+              "current": [
+                {
+                  "totalMs": 496.40000009536743,
+                  "maxHeartbeatDelayMs": 107.30000019073486,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 479.90000009536743,
+                  "maxHeartbeatDelayMs": 103.69999980926514,
+                  "longTasks": 1,
+                  "longTaskMs": 93
+                },
+                {
+                  "totalMs": 473.90000009536743,
+                  "maxHeartbeatDelayMs": 101.80000019073486,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 508.40000009536743,
+                  "maxHeartbeatDelayMs": 108.30000019073486,
+                  "longTasks": 1,
+                  "longTaskMs": 97
+                },
+                {
+                  "totalMs": 490,
+                  "maxHeartbeatDelayMs": 106.80000019073486,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 507.5,
+                  "maxHeartbeatDelayMs": 100.69999980926514,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 486,
+                  "maxHeartbeatDelayMs": 107.80000019073486,
+                  "longTasks": 1,
+                  "longTaskMs": 97
+                },
+                {
+                  "totalMs": 494.80000019073486,
+                  "maxHeartbeatDelayMs": 109.90000009536743,
+                  "longTasks": 1,
+                  "longTaskMs": 99
+                },
+                {
+                  "totalMs": 481.8999996185303,
+                  "maxHeartbeatDelayMs": 108.09999990463257,
+                  "longTasks": 1,
+                  "longTaskMs": 96
+                }
+              ]
+            }
+          },
+          {
+            "name": "area-upscale-pad",
+            "inputWidth": 1000,
+            "inputHeight": 500,
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "summary": {
+              "baseline": {
+                "totalMs": 191.5,
+                "maxHeartbeatDelayMs": 189,
+                "longTaskMs": 180,
+                "longTaskSamples": 9
+              },
+              "current": {
+                "totalMs": 208.89999961853027,
+                "maxHeartbeatDelayMs": 49.40000009536743,
+                "longTaskMs": 0,
+                "longTaskSamples": 0
+              }
+            },
+            "samples": {
+              "baseline": [
+                {
+                  "totalMs": 186.30000019073486,
+                  "maxHeartbeatDelayMs": 187.5,
+                  "longTasks": 1,
+                  "longTaskMs": 174
+                },
+                {
+                  "totalMs": 186.5,
+                  "maxHeartbeatDelayMs": 189,
+                  "longTasks": 1,
+                  "longTaskMs": 173
+                },
+                {
+                  "totalMs": 189.90000009536743,
+                  "maxHeartbeatDelayMs": 192.2000002861023,
+                  "longTasks": 1,
+                  "longTaskMs": 176
+                },
+                {
+                  "totalMs": 191.5,
+                  "maxHeartbeatDelayMs": 180.5,
+                  "longTasks": 1,
+                  "longTaskMs": 180
+                },
+                {
+                  "totalMs": 191.09999990463257,
+                  "maxHeartbeatDelayMs": 193.40000009536743,
+                  "longTasks": 1,
+                  "longTaskMs": 179
+                },
+                {
+                  "totalMs": 204.40000009536743,
+                  "maxHeartbeatDelayMs": 206.7999997138977,
+                  "longTasks": 1,
+                  "longTaskMs": 192
+                },
+                {
+                  "totalMs": 198.09999990463257,
+                  "maxHeartbeatDelayMs": 186.69999980926514,
+                  "longTasks": 1,
+                  "longTaskMs": 186
+                },
+                {
+                  "totalMs": 199.69999980926514,
+                  "maxHeartbeatDelayMs": 188.60000038146973,
+                  "longTasks": 1,
+                  "longTaskMs": 188
+                },
+                {
+                  "totalMs": 195.59999990463257,
+                  "maxHeartbeatDelayMs": 198.69999980926514,
+                  "longTasks": 1,
+                  "longTaskMs": 183
+                }
+              ],
+              "current": [
+                {
+                  "totalMs": 197.5,
+                  "maxHeartbeatDelayMs": 49.299999713897705,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 200.60000038146973,
+                  "maxHeartbeatDelayMs": 49.39999961853027,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 202.7999997138977,
+                  "maxHeartbeatDelayMs": 49.30000019073486,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 200.5,
+                  "maxHeartbeatDelayMs": 49.40000009536743,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 212,
+                  "maxHeartbeatDelayMs": 49.69999980926514,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 209.09999990463257,
+                  "maxHeartbeatDelayMs": 49.5,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 213.69999980926514,
+                  "maxHeartbeatDelayMs": 49.40000009536743,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 208.90000009536743,
+                  "maxHeartbeatDelayMs": 49.40000009536743,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 208.89999961853027,
+                  "maxHeartbeatDelayMs": 49.30000019073486,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "image-downscale",
+            "inputWidth": 3000,
+            "inputHeight": 2500,
+            "warmupsPerVersion": 3,
+            "alternatingRounds": 9,
+            "summary": {
+              "baseline": {
+                "totalMs": 1263.8000001907349,
+                "maxHeartbeatDelayMs": 1129.1999998092651,
+                "longTaskMs": 1263,
+                "longTaskSamples": 9
+              },
+              "current": {
+                "totalMs": 821.0999999046326,
+                "maxHeartbeatDelayMs": 226.2000002861023,
+                "longTaskMs": 176,
+                "longTaskSamples": 8
+              }
+            },
+            "samples": {
+              "baseline": [
+                {
+                  "totalMs": 1263.8000001907349,
+                  "maxHeartbeatDelayMs": 1265,
+                  "longTasks": 2,
+                  "longTaskMs": 1263
+                },
+                {
+                  "totalMs": 1297.7999997138977,
+                  "maxHeartbeatDelayMs": 1300.3000001907349,
+                  "longTasks": 2,
+                  "longTaskMs": 1297
+                },
+                {
+                  "totalMs": 709.3999996185303,
+                  "maxHeartbeatDelayMs": 711.8000001907349,
+                  "longTasks": 1,
+                  "longTaskMs": 541
+                },
+                {
+                  "totalMs": 1918.5999999046326,
+                  "maxHeartbeatDelayMs": 1129.1999998092651,
+                  "longTasks": 3,
+                  "longTaskMs": 1917
+                },
+                {
+                  "totalMs": 733.7000002861023,
+                  "maxHeartbeatDelayMs": 736.1999998092651,
+                  "longTasks": 2,
+                  "longTaskMs": 733
+                },
+                {
+                  "totalMs": 1378.8000001907349,
+                  "maxHeartbeatDelayMs": 1381.0999999046326,
+                  "longTasks": 2,
+                  "longTaskMs": 1378
+                },
+                {
+                  "totalMs": 723.6999998092651,
+                  "maxHeartbeatDelayMs": 726.2999997138977,
+                  "longTasks": 1,
+                  "longTaskMs": 552
+                },
+                {
+                  "totalMs": 1494.5,
+                  "maxHeartbeatDelayMs": 1497,
+                  "longTasks": 2,
+                  "longTaskMs": 1494
+                },
+                {
+                  "totalMs": 748.4000000953674,
+                  "maxHeartbeatDelayMs": 569.5999999046326,
+                  "longTasks": 1,
+                  "longTaskMs": 569
+                }
+              ],
+              "current": [
+                {
+                  "totalMs": 775.1000003814697,
+                  "maxHeartbeatDelayMs": 204.2999997138977,
+                  "longTasks": 0,
+                  "longTaskMs": 0
+                },
+                {
+                  "totalMs": 1374.7999997138977,
+                  "maxHeartbeatDelayMs": 793.8000001907349,
+                  "longTasks": 2,
+                  "longTaskMs": 791
+                },
+                {
+                  "totalMs": 794.5,
+                  "maxHeartbeatDelayMs": 204.89999961853027,
+                  "longTasks": 1,
+                  "longTaskMs": 169
+                },
+                {
+                  "totalMs": 1514.8000001907349,
+                  "maxHeartbeatDelayMs": 645,
+                  "longTasks": 4,
+                  "longTaskMs": 918
+                },
+                {
+                  "totalMs": 806.8000001907349,
+                  "maxHeartbeatDelayMs": 179,
+                  "longTasks": 1,
+                  "longTaskMs": 175
+                },
+                {
+                  "totalMs": 1397.7000002861023,
+                  "maxHeartbeatDelayMs": 821.5999999046326,
+                  "longTasks": 2,
+                  "longTaskMs": 817
+                },
+                {
+                  "totalMs": 783.4000000953674,
+                  "maxHeartbeatDelayMs": 210.7999997138977,
+                  "longTasks": 1,
+                  "longTaskMs": 171
+                },
+                {
+                  "totalMs": 1421.1999998092651,
+                  "maxHeartbeatDelayMs": 840.4000000953674,
+                  "longTasks": 1,
+                  "longTaskMs": 403
+                },
+                {
+                  "totalMs": 821.0999999046326,
+                  "maxHeartbeatDelayMs": 226.2000002861023,
+                  "longTasks": 1,
+                  "longTaskMs": 176
+                }
+              ]
+            }
+          }
+        ],
+        "cancellation": [
+          {
+            "name": "crop-full-2048",
+            "version": "baseline",
+            "outcome": "success",
+            "cancelHadFiredAtSettlement": false,
+            "settlementMs": 873.4000000953674
+          },
+          {
+            "name": "crop-full-2048",
+            "version": "current",
+            "outcome": "AbortError",
+            "cancelHadFiredAtSettlement": true,
+            "settlementMs": 107.09999990463257
+          },
+          {
+            "name": "area-upscale-pad",
+            "version": "baseline",
+            "outcome": "success",
+            "cancelHadFiredAtSettlement": false,
+            "settlementMs": 242.7000002861023
+          },
+          {
+            "name": "area-upscale-pad",
+            "version": "current",
+            "outcome": "AbortError",
+            "cancelHadFiredAtSettlement": true,
+            "settlementMs": 19.300000190734863
+          },
+          {
+            "name": "image-downscale",
+            "version": "baseline",
+            "outcome": "success",
+            "cancelHadFiredAtSettlement": false,
+            "settlementMs": 1415.1000003814697
+          },
+          {
+            "name": "image-downscale",
+            "version": "current",
+            "outcome": "AbortError",
+            "cancelHadFiredAtSettlement": true,
+            "settlementMs": 188.09999990463257
+          }
+        ],
+        "timingBoundary": "native function stages including decode/draw/encode; input setup, pixel comparisons and cancellation instrumentation excluded; heartbeat/longtask measures are stage-local, no whole machine idle or whole OCR-chain claim",
+        "passed": true,
+        "profileRemoved": true,
+        "pageErrors": [],
+        "cleanupErrors": [],
+        "backgroundWindowVerified": true,
+        "comparedPixelBytes": 49035068
+      },
+      "timingBoundary": "Own test/build/inventory/architecture handles ended before native timing; same deterministic opaque noise, actual immutable/current AST-selected functions, native decode/draw/PNG/FileReader. Pixel comparisons, cancellation instrumentation and input setup excluded.3warmups/version and9alternating rounds. No whole-machine idle, whole OCR/translation/provider/runtime quality or universal speedup. Crop/area total medians slightly longer; large image decode/draw still long tasks. Cancellation discards pending output and releases caller, does not forcibly stop native PNG compression.",
+      "browser": {
+        "areaOcr": {
+          "passed": true,
+          "phases": 24,
+          "cases": [
+            "synthetic shortcut ignored",
+            "editable input keeps Shift+Z",
+            "focused non-editable container still triggers",
+            "custom shortcut replaces the default one",
+            "open shadow input keeps Shift+Z",
+            "closed shadow input keeps Shift+Z",
+            "machine service name without model",
+            "trusted selection and OCR",
+            "same capture retry",
+            "source image and text review",
+            "escape clears result and next selection works",
+            "small English 14px",
+            "dark English 20px",
+            "AI structured entire-region translation",
+            "result metadata stays frozen until retry",
+            "invalid AI response exposes retry, no silent fallback",
+            "close cancels pending and no late result",
+            "post-cancel retry",
+            "switching tabs cancels the old operation",
+            "captured result survives page scroll",
+            "narrow dark result geometry",
+            "long model wraps in narrow dark panel",
+            "live motion settings retain static progress",
+            "disabled cleanup"
+          ],
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "profileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 8
+        },
+        "areaVision": {
+          "passed": true,
+          "phases": 9,
+          "cases": [
+            "recognition and prompt settings persist after quick close",
+            "model capability control saves per model",
+            "vision succeeds without OCR packs and uploads only crop",
+            "same captured crop retranslated without image cache",
+            "known unsupported and probed-unknown model use local OCR",
+            "explicit model capability override reaches vision",
+            "provider error does not fall back to OCR",
+            "cancel image request ignores late response and allows retry",
+            "unmount on disabling feature"
+          ],
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "profileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 6
+        },
+        "ordinaryImage": {
+          "passed": true,
+          "phases": 22,
+          "cases": [
+            "HAR technical identifiers stay unchanged without requests; repeated primary XSRF failures are skipped",
+            "missing languages exposes preparation action",
+            "real language download, OCR, translation and replacement",
+            "independent viewport reader preserves recognized original alongside translation",
+            "restore and redisplay reuse result without requests or source mutation",
+            "scroll retains same decoded bitmap",
+            "second image hover survives unrelated live DOM updates",
+            "DOM geometry matches source: contain-padding-border",
+            "DOM geometry matches source: cover-padding-border",
+            "DOM geometry matches source: none-padding-border",
+            "DOM geometry matches source: ancestor-clipping",
+            "DOM geometry matches source: ancestor-scroll-clipping",
+            "dynamic source change removes old translation",
+            "loading Cancel retains the same attached hovered focused row and button during progress",
+            "cancel never installs a late result",
+            "retry works after cancellation",
+            "injected offscreen channel closure retries once with a fresh request and installs a valid bitmap",
+            "transparent PNG hides original letters while translated bitmap remains visible",
+            "restoring transparent source releases only the extension opacity lease",
+            "host opacity change removes old replacement and preserves the host value",
+            "image removal cleans overlay",
+            "consumed cancellation ID can be cancelled again across real Offscreen routing without starting OCR/provider"
+          ],
+          "pageErrors": [],
+          "cleanupErrors": [],
+          "profileRemoved": true,
+          "backgroundWindowVerified": true,
+          "screenshotsGenerated": 15
+        },
+        "totalProductionPhases": 55,
+        "javascriptAssetsSha256": "c36f67c3806e9468a360abf5e86ab95d3eddaabeb1cb109e02fa537294cd5d51",
+        "assetProof": "Area and ordinary image harness SHA equal current build; vision runs used same unchanged build between them (vision harness does not hash assets itself).",
+        "googleAreaEndpointHosts": [
+          "translate-pa.googleapis.com",
+          "translate-pa.googleapis.com",
+          "translate-pa.googleapis.com",
+          "translate-pa.googleapis.com",
+          "translate-pa.googleapis.com",
+          "translate-pa.googleapis.com"
+        ],
+        "visionProbe": {
+          "requests": 1,
+          "dimensions": {
+            "width": 224,
+            "height": 64
+          },
+          "result": "Fixture UNKNOWN, route requires OCR packs; known explicit unsupported does not probe; explicit supported goes to crop vision."
+        },
+        "initialVisionFixtureFailures": [
+          {
+            "passed": false,
+            "reason": "Old fixture waits for recognition control inside intentionally collapsed settings",
+            "phasesPassedBeforeFailure": 0,
+            "profileRemoved": true,
+            "pageErrors": []
+          },
+          {
+            "passed": false,
+            "reason": "Old fixture waits for lazily mounted area host before trusted hotkey",
+            "phasesPassedBeforeFailure": 2,
+            "profileRemoved": true,
+            "pageErrors": []
+          },
+          {
+            "passed": false,
+            "reason": "Old fixture treats random model-probe image as selected screenshot",
+            "phasesPassedBeforeFailure": 4,
+            "profileRemoved": true,
+            "pageErrors": []
+          }
+        ],
+        "screenshotsInspected": [
+          "area-dark-narrow",
+          "area-vision-result",
+          "ordinary-translated",
+          "initial-settings-collapsed-failure"
+        ],
+        "cleanupVerified": true,
+        "scopedTemporaryProcessesAfterRun": 0,
+        "scope": "Real native capture/crop/UI and Tesseract public model loading; deterministic Google and local OpenAI/vision/probe responses. No live Google/AI semantic quality, real account, real Firefox/device/store proof."
+      },
+      "checks": {
+        "typecheck": "passed",
+        "chromeBuild": "passed",
+        "firefoxBuild": "passed; not native Firefox runtime",
+        "userscriptBuild": "passed",
+        "userscriptVerifier": "passed",
+        "testSuiteAudit": {
+          "passed": true,
+          "files": 466,
+          "staticRegisteredDefinitions": 6220
+        },
+        "docsBuild": "passed;77public pages, internal reports excluded",
+        "docsCheck": {
+          "passed": true,
+          "pages": 77,
+          "links": 3959,
+          "anchors": 745,
+          "images": 154,
+          "internalReportsCheckedBy": "Separate JSON/hash/count/partition validation"
+        },
+        "documentAndAdapters": {
+          "files": 2,
+          "cases": 24,
+          "passed": true,
+          "scope": "8Firefox-document contract +16shared Offscreen adapters; no native Firefox proof"
+        },
+        "changedCjsSyntax": "passed"
+      },
+      "architecture": {
+        "headerCases": 801,
+        "moduleBoundaryCases": 13,
+        "providerBoundaryCases": 6,
+        "passed": 827,
+        "failed": 2,
+        "ownership": {
+          "cases": 9,
+          "passed": 7,
+          "failed": 2,
+          "remainingExecutableOmissions": 15,
+          "unownedDocumentationTools": 3,
+          "wholeGatePassed": false
+        }
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/app/offscreen/runtime.ts",
+          "src/features/area-translation/core.ts",
+          "src/features/area-translation/protocol.ts",
+          "src/features/area-translation/types.ts",
+          "src/features/image-translation/services/mangaOcr.ts",
+          "src/features/image-translation/services/remoteImage.ts"
+        ],
+        "newFunctionBodies": 84,
+        "changedFiles": [
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/features/image-translation/services/ocrRuntime.ts"
+        ],
+        "renamedFile": {
+          "from": "src/features/image-translation/services/mangaEncoding.ts",
+          "to": "src/features/image-translation/services/imageEncoding.ts",
+          "functionBodies": 8
+        },
+        "inventoryFiles": 821,
+        "inventoryFunctions": 14700,
+        "cachedIntegratedPendingSources": [
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/handlers/webDavBackup.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/core/config/catalog.ts",
+          "src/core/config/freeTranslation.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/WebDavBackup.vue",
+          "src/features/settings/ui/WritingSettings.vue",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue",
+          "src/features/settings/ui/services/ServiceCatalog.vue",
+          "src/features/settings/ui/services/ServiceCatalogItem.vue",
+          "src/features/settings/ui/services/freeTranslationChecks.ts",
+          "src/platform/google-drive/api.ts",
+          "src/platform/webdav/api.ts",
+          "src/providers/translation/free-extra-web.ts",
+          "src/providers/translation/free-web.ts",
+          "src/services/config/cloudBackupClient.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/config/webDavBackup.ts"
+        ]
+      },
+      "remaining": [
+        "644pending source files, including23cached integrated sources",
+        "Native large-image decode/draw preprocessing still107-226ms median maximum heartbeat gaps; no excellent whole-chain budget proof",
+        "Host content canvas read, remote base64/chunk cost, inpaint cluster search/mask budget and vertical OCR grouping/dedup",
+        "Engine omitted punctuation quality gap and all prior highlighter/remount/section/vocabulary debts",
+        "15executable and3documentation ownership gaps; rewritten cached main history not reconciled"
+      ],
+      "referenceRepositoriesChanged": false,
+      "referenceCodeUsedInThisBatch": false,
+      "pushed": false,
+      "remoteMerged": false
     }
   ]
 }
