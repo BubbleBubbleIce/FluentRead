@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 828,
-    "functions": 15023,
+    "functions": 15051,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -83,8 +83,8 @@
       },
       "src/app": {
         "files": 102,
-        "functions": 1184,
-        "lines": 11565
+        "functions": 1212,
+        "lines": 11622
       },
       "src/core/config": {
         "files": 52,
@@ -648,6 +648,12 @@
       "file": "src/app/options/OptionsApp.vue",
       "sha256": "328d4f2c16659fbdc4fc6d3e0d13fc67cf48a9642e9968b4a30d5023cf5e4214",
       "functionBodies": 52,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/PopupServices.vue",
+      "sha256": "d9a97e1b648c92a168b69a6e1d03eed94a141762e2d72dc07a9e229cc4b090ce",
+      "functionBodies": 55,
       "status": "source-read-and-traced"
     },
     {
@@ -1534,7 +1540,7 @@
     },
     {
       "file": "src/features/settings/ui/FeatureServiceSettings.vue",
-      "sha256": "b7e398bbd3ddd821dcf51e4c8c4dfd18b29d7c417cdc598bd0b8df57d247effd",
+      "sha256": "8d168e9bce4a1a0ea4302829f545dd25ea62e5a25723a8c623e5e919afa973b3",
       "functionBodies": 15,
       "status": "source-read-and-traced"
     },
@@ -2235,7 +2241,6 @@
     "src/app/popup/PopupDrawer.ts",
     "src/app/popup/PopupLanguageSelect.vue",
     "src/app/popup/PopupOnboarding.vue",
-    "src/app/popup/PopupServices.vue",
     "src/app/popup/PopupSiteRule.vue",
     "src/app/popup/cache.ts",
     "src/app/popup/index.ts",
@@ -2701,7 +2706,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue547pending files/functions: QuickTranslationProfiles actual cached controls/capacity/hotkey sessions and PopupServices credential/model assignments next. Other settings/background/application paths and cached-main reconciliation remain pending. Latest-main rebase, full resulting code review/fixes/verification/merge only after whole audit.",
+    "Continue546pending production files/functions: QuickTranslationProfiles capacity at commit, latest profiles/drafts, actual cached controls, recorder sessions and independent models/defaults next. PopupApp whole-source review remains pending (only service drawer visibility forwarding traced43). Other application paths and cached-main reconciliation remain pending. After full scope: fresh main, safe rewritten-history rebase, whole resulting code review/fixes, verification and merge.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2736,9 +2741,9 @@
     "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending."
   ],
   "progress": {
-    "sourceReadFiles": 281,
-    "sourceReadFunctionBodies": 5128,
-    "pendingFiles": 547,
+    "sourceReadFiles": 282,
+    "sourceReadFunctionBodies": 5183,
+    "pendingFiles": 546,
     "goalComplete": false
   },
   "observations": [
@@ -3484,6 +3489,12 @@
       "file": "src/app/background/imageContextMenu.ts",
       "status": "fixed-reviewed-and-verified-forty-second",
       "issue": "Menu snapshot reads supplied image config instead of global config, rebuild signature includes actual menu structure and UI language. Target language, shortcut and legacy display changes no longer rebuild. Remove unused target-language/shortcut computation, two freeze wrappers and obsolete group/fallback fields. Current preview/action labels preserved."
+    },
+    {
+      "file": "src/app/popup/PopupServices.vue",
+      "status": "fixed-reviewed-and-verified-forty-third",
+      "issue": "Popup overview caches ten rows and label map; model-specific validation reuses optional selected-model identity without whole-config/model copying or repeat warning computation. Keeps independent input/reading/writing/document models, unavailable selections, default inheritance and model reset semantics. Overview/open/close and picker choices, query controls, expansion and keyboard handlers capture active config, view revision, session and rendered query/expansion. Hidden/deactivated/unmounted/replaced configuration or older sessions cannot write/close current view. External selected/effective service changes reset picker. Choosing revalidates current provider membership/capabilities, rejects removed custom providers and AI-incompatible machine services. DOM/session references use shallowRef. Pending focus/scroll rechecks active ownership and view, connected root and user focus; back returns to corresponding overview row without moving focus after user leaves. Session reset immediately invalidates old close/choice handlers. Removed extra closed flag discovered in review: view identity suffices and default-active KeepAlive reactivation stays operable. Shared Popup/settings capability warning now names corresponding reading/writing feature and AI-only requirement using existing localized keys. Writing does not describe itself as default AI explanation; explicit incompatible selection is not mislabeled as default. Parent service drawer forwards actual visibility. PopupApp whole-file review remains pending; the one changed ownership boundary does not count its other functions. Removed old selectedLabel, returnFromPicker and focusFirstOption wrappers by folding derived text into cached rows and binding keyboard actions to their view.",
+      "validation": "New actual cached client SFC/Linkedom suite28cases20staticdefinitions; same final harness original0f0444b0 Popup source23fail5pass. Seven related files119pass and six strict files79cases/four modules four dimensions100, zero unhandled. Final production Edge10flows4stable screenshots/console0; cleanup verified. Types/Chrome/Firefox/userscript/verifier/manifests/testaudit passed. Architecture829pass2existing failures. Whole goal remains active,546files pending; final main rebase/review/merge not performed."
     }
   ],
   "finalDelivery": {

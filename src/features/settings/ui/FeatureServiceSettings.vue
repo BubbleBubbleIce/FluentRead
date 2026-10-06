@@ -65,7 +65,7 @@ const rows = computed(() => featureServiceDefinitions.map(feature => {
   const ownsSelection = () => current() && getFeatureService(config, feature) === selected
     && (selected || config.service) === service;
   const message = feature.aiOnly && !isHarnessService(service, config.customOpenAIProviders)
-    ? t('featureServices.needsAi') : getMissingCredentialMessage(service, config, model);
+    ? `${t(`featureServices.${feature.id}`)} · ${t('featureServices.aiOnly')}` : getMissingCredentialMessage(service, config, model);
   return {
     feature, selected, service, model, warning: message ? translateLegacy(message) : '',
     choices: selected && !available ? [{value: selected, label: serviceLabel(selected), disabled: true}, ...visible] : visible,

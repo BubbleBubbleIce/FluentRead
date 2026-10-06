@@ -475,7 +475,8 @@
       "tests/serviceDirectoryLifecycle.test.ts",
       "tests/promptEditorLifecycle.test.ts",
       "tests/featureMenuSettingsLifecycle.test.ts",
-      "tests/contextMenuRuntimeOwnership.test.ts"
+      "tests/contextMenuRuntimeOwnership.test.ts",
+      "tests/popupServicesLifecycle.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

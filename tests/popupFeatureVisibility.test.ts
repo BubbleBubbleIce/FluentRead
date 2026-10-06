@@ -348,7 +348,8 @@ describe('popup feature visibility', () => {
         expect(panel).toContain('searchServiceOptions(');
         expect(panel).toContain('searchableModels.value');
         expect(panel).toContain('provider.models');
-        expect(panel).toContain('setFeatureService(props.config, feature, service)');
+        expect(panel).toContain('setFeatureService(config, feature, service)');
+        expect(popup).toContain(':active="drawerVisible && activeDrawer === \'services\'"');
         expect(panel).toContain('class="popup-service-overview"');
         expect(panel).toContain('class="popup-service-picker"');
         expect(panel).toContain('role="listbox"');

@@ -227,7 +227,7 @@
         </header>
 
       <div v-if="activeDrawer === 'services'" class="drawer-content provider-drawer-content">
-        <PopupServices :config="config" :service-options="allServiceOptions" @close="drawerVisible = false" />
+        <PopupServices :config="config" :service-options="allServiceOptions" :active="drawerVisible && activeDrawer === 'services'" @close="drawerVisible = false" />
       </div>
       <div v-else-if="activeDrawer === 'aiContext'" class="drawer-content ai-context-details" data-i18n-ignore>
         <div class="ai-context-detail-state" :data-ai-context-state="aiContextPresentation.state">

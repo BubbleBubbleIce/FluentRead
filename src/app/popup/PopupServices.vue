@@ -1,53 +1,53 @@
 <!--
  @file src/app/popup/PopupServices.vue
  文件职责：在 Popup 翻译服务抽屉中展示功能分配概览，以独立选择面板替代层叠下拉菜单，让窄弹窗里的服务选择更直观。
- 主要内容：突出网页默认服务，以紧凑列表展示各功能的独立服务或继承状态，以统一状态标签呈现服务并让多语言名称完整换行，保留本地图标、模型和配置提醒；选择面板合并功能标题、返回与关闭操作，将主要空间用于常用/更多服务、模型搜索及键盘导航，保留不可用的旧选择。
+ 主要内容：突出网页默认服务，以紧凑列表展示各功能的独立服务或继承状态，以统一状态标签呈现服务并让多语言名称完整换行，保留本地图标、模型和配置提醒；选择面板合并功能标题、返回与关闭操作，将主要空间用于常用/更多服务、模型搜索及键盘导航，保留不可用的旧选择，缓存行级凭据与模型，只让当前活跃配置和所属面板的事件修改草稿；焦点返回复验面板与用户焦点。
  模块边界：复用功能服务映射、模型解析及供应商能力，只修改父级配置草稿；保存由 PopupApp 负责，不请求翻译或处理连接密钥。
 -->
 <template>
-  <div ref="panel" class="popup-service-panel" data-i18n-ignore @keydown.esc="returnFromPicker">
+  <div ref="panel" class="popup-service-panel" data-i18n-ignore :onKeydown="panelActions.keydown">
     <div v-if="!editing" class="popup-service-toolbar">
-      <button type="button" class="service-panel-close" :aria-label="t('common.close')" @click="$emit('close')">×</button>
+      <button type="button" class="service-panel-close" :aria-label="t('common.close')" :onClick="panelActions.close">×</button>
     </div>
     <div v-if="!editing" class="popup-service-overview">
-      <button v-for="field in fields" :key="field.id" type="button" class="service-assignment"
-        :class="{'default-assignment': !field.feature}" :data-feature-service="field.id"
-        :aria-label="`${t(`featureServices.${field.id}`)} · ${selectedLabel(field.feature)}`"
-        :title="warning(field.feature) || (!field.feature ? t('featureServices.defaultHelp') : selectedLabel(field.feature))"
-        @click="openPicker(field)">
-        <span class="assignment-heading"><strong>{{ t(`featureServices.${field.id}`) }}</strong></span>
+      <button v-for="row in rows" :key="row.field.id" type="button" class="service-assignment"
+        :class="{'default-assignment': !row.field.feature}" :data-feature-service="row.field.id"
+        :aria-label="`${t(`featureServices.${row.field.id}`)} · ${row.selectedLabel}`"
+        :title="row.warning || (!row.field.feature ? t('featureServices.defaultHelp') : row.selectedLabel)"
+        :onClick="row.open">
+        <span class="assignment-heading"><strong>{{ t(`featureServices.${row.field.id}`) }}</strong></span>
         <span class="assignment-details">
-          <span v-if="warning(field.feature)" class="assignment-warning" role="img" :aria-label="warning(field.feature)" :title="warning(field.feature)">!</span>
-          <span class="assignment-value" :class="{'assignment-inherited': field.feature?.inherit && !selected(field.feature)}">
-            <ServiceIcon v-if="!field.feature?.inherit || selected(field.feature)" :service="effective(field.feature)" :label="label(effective(field.feature))" size="small" />
-            <span>{{ field.feature?.inherit && !selected(field.feature) ? t('featureServices.followDefault') : label(effective(field.feature)) }}</span>
+          <span v-if="row.warning" class="assignment-warning" role="img" :aria-label="row.warning" :title="row.warning">!</span>
+          <span class="assignment-value" :class="{'assignment-inherited': row.field.feature?.inherit && !row.selected}">
+            <ServiceIcon v-if="!row.field.feature?.inherit || row.selected" :service="row.service" :label="label(row.service)" size="small" />
+            <span>{{ row.field.feature?.inherit && !row.selected ? t('featureServices.followDefault') : label(row.service) }}</span>
           </span>
-          <small v-if="!warning(field.feature) && field.feature && selected(field.feature) && servicesType.isUseModel(effective(field.feature))" :title="getFeatureModel(config, field.feature)">{{ getFeatureModel(config, field.feature) }}</small>
+          <small v-if="!row.warning && row.field.feature && row.selected && servicesType.isUseModel(row.service)" :title="row.model">{{ row.model }}</small>
         </span>
         <span class="assignment-chevron" aria-hidden="true">›</span>
       </button>
     </div>
     <section v-else class="popup-service-picker" :data-service-picker="editing.id">
       <header class="service-picker-heading">
-        <button type="button" class="service-picker-back" :aria-label="t('featureServices.back')" @click="backToOverview">←</button>
+        <button type="button" class="service-picker-back" :aria-label="t('featureServices.back')" :onClick="panelActions.back">←</button>
         <strong>{{ t(`featureServices.${editing.id}`) }}</strong>
         <small v-if="editing.feature?.aiOnly">{{ t('featureServices.aiOnly') }}</small>
-        <button type="button" class="service-panel-close" :aria-label="t('common.close')" @click="$emit('close')">×</button>
+        <button type="button" class="service-panel-close" :aria-label="t('common.close')" :onClick="panelActions.close">×</button>
       </header>
       <label class="service-picker-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
-        <input ref="searchInput" v-model="query" type="search" :aria-label="t('popup.serviceSearchPlaceholder')" :placeholder="t('popup.serviceSearchPlaceholder')" @keydown.down.prevent="focusFirstOption" />
-        <button v-if="query" type="button" :aria-label="t('popup.clearSearch')" @click="query = ''; searchInput?.focus()">×</button>
+        <input ref="searchInput" :value="query" :onInput="panelActions.search" type="search" :aria-label="t('popup.serviceSearchPlaceholder')" :placeholder="t('popup.serviceSearchPlaceholder')" :onKeydown="panelActions.searchKeydown" />
+        <button v-if="query" type="button" :aria-label="t('popup.clearSearch')" :onClick="panelActions.clear">×</button>
       </label>
-      <div ref="results" class="service-picker-list" role="listbox" :aria-label="t(`featureServices.${editing.id}`)" @keydown="navigateOptions">
+      <div ref="results" class="service-picker-list" role="listbox" :aria-label="t(`featureServices.${editing.id}`)" :onKeydown="panelActions.navigate">
         <button v-if="editing.feature?.inherit && !query.trim()" type="button" role="option" class="service-choice follow-choice"
-          data-service-choice="" :aria-selected="!selected(editing.feature)" @click="choose(editing.feature, '')">
+          data-service-choice="" :aria-selected="!selected(editing.feature)" :onClick="panelActions.inherit">
           <ServiceIcon :service="config.service" :label="label(config.service)" size="small" />
           <span class="service-choice-copy"><strong>{{ t('featureServices.followDefault') }}</strong><small>{{ label(config.service) }}</small></span>
           <span v-if="!selected(editing.feature)" class="service-choice-check" aria-hidden="true">✓</span>
         </button>
         <template v-for="group in choiceGroups" :key="group.id">
-          <button v-if="group.id === 'more' && !query.trim() && moreChoices.length" type="button" class="service-picker-more" :aria-expanded="moreOpen" @click="moreOpen = !moreOpen">
+          <button v-if="group.id === 'more' && !query.trim() && moreChoices.length" type="button" class="service-picker-more" :aria-expanded="moreOpen" :onClick="panelActions.more">
             <span>{{ t('popup.moreServices') }} <small>{{ moreChoices.length }}</small></span><span aria-hidden="true">{{ moreOpen ? '⌃' : '⌄' }}</span>
           </button>
           <div v-if="group.items.length" role="group" :aria-label="group.label" class="service-choice-group">
@@ -55,7 +55,7 @@
             <div class="service-choice-grid" :class="{common: group.id === 'common'}">
             <button v-for="option in group.items" :key="option.value" type="button" role="option" class="service-choice"
               :data-service-choice="option.value" :aria-selected="selected(editing.feature) === option.value"
-              :disabled="option.disabled" @click="choose(editing.feature, option.value)">
+              :disabled="option.disabled" :onClick="option.choose">
               <ServiceIcon :service="option.value" :label="option.label" size="small" />
               <span class="service-choice-copy"><strong>{{ option.label }}</strong><small v-if="option.disabled">{{ translateLegacy(getTranslationServiceUnavailableMessage(option.value) || '') }}</small><small v-else-if="option.matchingModels.length">{{ option.matchingModels.join(' · ') }}</small></span>
               <span v-if="selected(editing.feature) === option.value" class="service-choice-check" aria-hidden="true">✓</span>
@@ -65,39 +65,67 @@
         </template>
         <p v-if="!filteredChoices.length" class="service-picker-empty" role="status">{{ t('popup.noServiceFound') }}</p>
       </div>
-      <p v-if="warning(editing.feature)" class="service-picker-warning" role="status">{{ warning(editing.feature) }}</p>
+      <p v-if="editingWarning" class="service-picker-warning" role="status">{{ editingWarning }}</p>
     </section>
   </div>
 </template>
 <script setup lang="ts">
-import {computed, nextTick, ref} from 'vue';
+import {computed, nextTick, ref, shallowRef, watch} from 'vue';
 import type {Config} from '@/src/core/config/model';
 import {featureServiceDefinitions, getFeatureService, setFeatureService, getFeatureModel, type FeatureServiceDefinition} from '@/src/core/config/featureServices';
 import {models, customModelString, servicesType} from '@/src/core/config/catalog';
 import {isHarnessService} from '@/src/core/config/harness';
+import {getCustomOpenAIProvider, isCustomOpenAIProviderId} from '@/src/core/config/customOpenAI';
 import {getMissingCredentialMessage} from '@/src/core/config/validation';
 import {getTranslationServiceUnavailableMessage, isTranslationServiceAvailable} from '@/src/services/translation/capabilities';
 import {searchServiceOptions, type ServiceOption} from '@/src/ui/view-model/serviceCatalog';
+import {useSettingsActionContext} from '@/src/features/settings/model/useSettingsActionContext';
 import {useUiI18n} from '@/src/ui/i18n';
 import ServiceIcon from '@/src/ui/components/ServiceIcon.vue';
 type Field = {id: string; feature?: FeatureServiceDefinition};
-defineEmits<{close: []}>();
-const props = defineProps<{config: Config; serviceOptions: ServiceOption[]}>();
+type PickerSession = {field: Field; config: Config; selected: string; service: string; current: () => boolean};
+const emit = defineEmits<{close: []}>();
+const props = withDefaults(defineProps<{config: Config; serviceOptions: readonly ServiceOption[]; active?: boolean}>(), {active: true});
 const {t, translateLegacy} = useUiI18n();
-const query = ref('');
-const editing = ref<Field | null>(null);
-const moreOpen = ref(false);
-const searchInput = ref<HTMLInputElement | null>(null);
-const results = ref<HTMLElement | null>(null);
-const panel = ref<HTMLElement | null>(null);
-let triggerId = '';
+const {active, capture, revision} = useSettingsActionContext(() => props.active, () => [props.config]);
+const query = ref(''), moreOpen = ref(false), viewRevision = ref(0);
+const session = shallowRef<PickerSession | null>(null);
+const editing = computed(() => session.value?.field || null);
+const searchInput = shallowRef<HTMLInputElement | null>(null);
+const results = shallowRef<HTMLElement | null>(null), panel = shallowRef<HTMLElement | null>(null);
 const fields: Field[] = [{id: 'default'}, ...featureServiceDefinitions.map(feature => ({id: feature.id, feature}))];
 const popularServices = new Set(['freeTranslation', 'microsoft', 'google', 'deepL', 'openai', 'deepseek', 'tongyi', 'gemini']);
+const labels = computed(() => {
+  const result = new Map<string, string>();
+  for (const option of props.serviceOptions) if (!result.has(option.value)) result.set(option.value, option.label);
+  return result;
+});
+const label = (service: string) => labels.value.get(service) || service;
 const selected = (feature?: FeatureServiceDefinition) => feature ? getFeatureService(props.config, feature) : props.config.service;
 const effective = (feature?: FeatureServiceDefinition) => selected(feature) || props.config.service;
-const label = (service: string) => props.serviceOptions.find(option => option.value === service)?.label || service;
-const selectedLabel = (feature?: FeatureServiceDefinition) => feature?.inherit && !selected(feature)
-  ? t('featureServices.follow', {service: label(props.config.service)}) : label(effective(feature));
+function selectionMatches(config: Config, field: Field, value: string, service: string) {
+  const current = field.feature ? getFeatureService(config, field.feature) : config.service;
+  return current === value && (current || config.service) === service;
+}
+function warning(feature?: FeatureServiceDefinition) {
+  const config = props.config, service = effective(feature);
+  if (feature?.aiOnly && !isHarnessService(service, config.customOpenAIProviders)) return `${t(`featureServices.${feature.id}`)} · ${t('featureServices.aiOnly')}`;
+  const model = feature ? getFeatureModel(config, feature) : config.model[service];
+  const message = getTranslationServiceUnavailableMessage(service) || getMissingCredentialMessage(service, config, model);
+  return message ? translateLegacy(message) : '';
+}
+const rows = computed(() => {
+  const token = viewRevision.value, current = capture(), config = props.config;
+  return fields.map(field => {
+    const value = selected(field.feature), service = value || config.service;
+    return {field, selected: value, service, model: field.feature ? getFeatureModel(config, field.feature) : config.model[service],
+      selectedLabel: field.feature?.inherit && !value ? t('featureServices.follow', {service: label(config.service)}) : label(service),
+      warning: warning(field.feature), open: () => {
+        if (current() && token === viewRevision.value && !session.value && selectionMatches(config, field, value, service)) openPicker(field);
+      }};
+  });
+});
+const editingWarning = computed(() => editing.value ? warning(editing.value.feature) : '');
 const searchableModels = computed(() => {
   const merged = new Map<string, readonly string[]>(models);
   Object.entries(props.config.customModels).forEach(([service, saved]) => merged.set(service, [...new Set([...(merged.get(service) || []).filter(model => model !== customModelString), ...saved])]));
@@ -107,6 +135,7 @@ const searchableModels = computed(() => {
 const filteredChoices = computed(() => {
   const feature = editing.value?.feature;
   const available = props.serviceOptions.filter(option => !option.disabled && isTranslationServiceAvailable(option.value)
+    && (!isCustomOpenAIProviderId(option.value) || Boolean(getCustomOpenAIProvider(props.config.customOpenAIProviders, option.value)))
     && (!feature?.aiOnly || isHarnessService(option.value, props.config.customOpenAIProviders)));
   const matches = searchServiceOptions(available, query.value, searchableModels.value, props.config.model, props.config.customModel);
   const current = selected(feature);
@@ -114,43 +143,62 @@ const filteredChoices = computed(() => {
     ? [{value: current, label: label(current), disabled: true, matchingModels: []}, ...matches] : matches;
 });
 const moreChoices = computed(() => filteredChoices.value.filter(option => !popularServices.has(option.value)));
-const choiceGroups = computed(() => query.value.trim()
-  ? [{id: 'search', label: t('popup.providers.title'), items: filteredChoices.value}]
-  : [
-    {id: 'common', label: t('popup.commonServices'), items: filteredChoices.value.filter(option => popularServices.has(option.value))},
-    {id: 'more', label: t('popup.moreServices'), items: moreOpen.value ? moreChoices.value : []},
-  ]);
-function openPicker(field: Field) {
-  triggerId = field.id;
-  editing.value = field;
-  query.value = '';
-  const current = selected(field.feature);
-  moreOpen.value = Boolean(current && !popularServices.has(current));
+const choiceGroups = computed(() => {
+  const owned = ownView(), keyword = query.value, expanded = moreOpen.value;
+  const bind = (items: typeof filteredChoices.value) => items.map(option => ({...option, choose: () => {
+    if (owned() && query.value === keyword && moreOpen.value === expanded) choose(session.value!, option.value);
+  }}));
+  return query.value.trim() ? [{id: 'search', label: t('popup.providers.title'), items: bind(filteredChoices.value)}] : [
+    {id: 'common', label: t('popup.commonServices'), items: bind(filteredChoices.value.filter(option => popularServices.has(option.value)))},
+    {id: 'more', label: t('popup.moreServices'), items: moreOpen.value ? bind(moreChoices.value) : []},
+  ];
+});
+function resetPicker() {session.value = null;query.value = '';moreOpen.value = false;viewRevision.value += 1;}
+watch(() => [revision.value, session.value && selected(session.value.field.feature), session.value && effective(session.value.field.feature)], () => {
+  if (!active.value || (session.value && !ownsSession(session.value))) resetPicker();
+}, {flush: 'sync'});
+function ownsSession(value: PickerSession) {
+  return session.value === value && value.current() && selectionMatches(value.config, value.field, value.selected, value.service);
+}
+function ownView() {
+  const value = session.value, token = viewRevision.value, current = capture();
+  return () => current() && token === viewRevision.value && (value ? ownsSession(value) : !session.value);
+}
+function focusAfterRender(current: () => boolean, before: Element | null, target: () => HTMLElement | null) {
+  const root = panel.value, startedHere = before === document.body || Boolean(before && root?.contains(before));
   void nextTick(() => {
-    searchInput.value?.focus();
-    const currentOption = results.value?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
-    if (results.value && currentOption) results.value.scrollTop = Math.max(0, currentOption.offsetTop - (results.value.clientHeight - currentOption.offsetHeight) / 2);
+    if (!current() || !root?.isConnected || !startedHere) return;
+    if (document.activeElement !== before && document.activeElement !== document.body) return;
+    target()?.focus({preventScroll: true});
   });
 }
-function backToOverview() {
-  editing.value = null;
-  query.value = '';
-  // 概览在选择面板开启时销毁；返回后按同一功能重新定位，不聚焦已移除节点。
-  void nextTick(() => panel.value?.querySelector<HTMLButtonElement>(`[data-feature-service="${triggerId}"]`)?.focus());
+function openPicker(field: Field) {
+  if (!active.value || !fields.includes(field)) return;
+  const before = document.activeElement, config = props.config;
+  resetPicker();session.value = {field, config, selected: selected(field.feature), service: effective(field.feature), current: capture()};
+  moreOpen.value = Boolean(session.value.selected && !popularServices.has(session.value.selected));
+  const current = ownView();
+  focusAfterRender(current, before, () => searchInput.value);
+  void nextTick(() => {
+    if (!current()) return;
+    const list = results.value, option = list?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
+    if (list?.isConnected && option) list.scrollTop = Math.max(0, option.offsetTop - (list.clientHeight - option.offsetHeight) / 2);
+  });
 }
-function returnFromPicker(event: KeyboardEvent) {
-  if (!editing.value) return;
-  event.stopPropagation();
-  backToOverview();
+function backToOverview(value: PickerSession) {
+  if (!ownsSession(value)) return;
+  const before = document.activeElement, id = value.field.id;
+  resetPicker();focusAfterRender(ownView(), before, () => panel.value?.querySelector<HTMLButtonElement>(`[data-feature-service="${id}"]`) || null);
 }
-function choose(feature: FeatureServiceDefinition | undefined, service: string) {
+function choose(value: PickerSession, service: string) {
+  if (!ownsSession(value)) return;
+  const feature = value.field.feature, config = value.config;
   if (service && !filteredChoices.value.some(option => option.value === service && !option.disabled)) return;
   if (!service && !feature?.inherit) return;
-  if (feature) setFeatureService(props.config, feature, service);
-  else props.config.service = service;
-  backToOverview();
+  // 写入会同步失效会话，所以先安排所属面板的返回，再修改捕获的配置。
+  backToOverview(value);
+  if (feature) setFeatureService(config, feature, service);else config.service = service;
 }
-function focusFirstOption() { results.value?.querySelector<HTMLButtonElement>('[role="option"]:not(:disabled)')?.focus(); }
 function navigateOptions(event: KeyboardEvent) {
   const buttons = [...(results.value?.querySelectorAll<HTMLButtonElement>('[role="option"]:not(:disabled)') || [])];
   const index = buttons.indexOf(event.target as HTMLButtonElement);
@@ -159,14 +207,23 @@ function navigateOptions(event: KeyboardEvent) {
   const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
   buttons[next]?.focus();
 }
-function warning(feature?: FeatureServiceDefinition) {
-  const service = effective(feature);
-  if (feature?.aiOnly && !isHarnessService(service, props.config.customOpenAIProviders)) return t('featureServices.needsAi');
-  const model = feature ? getFeatureModel(props.config, feature) : props.config.model[service];
-  const message = getTranslationServiceUnavailableMessage(service)
-    || getMissingCredentialMessage(service, {...props.config, model: {...props.config.model, [service]: model}});
-  return message ? translateLegacy(message) : '';
-}
+const panelActions = computed(() => {
+  const owned = ownView(), value = session.value, keyword = query.value, expanded = moreOpen.value;
+  const ownsControls = () => owned() && query.value === keyword && moreOpen.value === expanded;
+  return {
+    close: () => {if (owned()) {resetPicker();emit('close');}},
+    back: () => {if (owned() && value) backToOverview(value);},
+    inherit: () => {if (ownsControls() && value) choose(value, '');},
+    search: (event: Event) => {if (ownsControls() && event.target === searchInput.value) query.value = searchInput.value?.value || '';},
+    clear: () => {if (ownsControls()) {query.value = '';searchInput.value?.focus({preventScroll: true});}},
+    more: () => {if (ownsControls()) moreOpen.value = !expanded;},
+    searchKeydown: (event: KeyboardEvent) => {
+      if (ownsControls() && event.key === 'ArrowDown') {event.preventDefault();results.value?.querySelector<HTMLButtonElement>('[role="option"]:not(:disabled)')?.focus();}
+    },
+    navigate: (event: KeyboardEvent) => {if (ownsControls()) navigateOptions(event);},
+    keydown: (event: KeyboardEvent) => {if (owned() && value && event.key === 'Escape') {event.stopPropagation();backToOverview(value);}},
+  };
+});
 </script>
 <style scoped>
 .popup-service-toolbar { position: sticky; top: 0; z-index: 1; display: flex; justify-content: flex-end; margin-bottom: 8px; background: var(--surface); }

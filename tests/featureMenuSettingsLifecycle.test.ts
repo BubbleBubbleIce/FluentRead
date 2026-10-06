@@ -120,7 +120,7 @@ describe('功能服务分配实际缓存模板归属', () => {
     config.requireApiKey[createApiKeyRequirementKey('openai','input')] = true;await settle();expect(document.querySelector('[data-feature-service="input"] .feature-service-warning')).not.toBeNull()
   })
   it('普通未声明 active 调用正常，机器服务继承的 AI 警告不妨碍恢复兼容服务', async () => {
-    const config = runtime.reactive(new Config());config.service = 'microsoft';await mountFeature(config,{active:undefined});expect(document.querySelector('[data-feature-service="reading"] .feature-service-warning')?.textContent).toContain('featureServices.needsAi')
+    const config = runtime.reactive(new Config());config.service = 'microsoft';await mountFeature(config,{active:undefined});expect(document.querySelector('[data-feature-service="reading"] .feature-service-warning')?.textContent).toBe('featureServices.reading · featureServices.aiOnly');expect(document.querySelector('[data-feature-service="writing"] .feature-service-warning')?.textContent).toBe('featureServices.writing · featureServices.aiOnly')
     eventOf(featureControl('reading'))('openai');expect(config.harness.service).toBe('openai')
   })
 })
