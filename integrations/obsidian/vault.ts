@@ -29,9 +29,19 @@ export async function createBilingualNote(
     content: string,
     signal: AbortSignal,
 ): Promise<TFile> {
-    if (signal.aborted) throw new DOMException('Document translation cancelled', 'AbortError');
-    if (file.stat.mtime !== sourceSnapshot.mtime || file.stat.size !== sourceSnapshot.size) {
-        throw new Error('The source file changed during translation. Please try again.');
+    for (let attempt = 0; attempt < 1_000; attempt += 1) {
+        if (signal.aborted) throw new DOMException('Document translation cancelled', 'AbortError');
+        if (vault.getAbstractFileByPath(file.path) !== file ||
+            file.stat.mtime !== sourceSnapshot.mtime || file.stat.size !== sourceSnapshot.size) {
+            throw new Error('The source file changed during translation. Please try again.');
+        }
+        const path = availableOutputPath(vault, file);
+        try {
+            return await vault.create(path, content);
+        } catch (error) {
+            // 选名与异步创建之间可能被另一项翻译抢占；只重试确实已占用的路径。
+            if (!vault.getAbstractFileByPath(path)) throw error;
+        }
     }
-    return vault.create(availableOutputPath(vault, file), content);
+    throw new Error('No available filename for the bilingual note');
 }

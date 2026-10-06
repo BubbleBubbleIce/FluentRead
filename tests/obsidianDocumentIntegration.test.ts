@@ -5,6 +5,8 @@ import {translateMicrosoftTextsWithTransport} from '../src/providers/translation
 import {bilingualNoteName, renderBilingualPdfNote} from '../integrations/obsidian/output';
 import {prepareMarkdownSegments} from '../integrations/obsidian/markdown';
 import {extractPdfSegments} from '../integrations/obsidian/pdf';
+import {createObsidianTranslator, type ObsidianRequestUrl} from '../integrations/obsidian/translation';
+import {createBilingualNote} from '../integrations/obsidian/vault';
 
 describe('Obsidian Markdown document flow', () => {
     it('preserves properties, wiki links, code, and math while translating ordinary text', () => {
@@ -59,6 +61,47 @@ describe('Obsidian Markdown document flow', () => {
         expect(result.indexOf('另一段')).toBeLessThan(result.indexOf('## 第 2 页'));
     });
 
+    it.each([
+        ['> ## A quoted heading', 'A quoted heading'],
+        ['> - [x] A completed task', 'A completed task'],
+        ['1. > A quoted list item', 'A quoted list item'],
+    ])('sends readable text for nested Markdown structure %s and retains the source line', (source, readable) => {
+        const document = parseDocument('nested.md', source);
+        const before = structuredClone(document.segments);
+        const prepared = prepareMarkdownSegments(document.segments);
+        expect(prepared.map(({source: text}) => text)).toEqual([readable]);
+        expect(document.segments).toEqual(before);
+        expect(renderDocument(document, ['结构译文'], 'bilingual')).toBe(`${source}\n> 结构译文`);
+    });
+
+    it('retains segment identity and metadata and does not erase structural-only text', () => {
+        const segments = [{id: 7, source: '> ', contextLabel: 'Context', role: 'note' as const}];
+        expect(prepareMarkdownSegments(segments)).toEqual(segments);
+        expect(prepareMarkdownSegments([{...segments[0], source: '> A note'}])[0])
+            .toEqual({...segments[0], source: 'A note'});
+    });
+
+    it.each(['', '   \n', '---\ntitle: Metadata only\n---', '```js\nconst code = 1;\n```', '$$\nE = mc^2\n$$'])
+        ('keeps non-translatable Markdown unchanged: %j', (source) => {
+            const document = parseDocument('empty.md', source);
+            expect(prepareMarkdownSegments(document.segments)).toEqual([]);
+            expect(renderDocument(document, [], 'bilingual')).toBe(source);
+        });
+
+    it.each([
+        ['UPPER.MD', 'UPPER.bilingual.md'],
+        ['long.MARKDOWN', 'long.bilingual.md'],
+        ['paper.PDF', 'paper.PDF.bilingual.md'],
+    ])('names outputs for case-insensitive source extensions: %s', (source, expected) => {
+        expect(bilingualNoteName(source)).toBe(expected);
+    });
+
+    it('escapes PDF text markup and keeps multiline translations inside the quote', () => {
+        const result = renderBilingualPdfNote('paper.pdf', [{id: 0, source: '[source] *bold*\n> another line'}], ['[translation]\n# heading']);
+        expect(result).toContain('> \\[source\\] \\*bold\\*\n> \\> another line');
+        expect(result).toContain('> \\[translation\\]\n> \\# heading');
+    });
+
     it('extracts text from a real two-page PDF without changing the fixture', async () => {
         const bytes = readFileSync(new URL('../examples/document-translation/sample.pdf', import.meta.url));
         const before = Buffer.from(bytes);
@@ -69,6 +112,39 @@ describe('Obsidian Markdown document flow', () => {
         expect(segments.some(({contextLabel}) => contextLabel === '第 1 页')).toBe(true);
         expect(segments.some(({contextLabel}) => contextLabel === '第 2 页')).toBe(true);
         expect(bytes).toEqual(before);
+    });
+
+    it('translates parsed Markdown and creates a unique sibling without changing either original note', async () => {
+        const source = '---\ntitle: Original title\n---\n> - [x] A task.\nRead [[Reference]] safely.\n```js\nconst code = 1;\n```';
+        const document = parseDocument('source.md', source);
+        const request = vi.fn(async ({body}: Parameters<ObsidianRequestUrl>[0]) => ({
+            status: 200,
+            headers: {},
+            text: JSON.stringify((JSON.parse(body as string) as string[]).map((text) => ({translations: [{text: `中文 ${text}`}]}))),
+        })) as unknown as ObsidianRequestUrl;
+        const translations = await createObsidianTranslator(request)(prepareMarkdownSegments(document.segments), {fileName: 'source.md'});
+        expect(JSON.parse(vi.mocked(request).mock.calls[0][0].body as string)).toEqual(['A task.', 'Read', 'safely.']);
+        const content = renderDocument(document, translations, 'bilingual');
+        const file = {
+            name: 'source.md', path: 'notes/source.md', parent: {path: 'notes'}, stat: {mtime: 42, size: source.length},
+        } as Parameters<typeof createBilingualNote>[1];
+        const entries = new Map([['notes/source.md', source], ['notes/source.bilingual.md', 'Earlier translation']]);
+        const vault = {
+            getAbstractFileByPath: (path: string) => path === file.path ? file : entries.has(path) ? {path} : null,
+            create: vi.fn(async (path: string, value: string) => {
+                if (entries.has(path)) throw new Error('File already exists');
+                entries.set(path, value);
+                return {path} as typeof file;
+            }),
+        } as unknown as Parameters<typeof createBilingualNote>[0];
+        const output = await createBilingualNote(vault, file, {mtime: 42, size: source.length}, content, new AbortController().signal);
+        expect(output.path).toBe('notes/source.bilingual 2.md');
+        expect(entries.get(file.path)).toBe(source);
+        expect(entries.get('notes/source.bilingual.md')).toBe('Earlier translation');
+        expect(entries.get(output.path)).toBe(content);
+        expect(content).toContain('> - [x] A task.\n> 中文 A task.');
+        expect(content).toContain('Read [[Reference]] safely.\n> 中文 Read [[Reference]] 中文 safely.');
+        expect(content).toContain('const code = 1;');
     });
 });
 

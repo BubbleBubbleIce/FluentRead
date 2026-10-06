@@ -29231,6 +29231,795 @@
         "Initial language map hook failed to observe actual imported binding; rejected and replaced with direct actual-function directory identity comparison, old16/new1",
         "Native fixture fixes preserved separately: exact model option, localized Google label, actual viewport width; anchors scroll visible panels so hidden ownership is validated with actual category navigation"
       ]
+    },
+    {
+      "batch": "forty-fifth",
+      "progress": {
+        "sourceReadFiles": 295,
+        "sourceReadFunctionBodies": 5571,
+        "pendingFiles": 535,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/app/popup/PopupApp.vue",
+          "src/app/popup/PopupSiteRule.vue",
+          "src/app/popup/cache.ts",
+          "src/app/popup/PopupDrawer.ts",
+          "src/app/popup/pageActions.ts",
+          "src/app/popup/PopupLanguageSelect.vue",
+          "src/app/popup/PopupOnboarding.vue",
+          "integrations/obsidian/markdown.ts",
+          "integrations/obsidian/output.ts",
+          "integrations/obsidian/translation.ts",
+          "integrations/obsidian/vault.ts"
+        ],
+        "newFunctionBodies": 256,
+        "previouslyReviewedChangedFiles": [
+          "src/features/section-translation/content/picker.ts"
+        ],
+        "sourceProof": {
+          "src/app/popup/PopupApp.vue": {
+            "sha256": "55f910f78fa656c4c2caee683a538ffa55b5a92bc67c2ababa040982a4862f92",
+            "functionBodies": 165,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "src/app/popup/PopupSiteRule.vue": {
+            "sha256": "011df828301d08810ef3a081160b132af84d51814dbe6bab0daa63faeaf2e6aa",
+            "functionBodies": 5,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "src/app/popup/cache.ts": {
+            "sha256": "8ef3e51ed395166fc852f4ead1fa3a2082dab1f62f8a7e25252def845ed37453",
+            "functionBodies": 1,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "src/app/popup/PopupDrawer.ts": {
+            "sha256": "c58857059bbdd556ce47f589dc32ec8f95eda832b566929074e3712469aca8e8",
+            "functionBodies": 0,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "src/app/popup/pageActions.ts": {
+            "sha256": "02f23b41cc16047d0c7a1f5602d380700ebb5a91692495dc06dba68a3116e9c6",
+            "functionBodies": 21,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "src/app/popup/PopupLanguageSelect.vue": {
+            "sha256": "cc66fb9b6ee0672ecf5f47223beb620c303034c3ecdc046bcf557fba16491bf7",
+            "functionBodies": 16,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "src/app/popup/PopupOnboarding.vue": {
+            "sha256": "594ad30f330592e178271ba8ee7a3b71a839ba9dae9857de1a5263f2eed8c1cb",
+            "functionBodies": 20,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "integrations/obsidian/markdown.ts": {
+            "sha256": "40112963f25a4619ec4e6196ad9c129653e0285c32ab39016996363aba1f4704",
+            "functionBodies": 2,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "integrations/obsidian/output.ts": {
+            "sha256": "ef44f3d868e65c117140d14f5688dcc16c45c3d71147c41a3bb69d891a13a908",
+            "functionBodies": 4,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "integrations/obsidian/translation.ts": {
+            "sha256": "e52f3ca85324c1e3a621c54ca8e36962b7abd3cd649140ccd43b358222157300",
+            "functionBodies": 20,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "integrations/obsidian/vault.ts": {
+            "sha256": "b8a77e3e564300aa5cdc35bed0c373f0e0e44a96c2bbd756514fbae15cf60805",
+            "functionBodies": 2,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyFullyReviewed": false,
+            "changedKeyboardBoundaryReadAndTraced": false
+          },
+          "src/features/section-translation/content/picker.ts": {
+            "sha256": "5dca7e219939c508b3320570f2ed9e5f5f5b8e6fa3b8cc8e8e1e336a24223beb",
+            "functionBodies": 63,
+            "fullyReadAndTracedThisBatch": false,
+            "previouslyFullyReviewed": true,
+            "changedKeyboardBoundaryReadAndTraced": true
+          }
+        },
+        "supportReadsNotAddedAsFullAudits": [
+          "src/app/popup/index.ts",
+          "src/app/popup/mount.ts",
+          "src/ui/components/UiLanguageOnboarding.vue",
+          "integrations/obsidian/main.ts",
+          "integrations/obsidian/pdf.ts",
+          "src/features/document-translation/core/document.ts"
+        ]
+      },
+      "implementation": [
+        "Extracted existing Popup full-page/restore/section/site messaging into one injected pageActions controller, removing five old root function bodies and unused feature icon VM data. In-flight operation locks before tab lookup; status reads, operations and lifecycle revisions are distinct; old query/reply/failure/finally cannot overwrite or release a new operation. Safe integer tab 0, strict status booleans, legacy fallback, credential restore, global/off/site save semantics and existing protocol retained.",
+        "Actual page/config render callbacks capture their page phase; real URL/loading/activation/removal listeners invalidate navigation, including consecutive URL updates during a query. Window filtering and title/complete/unrelated update exclusion avoid repeated status work; listeners removed on unmount. Child site buttons also capture props/context so cached child emit cannot borrow a new parent listener/domain.",
+        "Cached drawer/selection/display/modal/header/cache/route callbacks own current active configuration and phase. Disable/deactivate/pagehide/unmount invalidate pending operations; pause closes quick drawers while services remain available. Cache clear is exclusive, old completion cannot release a new request. Donation pending focus respects user focus, close restores only owned focus, old overlay cannot close a new dialog; navigation API rejections produce current-session notice instead of unhandled errors. Existing hydration/config CAS/exit handoff retained.",
+        "Parallel A: language select rejects stale/closed/disabled/source/value/lifecycle events and invalid current choices. Control remount only for source/availability changes preserves ordinary value-sync focus and language directory caching. Onboarding preload/open/retry and appearance subscriptions own active lifetime; late import/error cannot update closed context and media/config observers are released.",
+        "Parallel B: Obsidian nested Markdown prefixes stripped together, deleted/replaced source object rejected, occupied output creation races retry with source/cancel recheck, and synchronous native-request cancellation still adopts late promise rejection. Existing original-file/output semantics and bounded timeout retained; no native transaction/transport cancellation guarantee.",
+        "Production Enter regression: own closed section-picker bar was treated by generic opaque-host editing protection as page input, blocking arrows and Enter. Apply page typing protection only to page events and inspect known own ShadowRoot focus for own events; other controls retain native keys. One new real-helper regression fails before and passes after, with 120 related cases and strict picker four100 plus native Enter confirmation."
+      ],
+      "parallelAgents": {
+        "requestedByUser": true,
+        "agents": [
+          {
+            "id": "01a10eea-1c18-7500-84bd-091e922094c1",
+            "scope": [
+              "src/app/popup/PopupLanguageSelect.vue",
+              "src/app/popup/PopupOnboarding.vue"
+            ],
+            "newComponentCases": 26,
+            "baselineCases": 26,
+            "baselineFailed": 21,
+            "baselinePassed": 5,
+            "report": "parallel-popup-children-45/audit-result.md",
+            "parentPatchAndHashReviewed": true,
+            "closed": true
+          },
+          {
+            "id": "01a10eea-1cae-7263-b7cd-bae53748dc56",
+            "scope": [
+              "integrations/obsidian/markdown.ts",
+              "integrations/obsidian/output.ts",
+              "integrations/obsidian/translation.ts",
+              "integrations/obsidian/vault.ts"
+            ],
+            "finalCases": 41,
+            "originalCases": 9,
+            "beforeFixCases": 38,
+            "beforeFixFailed": 6,
+            "beforeFixPassed": 32,
+            "coverage": {
+              "statements": 97.39,
+              "lines": 97.39,
+              "branches": 89.55,
+              "functions": 94.44
+            },
+            "report": "parallel-obsidian-45/audit-report.md",
+            "parentPatchAndHashReviewed": true,
+            "closed": true
+          }
+        ]
+      },
+      "newTests": {
+        "newFiles": [
+          "tests/popupAppLifecycle.test.ts",
+          "tests/popupPageActionsOwnership.test.ts",
+          "tests/popupChildOwnership.test.ts"
+        ],
+        "newFileExecutedCases": 87,
+        "obsidianExistingCasesBefore": 9,
+        "obsidianExistingCasesAfter": 41,
+        "pickerRegressionAdded": 1,
+        "oldPageActionCasesMoved": 5,
+        "netStaticDefinitions": 67,
+        "overlappingConceptsSummedAsUnique": false,
+        "originalRootComparison": {
+          "baselineHead": "deecd9e8200ac856491371705f58b4df5a58badb",
+          "sourceFiles": 2,
+          "executed": 25,
+          "failed": 23,
+          "passed": 2,
+          "harnessSha256": "4bd865e3f125be3f9bcea9e0e29b703d92798bfeb99bbc4c37c94324c18e37ab",
+          "restored": true
+        },
+        "originalPickerRegression": {
+          "executed": 1,
+          "failed": 1,
+          "otherCasesSkippedByExplicitFilter": 52,
+          "boundary": "Actual generic editingTarget helper plus controlled closed ShadowRoot focus; fixture-only keyboard events, native confirmation separately verified"
+        }
+      },
+      "strictCoverage": {
+        "testFiles": 4,
+        "cases": 94,
+        "modules": {
+          "src/app/popup/cache.ts": {
+            "lines": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 1,
+              "covered": 1,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/app/popup/pageActions.ts": {
+            "lines": {
+              "total": 86,
+              "covered": 86,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 86,
+              "covered": 86,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 133,
+              "covered": 133,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/section-translation/content/picker.ts": {
+            "lines": {
+              "total": 595,
+              "covered": 595,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 46,
+              "covered": 46,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 595,
+              "covered": 595,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 346,
+              "covered": 346,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/settings/model/useSettingsActionContext.ts": {
+            "lines": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "thresholdsWeakened": false
+      },
+      "integration": {
+        "popupAndObsidianFiles": 16,
+        "popupAndObsidianCases": 258,
+        "sectionAndTrustFiles": 5,
+        "sectionAndTrustCases": 120,
+        "distinctFiles": 21,
+        "cases": 378,
+        "passed": 378,
+        "unhandledErrors": 0,
+        "allRegressionRun": false
+      },
+      "performance": {
+        "method": "Unchanged actual source computed declarations transpiled with real Vue computed/ref and observed 80-entry controlled catalog/credential port",
+        "before": {
+          "catalogItems": 80,
+          "labelCalls": 24,
+          "propertyReads": 1920,
+          "quickSummaryCalls": 24,
+          "quickSummaryExtraPropertyReads": 1920,
+          "credentialCalls": 2
+        },
+        "after": {
+          "catalogItems": 80,
+          "labelCalls": 24,
+          "propertyReads": 80,
+          "quickSummaryCalls": 24,
+          "quickSummaryExtraPropertyReads": 0,
+          "credentialCalls": 1
+        },
+        "boundary": "Repeated label lookup and shared credential validation work only; no provider/full-page latency, benchmark speed ratio or live browser CPU claim"
+      },
+      "browser": {
+        "passed": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "finalBrowserFrontmost": false,
+        "focusMonitorSamples": 20,
+        "focusViolations": [],
+        "cases": [
+          "actual language search, selection and config persistence use current child callbacks",
+          "intrinsic light Popup, real donation focus trap, Escape and owning trigger restoration",
+          "actual fullPage/restore/retranslate produces [1,0,1], preserves source and excluded neighbour, URL and single nonnested wrapper",
+          "reopened Popup reads actual existing full-page state",
+          "real same-tab navigation invalidates old translated status and next toggle translates/restores the new page",
+          "actual section message closes owning Popup, opens real picker and translates only confirmed range",
+          "actual site-on immediate translation, site-off retains current text, disable clears page and guards both actions, enable resumes",
+          "real hover restore and pause close quick drawer, disabled page buttons, service overview remains available while paused",
+          "real selection mode/master remember last enabled mode and presentation",
+          "image and area toggles update independent fields",
+          "Google restricts translation-only while retaining saved preference; compatible provider can select it",
+          "real cache-clear runtime/background success notice",
+          "intrinsic dark main and selection drawer render without horizontal overflow",
+          "More settings opens actual selected Options route and closes owning Popup",
+          "document entry opens actual document route and closes owning Popup"
+        ],
+        "pageWrapperStates": [
+          1,
+          0,
+          1
+        ],
+        "screenshotsInspected": [
+          "/private/tmp/fluentread-audit-20261005/browser-popup-forty-fifth/popup-light.png",
+          "/private/tmp/fluentread-audit-20261005/browser-popup-forty-fifth/page-retranslated.png",
+          "/private/tmp/fluentread-audit-20261005/browser-popup-forty-fifth/popup-dark.png",
+          "/private/tmp/fluentread-audit-20261005/browser-popup-forty-fifth/selection-dark.png"
+        ],
+        "screenshotsStableAfterFiniteAnimations": true,
+        "consoleErrors": [],
+        "browserClosed": true,
+        "profileRemoved": true,
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-popup-page-audit-45-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        },
+        "productionJavascriptSha256": "a3b62e198da615a9bfb1ba0d7b62722dc1646d16a560721f7a87e103a89cb6b8",
+        "sourceHashes": {
+          "src/app/popup/PopupApp.vue": "55f910f78fa656c4c2caee683a538ffa55b5a92bc67c2ababa040982a4862f92",
+          "src/app/popup/PopupLanguageSelect.vue": "cc66fb9b6ee0672ecf5f47223beb620c303034c3ecdc046bcf557fba16491bf7",
+          "src/app/popup/PopupOnboarding.vue": "594ad30f330592e178271ba8ee7a3b71a839ba9dae9857de1a5263f2eed8c1cb",
+          "src/features/section-translation/content/picker.ts": "5dca7e219939c508b3320570f2ed9e5f5f5b8e6fa3b8cc8e8e1e336a24223beb"
+        },
+        "persistenceCases": [
+          "real config store reads and reopened Popup retain final drawer preferences"
+        ],
+        "quickClose": false,
+        "crossPageSync": false,
+        "evidenceBoundary": "Actual production extension HTML Popup/content/config and local deterministic OpenAI transport; active-tab query fixture maps HTML Popup to actual owned web tab. Native Enter after own closed-bar fix. No toolbar-window/live-provider/Firefox/userscript/Obsidian UI proof. Failure API/status branches covered in controlled template/unit tests.",
+        "priorAttemptsPreserved": {
+          "first": "Four flows before section Enter timeout; exact page activation absent, not claimed solely a fixture failure",
+          "second": "Four flows before waiting for visibility of zero-sized closed Shadow host; fixture corrected to attached locked attribute",
+          "third": "Five flows, exact page activation and locked host, Enter still ignored; actual generic editing guard/own closed focus defect reproduced and fixed"
+        },
+        "repeatCountsAddedAsUniqueCases": false
+      },
+      "architecture": {
+        "files": 3,
+        "cases": 833,
+        "passed": 831,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3
+      },
+      "followups": [
+        {
+          "file": "src/features/document-translation/core/document.ts",
+          "function": "parseTextDocument",
+          "status": "reproduced-pending-fix",
+          "issue": "Quoted/list-container fenced code is sent as text; inline fragments lack line-position metadata and lose an inline dash in Obsidian prefix preparation",
+          "evidence": "parallel-obsidian-45/readonly-findings.json"
+        },
+        {
+          "file": "integrations/obsidian/main.ts",
+          "function": "FluentReadObsidianPlugin.translateFile",
+          "status": "reproduced-pending-fix",
+          "issue": "Mutable renamed file.path used for jobs cleanup leaves original job key",
+          "evidence": "parallel-obsidian-45/readonly-findings.json"
+        },
+        {
+          "file": "src/ui/components/UiLanguageOnboarding.vue",
+          "status": "static-candidate-pending-reproduction",
+          "issue": "Language changes during save, pending focus and post-unmount success timer lack complete ownership",
+          "evidence": "parallel-popup-children-45/audit-result.md"
+        }
+      ],
+      "externalMain": {
+        "primaryHead": "b7693b3414c46c64a9f24bd65737afddf2800a28",
+        "primaryClean": true,
+        "cachedOrigin": "b7693b3414c46c64a9f24bd65737afddf2800a28",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/en/guide/webpage-translation.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/guide/webpage-translation.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/brand-dock-manga-sites-20261005.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/maintainers/manga-sites-20261003.md",
+          "docs/public/guide/brand-dock-manga.png",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/reports/settings-ui-polish-20261006/README.md",
+          "docs/reports/settings-ui-polish-20261006/cloud-compatibility-report.json",
+          "docs/reports/settings-ui-polish-20261006/cloud-delete-loading.png",
+          "docs/reports/settings-ui-polish-20261006/delete-loading-report.json",
+          "docs/reports/settings-ui-polish-20261006/key-policy-menu.png",
+          "docs/reports/settings-ui-polish-20261006/layout-report.json",
+          "docs/reports/settings-ui-polish-20261006/learning-level.png",
+          "docs/reports/settings-ui-polish-20261006/reading-desktop.png",
+          "docs/reports/settings-ui-polish-20261006/request-limits.png",
+          "docs/reports/settings-ui-polish-20261006/resources-current.png",
+          "docs/reports/settings-ui-polish-20261006/resources-management.png",
+          "docs/reports/settings-ui-polish-20261006/resources-tesseract.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-dark-390.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-light-1440.png",
+          "docs/reports/settings-ui-polish-20261006/site-preference-menu.png",
+          "docs/reports/settings-ui-polish-20261006/speech-unified.png",
+          "docs/reports/settings-ui-polish-20261006/tooltip-selectable.png",
+          "docs/reports/settings-ui-polish-20261006/vision-single-result.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/evidence/manga-site-checks-20261005.json",
+          "scripts/testing/inspect-manga-readers.cjs",
+          "scripts/testing/probe-manga-sites.py",
+          "scripts/testing/run-drive-version-compat-ui-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-settings-layout-polish-test.cjs",
+          "scripts/testing/run-settings-reading-menu-ui-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "scripts/verify-brand-copy.mjs",
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/messageRuntime.ts",
+          "src/app/content/runtime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/cloudSync.ts",
+          "src/core/config/manga.ts",
+          "src/core/config/mangaReaderProfiles.ts",
+          "src/core/config/mangaSiteCatalog.ts",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/localTts.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/floating-ball/ui/FloatingBall.vue",
+          "src/features/image-translation/background/handlers.ts",
+          "src/features/image-translation/content/mangaBackground.ts",
+          "src/features/image-translation/content/mangaCanvas.ts",
+          "src/features/image-translation/content/mangaCompositor.ts",
+          "src/features/image-translation/content/mangaEntry.ts",
+          "src/features/image-translation/content/mangaImageSegments.ts",
+          "src/features/image-translation/content/mangaReader.ts",
+          "src/features/image-translation/content/mangaSession.ts",
+          "src/features/image-translation/content/runtime.ts",
+          "src/features/image-translation/content/sourceAuthorization.ts",
+          "src/features/image-translation/ocrLanguages.ts",
+          "src/features/image-translation/services/mangaBubbles.ts",
+          "src/features/image-translation/services/mangaRegions.ts",
+          "src/features/image-translation/services/mangaRendering.ts",
+          "src/features/image-translation/services/ocrRuntime.ts",
+          "src/features/image-translation/services/offscreenRuntime.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaEntry.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/image-translation/ui/image-ocr-settings.css",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/public.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/FloatingBallSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/LocalTranslationModelSettings.vue",
+          "src/features/settings/ui/LocalTtsSettings.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/FieldHelp.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/services/ModelVisionSettings.vue",
+          "src/features/settings/ui/services/RequestLimitSettings.vue",
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/settings/ui/settings-sections.css",
+          "src/features/settings/ui/site-rule-workspace.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/google-drive/api.ts",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/platform/webdav/api.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/architecture/verificationOwnership.test.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/backgroundGoogleDriveSync.test.ts",
+          "tests/browserFocusSafety.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/googleDriveApi.test.ts",
+          "tests/i18n.test.ts",
+          "tests/imageOcrNormalization.test.ts",
+          "tests/imageOcrRuntime.test.ts",
+          "tests/imageSourceAuthorization.test.ts",
+          "tests/imageTranslationFlow.test.ts",
+          "tests/imageTranslationOffscreenRuntime.test.ts",
+          "tests/imageTranslationRuntime.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/mangaBackground.test.ts",
+          "tests/mangaBubbles.test.ts",
+          "tests/mangaCanvas.test.ts",
+          "tests/mangaEntry.test.ts",
+          "tests/mangaImageSegments.test.ts",
+          "tests/mangaQuality.test.ts",
+          "tests/mangaReader.test.ts",
+          "tests/mangaSites.test.ts",
+          "tests/mangaTypography.test.ts",
+          "tests/model.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/test-matrix.json",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/webDavApi.test.ts",
+          "tests/webDavBackup.test.ts",
+          "tests/webDavHttpIntegration.test.ts",
+          "tests/webDavProperties.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.12315e2dafebd516.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.76118e3e0bda091e.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.b0cdc738950d45c1.json",
+          "userscript/languages/es-ES.c951c43877dbe19a.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.e66b7ea53ace2cc3.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.38d18c6dcb6e3652.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.7d1e2e8cd645eb60.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.af00cb4d384a4548.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/fr-FR.e7c03cd55983f434.json",
+          "userscript/languages/fr-FR.fa49ed17d51d0cc2.json",
+          "userscript/languages/ja-JP.1691d1c911d69419.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3b0b4f72b49707d3.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.6f3596e537c586ea.json",
+          "userscript/languages/ja-JP.7da80e10fa390124.json",
+          "userscript/languages/ja-JP.93e16f19bb3689e3.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.168894e1f4267b80.json",
+          "userscript/languages/ko-KR.3efdea50649f4cd2.json",
+          "userscript/languages/ko-KR.4e3b15d8628ddf09.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.a646b29db26c327e.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ko-KR.fbbf405d2d20474a.json",
+          "userscript/languages/ru-RU.061066d8a254689d.json",
+          "userscript/languages/ru-RU.3fc04431bd07b6e6.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.8d66f666ac96d59f.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.d10a0e95815d54e5.json",
+          "userscript/languages/ru-RU.dce326ee441ce896.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts",
+          "vitest.coverage.config.ts"
+        ],
+        "pendingFileCount": 295
+      },
+      "finalDelivery": {
+        "status": "pending-full-audit",
+        "requestedByUser": true,
+        "steps": [
+          "Complete all source/function/chain review and related fixes/performance/tests",
+          "Rebase onto then-latest verified main and reconcile changed/new source review",
+          "Review the whole resulting code and functional chains, resolve all related findings and verify",
+          "Merge the verified reviewed head using the repository delivery workflow"
+        ],
+        "performed": false
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "obsidian": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 495,
+          "staticDefinitions": 6836
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Goal active:535current production files pending; then fresh latest-main/rebase/review/fix/verify/authorized merge",
+        "Source/parser/main/shared-onboarding followups pending; reading helper files is not a full audit",
+        "Native Obsidian request/write have no cancellation/atomic-version port; post-write cancel/source changes not guaranteed",
+        "No reference project code/design, dependencies/version/localization changes; userscript pin retained",
+        "Existing2architecture ownership failures remain pending"
+      ],
+      "intermediateCorrections": [
+        "Client fixture async drawer load, real selectors/ARIA booleans/default feature visibility/selection state corrected without source workaround",
+        "Unsupported Vitest matcher and KeyboardEvent port assertion type fixed; final type check passed",
+        "Source-read external snapshot script initially reused old filename; old private44 snapshot restored from committed verification record and current read stored separately45; no old report edited",
+        "Native retries preserved; a real picker regression was diagnosed rather than silently bypassing Enter"
+      ]
     }
   ]
 }

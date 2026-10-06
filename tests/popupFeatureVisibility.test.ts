@@ -224,7 +224,7 @@ describe('popup feature visibility', () => {
         const popup = source('src/app/popup/PopupApp.vue');
         expect(popupQuickFeatureOptions.map(feature => feature.id)).toEqual(['hover', 'selection', 'appearance', 'image', 'document']);
         expect(popup).toContain('data-testid="page-translation"');
-        expect(popup).toContain('@click="togglePageTranslation"');
+        expect(popup).toContain(':onClick="pageButtons.toggle"');
         expect(popup).toContain('data-testid="section-translation"');
         expect(popup.indexOf('data-testid="section-translation"')).toBeLessThan(popup.indexOf('<el-drawer'));
         expect(popup).not.toContain('class="eyebrow features-eyebrow"');
@@ -314,7 +314,7 @@ describe('popup feature visibility', () => {
         expect(popup).toContain('{{ quickProfileSummary(profile) }}');
         expect(popup).toContain("t('popup.quickTranslation.defaultHoverShortcut')");
         expect(popup).toContain("t('popup.quickTranslation.defaultOnly', {count: quickHoverProfiles.length})");
-        expect(popup).toContain('@click="toggleDefaultHoverShortcut"');
+        expect(popup).toContain(':onClick="drawerActions.hover"');
         expect(popup).toContain(':aria-checked="defaultHoverEnabled"');
         expect(popup).toContain("t('popup.quickSettings.chooseHoverShortcut')");
         expect(popup).not.toContain("setHoverHotkey('Control')");

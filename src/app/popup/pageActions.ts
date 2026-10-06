@@ -1,0 +1,111 @@
+/**
+ * @file src/app/popup/pageActions.ts
+ * 文件职责：管理 Popup 的标签页状态读取、全文/局部操作和站点规则即时翻译归属。
+ * 主要内容：区分状态读取与用户操作版本，独占在途操作；等待后复验页面和活跃上下文，关闭、配置切换和导航使旧回复失效。
+ * 模块边界：只通过注入端口读取标签页、发送已有消息和修改界面状态/配置，不持久化、创建观察器或实现网页翻译。
+ */
+import type {Config} from '@/src/core/config/model'
+import {getSiteBaseDomain} from '@/src/core/site-rules/domain'
+import {isBrowserTabId} from '@/src/platform/browser/ids'
+
+export interface PopupPageState {tabId: number | null; windowId?: number; url: string; domain: string; translated: boolean; busy: boolean}
+export interface PopupActiveTab {id?: number; windowId?: number; url?: string; pendingUrl?: string}
+export interface PopupPagePorts {
+  state: PopupPageState
+  config: () => Config
+  active: () => boolean
+  warning: () => string
+  getTab: () => Promise<PopupActiveTab | undefined>
+  send: (tabId: number, message: {type: string; action?: string}) => Promise<unknown>
+  notice: (message: string, type?: 'success' | 'error') => void
+  close: () => void
+  translate: (key: string) => string
+  thunderbird: boolean
+}
+
+export function createPopupPageActions(ports: PopupPagePorts) {
+  const {state} = ports
+  let revision = 0, readSequence = 0, stateSequence = 0, operation: symbol | null = null
+  const disabled = () => Boolean(state.domain && ports.config().disabledExtensionDomains.includes(state.domain))
+  function invalidate() {revision += 1;readSequence += 1;stateSequence += 1;operation = null;state.busy = false}
+  function capture() {const captured = revision;return () => ports.active() && captured === revision}
+  function bindTab(tab: PopupActiveTab & {id: number}) {
+    state.tabId = tab.id;state.windowId = tab.windowId;state.url = tab.pendingUrl || tab.url || '';state.domain = getSiteBaseDomain(state.url) || ''
+  }
+  async function hydrate() {
+    if (!ports.active()) return
+    invalidate();const current = capture(), sequence = ++readSequence
+    state.tabId = null;state.url = '';state.domain = '';state.translated = false
+    try {
+      const tab = await ports.getTab()
+      if (!current() || sequence !== readSequence || !isBrowserTabId(tab?.id)) return
+      bindTab(tab as PopupActiveTab & {id: number});const statusVersion = stateSequence
+      try {
+        const response = await ports.send(tab.id, {type: 'getFullPageTranslationState'}) as {isTranslated?: unknown} | undefined
+        if (current() && sequence === readSequence && statusVersion === stateSequence) state.translated = response?.isTranslated === true
+      } catch {if (current() && sequence === readSequence && statusVersion === stateSequence) state.translated = false}
+    } catch (error) {if (current()) console.warn('[FluentRead] 无法读取当前网站', error)}
+  }
+  function begin() {
+    if (!ports.active() || state.busy || !ports.config().on || disabled()) return
+    const token = Symbol();operation = token;stateSequence += 1;state.busy = true
+    const active = capture()
+    return {current: () => active() && operation === token, finish: () => {if (operation === token) {operation = null;state.busy = false}}}
+  }
+  async function target(current: () => boolean) {
+    const tab = await ports.getTab()
+    if (!current()) return
+    if (!isBrowserTabId(tab?.id)) throw new Error('No active tab')
+    if (state.tabId !== null && (state.tabId !== tab.id || state.url !== (tab.pendingUrl || tab.url || ''))) {
+      // 新页面先读取自己的真值，旧页面的 restore/fullPage 意图不能移交给它。
+      await hydrate();return
+    }
+    bindTab(tab as PopupActiveTab & {id: number});return tab.id
+  }
+  async function translate(action: 'fullPage' | 'restore' | 'section', success: (response: {isTranslated?: unknown}) => void, failure: string) {
+    const task = begin();if (!task) return
+    try {
+      const tabId = await target(task.current);if (tabId === undefined || !task.current()) return
+      const response = await ports.send(tabId, {type: 'contextMenuTranslate', action}) as {status?: unknown; isTranslated?: unknown} | undefined
+      if (!task.current()) return
+      if (response?.status !== 'success') throw new Error('Translation failed')
+      success(response)
+    } catch {if (task.current()) ports.notice(failure, 'error')}
+    finally {task.finish()}
+  }
+  function toggle() {
+    if (!ports.active() || state.busy || !ports.config().on || disabled()) return
+    const action = state.translated ? 'restore' : 'fullPage', warning = ports.warning()
+    if (action !== 'restore' && warning) {ports.notice(warning, 'error');return}
+    return translate(action, response => {state.translated = typeof response.isTranslated === 'boolean' ? response.isTranslated : action === 'fullPage'},
+      ports.thunderbird ? '请先打开一封邮件，然后重试翻译' : '当前页面暂不支持翻译，请刷新后重试')
+  }
+  function section() {
+    if (!ports.active() || state.busy || !ports.config().on || disabled()) return
+    const warning = ports.warning();if (warning) {ports.notice(warning, 'error');return}
+    return translate('section', () => ports.close(), ports.translate('popup.sectionTranslationUnavailable'))
+  }
+  function setDisabled(enabled: boolean) {
+    if (!ports.active() || !state.domain || state.tabId === null || typeof enabled !== 'boolean') return
+    const domain = state.domain, domains = ports.config().disabledExtensionDomains
+    ports.config().disabledExtensionDomains = enabled ? domains.includes(domain) ? domains : [...domains, domain] : domains.filter(item => item !== domain)
+    invalidate();if (enabled) state.translated = false
+    ports.notice(enabled ? `已在 ${domain} 禁用扩展` : `已恢复 ${domain} 的扩展`)
+  }
+  function setAlways(enabled: boolean) {
+    if (!ports.active() || state.busy || !state.domain || state.tabId === null || typeof enabled !== 'boolean') return
+    const cfg = ports.config(), domain = state.domain
+    if (cfg.autoTranslate) {ports.notice('所有网站自动翻译已开启，请在完整设置中关闭全局开关');return}
+    if (disabled()) {ports.notice(`当前已在 ${domain} 禁用扩展，请先恢复扩展`);return}
+    const domains = cfg.alwaysTranslateDomains
+    cfg.alwaysTranslateDomains = enabled ? domains.includes(domain) ? domains : [...domains, domain] : domains.filter(item => item !== domain)
+    if (!enabled) {ports.notice(`已关闭 ${domain} 的始终翻译，当前网页保持不变`);return}
+    if (!cfg.on) {ports.notice(`已保存 ${domain}，启动插件后生效`);return}
+    const warning = ports.warning();if (warning) {ports.notice(`已保存 ${domain}；${warning}`, 'error');return}
+    return translate('fullPage', response => {
+      if (!ports.config().alwaysTranslateDomains.includes(domain)) return
+      state.translated = response.isTranslated !== false;ports.notice(`已开启 ${domain} 的始终翻译`)
+    }, `已保存 ${domain}，当前网页请刷新后重试`)
+  }
+  return {hydrate, toggle, section, setAlways, setDisabled, invalidate}
+}

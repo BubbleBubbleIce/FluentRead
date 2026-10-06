@@ -3,7 +3,8 @@
  */
 import type {DocumentSegment} from '../../src/features/document-translation/core/document';
 
-const STRUCTURAL_PREFIX = /^(?:\s*(?:>\s*)+|\s*#{1,6}\s+|\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?)/u;
+// 引用、列表与标题可以嵌套；必须一起移除，不能把第二层标记继续送给 provider。
+const STRUCTURAL_PREFIX = /^(?:\s*(?:>\s*|#{1,6}\s+|(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?))+/u;
 
 export function prepareMarkdownSegments(segments: readonly DocumentSegment[]): DocumentSegment[] {
     return segments.map((segment) => {

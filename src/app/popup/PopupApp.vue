@@ -1,8 +1,8 @@
 <!--
  @file src/app/popup/PopupApp.vue
  文件职责：实现浏览器 Popup 的主交互界面，连接当前标签页状态、翻译配置、可插拔皮肤、功能抽屉和高频操作，让现场开关与显示操作保持简短，将长期偏好引导到对应设置页。
- 主要内容：在配置 hydration 后汇总翻译服务，保留版本、赞赏、网页翻译与恢复、局部选择及站点开关；赞赏码在当前弹窗内切换放大与还原，关闭后重置；悬停、划词与图片抽屉优先展示开关和操作示意，首次语言引导独占内容。
- 模块边界：组件编排用户交互与运行时消息，不实现翻译 provider、缓存存储或 content 挂载细节；公共配置由 services/store 管理，页面行为由 content feature 接收消息完成。
+ 主要内容：在配置 hydration 后汇总翻译服务，保留版本、赞赏、网页翻译与恢复、局部选择及站点开关；赞赏码在当前弹窗内切换放大与还原，关闭后重置；悬停、划词与图片抽屉优先展示开关和操作示意，首次语言引导独占内容；页面操作、抽屉和导航绑定活跃会话，等待期间独占请求，关闭和配置切换使旧回复失效。
+ 模块边界：组件编排 UI、浏览器导航事件与生命周期；页面消息归属由 pageActions 管理，不实现翻译 provider、缓存存储或 content 挂载；公共配置由 services/store 管理。
 -->
 <!-- Popup 页面归 app 层所有；WXT 入口只负责调用挂载函数。 -->
 <template>
@@ -37,11 +37,11 @@
         </div>
       </div>
       <div class="header-actions">
-        <button ref="donationTrigger" class="donation-button" type="button" :title="t('popup.donationTitle')" :aria-label="t('popup.donationTitle')" @click="openDonation()">
+        <button ref="donationTrigger" class="donation-button" type="button" :title="t('popup.donationTitle')" :aria-label="t('popup.donationTitle')" :onClick="donationActions.open">
           <Coffee />
           <span>{{ t('popup.donationButton') }}</span>
         </button>
-        <button class="settings-button" type="button" title="完整设置" aria-label="打开完整设置" @click="openOptions()">
+        <button class="settings-button" type="button" title="完整设置" aria-label="打开完整设置" :onClick="popupActions.settings">
           <Setting />
           <span>设置</span>
         </button>
@@ -55,10 +55,10 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="donation-title"
-        @click.self="closeDonation"
+        :onClick="donationActions.overlay"
       >
         <section ref="donationCard" class="donation-card" tabindex="-1">
-          <button class="donation-close" type="button" :aria-label="t('popup.donationClose')" @click="closeDonation">×</button>
+          <button class="donation-close" type="button" :aria-label="t('popup.donationClose')" :onClick="donationActions.close">×</button>
           <h2 id="donation-title">{{ t('popup.donationTitle') }}</h2>
           <p class="donation-description">{{ t('popup.donationDescription') }}</p>
           <section class="donation-method donation-wechat">
@@ -100,7 +100,7 @@
 
       <button class="provider-summary" type="button" data-testid="popup-feature-services"
         :aria-label="t('featureServices.open')" :title="providerSummaryTitle" aria-haspopup="dialog"
-        :aria-expanded="drawerVisible && activeDrawer === 'services'" @click="openDrawer('services')">
+        :aria-expanded="drawerVisible && activeDrawer === 'services'" :onClick="popupActions.services">
         <strong>{{ t('popup.providers.title') }}</strong>
         <span class="provider-summary-icons" aria-hidden="true">
           <span v-for="service in assignedProviders.slice(0, 4)" :key="service" class="provider-avatar">
@@ -112,14 +112,14 @@
       </button>
       <div v-if="credentialWarning" class="credential-warning" role="alert">
         <span><strong>配置提醒</strong>{{ credentialWarning }}</span>
-        <button type="button" @click="openOptions('settings-services')">去设置</button>
+        <button type="button" :onClick="popupActions.serviceSettings">去设置</button>
       </div>
 
       <div class="translate-action">
         <button class="translate-button" :class="{ translated: pageTranslated }" type="button"
           data-testid="page-translation" :aria-pressed="pageTranslated" :aria-busy="translating"
           :title="t(pageTranslated ? 'popup.restoreCurrentPage' : 'popup.translateCurrentPage')"
-          :disabled="!config.on || currentSiteExtensionDisabled || translating" @click="togglePageTranslation">
+          :disabled="!config.on || currentSiteExtensionDisabled || translating" :onClick="pageButtons.toggle">
           <span v-if="translating" class="spinner" aria-hidden="true" />
           <span v-else class="translate-glyph" aria-hidden="true">A↔译</span>
           <span class="translate-label">{{ t(pageTranslated ? 'popup.restoreCurrentPage' : 'popup.translateCurrentPage') }}</span>
@@ -127,7 +127,7 @@
         </button>
         <button v-if="!isThunderbird" class="section-translate-button" type="button" data-testid="section-translation"
           :disabled="!config.on || currentSiteExtensionDisabled || translating" :aria-label="sectionTranslationLabel" :title="sectionTranslationLabel"
-          @click="startSectionTranslation">
+          :onClick="pageButtons.section">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15M10 10l7 2.6-3 1.1-1.1 3z" /></svg>
           <span>{{ t('popup.sectionTranslation') }}</span>
         </button>
@@ -136,8 +136,8 @@
       <PopupSiteRule
         v-if="siteModuleNestedInTranslation && isSiteModuleVisible"
         v-bind="siteRuleModuleProps"
-        @set-always-translated="setCurrentSiteAlwaysTranslated"
-        @set-extension-disabled="setCurrentSiteExtensionDisabled"
+        :onSetAlwaysTranslated="pageButtons.always"
+        :onSetExtensionDisabled="pageButtons.disabled"
       />
 
       <p v-if="notice" class="notice" :class="noticeType">{{ notice }}</p>
@@ -146,8 +146,8 @@
     <PopupSiteRule
       v-else-if="moduleId === 'siteRule' && !siteModuleNestedInTranslation"
       v-bind="siteRuleModuleProps"
-      @set-always-translated="setCurrentSiteAlwaysTranslated"
-      @set-extension-disabled="setCurrentSiteExtensionDisabled"
+      :onSetAlwaysTranslated="pageButtons.always"
+      :onSetExtensionDisabled="pageButtons.disabled"
     />
 
     <section
@@ -203,7 +203,7 @@
         <span>开源项目</span>
         <span class="external-mark" aria-hidden="true">↗</span>
       </a>
-      <button type="button" :disabled="clearingCache" @click="clearCache">{{ clearingCache ? '清理中…' : '清除缓存' }}</button>
+      <button type="button" :disabled="clearingCache" :onClick="popupActions.cache">{{ clearingCache ? '清理中…' : '清除缓存' }}</button>
     </footer>
     </template>
 
@@ -222,12 +222,12 @@
       <div class="drawer-surface">
         <div class="drawer-handle" />
         <header v-if="activeDrawer !== 'services'" class="drawer-header">
-        <div class="drawer-heading"><button v-if="activeDrawer === 'aiContext'" type="button" :aria-label="t('popup.providers.title')" @click="openDrawer('services')">←</button><div><h2>{{ drawerTitle }}</h2><p v-if="!['image', 'services'].includes(activeDrawer)">{{ drawerDescription }}</p></div></div>
-        <button type="button" aria-label="关闭" @click="drawerVisible = false">×</button>
+        <div class="drawer-heading"><button v-if="activeDrawer === 'aiContext'" type="button" :aria-label="t('popup.providers.title')" :onClick="drawerActions.services">←</button><div><h2>{{ drawerTitle }}</h2><p v-if="!['image', 'services'].includes(activeDrawer)">{{ drawerDescription }}</p></div></div>
+        <button type="button" aria-label="关闭" :onClick="drawerActions.close">×</button>
         </header>
 
       <div v-if="activeDrawer === 'services'" class="drawer-content provider-drawer-content">
-        <PopupServices :config="config" :service-options="allServiceOptions" :active="drawerVisible && activeDrawer === 'services'" @close="drawerVisible = false" />
+        <PopupServices :config="config" :service-options="allServiceOptions" :active="drawerVisible && activeDrawer === 'services'" :onClose="drawerActions.close" />
       </div>
       <div v-else-if="activeDrawer === 'aiContext'" class="drawer-content ai-context-details" data-i18n-ignore>
         <div class="ai-context-detail-state" :data-ai-context-state="aiContextPresentation.state">
@@ -244,7 +244,7 @@
             :aria-label="t('popup.aiContext.preference')"
             :aria-checked="config.enableAIContext"
             :disabled="aiContextPresentation.toggleDisabled"
-            @click="toggleAIContext"
+            :onClick="drawerActions.aiContext"
           ><i /></button>
         </div>
         <dl class="ai-context-explanation">
@@ -252,7 +252,7 @@
           <div><dt>{{ t('popup.aiContext.costTitle') }}</dt><dd>{{ t('popup.aiContext.cost') }}</dd></div>
           <div><dt>{{ t('popup.aiContext.applyTitle') }}</dt><dd>{{ t('popup.aiContext.apply') }}</dd></div>
         </dl>
-        <button class="secondary-action" type="button" data-testid="ai-context-settings" @click="openOptions('settings-services')">{{ t('popup.aiContext.configure') }} ↗</button>
+        <button class="secondary-action" type="button" data-testid="ai-context-settings" :onClick="drawerActions.serviceSettings">{{ t('popup.aiContext.configure') }} ↗</button>
       </div>
 
       <div v-else-if="activeDrawer === 'hover'" class="drawer-content">
@@ -261,11 +261,11 @@
             <strong>{{ t('popup.quickTranslation.defaultHoverShortcut') }}</strong>
             <small v-if="quickHoverProfiles.length" class="independent-profile-note">{{ t('popup.quickTranslation.defaultOnly', {count: quickHoverProfiles.length}) }}</small>
           </span>
-          <button class="switch compact" type="button" role="switch" :aria-label="t('popup.quickTranslation.defaultHoverShortcut')" :aria-checked="defaultHoverEnabled" data-testid="hover-enable" @click="toggleDefaultHoverShortcut"><i /></button>
+          <button class="switch compact" type="button" role="switch" :aria-label="t('popup.quickTranslation.defaultHoverShortcut')" :aria-checked="defaultHoverEnabled" data-testid="hover-enable" :onClick="drawerActions.hover"><i /></button>
         </div>
         <div class="interaction-preview hover-translation-preview" :class="{'preview-disabled': !hoverProfileCount}">
           <span class="cursor" aria-hidden="true">↖</span><span aria-hidden="true">＋</span>
-          <button class="hover-keycap" type="button" :aria-label="t('popup.quickSettings.chooseHoverShortcut')" :title="t('popup.quickSettings.chooseHoverShortcut')" @click="openOptions('settings-translation')" data-i18n-ignore>{{ hoverPreviewKey }}</button>
+          <button class="hover-keycap" type="button" :aria-label="t('popup.quickSettings.chooseHoverShortcut')" :title="t('popup.quickSettings.chooseHoverShortcut')" :onClick="drawerActions.translationSettings" data-i18n-ignore>{{ hoverPreviewKey }}</button>
           <span aria-hidden="true">＝</span><strong>即时翻译</strong>
         </div>
         <div v-if="quickHoverProfiles.length" class="quick-profile-preview" data-testid="popup-quick-hover-profiles">
@@ -282,12 +282,12 @@
         <div>
           <div class="setting-row quick-enable-row">
             <span><strong>{{ t('popup.selectionTranslation') }}</strong></span>
-            <button class="switch compact" type="button" role="switch" :aria-label="t('popup.selectionTranslation')" :aria-checked="config.selectionTranslatorMode !== 'disabled'" data-testid="selection-enable" @click="toggleSelectionTranslation"><i /></button>
+            <button class="switch compact" type="button" role="switch" :aria-label="t('popup.selectionTranslation')" :aria-checked="config.selectionTranslatorMode !== 'disabled'" data-testid="selection-enable" :onClick="drawerActions.selection"><i /></button>
           </div>
           <div class="choice-block">
             <label>翻译模式</label>
             <div class="chips two" role="group" aria-label="划词翻译模式">
-              <button v-for="item in selectionModes" :key="item.value" type="button" :class="{ selected: (config.selectionTranslatorMode === 'disabled' ? config.selectionTranslatorModeBeforeDisable : config.selectionTranslatorMode) === item.value }" :aria-pressed="(config.selectionTranslatorMode === 'disabled' ? config.selectionTranslatorModeBeforeDisable : config.selectionTranslatorMode) === item.value" :disabled="config.selectionTranslatorMode === 'disabled'" @click="setSelectionMode(item.value)">{{ item.label }}</button>
+              <button v-for="item in drawerSelectionModes" :key="item.value" type="button" :class="{ selected: (config.selectionTranslatorMode === 'disabled' ? config.selectionTranslatorModeBeforeDisable : config.selectionTranslatorMode) === item.value }" :aria-pressed="(config.selectionTranslatorMode === 'disabled' ? config.selectionTranslatorModeBeforeDisable : config.selectionTranslatorMode) === item.value" :disabled="config.selectionTranslatorMode === 'disabled'" :onClick="item.choose">{{ item.label }}</button>
             </div>
           </div>
 
@@ -300,7 +300,7 @@
           <strong>当前浏览器暂不支持图片翻译与 OCR</strong>
           <small>原有开关偏好已保留；请在 Chrome 中使用此功能。</small>
         </div>
-        <button v-if="browserCapabilities.imageTranslation" class="image-method" :class="{enabled: !config.disableImageTranslator}" type="button" role="switch" :aria-checked="!config.disableImageTranslator" aria-label="启用或关闭图片翻译" @click="setImageTranslatorEnabled(config.disableImageTranslator)">
+        <button v-if="browserCapabilities.imageTranslation" class="image-method" :class="{enabled: !config.disableImageTranslator}" type="button" role="switch" :aria-checked="!config.disableImageTranslator" aria-label="启用或关闭图片翻译" :onClick="drawerActions.image">
           <svg class="image-method-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg>
           <span class="image-method-copy"><strong>{{ t('popup.image.web') }}</strong><small>{{ t('popup.image.webHint') }}</small></span>
           <span class="switch compact" :aria-checked="!config.disableImageTranslator" aria-hidden="true"><i /></span>
@@ -309,7 +309,7 @@
           <strong>当前浏览器暂不支持圈选翻译</strong>
           <small>原有开关偏好已保留；回到 Chrome 后仍会按原设置生效。</small>
         </div>
-        <button v-else class="image-method" :class="{enabled: config.selectionAreaEnabled}" type="button" role="switch" :aria-checked="config.selectionAreaEnabled" aria-label="启用或关闭圈选翻译" @click="setAreaEnabled(!config.selectionAreaEnabled)">
+        <button v-else class="image-method" :class="{enabled: config.selectionAreaEnabled}" type="button" role="switch" :aria-checked="config.selectionAreaEnabled" aria-label="启用或关闭圈选翻译" :onClick="drawerActions.area">
           <svg class="image-method-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
           <span class="image-method-copy"><strong>{{ t('popup.image.area') }}</strong><small class="image-method-shortcut"><kbd data-i18n-ignore>{{ areaHotkeyDisplayName }}</kbd><span>{{ t('popup.image.areaHint') }}</span></small></span>
           <span class="switch compact" :aria-checked="config.selectionAreaEnabled" aria-hidden="true"><i /></span>
@@ -324,13 +324,13 @@
         <div class="choice-block">
           <label>翻译模式</label>
           <div class="chips two" role="group" aria-label="翻译模式">
-            <button v-for="item in options.display" :key="item.value" type="button" :class="{ selected: config.display === item.value }" :aria-pressed="config.display === item.value" @click="config.display = item.value">{{ item.label }}</button>
+            <button v-for="item in drawerDisplayModes" :key="item.value" type="button" :class="{ selected: config.display === item.value }" :aria-pressed="config.display === item.value" :disabled="item.disabled" :onClick="item.choose">{{ item.label }}</button>
           </div>
         </div>
       </div>
 
         <p v-if="notice && noticeType === 'error'" class="notice error" role="alert">{{ notice }}</p>
-        <button v-if="!['aiContext', 'services'].includes(activeDrawer)" class="drawer-settings-link" type="button" data-i18n-ignore @click="openOptions(drawerSettingsSection[activeDrawer])">
+        <button v-if="!['aiContext', 'services'].includes(activeDrawer)" class="drawer-settings-link" type="button" data-i18n-ignore :onClick="drawerActions.options">
           <span><strong>{{ t('popup.quickSettings.moreSettings') }}</strong></span>
           <span aria-hidden="true">↗</span>
         </button>
@@ -344,8 +344,9 @@
 <script lang="ts" setup>
 import PopupLanguageSelect from './PopupLanguageSelect.vue';
 
-import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, reactive, ref, shallowRef, toRefs, watch } from 'vue';
 import browser from 'webextension-polyfill';
+import type {Tabs} from 'webextension-polyfill';
 import {
   config as runtimeConfig,
   handoffPendingConfigPatches,
@@ -379,7 +380,8 @@ import {
   type PopupQuickFeatureId,
 } from '@/src/core/config/interfaceAppearance';
 import { resolveAIContextPresentation } from '@/src/ui/view-model/aiContext';
-import { getSiteBaseDomain } from '@/src/core/site-rules/domain';
+import {createPopupPageActions, type PopupPageState} from './pageActions';
+import {useSettingsActionContext} from '@/src/features/settings/model/useSettingsActionContext';
 import {applyInterfaceFont, applyInterfaceSkin} from '@/src/ui/interfaceAppearance';
 import { requestTranslationCacheClear } from './cache';
 import {isBrowserTabId} from '@/src/platform/browser/ids';
@@ -420,15 +422,13 @@ const onboardingLanguage = ref<UiLanguage>('zh-CN');
 const drawerVisible = ref(false);
 const drawerMounted = ref(false);
 const activeDrawer = ref<DrawerName>('hover');
-const translating = ref(false);
-const pageTranslated = ref(false);
-const currentTabId = ref<number | null>(null);
-const currentSiteDomain = ref('');
+const pageState = reactive<PopupPageState>({tabId: null, url: '', domain: '', translated: false, busy: false});
+const {busy: translating, translated: pageTranslated, tabId: currentTabId, domain: currentSiteDomain} = toRefs(pageState);
 const clearingCache = ref(false);
 const donationVisible = ref(false);
 const donationQrEnlarged = ref(false);
-const donationCard = ref<HTMLElement | null>(null);
-const donationTrigger = ref<HTMLButtonElement | null>(null);
+const donationCard = shallowRef<HTMLElement | null>(null);
+const donationTrigger = shallowRef<HTMLButtonElement | null>(null);
 const notice = ref('');
 const noticeType = ref<'success' | 'error'>('success');
 const hydrated = ref(false);
@@ -488,7 +488,8 @@ const allServiceOptions = computed(() => withCustomOpenAIServiceOptions(
   description: item.description ? translateLegacy(item.description) : item.description,
   searchTerms: [...(item.searchTerms || []), translateLegacy(item.label)],
 })));
-const providerLabel = (service: string) => allServiceOptions.value.find(item => item.value === service)?.label || service;
+const providerLabels = computed(() => new Map(allServiceOptions.value.map(item => [item.value, item.label])));
+const providerLabel = (service: string) => providerLabels.value.get(service) || service;
 const assignedProviders = computed(() => [...new Set([
   config.value.service,
   ...featureServiceDefinitions.map(feature => getFeatureService(config.value, feature) || config.value.service),
@@ -510,7 +511,8 @@ const canUseAIContext = computed(() => servicesType.isUseAIContext(
   selectedCustomOpenAIProvider.value ? 'custom' : config.value.service,
   aiContextModel.value,
 ));
-const credentialWarning = computed(() => selectedServiceUnavailableMessage.value || getMissingCredentialMessage(config.value.service, config.value));
+const missingCredentialMessage = computed(() => getMissingCredentialMessage(config.value.service, config.value));
+const credentialWarning = computed(() => selectedServiceUnavailableMessage.value || missingCredentialMessage.value);
 const isThunderbird = browserCapabilities.browser === 'thunderbird';
 const currentSiteSupported = computed(() => !isThunderbird && currentTabId.value !== null && Boolean(currentSiteDomain.value));
 const currentSiteRuleEnabled = computed(() => currentSiteSupported.value
@@ -525,7 +527,7 @@ const aiContextPresentation = computed(() => resolveAIContextPresentation({
   pluginEnabled: config.value.on,
   siteDisabled: currentSiteExtensionDisabled.value,
   unavailable: Boolean(selectedServiceUnavailableMessage.value),
-  missingCredentials: Boolean(getMissingCredentialMessage(config.value.service, config.value)),
+  missingCredentials: Boolean(missingCredentialMessage.value),
   translating: translating.value,
 }));
 const isSiteModuleVisible = computed(() => config.value.interfaceVisibility.popupSiteRule && !isThunderbird);
@@ -569,6 +571,8 @@ const currentSiteExtensionSwitchLabel = computed(() => currentSiteSupported.valu
     : `在 ${currentSiteDomain.value} 禁用扩展`
   : '在此网站禁用扩展（当前页面不可用）');
 const siteRuleModuleProps = computed(() => ({
+  active: popupContext.active.value,
+  context: pageContext.revision.value,
   domain: currentSiteDomain.value,
   supported: currentSiteSupported.value,
   alwaysTranslated: currentSiteAlwaysTranslated.value,
@@ -593,7 +597,7 @@ const hoverSummary = computed(() => quickHoverProfiles.value.length
   : defaultHoverEnabled.value ? hoverKey.value.replace('Control', 'Ctrl') : '已关闭');
 function quickProfileSummary(profile: QuickTranslationProfile): string {
   const service = profile.service || config.value.service;
-  const serviceName = allServiceOptions.value.find((item: any) => item.value === service)?.label || service;
+  const serviceName = providerLabel(service);
   if (!servicesType.isUseModel(service)) return serviceName;
   const model = profile.model || resolveConfiguredModel(config.value.model[service], config.value.customModel[service]);
   return model ? `${serviceName} · ${model}` : serviceName;
@@ -606,7 +610,9 @@ const displaySummary = computed(() => config.value.display === 1 ? `双语 · ${
 const imageTranslationSummary = computed(() => !browserCapabilities.imageTranslation
   ? '当前浏览器不可用'
   : config.value.selectionAreaEnabled ? areaHotkeyDisplayName.value : config.value.disableImageTranslator ? '已关闭' : '悬停图片');
-const popupQuickFeatureViewModels = computed<Record<PopupQuickFeatureId, PopupQuickFeatureViewModel>>(() => ({
+const popupQuickFeatureViewModels = computed<Record<PopupQuickFeatureId, PopupQuickFeatureViewModel>>(() => {
+  const current = popupContext.capture();
+  return {
   hover: {
     id: 'hover',
     label: '鼠标悬停翻译',
@@ -615,7 +621,7 @@ const popupQuickFeatureViewModels = computed<Record<PopupQuickFeatureId, PopupQu
     iconTone: popupQuickFeatureIconTones.hover,
     showStatus: true,
     active: hoverProfileCount.value > 0,
-    open: () => openDrawer('hover'),
+    open: () => {if (current()) openDrawer('hover')},
   },
   selection: {
     id: 'selection',
@@ -625,7 +631,7 @@ const popupQuickFeatureViewModels = computed<Record<PopupQuickFeatureId, PopupQu
     iconTone: popupQuickFeatureIconTones.selection,
     showStatus: true,
     active: config.value.selectionTranslatorMode !== 'disabled',
-    open: () => openDrawer('selection'),
+    open: () => {if (current()) openDrawer('selection')},
   },
   appearance: {
     id: 'appearance',
@@ -634,7 +640,7 @@ const popupQuickFeatureViewModels = computed<Record<PopupQuickFeatureId, PopupQu
     icon: 'Aa',
     iconTone: popupQuickFeatureIconTones.appearance,
     showStatus: false,
-    open: () => openDrawer('appearance'),
+    open: () => {if (current()) openDrawer('appearance')},
   },
   image: {
     id: 'image',
@@ -644,7 +650,7 @@ const popupQuickFeatureViewModels = computed<Record<PopupQuickFeatureId, PopupQu
     iconTone: popupQuickFeatureIconTones.image,
     showStatus: true,
     active: (browserCapabilities.imageTranslation && !config.value.disableImageTranslator) || (browserCapabilities.areaTranslation && config.value.selectionAreaEnabled),
-    open: () => openDrawer('image'),
+    open: () => {if (current()) openDrawer('image')},
   },
   document: {
     id: 'document',
@@ -656,9 +662,9 @@ const popupQuickFeatureViewModels = computed<Record<PopupQuickFeatureId, PopupQu
     className: 'document-feature-card',
     dataFeature: 'document-translation',
     ariaLabel: '打开文档翻译',
-    open: openDocumentTranslation,
+    open: () => {if (current()) return openDocumentTranslation()},
   },
-}));
+};});
 const visiblePopupQuickFeatures = computed(() => visiblePopupQuickFeatureIds.value
   .map((featureId) => popupQuickFeatureViewModels.value[featureId]));
 const drawerTitle = computed(() => ({ services: t('popup.providers.title'), aiContext: t('popup.aiContext.title'), hover: '鼠标悬停翻译设置', selection: '划词翻译设置', appearance: '译文显示设置', image: '图片翻译' }[activeDrawer.value]));
@@ -678,6 +684,71 @@ const areaPreviewKeys = computed(() => {
   const label = areaHotkeyDisplayName.value;
   return label.endsWith('+') ? [...label.slice(0, -1).split('+').filter(Boolean), '+'] : label.split('+').filter(Boolean);
 });
+
+const pageExited = ref(false);
+const popupContext = useSettingsActionContext(() => hydrated.value && !showLanguageOnboarding.value && !pageExited.value,
+  () => [config.value, config.value.on]);
+const pageContext = useSettingsActionContext(() => popupContext.active.value, () => [config.value.on, config.value.service,
+  config.value.from, config.value.to, config.value.display, config.value.model[config.value.service],
+  config.value.customModel[config.value.service], config.value.disabledExtensionDomains.join(','), config.value.alwaysTranslateDomains.join(','), config.value.autoTranslate, credentialWarning.value]);
+const cacheContext = useSettingsActionContext(() => popupContext.active.value, () => []);
+const pageActions = createPopupPageActions({state: pageState, config: () => config.value, active: () => pageContext.active.value,
+  warning: () => credentialWarning.value || '', getTab: async () => (await browser.tabs.query({active: true, currentWindow: true}))[0],
+  send: (id, message) => browser.tabs.sendMessage(id, message), notice: showNotice, close: () => window.close(), translate: t, thunderbird: isThunderbird});
+const {hydrate: hydrateCurrentSite, toggle: togglePageTranslation, section: startSectionTranslation,
+  setAlways: setCurrentSiteAlwaysTranslated, setDisabled: setCurrentSiteExtensionDisabled} = pageActions;
+watch(pageContext.revision, () => {pageActions.invalidate();if (!config.value.on || currentSiteExtensionDisabled.value) pageTranslated.value = false}, {flush: 'sync'});
+const pageRenderRevision = ref(0);
+watch(() => [pageState.tabId, pageState.url, pageState.translated, pageState.busy], () => {pageRenderRevision.value += 1}, {flush: 'sync'});
+const pageButtons = computed(() => {
+  const current = pageContext.capture(), version = pageRenderRevision.value;
+  const owns = () => current() && version === pageRenderRevision.value;
+  return {toggle: () => {if (owns()) return togglePageTranslation()}, section: () => {if (owns()) return startSectionTranslation()},
+    always: (value: boolean) => {if (owns()) return setCurrentSiteAlwaysTranslated(value)},
+    disabled: (value: boolean) => {if (owns()) setCurrentSiteExtensionDisabled(value)}};
+});
+const donationRevision = ref(0);
+watch(donationVisible, () => {donationRevision.value += 1}, {flush: 'sync'});
+
+const donationActions = computed(() => {
+  const current = popupContext.capture(), sequence = donationRevision.value;
+  const close = () => {if (current() && sequence === donationRevision.value) closeDonation()};
+  return {open: () => {if (current() && sequence === donationRevision.value) return openDonation()},
+    close, overlay: (event: MouseEvent) => {if (event.target === event.currentTarget) close()}};
+});
+const popupActions = computed(() => {
+  const current = popupContext.capture();
+  const bind = (run: () => void | Promise<void>) => () => {if (current()) return run()};
+  return {settings: bind(() => openOptions()), serviceSettings: bind(() => openOptions('settings-services')),
+    services: bind(() => openDrawer('services')), cache: bind(clearCache)};
+});
+const drawerContext = useSettingsActionContext(() => popupContext.active.value && drawerVisible.value,
+  () => [config.value, activeDrawer.value, config.value.on, config.value.hotkey, config.value.customHotkey,
+    config.value.selectionTranslatorMode, config.value.selectionTranslatorPresentation, config.value.selectionAreaEnabled,
+    config.value.disableImageTranslator, config.value.display, config.value.service, config.value.enableAIContext,
+    browserCapabilities.areaTranslation, browserCapabilities.imageTranslation]);
+const drawerActions = computed(() => {
+  const current = drawerContext.capture(), section = drawerSettingsSection[activeDrawer.value];
+  const bind = (run: () => void | Promise<void>) => () => {if (current()) return run()};
+  return {close: bind(() => {drawerVisible.value = false}), aiContext: bind(toggleAIContext), hover: bind(toggleDefaultHoverShortcut),
+    selection: bind(toggleSelectionTranslation), simple: bind(() => {config.value.selectionTranslatorPresentation = 'simple'}),
+    card: bind(() => {config.value.selectionTranslatorPresentation = 'card'}), image: bind(() => setImageTranslatorEnabled(config.value.disableImageTranslator)),
+    area: bind(() => setAreaEnabled(!config.value.selectionAreaEnabled)), options: bind(() => openOptions(section)),
+    services: bind(() => openDrawer('services')), serviceSettings: bind(() => openOptions('settings-services')),
+    translationSettings: bind(() => openOptions('settings-translation'))};
+});
+const drawerSelectionModes = computed(() => {
+  const current = drawerContext.capture();
+  return selectionModes.map(item => ({...item, choose: () => {if (current() && config.value.on && config.value.selectionTranslatorMode !== 'disabled') setSelectionMode(item.value)}}));
+});
+const drawerDisplayModes = computed(() => {
+  const current = drawerContext.capture();
+  return options.display.map(item => ({...item, disabled: !config.value.on || (config.value.service === 'google' && item.value === 0),
+    choose: () => {if (current() && config.value.on && (config.value.service !== 'google' || item.value !== 0)) config.value.display = item.value}}));
+});
+watch(popupContext.active, enabled => {if (!enabled) {drawerVisible.value = false;donationVisible.value = false;notice.value = '';if (noticeTimer) clearTimeout(noticeTimer)}}, {flush: 'sync'});
+watch(() => config.value.on, enabled => {if (!enabled && activeDrawer.value !== 'services' && activeDrawer.value !== 'aiContext') drawerVisible.value = false}, {flush: 'sync'});
+watch(cacheContext.active, enabled => {if (!enabled) clearingCache.value = false}, {flush: 'sync'});
 
 function applyTheme(theme: string) {
   document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'auto' && darkMode.matches));
@@ -740,18 +811,25 @@ watch(popupUsesContentHeight, applyPopupHeightMode, {immediate: true});
 darkMode.onchange = () => { if (config.value.theme === 'auto') applyTheme('auto'); };
 
 async function openDonation() {
+  if (!popupContext.active.value || donationVisible.value) return;
+  const current = popupContext.capture(), before = document.activeElement;
   donationQrEnlarged.value = false;
-  donationVisible.value = true;
+  donationVisible.value = true;const sequence = donationRevision.value;
   await nextTick();
-  donationCard.value?.querySelector<HTMLButtonElement>('.donation-close')?.focus();
+  if (current() && donationVisible.value && sequence === donationRevision.value
+    && (document.activeElement === before || document.activeElement === document.body)) {
+    donationCard.value?.querySelector<HTMLButtonElement>('.donation-close')?.focus({preventScroll: true});
+  }
 }
 function closeDonation() {
+  if (!popupContext.active.value || !donationVisible.value) return;
+  const before = document.activeElement, restore = donationCard.value?.contains(before) || before === document.body;
   donationVisible.value = false;
   donationQrEnlarged.value = false;
-  donationTrigger.value?.focus();
+  if (restore && donationTrigger.value?.isConnected) donationTrigger.value.focus({preventScroll: true});
 }
 function handleDonationKeydown(event: KeyboardEvent) {
-  if (!donationVisible.value) return;
+  if (!popupContext.active.value || !donationVisible.value) return;
   if (event.key === 'Escape') {
     event.preventDefault();
     closeDonation();
@@ -771,14 +849,31 @@ function toggleAIContext() {
   if (aiContextPresentation.value.toggleDisabled) return;
   config.value.enableAIContext = !config.value.enableAIContext;
 }
+function handleTabUpdated(tabId: number, change: Tabs.OnUpdatedChangeInfoType, tab: Tabs.Tab) {
+  if (popupContext.active.value && (typeof change.url === 'string' || change.status === 'loading')
+    && (tabId === currentTabId.value || (tab.active && (pageState.windowId === undefined || tab.windowId === pageState.windowId)))) void hydrateCurrentSite();
+}
+function handleTabActivated(info: Tabs.OnActivatedActiveInfoType) {
+  if (popupContext.active.value && (pageState.windowId === undefined || info.windowId === pageState.windowId) && info.tabId !== currentTabId.value) void hydrateCurrentSite();
+}
+function handleTabRemoved(tabId: number) {
+  if (popupContext.active.value && tabId === currentTabId.value) void hydrateCurrentSite();
+}
 onMounted(() => {
   document.addEventListener('keydown', handleDonationKeydown);
+  browser.tabs.onUpdated.addListener(handleTabUpdated);
+  browser.tabs.onActivated.addListener(handleTabActivated);
+  browser.tabs.onRemoved.addListener(handleTabRemoved);
 });
 onUnmounted(() => {
   persistOnPageExit();
+  pageExited.value = true;
   window.removeEventListener('pagehide', saveOnPageHide);
   unsubscribeConfig();
   document.removeEventListener('keydown', handleDonationKeydown);
+  browser.tabs.onUpdated.removeListener(handleTabUpdated);
+  browser.tabs.onActivated.removeListener(handleTabActivated);
+  browser.tabs.onRemoved.removeListener(handleTabRemoved);
   darkMode.onchange = null;
   delete document.documentElement.dataset.popupHeight;
   if (noticeTimer) clearTimeout(noticeTimer);
@@ -786,6 +881,7 @@ onUnmounted(() => {
 
 function saveOnPageHide() {
   persistOnPageExit();
+  pageExited.value = true;
 }
 window.addEventListener('pagehide', saveOnPageHide);
 
@@ -802,158 +898,49 @@ function persistOnPageExit() {
 }
 
 function showNotice(message: string, type: 'success' | 'error' = 'success') {
+  if (!popupContext.active.value) return;
   notice.value = message;
   noticeType.value = type;
   if (noticeTimer) clearTimeout(noticeTimer);
   noticeTimer = setTimeout(() => { notice.value = ''; }, 2200);
 }
 
-async function hydrateCurrentSite() {
-  currentTabId.value = null;
-  currentSiteDomain.value = '';
-  pageTranslated.value = false;
-  try {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-    if (typeof tab?.id !== 'number') return;
-    currentTabId.value = tab.id;
-    currentSiteDomain.value = getSiteBaseDomain(tab.pendingUrl || tab.url || '') || '';
-    // 首屏入口立即可用；状态查询失败只说明当前页没有内容脚本，不隐藏站点控制。
-    try {
-      const response = await browser.tabs.sendMessage(tab.id, {type: 'getFullPageTranslationState'}) as {isTranslated?: boolean} | undefined;
-      pageTranslated.value = response?.isTranslated === true;
-    } catch { pageTranslated.value = false; }
-  } catch (error) {
-    console.warn('[FluentRead] 无法读取当前网站', error);
-  }
-}
-
-async function setCurrentSiteAlwaysTranslated(enabled: boolean) {
-  const domain = currentSiteDomain.value;
-  const tabId = currentTabId.value;
-  if (!domain || tabId === null) return;
-  if (config.value.autoTranslate) {
-    showNotice('所有网站自动翻译已开启，请在完整设置中关闭全局开关');
-    return;
-  }
-  if (currentSiteExtensionDisabled.value) {
-    showNotice(`当前已在 ${domain} 禁用扩展，请先恢复扩展`);
-    return;
-  }
-
-  const currentDomains = config.value.alwaysTranslateDomains ?? [];
-  config.value.alwaysTranslateDomains = enabled
-    ? currentDomains.includes(domain) ? currentDomains : [...currentDomains, domain]
-    : currentDomains.filter(item => item !== domain);
-
-  if (!enabled) {
-    showNotice(`已关闭 ${domain} 的始终翻译，当前网页保持不变`);
-    return;
-  }
-
-  if (!config.value.on) {
-    showNotice(`已保存 ${domain}，启动插件后生效`);
-    return;
-  }
-  if (credentialWarning.value) {
-    showNotice(`已保存 ${domain}；${credentialWarning.value}`, 'error');
-    return;
-  }
-
-  translating.value = true;
-  try {
-    const response = await browser.tabs.sendMessage(tabId, {
-      type: 'contextMenuTranslate',
-      action: 'fullPage',
-    }) as { status?: string; isTranslated?: boolean } | undefined;
-    if (response?.status !== 'success') throw new Error('Translation failed');
-    pageTranslated.value = response.isTranslated !== false;
-    showNotice(`已开启 ${domain} 的始终翻译`);
-  } catch {
-    showNotice(`已保存 ${domain}，当前网页请刷新后重试`, 'error');
-  } finally {
-    translating.value = false;
-  }
-}
-
-function setCurrentSiteExtensionDisabled(enabled: boolean) {
-  const domain = currentSiteDomain.value;
-  const tabId = currentTabId.value;
-  if (!domain || tabId === null) return;
-
-  const currentDomains = config.value.disabledExtensionDomains ?? [];
-  config.value.disabledExtensionDomains = enabled
-    ? currentDomains.includes(domain) ? currentDomains : [...currentDomains, domain]
-    : currentDomains.filter(item => item !== domain);
-  translating.value = false;
-  if (enabled) pageTranslated.value = false;
-
-  showNotice(enabled ? `已在 ${domain} 禁用扩展` : `已恢复 ${domain} 的扩展`);
-}
-
 // 配置订阅是内容功能的唯一状态来源；避免无 revision 的广播晚到后覆盖新快照。
-
-
-function openDrawer(name: DrawerName) { activeDrawer.value = name; drawerMounted.value = true; drawerVisible.value = true; }
+function openDrawer(name: DrawerName) {if (!popupContext.active.value || (!config.value.on && name !== 'services' && name !== 'aiContext')) return;activeDrawer.value = name;drawerMounted.value = true;drawerVisible.value = true;}
 async function openOptions(section?: SettingsSection) {
-  if (section) {
-    await browser.tabs.create({ url: `${browser.runtime.getURL('options.html')}#${section}` });
-  } else {
-    await browser.runtime.openOptionsPage();
+  if (!popupContext.active.value) return;
+  const current = popupContext.capture();
+  try {
+    if (section) {
+      await browser.tabs.create({ url: `${browser.runtime.getURL('options.html')}#${section}` });
+    } else {
+      await browser.runtime.openOptionsPage();
+    }
+    if (current()) window.close();
+  } catch {
+    if (current()) showNotice(translateLegacy('无法打开设置，请从扩展菜单打开设置后重试'), 'error');
   }
-  window.close();
 }
 
 async function openDocumentTranslation() {
-  await browser.tabs.create({ url: browser.runtime.getURL('document.html') });
-  window.close();
-}
-
-async function togglePageTranslation() {
-  if (!config.value.on || currentSiteExtensionDisabled.value || translating.value) return;
-  if (!pageTranslated.value && credentialWarning.value) {
-    showNotice(credentialWarning.value, 'error');
-    return;
-  }
-  const action = pageTranslated.value ? 'restore' : 'fullPage';
-  translating.value = true;
+  if (!popupContext.active.value || !config.value.on) return;
+  const current = popupContext.capture();
   try {
-    const [tab] = await browser.tabs.query({active: true, currentWindow: true});
-    if (!isBrowserTabId(tab?.id)) throw new Error('No active tab');
-    const response = await browser.tabs.sendMessage(tab.id, {type: 'contextMenuTranslate', action}) as {status?: string; isTranslated?: boolean} | undefined;
-    if (response?.status !== 'success') throw new Error(response?.status || 'Translation failed');
-    pageTranslated.value = typeof response.isTranslated === 'boolean' ? response.isTranslated : action === 'fullPage';
-  } catch {
-    showNotice(isThunderbird ? '请先打开一封邮件，然后重试翻译' : '当前页面暂不支持翻译，请刷新后重试', 'error');
-  } finally { translating.value = false; }
-}
-
-// 进入网页的区域选择模式后立即关闭 Popup，让用户直接在页面上点选要翻译的区域。
-async function startSectionTranslation() {
-  if (!config.value.on || currentSiteExtensionDisabled.value || translating.value) return;
-  if (credentialWarning.value) {
-    showNotice(credentialWarning.value, 'error');
-    return;
-  }
-  try {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!isBrowserTabId(tab?.id)) throw new Error('No active tab');
-    const response = await browser.tabs.sendMessage(tab.id, { type: 'contextMenuTranslate', action: 'section' }) as { status?: string } | undefined;
-    if (response?.status !== 'success') throw new Error(response?.status === 'disabled' ? 'Plugin disabled' : 'Section picker unavailable');
-    window.close();
-  } catch {
-    showNotice(t('popup.sectionTranslationUnavailable'), 'error');
-  }
+    await browser.tabs.create({ url: browser.runtime.getURL('document.html') });
+    if (current()) window.close();
+  } catch {if (current()) showNotice(t('translationCenter.requestError'), 'error');}
 }
 
 async function clearCache() {
+  if (!popupContext.active.value || clearingCache.value) return;
+  const current = cacheContext.capture();
   clearingCache.value = true;
   try {
     await requestTranslationCacheClear((message) => browser.runtime.sendMessage(message));
-    showNotice('全部翻译缓存已清除');
+    if (current()) showNotice('全部翻译缓存已清除');
   } catch (error) {
-    console.error(error);
-    showNotice('缓存清除失败', 'error');
-  } finally { clearingCache.value = false; }
+    if (current()) {console.error(error);showNotice('缓存清除失败', 'error');}
+  } finally { if (current()) clearingCache.value = false; }
 }
 
 function quickTranslationConflictMessage(hotkey: string): string {
@@ -962,8 +949,6 @@ function quickTranslationConflictMessage(hotkey: string): string {
   const group = t(`quickTranslation.heading.${quickTranslationActionKey(conflict.action)}`);
   return t('quickTranslation.conflictProfilePopup', {group});
 }
-
-
 function toggleDefaultHoverShortcut() {
   if (defaultHoverEnabled.value) {
     config.value.hoverShortcutBeforeDisable = config.value.hotkey;

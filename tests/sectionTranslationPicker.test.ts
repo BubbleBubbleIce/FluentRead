@@ -1,4 +1,5 @@
 import {parseHTML} from 'linkedom';
+import {isEditingInPage} from '@/src/shared/dom/editingTarget';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {SectionLabelSummary} from '@/src/features/section-translation/core';
 import {isEditingInPage} from '@/src/shared/dom/editingTarget';
@@ -34,6 +35,25 @@ interface PickerHarness {
 
 const summary = (overrides: Partial<SectionLabelSummary> = {}): SectionLabelSummary => ({
     total: 2, active: 0, pending: 2, truncated: false, action: 'translate', ...overrides,
+});
+
+it('自有封闭操作条聚焦时不被通用输入保护挡住方向键和 Enter，网页输入仍让行',async()=>{
+    const harness=await createHarness();
+    harness.picker.startSectionPicker({...harness.options,isEditing:(event:KeyboardEvent)=>isEditingInPage(event,harness.document)} as any);
+    harness.flushFrames();
+    const bar=query(harness.shadow(),'.fr-section-bar');
+    Object.defineProperty(harness.document,'activeElement',{configurable:true,get:()=>harness.host()});
+    Object.defineProperty(harness.shadow(),'activeElement',{configurable:true,get:()=>bar});
+    const path=()=>[harness.host(),harness.document.body];
+    expect(isEditingInPage({composedPath:path} as unknown as KeyboardEvent,harness.document)).toBe(true);
+    const larger=harness.emit('keydown',{key:'ArrowUp',composedPath:path});
+    expect(larger.preventDefault).toHaveBeenCalledOnce();
+    const smaller=harness.emit('keydown',{key:'ArrowDown',composedPath:path});
+    expect(smaller.preventDefault).toHaveBeenCalledOnce();
+    const outside=harness.emit('keydown',{key:'Enter'});
+    expect(outside.preventDefault).not.toHaveBeenCalled();expect(harness.onPick).not.toHaveBeenCalled();
+    const enter=harness.emit('keydown',{key:'Enter',composedPath:path});
+    expect(enter.preventDefault).toHaveBeenCalledOnce();expect(harness.onPick).toHaveBeenCalledOnce();expect(harness.onPick).toHaveBeenCalledWith(harness.byId('para'));
 });
 
 function rect(left: number, top: number, width: number, height: number) {

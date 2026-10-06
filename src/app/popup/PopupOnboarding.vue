@@ -1,39 +1,43 @@
 <!--
  * @file src/app/popup/PopupOnboarding.vue
  * 文件职责：作为 Popup 首启专用根组件，展示引导并在语言确认后接入完整主菜单。
- * 主要内容：复用共享配置、语言选择和主题字体；保存成功后预加载主菜单，成功反馈结束再切换，加载失败可重试。
+ * 主要内容：复用共享配置、语言选择和主题字体；保存成功后预加载主菜单，成功反馈结束再切换，加载失败可重试；失活或关闭时释放外观订阅并使旧引导事件与迟到结果失效。
  * 模块边界：不读取当前标签页、不实现主菜单交互、不另存配置；主菜单仅通过动态 import 加载，持久化仍由共享 i18n/config store 负责。
 -->
 <template>
   <component :is="mainApp" v-if="mainApp" />
   <main v-else class="popup-shell language-onboarding-shell" data-config-ready="true" :data-interface-skin="config.interfaceSkin">
     <UiLanguageOnboarding
+      :key="onboardingContext.revision.value"
       :initial-language="initialLanguage"
-      @saved="prepareMain"
-      @confirmed="openMain"
+      :onSaved="onboardingActions.saved"
+      :onConfirmed="onboardingActions.confirmed"
     />
     <div v-if="loadFailed" class="onboarding-load-error" role="alert" data-i18n-ignore>
       <p>{{ onboardingLoadError['zh-CN'] }}<br />{{ onboardingLoadError['en-US'] }}</p>
-      <button type="button" @click="reloadMain">{{ onboardingChineseMessages['common.retry'] }} / {{ onboardingEnglishMessages['common.retry'] }}</button>
+      <button type="button" :onClick="onboardingActions.retry">{{ onboardingChineseMessages['common.retry'] }} / {{ onboardingEnglishMessages['common.retry'] }}</button>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
-import {onBeforeUnmount, ref, shallowRef, type Component} from 'vue';
+import {computed, onBeforeUnmount, ref, shallowRef, watch, type Component} from 'vue';
 import browser from 'webextension-polyfill';
 import {config, subscribeConfig} from '@/src/services/config/store';
 import {resolveUiLanguageFromLocale} from '@/src/core/i18n/language';
 import {onboardingChineseMessages, onboardingEnglishMessages, onboardingLoadError} from '@/src/core/i18n/messages/onboarding';
 import {applyInterfaceSkin, applyInterfaceFont, applyInterfaceTheme} from '@/src/ui/interfaceAppearance';
 import UiLanguageOnboarding from '@/src/ui/components/UiLanguageOnboarding.vue';
+import {useSettingsActionContext} from '@/src/features/settings/model/useSettingsActionContext';
 
 const initialLanguage = resolveUiLanguageFromLocale(readLocale());
 const mainApp = shallowRef<Component | null>(null);
 const loadFailed = ref(false);
+const pageExited = ref(false);
+const onboardingContext = useSettingsActionContext(() => !mainApp.value && !pageExited.value, () => []);
 const darkMode = matchMedia('(prefers-color-scheme: dark)');
 let pendingMain: Promise<Component> | undefined;
-let disposed = false;
+let stopAppearance: (() => void) | undefined;
 
 function readLocale(): unknown {
   try {
@@ -44,14 +48,25 @@ function readLocale(): unknown {
 }
 
 function applyAppearance(): void {
-  if (mainApp.value) return;
+  if (!onboardingContext.active.value) return;
   applyInterfaceSkin(config.interfaceSkin);
   applyInterfaceFont(config.interfaceFont);
   applyInterfaceTheme(config.theme === 'dark' || (config.theme === 'auto' && darkMode.matches));
 }
-applyAppearance();
-const unsubscribe = subscribeConfig(applyAppearance);
-darkMode.addEventListener('change', applyAppearance);
+watch(onboardingContext.active, active => {
+  stopAppearance?.();
+  stopAppearance = undefined;
+  if (!active) return;
+  const current = onboardingContext.capture();
+  const apply = () => {if (current()) applyAppearance();};
+  apply();
+  const unsubscribe = subscribeConfig(apply);
+  darkMode.addEventListener('change', apply);
+  stopAppearance = () => {
+    unsubscribe();
+    darkMode.removeEventListener('change', apply);
+  };
+}, {immediate: true, flush: 'sync'});
 
 function loadMain(): Promise<Component> {
   return pendingMain ??= import('./PopupApp.vue').then(module => module.default).catch(error => {
@@ -59,26 +74,35 @@ function loadMain(): Promise<Component> {
     throw error;
   });
 }
-function prepareMain(): void {
+function prepareMain(current: () => boolean): void {
+  if (!current()) return;
   void loadMain().catch(() => {});
 }
-async function openMain(): Promise<void> {
+async function openMain(current: () => boolean): Promise<void> {
+  if (!current()) return;
   loadFailed.value = false;
   try {
     const app = await loadMain();
-    if (!disposed) mainApp.value = app;
+    if (current()) mainApp.value = app;
   } catch {
-    if (!disposed) loadFailed.value = true;
+    if (current()) loadFailed.value = true;
   }
 }
 function reloadMain(): void {
+  if (!onboardingContext.active.value || !loadFailed.value) return;
   // 浏览器会缓存失败的模块 import；重开文档才能重新加载，已保存的语言由正常入口恢复。
+  pageExited.value = true;
   location.reload();
 }
+const onboardingActions = computed(() => {
+  const current = onboardingContext.capture();
+  return {saved: () => prepareMain(current), confirmed: () => openMain(current), retry: () => {if (current()) reloadMain();}};
+});
+function handlePageHide(): void {pageExited.value = true;}
+window.addEventListener('pagehide', handlePageHide);
 onBeforeUnmount(() => {
-  disposed = true;
-  unsubscribe();
-  darkMode.removeEventListener('change', applyAppearance);
+  stopAppearance?.();
+  window.removeEventListener('pagehide', handlePageHide);
 });
 </script>
 

@@ -18,17 +18,21 @@ function awaitRequest(
     request: Promise<RequestUrlResponse>,
     signal?: AbortSignal,
 ): Promise<RequestUrlResponse> {
-    if (signal?.aborted) return Promise.reject(abortError());
     return new Promise((resolve, reject) => {
+        let settled = false;
         const timer = setTimeout(() => finish(() => reject(new Error('翻译请求超时，请稍后重试'))), REQUEST_TIMEOUT_MS);
         const onAbort = () => finish(() => reject(abortError()));
         const finish = (callback: () => void) => {
+            if (settled) return;
+            settled = true;
             clearTimeout(timer);
             signal?.removeEventListener('abort', onAbort);
             callback();
         };
         signal?.addEventListener('abort', onAbort, {once: true});
         request.then((value) => finish(() => resolve(value)), (error) => finish(() => reject(error)));
+        // requestUrl 已启动后仍需接管它的拒绝；同步取消也不能留下未处理的晚到错误。
+        if (signal?.aborted) onAbort();
     });
 }
 

@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 829,
-    "functions": 15099,
+    "files": 830,
+    "functions": 15199,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -79,12 +79,12 @@
       "integrations/obsidian": {
         "files": 7,
         "functions": 57,
-        "lines": 433
+        "lines": 448
       },
       "src/app": {
-        "files": 102,
-        "functions": 1212,
-        "lines": 11622
+        "files": 103,
+        "functions": 1312,
+        "lines": 11772
       },
       "src/core/config": {
         "files": 52,
@@ -214,7 +214,7 @@
       "src/features/section-translation": {
         "files": 4,
         "functions": 91,
-        "lines": 1044
+        "lines": 1047
       },
       "src/features/selection-translation": {
         "files": 22,
@@ -465,6 +465,30 @@
   },
   "reviewed": [
     {
+      "file": "integrations/obsidian/markdown.ts",
+      "sha256": "40112963f25a4619ec4e6196ad9c129653e0285c32ab39016996363aba1f4704",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "integrations/obsidian/output.ts",
+      "sha256": "ef44f3d868e65c117140d14f5688dcc16c45c3d71147c41a3bb69d891a13a908",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "integrations/obsidian/translation.ts",
+      "sha256": "e52f3ca85324c1e3a621c54ca8e36962b7abd3cd649140ccd43b358222157300",
+      "functionBodies": 20,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "integrations/obsidian/vault.ts",
+      "sha256": "b8a77e3e564300aa5cdc35bed0c373f0e0e44a96c2bbd756514fbae15cf60805",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/badgeRuntime.ts",
       "sha256": "7795aae2a324408e4a637cd7010fea663e25898135afef2207da0458e5b12e03",
       "functionBodies": 13,
@@ -651,9 +675,51 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/popup/PopupApp.vue",
+      "sha256": "55f910f78fa656c4c2caee683a538ffa55b5a92bc67c2ababa040982a4862f92",
+      "functionBodies": 165,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/PopupDrawer.ts",
+      "sha256": "c58857059bbdd556ce47f589dc32ec8f95eda832b566929074e3712469aca8e8",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/PopupLanguageSelect.vue",
+      "sha256": "cc66fb9b6ee0672ecf5f47223beb620c303034c3ecdc046bcf557fba16491bf7",
+      "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/PopupOnboarding.vue",
+      "sha256": "594ad30f330592e178271ba8ee7a3b71a839ba9dae9857de1a5263f2eed8c1cb",
+      "functionBodies": 20,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/popup/PopupServices.vue",
       "sha256": "d9a97e1b648c92a168b69a6e1d03eed94a141762e2d72dc07a9e229cc4b090ce",
       "functionBodies": 55,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/PopupSiteRule.vue",
+      "sha256": "011df828301d08810ef3a081160b132af84d51814dbe6bab0daa63faeaf2e6aa",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/cache.ts",
+      "sha256": "8ef3e51ed395166fc852f4ead1fa3a2082dab1f62f8a7e25252def845ed37453",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/pageActions.ts",
+      "sha256": "02f23b41cc16047d0c7a1f5602d380700ebb5a91692495dc06dba68a3116e9c6",
+      "functionBodies": 21,
       "status": "source-read-and-traced"
     },
     {
@@ -1480,7 +1546,7 @@
     },
     {
       "file": "src/features/section-translation/content/picker.ts",
-      "sha256": "327421ef97c6a51c913940354881d4a687cc5e29c21789b530476a7ed231444c",
+      "sha256": "5dca7e219939c508b3320570f2ed9e5f5f5b8e6fa3b8cc8e8e1e336a24223beb",
       "functionBodies": 63,
       "status": "source-read-and-traced"
     },
@@ -2185,11 +2251,7 @@
     "entrypoints/xVideoBridge.content.ts",
     "entrypoints/youtubeBridge.content.ts",
     "integrations/obsidian/main.ts",
-    "integrations/obsidian/markdown.ts",
-    "integrations/obsidian/output.ts",
     "integrations/obsidian/pdf.ts",
-    "integrations/obsidian/translation.ts",
-    "integrations/obsidian/vault.ts",
     "integrations/obsidian/vite.config.ts",
     "src/app/background/areaRuntime.ts",
     "src/app/background/capabilityRegistry.ts",
@@ -2249,12 +2311,6 @@
     "src/app/offscreen/ttsPlayback.ts",
     "src/app/offscreen/videoTranscriptionWorker.ts",
     "src/app/options/index.ts",
-    "src/app/popup/PopupApp.vue",
-    "src/app/popup/PopupDrawer.ts",
-    "src/app/popup/PopupLanguageSelect.vue",
-    "src/app/popup/PopupOnboarding.vue",
-    "src/app/popup/PopupSiteRule.vue",
-    "src/app/popup/cache.ts",
     "src/app/popup/index.ts",
     "src/app/popup/mount.ts",
     "src/core/config/apiKeys.ts",
@@ -2717,7 +2773,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue545pending production files/functions. PopupApp whole-source review remains pending (only service drawer active forwarding traced43), together with remaining application, feature, provider, shared/UI and generated/resource paths. Cached-main reconciliation224files remains pending. After full scope: fresh main, safe rewritten-history rebase, whole resulting code review/fixes, verification and authorized merge.",
+    "Continue535pending production files/functions, starting shared Markdown parsing, Obsidian entry rename jobs and shared language onboarding candidates. Supporting Popup entry/mount and PDF reads not counted as full audits. Cached main reconciliation295files pending. After entire scope: fresh main, safe rewritten-history rebase, whole code/chain review/fixes, verify and authorized merge.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2749,12 +2805,13 @@
     "Thirty-ninth:8new files129bodies;266reviewed4836bodies561pending. New44executed cases30static definitions;12affected files149pass. Original7source47executed33fail14pass;5new captured-action API cases excluded, not counted as old defects. Actual cached client template6cases caught setup-only false confidence; controlled element ports not real Element Plus. Production13native flows3inspected screenshots and zero errors; first native same-option reopen failure fixed with context revision key. Other retries fixed input/checkbox selectors and full public snapshot theme fixture wiping synthetic credentials; final theme uses real UI. Two strict modules9cases four100, no weakened threshold/exemption. Existing13executable/3docs ownership debt and whole scope/latest-main delivery pending.",
     "Fortieth:2new reviewed files95bodies;268reviewed4931bodies559pending. New35executed/18static;12affected files186pass. Immutable two-source comparison35cases29failed6passed, one unhandled old malformed-entries render error preserved, not a count of independent bugs. Current zero unhandled errors. Strict unchanged shared context/task wait11cases four100; no threshold/exemption changes. Native11flows3screens inspected/errors0; first attempt hidden ElSwitch input selector corrected to visible switch click, no product error inferred. Earlier test preparation timers/no-tree renderer errors preserved but excluded from baseline claims. Existing13executable/3docs ownership debt; scope and final latest-main delivery pending.",
     "Forty-first:4new reviewed files110bodies;272reviewed5041bodies555pending. New32component+11unit executed/22static;14affectedfiles312pass. Immutable2SFC comparison32cases30failed2passed, zero unhandled; failure count not independent defects. Strict5files67cases3modules four100; no exemptions/threshold changes. Native14unique flows3 inspected narrow/light/dark screenshots/errors0, owned profile/browser cleanup0processes; composition synthetic only. Wrong tab-label fixture failed first and was corrected, no product regression inferred. Existing13executable/3docs ownership debt; whole audit and latest-main delivery remain pending.",
-    "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending."
+    "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending.",
+    "Forty-fifth:11new complete files256bodies;295reviewed5571bodies535pending. Parallel agentsA/B reviewed and closed. Root25baseline23fail2pass; child26baseline21fail5pass; picker new real-helper regression fails before/pass after native Enter.21related files378pass;strict94cases4modules four100;production15flows4screens/errors0/clean. Shared Markdown quoted fences/inline dash and Obsidian renamed job reproduced, shared onboarding candidates await reproduction; no native Obsidian/live-provider proof. Cached main295files reconciliation and final whole delivery pending."
   ],
   "progress": {
-    "sourceReadFiles": 284,
-    "sourceReadFunctionBodies": 5315,
-    "pendingFiles": 545,
+    "sourceReadFiles": 295,
+    "sourceReadFunctionBodies": 5571,
+    "pendingFiles": 535,
     "goalComplete": false
   },
   "observations": [
@@ -3512,6 +3569,12 @@
       "status": "fixed-reviewed-and-verified-forty-fourth",
       "issue": "Latest draft composable keeps own published arrays and field snapshots in WeakMap, ignores unchanged late acknowledgments, adopts external edits/replacements/config/action context and assigns logical/field lifetime tokens. Continuous different-field edits merge the latest draft; old same-field events cannot revive after change-back or replacement/deletion/recreation. Cached actual row callbacks capture active configuration/action, logical profile, action/field/dependency tokens and expansion epoch. Model/display/glossary callbacks recheck effective service; inherited default-service revision also invalidates old events after switching away and back. Current service/model/language/glossary membership and strict types/enums are checked; same service preserves independent model, new service clears it, selecting independent model while following default pins service, clearing model keeps pinned service. Keyed conditional recorder owns configuration/action and logical/hotkey token, captures confirmation/cancel/close callbacks per session. Confirmation revalidates eight-item per-action capacity and every existing trigger conflict, including previously missing paragraph-copy. Updates merge other current profile fields; obsolete recorder events cannot close or write a new session. Hidden/cached/unmounted/replaced context or external hotkey/profile change invalidates recorder; watch also observes actual visible list so action moves/deletions immediately close recorder and clear expansion ownership. Parents propagate actual settings/category/panel activation; independent section profiles remain active even with legacy section hotkey disabled. Pending focus rechecks context, recorder revision, connected trigger and user focus. Google display restriction preserves saved preference; target/glossary/model selection reject invalid values and removed current entries. Current service labels, profile lookup and known translated language catalog are cached; removed old prop-array editor/dialog wrapping and creation flags in favor of one draft and one recorder session. Meaningful regression harness executes actual cached client SFC template with Linkedom nodes and controlled display/focus ports; unit suite exercises reactive draft identity/acknowledgments/field snapshots. Existing architecture assertion now checks shared draft/action context and keyed conditional recorder, removing obsolete variable/callback requirements. Strict coverage boundary adds the new executable module without exemptions/threshold changes. User shortcut guide documents independent limits, model pin/clear and complete conflicts.",
       "validation": "New actual cached-template34cases plus16draft units; same final harness original b386dce5 Quick source24fail10pass. Fourteen relevant files220pass; two strict files19cases/two modules all dimensions100. Final native production Edge11flows3screenshots inspected/console0/process/profile cleanup. Types/Chrome/Firefox/userscript/verifier/manifests/audit passed; architecture830pass2existing failures. Goal active,545files pending; final rebase/review/merge not yet performed."
+    },
+    {
+      "file": "src/app/popup/PopupApp.vue",
+      "status": "fixed-reviewed-and-verified-forty-fifth",
+      "issue": "Extracted existing Popup full-page/restore/section/site messaging into one injected pageActions controller, removing five old root function bodies and unused feature icon VM data. In-flight operation locks before tab lookup; status reads, operations and lifecycle revisions are distinct; old query/reply/failure/finally cannot overwrite or release a new operation. Safe integer tab 0, strict status booleans, legacy fallback, credential restore, global/off/site save semantics and existing protocol retained. Actual page/config render callbacks capture their page phase; real URL/loading/activation/removal listeners invalidate navigation, including consecutive URL updates during a query. Window filtering and title/complete/unrelated update exclusion avoid repeated status work; listeners removed on unmount. Child site buttons also capture props/context so cached child emit cannot borrow a new parent listener/domain. Cached drawer/selection/display/modal/header/cache/route callbacks own current active configuration and phase. Disable/deactivate/pagehide/unmount invalidate pending operations; pause closes quick drawers while services remain available. Cache clear is exclusive, old completion cannot release a new request. Donation pending focus respects user focus, close restores only owned focus, old overlay cannot close a new dialog; navigation API rejections produce current-session notice instead of unhandled errors. Existing hydration/config CAS/exit handoff retained. Parallel A: language select rejects stale/closed/disabled/source/value/lifecycle events and invalid current choices. Control remount only for source/availability changes preserves ordinary value-sync focus and language directory caching. Onboarding preload/open/retry and appearance subscriptions own active lifetime; late import/error cannot update closed context and media/config observers are released. Parallel B: Obsidian nested Markdown prefixes stripped together, deleted/replaced source object rejected, occupied output creation races retry with source/cancel recheck, and synchronous native-request cancellation still adopts late promise rejection. Existing original-file/output semantics and bounded timeout retained; no native transaction/transport cancellation guarantee. Production Enter regression: own closed section-picker bar was treated by generic opaque-host editing protection as page input, blocking arrows and Enter. Apply page typing protection only to page events and inspect known own ShadowRoot focus for own events; other controls retain native keys. One new real-helper regression fails before and passes after, with 120 related cases and strict picker four100 plus native Enter confirmation.",
+      "validation": "21distinct related files378pass;4strict test files94cases/4modules four100. Production15flows4inspected screenshots/errors0 and owned resources clean. Parallel child/Obsidian patches reviewed.535files/followups and final delivery remain pending."
     }
   ],
   "finalDelivery": {
