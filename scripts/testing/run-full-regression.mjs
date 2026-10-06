@@ -463,7 +463,7 @@ export function buildPlan(options) {
 }
 
 function run(command, args, options = {}) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         console.log(`\n[regression] ${options.label || command} -> ${command} ${args.join(' ')}`);
         const child = spawn(command, args, {
             cwd: PROJECT_ROOT,
@@ -471,7 +471,8 @@ function run(command, args, options = {}) {
             stdio: 'inherit',
             shell: false,
         });
-        child.on('close', (code, signal) => resolve({code, signal}));
+        child.once('error', reject);
+        child.once('close', (code, signal) => resolve({code, signal}));
     });
 }
 

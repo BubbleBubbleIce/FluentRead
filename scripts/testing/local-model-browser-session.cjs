@@ -17,9 +17,10 @@ async function main() {
     background: process.env.FR_FOREGROUND !== '1', headless: false, viewport: {width: 1440, height: 1000}, displayTarget: 'secondary',
     browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check'],
   });
-  const context = session.context;
   const errors = [];
+  let operationFailed = false;
   try {
+  const context = session.context;
   context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
   const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker', {timeout: 30_000});
   const extensionId = new URL(worker.url()).host;
@@ -40,9 +41,19 @@ async function main() {
       console.log('RESULT', JSON.stringify(result));
     } catch (error) { console.log('ERROR', error.stack); }
   }
+  } catch (error) {
+    operationFailed = true;
+    throw error;
   } finally {
-    fs.writeFileSync(path.join(evidenceDir, 'errors.json'), JSON.stringify(errors, null, 2));
-    await session.close();
+    const cleanupErrors = [];
+    try { fs.writeFileSync(path.join(evidenceDir, 'errors.json'), JSON.stringify(errors, null, 2)); }
+    catch (error) { cleanupErrors.push(error); }
+    try { await session.close(); }
+    catch (error) { cleanupErrors.push(error); }
+    if (cleanupErrors.length) {
+      if (operationFailed) console.error('Session cleanup failed:', ...cleanupErrors);
+      else throw cleanupErrors[0];
+    }
   }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

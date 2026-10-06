@@ -44,6 +44,8 @@ function isLegacyPatternList(value: unknown): boolean {
 
 export function isUiLanguageBundle(value: unknown): value is UiLanguageBundle {
     return isPlainRecord(value) && isPlainRecord(value.messages) && isPlainRecord(value.legacyText)
+        && Object.values(value.messages).every((message) => typeof message === 'string')
+        && Object.values(value.legacyText).every((message) => typeof message === 'string')
         && isPlainRecord(value.legacyPatterns)
         && isLegacyPatternList(value.legacyPatterns.early)
         && isLegacyPatternList(value.legacyPatterns.late);

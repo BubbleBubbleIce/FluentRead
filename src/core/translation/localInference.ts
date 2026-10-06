@@ -8,6 +8,8 @@
 import {HUNYUAN_LANGUAGE_NAMES} from '@/src/core/config/localTranslation';
 
 export function splitLocalTranslationText(text: string, maxLength = 480): string[] {
+    // 至少容纳一个 UTF-16 代理对，否则退让边界会得到零长度并反复切同一段。
+    if (!Number.isSafeInteger(maxLength) || maxLength < 2) throw new RangeError('LOCAL_TRANSLATION_INVALID_CHUNK_LENGTH');
     const result: string[] = [];
     const segments = new Intl.Segmenter(undefined, {granularity: 'sentence'}).segment(text);
     for (const {segment} of segments) {

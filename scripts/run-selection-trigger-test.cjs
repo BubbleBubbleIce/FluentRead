@@ -18,6 +18,7 @@ let activateInputPage = async () => undefined;
 let createIsolatedPage = context => context.newPage();
 const selectionUiSessions = new WeakMap();
 const selectionUiTrackers = new WeakMap();
+const ownedSelectionUiTrackers = new Set();
 
 function readArg(argv, name, fallback) {
   const index = argv.indexOf(`--${name}`);
@@ -714,6 +715,7 @@ async function readSelectionUi(page) {
 
 async function sampleSelectionUiTracker(page, tracker) {
   const state = await readSelectionUi(page);
+  if (!tracker.active) return;
   const next = { at: Date.now(), tooltip: state.tooltip, indicator: state.indicator };
   const previous = tracker.transitions.at(-1);
   if (!previous || previous.tooltip !== next.tooltip || previous.indicator !== next.indicator) {
@@ -723,16 +725,17 @@ async function sampleSelectionUiTracker(page, tracker) {
 
 async function startSelectionUiTracking(page) {
   const previous = selectionUiTrackers.get(page);
-  if (previous) clearInterval(previous.timer);
-  const tracker = { transitions: [], timer: null, busy: false };
+  if (previous) {previous.active = false; clearInterval(previous.timer); ownedSelectionUiTrackers.delete(previous);}
+  const tracker = { transitions: [], timer: null, busy: false, active: true };
   await sampleSelectionUiTracker(page, tracker);
   tracker.timer = setInterval(async () => {
-    if (tracker.busy) return;
+    if (tracker.busy || !tracker.active) return;
     tracker.busy = true;
     try { await sampleSelectionUiTracker(page, tracker); } catch { /* 页面正在切换时忽略该次采样。 */ }
-    tracker.busy = false;
+    finally {tracker.busy = false;}
   }, 25);
   selectionUiTrackers.set(page, tracker);
+  ownedSelectionUiTrackers.add(tracker);
 }
 
 async function stopSelectionUiTracking(page) {
@@ -741,12 +744,16 @@ async function stopSelectionUiTracking(page) {
   clearInterval(tracker.timer);
   while (tracker.busy) await page.waitForTimeout(5);
   await sampleSelectionUiTracker(page, tracker).catch(() => {});
+  tracker.active = false;
+  ownedSelectionUiTrackers.delete(tracker);
   selectionUiTrackers.delete(page);
   return tracker.transitions;
 }
 
 async function exerciseTransientSelectionLoss(page, restoreDelayMs = 80) {
   await startSelectionUiTracking(page);
+  let transitions;
+  try {
   await page.evaluate(async (delayMs) => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) throw new Error('瞬时选区测试缺少活动选区');
@@ -756,7 +763,7 @@ async function exerciseTransientSelectionLoss(page, restoreDelayMs = 80) {
     for (const range of ranges) selection.addRange(range);
   }, restoreDelayMs);
   await page.waitForTimeout(350);
-  const transitions = await stopSelectionUiTracking(page);
+  } finally {transitions = await stopSelectionUiTracking(page);}
   assert(transitions.length > 0 && transitions.every(item => item.tooltip), `瞬时选区变化导致翻译框闪退：${JSON.stringify(transitions)}`);
   return transitions;
 }
@@ -2290,6 +2297,8 @@ async function main() {
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     process.exitCode = 1;
   } finally {
+    for (const tracker of ownedSelectionUiTrackers) {tracker.active = false; clearInterval(tracker.timer);}
+    ownedSelectionUiTrackers.clear();
     await closeBrowser();
     await new Promise(resolve => translationServer.close(resolve));
     fs.rmSync(profileDir, { recursive: true, force: true });

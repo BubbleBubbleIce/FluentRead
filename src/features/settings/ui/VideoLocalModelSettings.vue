@@ -1,8 +1,8 @@
 <!--
  * @file src/features/settings/ui/VideoLocalModelSettings.vue
  * 文件职责：提供 X 本地视频字幕模型选择与下载管理，向用户呈现模型推荐、可用状态和缓存操作。
- * 主要内容：使用模型卡片作为唯一选择入口，标注默认推荐模型，展示 Tiny/Base 下载状态与视频缓存操作栏；下载时卡片底部显示真实进度条、百分比和已下载体积，播放器里发起的下载也会同步显示；呈现缓存读取与错误反馈，并在组件卸载时移除存储监听。
- * 模块边界：通过视频 feature 公共配置和后台消息获取模型，不直接执行识别、下载模型权重或操作网页播放器；下载进度只读取后台转存的变化事件。
+ * 主要内容：模型卡片作为唯一选择入口，保留推荐、Tiny/Base 状态和真实进度条、百分比及已下载体积，同步播放器发起的下载；各模型命令状态独立，命令结束重读权威缓存，区分读取与命令错误；管理识别缓存，并在卸载时作废异步提交及移除监听。
+ * 模块边界：通过视频 feature 公共配置和后台消息获取模型，不直接执行识别、下载权重或操作网页播放器；下载进度只读取后台转存的变化事件。
  -->
 <template>
   <section class="video-model-management" aria-labelledby="video-model-management-title">
@@ -42,7 +42,7 @@
       </article>
     </div>
     <p class="video-model-guidance">支持桌面版 Chrome、Edge 和 Firefox，首次下载需联网，识别速度取决于 CPU 和内存</p>
-    <p v-if="downloadError" class="video-model-error" role="alert">{{ downloadError }}</p>
+    <p v-if="downloadError || modelReadError" class="video-model-error" role="alert">{{ downloadError || modelReadError }}</p>
   </section>
   <section class="video-ai-cache-panel" data-video-ai-cache aria-labelledby="video-ai-cache-title">
     <div class="video-ai-cache-copy">
@@ -95,10 +95,14 @@ const observedDownloads = ref<VideoLocalTranscriptionModel[]>([]);
 const progress = ref<Partial<Record<VideoLocalTranscriptionModel, DownloadProgressValue>>>({});
 const downloadError = ref('');
 let stopWatchingProgress: (() => void) | undefined;
+const modelReadError = ref('');
 const removing = ref<VideoLocalTranscriptionModel[]>([]);
 const cacheStats = ref<{entries: number; bytes: number; maxEntries: number; ttlMs: number} | null>(null);
 const cacheError = ref('');
 const clearingCache = ref(false);
+let active = true;
+let modelGeneration = 0;
+let cacheGeneration = 0;
 
 function selectModel(model: VideoLocalTranscriptionModel): void {
   if (!config.value.videoTranslationEnabled || !browserCapabilities.extensionDom) return;
@@ -110,6 +114,7 @@ function isDownloading(model: VideoLocalTranscriptionModel): boolean {
 }
 
 function handleDownloadProgress(id: string, next: DownloadProgressValue | undefined): void {
+  if (!active) return;
   const model = modelOptions.find(item => videoModelDownloadId(item.value) === id)!.value;
   progress.value = {...progress.value, [model]: next};
   if (next) {
@@ -119,89 +124,124 @@ function handleDownloadProgress(id: string, next: DownloadProgressValue | undefi
   // 结束事件不说明成败；不是本页发起的下载需要重新读取已下载列表。
   const external = observedDownloads.value.includes(model) && !downloading.value.includes(model);
   observedDownloads.value = observedDownloads.value.filter(item => item !== model);
-  if (external) void refresh().catch(() => { downloadError.value = '无法读取模型缓存，请重试'; });
+  if (external) void refresh().catch(() => { if (active) modelReadError.value = '无法读取模型缓存，请重试'; });
 }
 
 async function refresh(): Promise<void> {
-  const stored = await browser.storage.local.get(VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY);
-  downloaded.value = normalizeVideoLocalTranscriptionModels(stored[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]);
-  modelStateLoaded.value = true;
+  if (!active || downloading.value.length || removing.value.length) return;
+  const request = ++modelGeneration;
+  try {
+    const stored = await browser.storage.local.get(VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY);
+    if (!active || request !== modelGeneration) return;
+    downloaded.value = normalizeVideoLocalTranscriptionModels(stored[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]);
+    modelReadError.value = '';
+  } catch {
+    if (active && request === modelGeneration) {
+      modelReadError.value = '无法读取模型缓存，请重试';
+    }
+  } finally {
+    if (active && request === modelGeneration) modelStateLoaded.value = true;
+  }
 }
 
 async function download(model: VideoLocalTranscriptionModel): Promise<void> {
+  if (!active) return;
   if (!browserCapabilities.extensionDom) {
     downloadError.value = '当前浏览器不支持本地 AI 字幕';
     return;
   }
   if (downloaded.value.includes(model) || isDownloading(model)) return;
+  modelGeneration++;
   downloadError.value = '';
   progress.value = {...progress.value, [model]: undefined};
   downloading.value = [...downloading.value, model];
   try {
     const response = await browser.runtime.sendMessage({type: 'fluentReadPrepareLocalVideoModel', model}) as {success?: boolean; models?: unknown; error?: string} | undefined;
+    if (!active) return;
     if (!response?.success) throw new Error(response?.error || '模型下载失败');
-    downloaded.value = normalizeVideoLocalTranscriptionModels(response.models);
   } catch (error) {
-    downloadError.value = error instanceof Error ? t('video.modelDownloadError', {error: translateLegacy(error.message)}) : '模型下载失败，请检查网络后重试';
+    if (active) downloadError.value = error instanceof Error ? t('video.modelDownloadError', {error: translateLegacy(error.message)}) : '模型下载失败，请检查网络后重试';
   } finally {
-    downloading.value = downloading.value.filter(item => item !== model);
-    observedDownloads.value = observedDownloads.value.filter(item => item !== model);
+    if (active) {
+      downloading.value = downloading.value.filter(item => item !== model);
+      observedDownloads.value = observedDownloads.value.filter(item => item !== model);
+      // 回包可能早于其他命令/外部变化；最后一项本页命令结束后重读权威 storage。
+      await refresh();
+    }
   }
 }
 
 async function removeModel(model: VideoLocalTranscriptionModel): Promise<void> {
-  if (removing.value.includes(model)) return;
+  if (!active || removing.value.includes(model)) return;
+  modelGeneration++;
   removing.value.push(model);
   downloadError.value = '';
   try {
     const response = await browser.runtime.sendMessage({type: 'fluentReadRemoveLocalVideoModel', model}) as {success?: boolean; error?: string; models?: unknown} | undefined;
+    if (!active) return;
     if (!response?.success) throw new Error(response?.error || t('modelCache.removeFailed'));
-    downloaded.value = normalizeVideoLocalTranscriptionModels(response.models);
-  } catch (error) { downloadError.value = error instanceof Error ? translateLegacy(error.message) : t('modelCache.removeFailed'); }
-  finally { removing.value = removing.value.filter(item => item !== model); }
+  } catch (error) { if (active) downloadError.value = error instanceof Error ? translateLegacy(error.message) : t('modelCache.removeFailed'); }
+  finally {
+    if (active) {
+      removing.value = removing.value.filter(item => item !== model);
+      await refresh();
+    }
+  }
 }
 
 async function refreshCacheStats(): Promise<void> {
-  const response = await browser.runtime.sendMessage({type: VIDEO_AI_SUBTITLE_CACHE_STATS_MESSAGE}) as {success?: boolean; stats?: typeof cacheStats.value} | undefined;
-  if (!response?.success || !response.stats) throw new Error('无法读取已识别字幕缓存，请重试');
-  cacheStats.value = response.stats;
-  cacheError.value = '';
+  if (!active) return;
+  const request = ++cacheGeneration;
+  try {
+    const response = await browser.runtime.sendMessage({type: VIDEO_AI_SUBTITLE_CACHE_STATS_MESSAGE}) as {success?: boolean; stats?: typeof cacheStats.value} | undefined;
+    if (!active || request !== cacheGeneration) return;
+    if (!response?.success || !response.stats) throw new Error('无法读取已识别字幕缓存，请重试');
+    cacheStats.value = response.stats;
+    cacheError.value = '';
+  } catch (error) {
+    if (active && request === cacheGeneration) cacheError.value = error instanceof Error ? error.message : '无法读取已识别字幕缓存，请重试';
+  }
 }
 
 async function clearVideoAiCache(): Promise<void> {
-  if (clearingCache.value) return;
+  if (!active || clearingCache.value) return;
+  cacheGeneration++;
   clearingCache.value = true;
   cacheError.value = '';
   try {
     const response = await browser.runtime.sendMessage({type: VIDEO_AI_SUBTITLE_CACHE_CLEAR_MESSAGE}) as {success?: boolean; error?: string} | undefined;
+    if (!active) return;
     if (!response?.success) throw new Error(response?.error || '清除已识别字幕失败');
     await refreshCacheStats();
   } catch (error) {
-    cacheError.value = error instanceof Error ? error.message : '清除已识别字幕失败，请重试';
+    if (active) cacheError.value = error instanceof Error ? error.message : '清除已识别字幕失败，请重试';
   } finally {
-    clearingCache.value = false;
+    if (active) clearingCache.value = false;
   }
 }
 
 function handleStorageChange(changes: Record<string, browser.Storage.StorageChange>, areaName: string): void {
-  if (areaName === 'local' && changes[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]) void refresh().catch(() => { downloadError.value = '无法读取模型缓存，请重试'; });
+  if (areaName === 'local' && changes[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]) void refresh();
 }
 
 // 从播放页返回设置时重新读取 IndexedDB 统计，避免一直显示首次挂载时的零条。
 function refreshVisibleCacheStats(): void {
-  if (document.visibilityState === 'hidden') return;
-  void refreshCacheStats().catch(error => { cacheError.value = error instanceof Error ? error.message : '无法读取已识别字幕缓存，请重试'; });
+  if (!active || clearingCache.value || document.visibilityState === 'hidden') return;
+  void refreshCacheStats();
 }
 
 onMounted(() => {
-  void refresh().catch(() => { modelStateLoaded.value = true; downloadError.value = '无法读取模型缓存，请重试'; });
-  void refreshCacheStats().catch((error) => { cacheError.value = error instanceof Error ? error.message : '无法读取已识别字幕缓存，请重试'; });
+  void refresh();
+  void refreshCacheStats();
   browser.storage.onChanged.addListener(handleStorageChange);
   stopWatchingProgress = watchDownloadProgress(modelOptions.map(item => videoModelDownloadId(item.value)), handleDownloadProgress);
   document.addEventListener('visibilitychange', refreshVisibleCacheStats);
   window.addEventListener('focus', refreshVisibleCacheStats);
 });
 onUnmounted(() => {
+  active = false;
+  modelGeneration++;
+  cacheGeneration++;
   browser.storage.onChanged.removeListener(handleStorageChange);
   stopWatchingProgress?.();
   document.removeEventListener('visibilitychange', refreshVisibleCacheStats);

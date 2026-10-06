@@ -23,10 +23,12 @@ const {chromium} = require(path.join(playwrightRoot, 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(helperPath);
 fs.mkdirSync(artifactsDir, {recursive: true});
 const report = {ok: false, extensionDir, providerEvidence: 'synthetic-http-400-in-production-extension-worker', cases: [], consoleErrors: [], links: {}};
-const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-aliyun-ui-'));
+let profileDir; let launchAttempted = false;
 let launched, page;
 (async () => {
  try {
+  profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-aliyun-ui-'));
+  launchAttempted = true;
   launched = await launchFocusSafePersistentContext({chromium, profileDir, browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', headless: false, background: true, browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check'], viewport: {width:1440,height:1100}, timeout:30000});
   Object.assign(report, {launchMode:launched.launchMode,focusPolicy:launched.focusPolicy,windowPlacement:launched.windowPlacement});
   const context = launched.context;
@@ -146,9 +148,22 @@ let launched, page;
   if(page) {await page.screenshot({path:path.join(artifactsDir,'failure.png')}).catch(()=>{});fs.writeFileSync(path.join(artifactsDir,'failure-dom.txt'),await page.locator('body').innerText().catch(()=>''));}
   process.exitCode = 1;
  } finally {
-  fs.writeFileSync(path.join(artifactsDir,'report.json'),JSON.stringify(report,null,2));
-  if(launched) await launched.close();
-  fs.rmSync(profileDir,{recursive:true,force:true});
+  report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
+
   console.log(JSON.stringify(report,null,2));
  }
 })();

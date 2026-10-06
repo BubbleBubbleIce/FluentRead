@@ -45,10 +45,18 @@ const phaseLabel=computed(()=>({downloading:'正在下载漫画模型',verifying
 const root='https://huggingface.co/snowfluke/ppu-paddle-ocr-models/resolve/bf1d5edb0335d3262be7caf13f766ba274b4cadd/';
 const offlineAssets=computed(()=>[...MANGA_OCR_ASSETS.map(asset=>({name:asset.path.split('/').pop()!,url:root+asset.path})),...(props.showInpainting?[{name:'lama-manga-dynamic.onnx',url:MANGA_INPAINT_ASSET.url}]:[])]);
 let disposed=false,timer:ReturnType<typeof setTimeout>|undefined;
+let sourceRevision=0;
 async function load(){
-  const response=await browser.runtime.sendMessage({type:'fluentReadMangaModelStatus'}) as {success?:boolean;error?:string;ready:boolean;inpaintingReady?:boolean;bytes:number;download?:MangaDownloadState};
+  const revision=sourceRevision;
+  const response=await browser.runtime.sendMessage({type:'fluentReadMangaModelStatus'}) as {success?:boolean;error?:string;ready:boolean;inpaintingReady?:boolean;bytes:number;source?:MangaModelSource;download?:MangaDownloadState};
   if(!response?.success)throw new Error(response?.error||'漫画识别模型状态读取失败');
-  if(!disposed){status.value=response;statusError.value='';}
+  if(!disposed){
+    status.value=response;statusError.value='';
+    // 后台快照同步其他设置页的更改，但迟到快照不能撤回本页刚提交的选择。
+    if(revision===sourceRevision&&!busy.value&&response.source&&['auto','official','mirror'].includes(response.source)){
+      source.value=response.source;sourceRevision++;
+    }
+  }
 }
 async function refresh(){
   if(document.visibilityState==='hidden'){timer=setTimeout(()=>void refresh(),1500);return;}
@@ -57,6 +65,7 @@ async function refresh(){
   finally {if(!disposed)timer=setTimeout(()=>void refresh(),downloading.value?500:1500);}
 }
 async function changeSource(value:string){
+  sourceRevision++;
   busy.value=true;error.value='';
   try {await setMangaModelSource(value as MangaModelSource);source.value=value as MangaModelSource;}
   catch(cause){error.value=translateLegacy(cause instanceof Error?cause.message:String(cause));}
@@ -75,7 +84,7 @@ async function remove(){
   }catch(cause){error.value=translateLegacy(cause instanceof Error?cause.message:String(cause));}
   finally{busy.value=false;}
 }
-onMounted(()=>{void getMangaModelSource().then(value=>{if(!disposed)source.value=value;}).catch(()=>undefined);void refresh();});
+onMounted(()=>{const revision=sourceRevision;void getMangaModelSource().then(value=>{if(!disposed&&revision===sourceRevision)source.value=value;}).catch(()=>undefined);void refresh();});
 onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);});
 </script>
 <style scoped>

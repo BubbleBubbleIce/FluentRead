@@ -30,6 +30,7 @@ const report = {ok:false, cases:[], screenshots:[], consoleErrors:[], translatio
   scope:grammarOnly?'grammar and bilingual reading source':'word feedback, grammar and bilingual reading source',
   evidence:grammarOnly?'Production extension in isolated Edge; deterministic translation and AI fixtures. No live provider quality claim.':'Production extension in isolated Edge. Real local dictionary; deterministic online dictionary, translation and AI fixtures. No live provider quality claim.'};
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+let launchAttempted = false;
 let session, context, worker, server, popup, page;
 let browserPid;
 function guardFocus() {
@@ -44,8 +45,11 @@ async function inspect(predicate, fn) {
   const tree = await support.getSelectionUiTree(page);
   const n = support.findCdpNode(tree.root, predicate); assert(n, 'UI element missing');
   const {object} = await tree.session.send('DOM.resolveNode', {nodeId:n.nodeId});
+  try {
   const result = await tree.session.send('Runtime.callFunctionOn', {objectId:object.objectId, returnByValue:true, functionDeclaration:fn});
+  if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
   return result.result.value;
+  } finally {await tree.session.send('Runtime.releaseObject', {objectId:object.objectId});}
 }
 async function clickNode(predicate) {
   const tree = await support.getSelectionUiTree(page); const n = support.findCdpNode(tree.root,predicate); assert(n);
@@ -93,8 +97,14 @@ async function main() {
     }
     res.end('data: '+JSON.stringify({id:'fixture',choices:[{index:0,delta:{},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n');
   });
-  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;
+  
   try {
+    await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); reject(error);};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });const port=server.address().port;
+    launchAttempted = true;
     session=await helper.launchFocusSafePersistentContext({chromium,profileDir:profile,
       browserPath:'/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',headless:false,background:true,
       browserArgs:[`--disable-extensions-except=${extensionDir}`,`--load-extension=${extensionDir}`,'--no-first-run','--no-default-browser-check'],viewport:{width:1440,height:960}});
@@ -214,6 +224,24 @@ async function main() {
     }
     await capture('failure').catch(()=>{});throw error;
   }
-  finally {fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));await session?.close();server.close();fs.rmSync(profile,{recursive:true,force:true});}
+  finally {
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (session) {
+      try {await session.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});}
+    catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+    if (profile) {
+      if (closed) {
+        try {fs.rmSync(profile, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profile;}
+      } else report.retainedProfile = profile;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
+  }
 }
 main().catch(error=>{console.error(error.stack);process.exitCode=1;});

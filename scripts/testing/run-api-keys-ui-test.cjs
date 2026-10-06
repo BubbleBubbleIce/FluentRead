@@ -22,7 +22,7 @@ fs.mkdirSync(artifactsDir, {recursive: true});
 const {chromium} = require(path.join(playwrightRoot, 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(helperPath);
 const report = {extensionDir, providerEvidence: 'local-http-401-fixture', cases: [], requests: [], screenshots: [], consoleErrors: []};
-let launched;
+let launched; let launchAttempted = false;
 let profileDir;
 let activePage;
 let fixtureDelayMs = 0;
@@ -31,7 +31,10 @@ const server = http.createServer((req, res) => {
   req.on('data', chunk => { body += chunk; });
   req.on('end', () => {
     const key = String(req.headers.authorization || '').replace(/^Bearer\s+/u, '');
-    report.requests.push({key, path: req.url, body: body ? JSON.parse(body) : null});
+    let parsedBody;
+    try {parsedBody = body ? JSON.parse(body) : null;}
+    catch {res.writeHead(400, {'content-type': 'application/json', 'access-control-allow-origin': '*'}); res.end(JSON.stringify({error: {message: 'Invalid synthetic fixture JSON'}})); return;}
+    report.requests.push({key, path: req.url, body: parsedBody});
     const respond = () => {
       if (key === 'fixture-A') {
         res.writeHead(401, {'content-type': 'application/json', 'access-control-allow-origin': '*'});
@@ -46,9 +49,14 @@ const server = http.createServer((req, res) => {
 });
 
 async function main() {
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); reject(error);};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });
   const endpoint = `http://127.0.0.1:${server.address().port}/v1/chat/completions`;
   profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-api-keys-'));
+  launchAttempted = true;
   launched = await launchFocusSafePersistentContext({chromium, profileDir, browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', headless: false, background: true, browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check'], viewport: {width: 1440, height: 1000}, timeout: 30000});
   Object.assign(report, {launchMode: launched.launchMode, focusPolicy: launched.focusPolicy, windowPlacement: launched.windowPlacement});
   const context = launched.context;
@@ -349,9 +357,22 @@ main().catch(async error => {
     }
   } catch (captureError) { report.failureCaptureError = String(captureError); }
 }).finally(async () => {
-  fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-  await launched?.close();
-  await new Promise(resolve => server.close(resolve));
-  if (profileDir) fs.rmSync(profileDir, {recursive: true, force: true});
+  report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});}
+    catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
   console.log(JSON.stringify({status: report.status, cases: report.cases, error: report.error, artifactsDir}, null, 2));
 });

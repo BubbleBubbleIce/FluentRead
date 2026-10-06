@@ -64,7 +64,7 @@ function parseArgs(argv) {
   }
   if (args.url) {
     const url = new URL(args.url);
-    if (!['127.0.0.1', 'localhost', '::1'].includes(url.hostname)) {
+    if (!['127.0.0.1', 'localhost', '::1', '[::1]'].includes(url.hostname)) {
       throw new Error('全文本地 fixture 只允许 loopback URL；真实站点必须使用显式 network matrix');
     }
   }
@@ -109,6 +109,7 @@ async function startTranslationFixtureServer(unexpectedNetworkRequests = [], res
   let translatedItemCount = 0;
   const requestPayloads = [];
   let failureActionAttempts = 0;
+  let closed = false;
   const server = http.createServer(async (request, response) => {
     const requestUrl = new URL(request.url || '/', 'http://127.0.0.1');
     if (request.method === 'POST' && requestUrl.pathname === '/translate') {
@@ -122,8 +123,13 @@ async function startTranslationFixtureServer(unexpectedNetworkRequests = [], res
       translatedItemCount += Array.isArray(payload) ? payload.length : 0;
       requestPayloads.push(Array.isArray(payload) ? [...payload] : []);
       if (responseDelayMs > 0) {
-        await new Promise((resolve) => setTimeout(resolve, responseDelayMs));
+        await new Promise(resolve => {
+          const finish = () => {clearTimeout(timer); response.off('close', finish); resolve();};
+          const timer = setTimeout(finish, responseDelayMs);
+          response.once('close', finish);
+        });
       }
+      if (closed || response.destroyed) return;
       const matchesFailureActionLink = Array.isArray(payload) && payload.some((text) =>
         String(text).includes(FAILURE_ACTION_TEXT_MARKER));
       if (matchesFailureActionLink) {
@@ -160,7 +166,7 @@ async function startTranslationFixtureServer(unexpectedNetworkRequests = [], res
     response.end('Not found');
   });
   await new Promise((resolve, reject) => {
-    const onError = (error) => reject(error);
+    const onError = (error) => {server.close(() => reject(error)); server.closeAllConnections();};
     server.once('error', onError);
     server.listen(0, '127.0.0.1', () => {
       server.off('error', onError);
@@ -180,7 +186,7 @@ async function startTranslationFixtureServer(unexpectedNetworkRequests = [], res
     translatedItemCount: () => translatedItemCount,
     requestPayloads: () => requestPayloads.map((payload) => [...payload]),
     failureActionAttempts: () => failureActionAttempts,
-    close: () => new Promise((resolve) => server.close(resolve)),
+    close: () => {closed = true; return new Promise(resolve => {server.close(resolve); server.closeAllConnections();});},
   };
 }
 
@@ -201,7 +207,7 @@ async function installTranslationFixtureOnWorker(worker, fixtureUrls) {
         return nativeFetch(redirectedInput, init);
       }
       if ((parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:')
-          && !['127.0.0.1', 'localhost', '::1'].includes(parsedUrl.hostname)) {
+          && !['127.0.0.1', 'localhost', '::1', '[::1]'].includes(parsedUrl.hostname)) {
         return nativeFetch(`${blockedUrl}?url=${encodeURIComponent(requestUrl)}`, {method: 'GET'});
       }
       return nativeFetch(input, init);
@@ -381,7 +387,7 @@ async function startFixtureServer() {
   const html = fs.readFileSync(fixturePath);
   const server = http.createServer(createFixtureRequestHandler(html));
   await new Promise((resolve, reject) => {
-    const onError = (error) => reject(error);
+    const onError = error => {server.close(() => reject(error)); server.closeAllConnections();};
     server.once('error', onError);
     server.listen(0, '127.0.0.1', () => {
       server.off('error', onError);

@@ -11,6 +11,7 @@ export function useDemoPlayback(
   const playing = ref(autoplay)
   const reduced = ref(false)
   const running = ref(false)
+  let disposed = false
   let visible = false
   let timer: ReturnType<typeof setTimeout> | undefined
   let stopAt: number | undefined
@@ -22,10 +23,11 @@ export function useDemoPlayback(
   }
   function sync() {
     stopTimer()
-    running.value = playing.value && !reduced.value && visible && !document.hidden
+    running.value = !disposed && playing.value && !reduced.value && visible && !document.hidden
     if (running.value)
       timer = setTimeout(
         () => {
+          if (disposed) return
           step.value = (step.value + 1) % count
           if (step.value === stopAt) {
             stopAt = undefined
@@ -67,6 +69,7 @@ export function useDemoPlayback(
     sync()
   }
   function motion() {
+    if (disposed) return
     reduced.value = Boolean(preference?.matches)
     if (reduced.value) {
       stopAt = undefined
@@ -83,6 +86,7 @@ export function useDemoPlayback(
     if (root.value) {
       observer = new IntersectionObserver(
         (entries) => {
+          if (disposed) return
           visible = entries[0].isIntersecting && entries[0].intersectionRatio >= 0.15
           sync()
         },
@@ -93,6 +97,9 @@ export function useDemoPlayback(
   })
   const unwatch = watch(playing, sync)
   onBeforeUnmount(() => {
+    // disconnect/clearTimeout cannot retract a callback already queued by the browser.
+    disposed = true
+    running.value = false
     stopTimer()
     observer?.disconnect()
     unwatch()

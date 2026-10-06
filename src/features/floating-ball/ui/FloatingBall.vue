@@ -327,6 +327,7 @@ function fallbackBallSize() {
 }
 
 function startDrag(event: PointerEvent) {
+  if (dragState.value) return;
   if (event.pointerType === 'mouse' && event.button !== 0) return;
 
   event.preventDefault();
@@ -353,6 +354,7 @@ function startDrag(event: PointerEvent) {
   window.addEventListener('pointermove', handlePointerMove);
   window.addEventListener('pointerup', finishPointerInteraction);
   window.addEventListener('pointercancel', cancelPointerInteraction);
+  window.addEventListener('blur', cancelActivePointerInteraction);
 }
 
 function handlePointerMove(event: PointerEvent) {
@@ -415,6 +417,14 @@ function cancelPointerInteraction(event: PointerEvent) {
   const currentDrag = dragState.value;
   if (!currentDrag || currentDrag.pointerId !== event.pointerId) return;
 
+  cancelActivePointerInteraction();
+}
+
+/** 失焦时没有可靠的 pointerup；释放当前手势并回到原停靠位置。 */
+function cancelActivePointerInteraction() {
+  const currentDrag = dragState.value;
+  if (!currentDrag) return;
+
   removePointerListeners();
   dragState.value = null;
   if (!currentDrag.moved) {
@@ -431,6 +441,7 @@ function removePointerListeners() {
   window.removeEventListener('pointermove', handlePointerMove);
   window.removeEventListener('pointerup', finishPointerInteraction);
   window.removeEventListener('pointercancel', cancelPointerInteraction);
+  window.removeEventListener('blur', cancelActivePointerInteraction);
 }
 
 /** 悬浮球主体的点击与回车行为；'none' 保留纯拖动手柄语义。 */
@@ -448,6 +459,7 @@ function runMainAction(event: PointerEvent | KeyboardEvent) {
 function handleMainKeydown(event: KeyboardEvent) {
   if (!isMainActionable.value || (event.key !== 'Enter' && event.key !== ' ')) return;
   event.preventDefault();
+  if (event.repeat) return;
   runMainAction(event);
 }
 

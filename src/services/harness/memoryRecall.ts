@@ -25,6 +25,7 @@ export function createLearningMemoryRecall(store: {list(): Promise<LearningMemor
 export interface HarnessMemoryReader {recall(query: string): Promise<readonly LearningMemory[]>}
 
 export async function readMemory(reader: HarnessMemoryReader, query: string, signal: AbortSignal): Promise<readonly LearningMemory[]> {
+    if (signal.aborted) throw new Error('学习记忆读取已取消');
     let abort!: () => void;
     let timer!: ReturnType<typeof setTimeout>;
     const interrupted = new Promise<never>((_, reject) => {

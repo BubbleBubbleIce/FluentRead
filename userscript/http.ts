@@ -117,6 +117,7 @@ export const userscriptFetch: RuntimeFetch = async (input, init) => {
     return new Promise<Response>((resolve, reject) => {
         let settled = false;
         let handle: UserscriptXmlHttpRequestHandle | void;
+        let cancellationRequested = false;
         // 所有 GM 回调与 AbortSignal 共用一次性完成门，避免取消后迟到回调重复结算。
         const finish = (callback: () => void) => {
             if (settled) return;
@@ -125,8 +126,14 @@ export const userscriptFetch: RuntimeFetch = async (input, init) => {
             callback();
         };
         const onAbort = () => {
-            handle?.abort?.();
+            cancellationRequested = true;
+            // 管理器 abort 可能同步调用 onload/onerror，先关闭完成门才能保留取消语义。
             finish(() => reject(abortError()));
+            try {
+                handle?.abort?.();
+            } catch {
+                // 传输句柄已失效也不能改变已确认的 AbortError。
+            }
         };
 
         request.signal?.addEventListener('abort', onAbort, {once: true});
@@ -157,6 +164,8 @@ export const userscriptFetch: RuntimeFetch = async (input, init) => {
                 },
             });
             handle = result as UserscriptXmlHttpRequestHandle | void;
+            // GM 端口在返回句柄前同步取消时，拿到句柄后仍须终止实际请求。
+            if (cancellationRequested) onAbort();
             // Safari Userscripts 的 GM.xmlHttpRequest 返回 Promise；旧式管理器
             // 则只调用 onload。两种完成方式共用 finish，避免重复应答。
             if (result && typeof result.then === 'function') {

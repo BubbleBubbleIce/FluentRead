@@ -32,7 +32,7 @@ async function fixtureServer() {
         usage: {prompt_tokens: 10, completion_tokens: 10, total_tokens: 20}}));
     } catch (error) { res.writeHead(400); res.end(JSON.stringify({error: {message: error.message}})); }
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve, reject) => {const onError = error => {server.close(() => reject(error)); server.closeAllConnections();}; server.once('error', onError); server.listen(0, '127.0.0.1', () => {server.off('error', onError); resolve();});});
   return {...state, state, url: `http://127.0.0.1:${server.address().port}/v1/chat/completions`, close: () => { server.closeAllConnections(); return new Promise(resolve => server.close(resolve)); }};
 }
 
@@ -52,9 +52,10 @@ async function main() {
   fs.mkdirSync(artifactsDir, {recursive: true});
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-document-flow-'));
   const report = {ok: false, extensionDir, artifactsDir, service: 'loopback deterministic fixture', suite, scriptsByStage: {}, cases: [], screenshots: [], downloads: [], consoleErrors: [], exampleLoads: {}};
-  const fixture = await fixtureServer();
-  let launched, page;
+  let fixture, launched, page; let launchAttempted = false;
   try {
+    fixture = await fixtureServer();
+    launchAttempted = true;
     launched = await launchFocusSafePersistentContext({chromium, profileDir,
       browserPath: arg('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'),
       background: true, headless: false, viewport: {width: 1440, height: 960}, timeout: 30000,
@@ -592,9 +593,22 @@ async function main() {
     if (page) await page.screenshot({path: path.join(artifactsDir, 'failure.png')}).catch(() => {});
     throw error;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    if (launched) await launched.close().catch(() => {});
-    await fixture.close(); fs.rmSync(profileDir, {recursive: true, force: true});
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await fixture?.close();} catch (error) {report.cleanupErrors.push(`fixture close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
     console.log(JSON.stringify({ok: report.ok, cases: report.cases, report: path.join(artifactsDir, 'report.json'), failure: report.failure}, null, 2));
   }
 }

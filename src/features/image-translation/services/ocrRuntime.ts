@@ -44,6 +44,8 @@ const ocrWorkerRuntime = createOcrWorkerRuntime<TesseractRecognitionResult>({
         // 并将解压后的语言包缓存到 Offscreen Document 的 IndexedDB。
         // Offscreen 页面拥有扩展源，直接加载本地 worker 可避免 Blob Worker 的 CSP/源限制。
         workerBlobURL: false,
+        // SDK 已用原始原因拒绝对应任务 Promise；交由 runtime/调用者处理，避免消息回调再抛全局错误。
+        errorHandler: () => {},
         logger: message => {
             if (message.status === 'recognizing text') onProgress(message.progress, message.userJobId);
         },

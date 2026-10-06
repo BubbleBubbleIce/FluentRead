@@ -272,10 +272,9 @@ async function main() {
 
   const {chromium, webkit} = loadPlaywright(args.playwrightRoot);
   const fixture = await startFixtureServer();
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-userscript-edge-'));
-  assertDedicatedProfile(profileDir);
+  let profileDir;
   let context;
-  let closeBrowser = async () => { if (context) await context.close().catch(() => undefined); };
+  let closeBrowser;
   let createIsolatedPage = () => context.newPage();
   let launchMode = args.background ? null : 'playwright-headed';
   let focusPolicy = args.background ? null : 'foreground-authorized';
@@ -298,14 +297,16 @@ async function main() {
     videoTranslationEnabled: true,
   }));
   try {
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-userscript-edge-'));
+    assertDedicatedProfile(profileDir);
     const browserArgs = [
         '--no-first-run',
         '--no-default-browser-check',
     ];
     if (args.engine === 'webkit') {
       const browser = await webkit.launch({headless: true, timeout: args.timeout});
-      context = await browser.newContext({viewport: {width: 1280, height: 900}});
       closeBrowser = () => browser.close();
+      context = await browser.newContext({viewport: {width: 1280, height: 900}});
       launchMode = 'playwright-webkit-headless';
       focusPolicy = 'headless-no-window';
       windowPlacement = {mode: 'headless', visible: false, hidden: true, browserFrontmost: false};
@@ -321,8 +322,8 @@ async function main() {
         viewport: {width: 1280, height: 900},
         timeout: args.timeout,
       });
-      context = browserSession.context;
       closeBrowser = browserSession.close;
+      context = browserSession.context;
       createIsolatedPage = () => focusSafe.newPageWithoutForeground(context, args.timeout);
       launchMode = browserSession.launchMode;
       focusPolicy = browserSession.focusPolicy;
@@ -334,6 +335,7 @@ async function main() {
         viewport: {width: 1280, height: 900},
         args: browserArgs,
       });
+      closeBrowser = () => context.close();
     }
     await context.exposeFunction('__fluentReadGmGet', (key, fallback) => (
       sharedGmStore.has(key) ? sharedGmStore.get(key) : fallback
@@ -1219,15 +1221,29 @@ async function main() {
     if (consoleErrors.length) throw new Error(`浏览器控制台出现错误：${JSON.stringify(consoleErrors)}`);
     console.log(JSON.stringify(evidence, null, 2));
   } finally {
-    await closeBrowser();
-    await fixture.close().catch(() => undefined);
-    for (let attempt = 0; attempt < 5; attempt += 1) {
+    let browserClosed = false;
+    try {
+      if (closeBrowser) {
+        await closeBrowser();
+        browserClosed = true;
+      }
+    } finally {
       try {
-        fs.rmSync(profileDir, {recursive: true, force: true});
-        break;
-      } catch (error) {
-        if (attempt === 4) console.error(`userscript 临时 profile 清理警告：${error.message}`);
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await fixture.close();
+      } finally {
+        if (profileDir && browserClosed) {
+          for (let attempt = 0; attempt < 5; attempt += 1) {
+            try {
+              fs.rmSync(profileDir, {recursive: true, force: true});
+              break;
+            } catch (error) {
+              if (attempt === 4) console.error(`userscript 临时 profile 清理警告：${error.message}`);
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+          }
+        } else if (profileDir && !closeBrowser) {
+          try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
+        }
       }
     }
   }

@@ -13,7 +13,7 @@ export function createLocalTranslationBackgroundRuntime() {
         offscreen: localTranslationOffscreenAdapter,
         isTrustedProgress: (context) => {
             const sender = (context as {sender?: {id?: string; url?: string}})?.sender;
-            return Boolean(sender && sender.id === browser.runtime.id && sender.url === browser.runtime.getURL('offscreen.html'));
+            return Boolean(sender && sender.id === browser.runtime.id && sender.url === browser.runtime.getURL('/offscreen.html'));
         },
         storage: {
             get: async (key) => browser.storage.local.get(key),

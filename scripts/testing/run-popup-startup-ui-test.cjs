@@ -41,6 +41,9 @@ const openCount = Math.max(2, Number(argument('opens', '3')) || 3);
 const requestedSkin = argument('skin', 'shuimo');
 const expectFlash = hasFlag('expect-flash');
 
+if (!Number.isFinite(openCount)) throw new Error('opens 无效：必须为 finite 数值');
+if (!Number.isFinite(configDelayMs)) throw new Error('config-delay-ms 无效：必须为 finite 数值');
+
 if (!fs.existsSync(path.join(extensionDir, 'manifest.json'))) {
   throw new Error(`扩展产物不存在：${extensionDir}`);
 }

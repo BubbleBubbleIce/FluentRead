@@ -517,7 +517,20 @@
       "tests/implementationAudit48A.test.ts",
       "tests/implementationAudit48B.test.ts",
       "tests/implementationAudit48D.test.ts",
-      "tests/implementationAudit48E.test.ts"
+      "tests/implementationAudit48E.test.ts",
+      "tests/implementationAudit49Operations.test.ts",
+      "tests/implementationAudit49A.test.ts",
+      "tests/implementationAudit49B.test.ts",
+      "tests/implementationAudit49C.test.ts",
+      "tests/implementationAudit49D.test.ts",
+      "tests/implementationAudit49E.test.ts",
+      "tests/implementationAudit49E2.test.ts",
+      "tests/implementationAudit49F.test.ts",
+      "tests/implementationAudit49G.test.ts",
+      "tests/implementationAudit49H.test.ts",
+      "tests/implementationAudit49I.test.ts",
+      "tests/implementationAudit49J.test.ts",
+      "tests/implementationAudit49K.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

@@ -1,7 +1,7 @@
 <!--
  * @file src/features/settings/ui/TranslationCacheSettings.vue
  * 文件职责：在高级选项原有位置提供紧凑的翻译缓存管理卡，展示用量、开关、清空和可调整的容量与条数上限。
- * 主要内容：从后台获取真实统计，把上限编辑收进可发现的折叠区，校验输入后通过字段级配置补丁保存，并提供加载、成功、失败重试和离页失效保护。
+ * 主要内容：从后台读取统计，折叠展示上限编辑，通过字段级补丁保存；保存终态同步忙时暂缓的父级上限更新，保留无外部更新的失败草稿，提供重试及离页保护。
  * 模块边界：界面不访问 IndexedDB、不决定淘汰顺序，不直接修改父组件配置；缓存管理经 services/translation，持久化及跨页同步经 services/config。
  -->
 <template>
@@ -113,6 +113,7 @@ const statusKey = ref('');
 const draftMiB = ref<number | undefined>(props.config.translationCacheMaxBytes / MIB);
 const draftEntries = ref<number | undefined>(props.config.translationCacheMaxEntries);
 let disposed = false;
+let pendingLimitsRefresh = false;
 
 const limitsValid = computed(() => Number.isInteger(draftMiB.value)
   && Number(draftMiB.value) * MIB >= MIN_TRANSLATION_CACHE_MAX_BYTES
@@ -128,7 +129,10 @@ const capacity = computed(() => estimateTranslationCacheCapacity(stats.value, {
 }));
 
 watch(() => [props.config.translationCacheMaxBytes, props.config.translationCacheMaxEntries], () => {
-  if (saving.value) return;
+  if (saving.value) {
+    pendingLimitsRefresh = true;
+    return;
+  }
   draftMiB.value = props.config.translationCacheMaxBytes / MIB;
   draftEntries.value = props.config.translationCacheMaxEntries;
 });
@@ -199,7 +203,16 @@ async function persistPatch(patch: Partial<Config>): Promise<void> {
   } catch {
     if (!disposed) errorKey.value = 'settings.cache.saveFailed';
   } finally {
-    if (!disposed) saving.value = false;
+    if (!disposed) {
+      saving.value = false;
+      // 输入在保存期间禁用；被暂缓的父级权威更新应在终态同步一次。
+      // 没有外部更新时保留失败的用户草稿，便于原值重试。
+      if (pendingLimitsRefresh) {
+        pendingLimitsRefresh = false;
+        draftMiB.value = props.config.translationCacheMaxBytes / MIB;
+        draftEntries.value = props.config.translationCacheMaxEntries;
+      }
+    }
   }
 }
 

@@ -119,6 +119,7 @@ let idleDisposeTimer: number | undefined;
 let activeStreamId = '';
 let workerGeneration = 0;
 let currentTranscriptionStreamId = '';
+let transcriptionCancellationVersion = 0;
 
 function createWorkerLifecycleError(message: string): WorkerLifecycleError {
   const error = new Error(message) as WorkerLifecycleError;
@@ -294,19 +295,24 @@ async function decodeAudioToWhisperAudio(audio: ArrayBuffer): Promise<Float32Arr
   if (!decodeAudioContext || decodeAudioContext.state === 'closed') {
     decodeAudioContext = new AudioContextConstructor();
   }
+  let decodeTimeout: number | undefined;
   try {
     const decoded = await Promise.race([
       decodeAudioContext.decodeAudioData(audio.slice(0)),
-      new Promise<never>((_, reject) => window.setTimeout(
-        () => reject(new Error(`音频解码超过 ${AUDIO_DECODE_TIMEOUT_MS / 1000} 秒`)),
-        AUDIO_DECODE_TIMEOUT_MS,
-      )),
+      new Promise<never>((_, reject) => {
+        decodeTimeout = window.setTimeout(
+          () => reject(new Error(`音频解码超过 ${AUDIO_DECODE_TIMEOUT_MS / 1000} 秒`)),
+          AUDIO_DECODE_TIMEOUT_MS,
+        );
+      }),
     ]);
     const channels = Array.from({ length: decoded.numberOfChannels }, (_, index) => decoded.getChannelData(index));
     return resampleToWhisperAudio(channels, decoded.sampleRate);
   } catch (error) {
     await closeDecodeAudioContext();
     throw new Error(`音频解码失败：${toError(error, '未知解码错误').message}`);
+  } finally {
+    if (decodeTimeout !== undefined) window.clearTimeout(decodeTimeout);
   }
 }
 
@@ -336,11 +342,17 @@ function clearIdleDisposal(): void {
 async function transcribeLocalVideoAudioNow(request: LocalVideoTranscriptionRequest): Promise<LocalVideoTranscriptionResult> {
   if (!request.audioPcm16Base64 && !request.audioBase64) throw new Error('没有捕获到视频音频');
   const startedAt = performance.now();
+  const cancellationVersion = transcriptionCancellationVersion;
   // 新实时链路在内容页面直接采集 16 kHz PCM，避免每 2–8 秒创建 WebM、
   // 再在 offscreen 用 AudioContext 解码。旧 audioBase64 仅作为兼容后备。
   const audio = request.audioPcm16Base64
     ? decodePcm16Base64(request.audioPcm16Base64)
     : await decodeAudioToWhisperAudio(decodeBase64(request.audioBase64!));
+  // 关闭 AudioContext 不保证未决解码不会迟到；同一 streamId 重启也不能
+  // 重新取得旧任务的归属，必须在空音频返回或启动 Worker 前检查取消版本。
+  if (cancellationVersion !== transcriptionCancellationVersion || request.streamId !== activeStreamId) {
+    throw new Error('本地视频 AI 字幕已取消');
+  }
   const decodeMs = performance.now() - startedAt;
   if (audio.length === 0) {
     return {
@@ -554,6 +566,7 @@ export async function cancelLocalVideoTranscription(
     if (activeStreamId === normalizedStreamId) activeStreamId = '';
     return;
   }
+  if (currentTranscriptionStreamId === normalizedStreamId) transcriptionCancellationVersion += 1;
   if (activeStreamId === normalizedStreamId) activeStreamId = '';
   if (pendingTranscription?.request.streamId === normalizedStreamId) {
     pendingTranscription.resolve(createSkippedResult(pendingTranscription.request.model));

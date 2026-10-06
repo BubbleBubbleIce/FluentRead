@@ -171,18 +171,106 @@ function findTokenSequence(haystack: string[], needle: string[]): number {
 }
 
 function longestCommonTokenSubsequenceLength(left: string[], right: string[]): number {
-  const previous = new Uint16Array(right.length + 1);
-  const current = new Uint16Array(right.length + 1);
-  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
-    current.fill(0);
-    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
-      current[rightIndex + 1] = left[leftIndex] === right[rightIndex]
-        ? previous[rightIndex] + 1
-        : Math.max(previous[rightIndex + 1], current[rightIndex]);
+  // 不在另一侧出现的 token 不可能贡献共同子序列，删去它们不改变 LCS。
+  const rightVocabulary = new Set(right);
+  let first = left.filter((token) => rightVocabulary.has(token));
+  const leftVocabulary = new Set(first);
+  let second = right.filter((token) => leftVocabulary.has(token));
+  if (first.length === 0) return 0;
+  if (first.length < second.length) [first, second] = [second, first];
+
+  // 小网格保留简单的精确递推；此预算仅选择算法，不限制输入或结果。
+  if (first.length * second.length <= 4_096) {
+    let previous = new Uint16Array(second.length + 1);
+    let current = new Uint16Array(second.length + 1);
+    for (const token of first) {
+      current[0] = 0;
+      for (let index = 0; index < second.length; index += 1) {
+        current[index + 1] = token === second[index]
+          ? previous[index] + 1
+          : Math.max(previous[index + 1], current[index]);
+      }
+      [previous, current] = [current, previous];
     }
-    previous.set(current);
+    return previous[second.length];
   }
-  return previous[right.length];
+
+  const positions = new Map<string, number[]>();
+  for (let index = 0; index < second.length; index += 1) {
+    const indices = positions.get(second[index]);
+    if (indices) indices.push(index);
+    else positions.set(second[index], [index]);
+  }
+  let matchingPairs = 0;
+  for (const token of first) matchingPairs += positions.get(token)!.length;
+  const wordCount = Math.ceil(second.length / 32);
+  const searchCost = Math.ceil(Math.log2(second.length + 1));
+  if (matchingPairs * searchCost <= first.length * wordCount) {
+    // 逐个左 token 逆序访问其右位置，再求严格递增序列；逆序确保同一个
+    // 左 token 不被重复使用。重复匹配太多时不用此路线，避免 r 的爆炸。
+    const tails: number[] = [];
+    for (const token of first) {
+      const indices = positions.get(token)!;
+      for (let index = indices.length - 1; index >= 0; index -= 1) {
+        const position = indices[index];
+        let low = 0;
+        let high = tails.length;
+        while (low < high) {
+          const middle = Math.floor((low + high) / 2);
+          if (tails[middle] < position) low = middle + 1;
+          else high = middle;
+        }
+        tails[low] = position;
+      }
+    }
+    return tails.length;
+  }
+
+  // 位 s[j] 表示相邻 LCS 列值之差（只能为 0/1）。一行精确更新为
+  // x=s|matches，y=(s<<1)|1，s'=x&~(x-y)。用无符号 32-bit 字逐字
+  // 移位/借位，不需要 BigInt，兼容现有 ES2018 构建目标。
+  // 每块最多 2048 位：即使每个 token 都不同，活跃 mask 也最多 512KiB。
+  // 块间按左行保存移位/借位，列块外循环与逐行循环是同一依赖图的不同
+  // 拓扑顺序；既不切断子序列，也不把未匹配输入当成 false。
+  const blockWords = 64;
+  const boundaries = new Uint8Array(first.length);
+  let shared = 0;
+  for (let start = 0; start < second.length; start += blockWords * 32) {
+    const end = Math.min(second.length, start + blockWords * 32);
+    const width = Math.ceil((end - start) / 32);
+    const masks = new Map<string, Uint32Array>();
+    for (let index = start; index < end; index += 1) {
+      let mask = masks.get(second[index]);
+      if (!mask) {
+        mask = new Uint32Array(width);
+        masks.set(second[index], mask);
+      }
+      const offset = index - start;
+      mask[offset >>> 5] |= 1 << (offset & 31);
+    }
+    const row = new Uint32Array(width);
+    for (let index = 0; index < first.length; index += 1) {
+      const mask = masks.get(first[index]);
+      let shift = start === 0 ? 1 : boundaries[index] & 1;
+      let borrow = start === 0 ? 0 : boundaries[index] >>> 1;
+      for (let word = 0; word < width; word += 1) {
+        const previous = row[word];
+        const x = (previous | (mask ? mask[word] : 0)) >>> 0;
+        const y = ((previous << 1) | shift) >>> 0;
+        const difference = x - y - borrow;
+        row[word] = x & ~difference;
+        shift = previous >>> 31;
+        borrow = difference < 0 ? 1 : 0;
+      }
+      boundaries[index] = shift | (borrow << 1);
+    }
+    for (const bits of row) {
+      let count = bits - ((bits >>> 1) & 0x55555555);
+      count = (count & 0x33333333) + ((count >>> 2) & 0x33333333);
+      shared += (((count + (count >>> 4)) & 0x0f0f0f0f) * 0x01010101) >>> 24;
+    }
+  }
+  return shared;
 }
 
 function hasTranscriptNegation(value: string): boolean {
@@ -205,6 +293,37 @@ export function areVideoAiTranscriptCorrectionVariants(left: string, right: stri
     && firstNumbers.join('|') !== secondNumbers.join('|')) return false;
   const shorterLength = Math.min(firstTokens.length, secondTokens.length);
   if (shorterLength < 4) return false;
+  let prefix = 0;
+  while (prefix < shorterLength && firstTokens[prefix] === secondTokens[prefix]) prefix += 1;
+  let suffix = 0;
+  while (suffix < shorterLength - prefix
+    && firstTokens[firstTokens.length - 1 - suffix] === secondTokens[secondTokens.length - 1 - suffix]) {
+    suffix += 1;
+  }
+  // 共同前缀和不重叠后缀可按序组成共同子序列，是实际 LCS 的下界。
+  // 只在下界已满足原阈值时跳过 DP；不足时继续尝试中间的接受下界。
+  if ((prefix + suffix) / shorterLength >= 0.72) return true;
+  const positions = new Map<string, {indices: number[]; next: number}>();
+  for (let index = prefix; index < secondTokens.length - suffix; index += 1) {
+    const token = secondTokens[index];
+    const entry = positions.get(token);
+    if (entry) entry.indices.push(index);
+    else positions.set(token, {indices: [index], next: 0});
+  }
+  let lastMatched = prefix - 1;
+  let matched = 0;
+  for (let index = prefix; index < firstTokens.length - suffix; index += 1) {
+    const entry = positions.get(firstTokens[index]);
+    if (!entry) continue;
+    while (entry.next < entry.indices.length && entry.indices[entry.next] <= lastMatched) entry.next += 1;
+    if (entry.next === entry.indices.length) continue;
+    lastMatched = entry.indices[entry.next];
+    entry.next += 1;
+    matched += 1;
+    // 中间匹配的左右位置都严格递增，且与已知边缘不重叠。
+    // 每个位置游标最多前进一次；这只是接受下界，失败仍走精确 DP。
+    if ((prefix + matched + suffix) / shorterLength >= 0.72) return true;
+  }
   const shared = longestCommonTokenSubsequenceLength(firstTokens, secondTokens);
   return shared / shorterLength >= 0.72;
 }

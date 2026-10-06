@@ -125,7 +125,7 @@ export function createVideoPlayerBinding(options: VideoPlayerBindingOptions): Vi
   let cleaningNodes = false;
   const activePlayers = new WeakSet<HTMLElement>();
   const positionedPlayers = new WeakSet<HTMLElement>();
-  const previousPositions = new WeakMap<HTMLElement, string>();
+  const previousPositions = new WeakMap<HTMLElement, {value: string; priority: string}>();
 
   const cleanNodes = () => {
     cleaningNodes = true;
@@ -152,7 +152,13 @@ export function createVideoPlayerBinding(options: VideoPlayerBindingOptions): Vi
     player.removeAttribute(VIDEO_PLAYER_ACTIVE_ATTRIBUTE);
     player.removeAttribute(VIDEO_PLAYER_FULLSCREEN_ATTRIBUTE);
     if (positionedPlayers.has(player)) {
-      player.style.position = previousPositions.get(player) || '';
+      const previous = previousPositions.get(player)!;
+      // 站点可能在挂载后更新自己的定位；只恢复仍由我们持有的声明。
+      if (player.style.position === 'relative'
+        && (!player.style.getPropertyPriority || player.style.getPropertyPriority('position') === 'important')) {
+        if (previous.value) player.style.setProperty('position', previous.value, previous.priority);
+        else player.style.position = '';
+      }
       positionedPlayers.delete(player);
       previousPositions.delete(player);
     }
@@ -167,7 +173,7 @@ export function createVideoPlayerBinding(options: VideoPlayerBindingOptions): Vi
       position = '';
     }
     if (position !== 'static') return;
-    previousPositions.set(player, player.style.position);
+    previousPositions.set(player, {value: player.style.position, priority: player.style.getPropertyPriority?.('position') || ''});
     player.style.setProperty('position', 'relative', 'important');
     positionedPlayers.add(player);
   };

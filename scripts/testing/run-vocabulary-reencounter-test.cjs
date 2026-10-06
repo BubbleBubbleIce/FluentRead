@@ -44,13 +44,17 @@ async function persist(page, patch) {
 async function until(check, message) {for (let i = 0; i < 180; i++) {if (await check()) return; await wait(80);} throw new Error(message);}
 async function main() {
   fs.mkdirSync(artifacts, {recursive: true});
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-reencounter-edge-'));
+  let profile; let launchAttempted = false;
   const requests = [];
   let slow = false; let fail = false;
   const server = http.createServer(async (req, res) => {
     if (req.method === 'POST') {
       const chunks = []; for await (const chunk of req) chunks.push(chunk);
-      const body = JSON.parse(Buffer.concat(chunks).toString()); requests.push(body);
+      let body;
+      try {body = JSON.parse(Buffer.concat(chunks).toString());}
+      catch {res.writeHead(400, {'content-type': 'application/json'}); res.end(JSON.stringify({error: {message: 'Invalid synthetic fixture JSON'}})); return;}
+      if (body === null || (body.stream && body.tools?.length && (!Array.isArray(body.messages) || body.messages.some(message => message === null)))) {res.writeHead(400, {'content-type': 'application/json'}); res.end(JSON.stringify({error: {message: 'Invalid synthetic fixture request'}})); return;}
+      requests.push(body);
       if (fail) {fail = false; res.writeHead(401, {'content-type': 'application/json'}).end(JSON.stringify({error: {message: 'fixture failure'}})); return;}
       if (!body.stream) {res.writeHead(200, {'content-type': 'application/json'}).end(JSON.stringify({id:'translation-fixture', choices:[{index:0,message:{role:'assistant',content:'测试译文 bank'},finish_reason:'stop'}]}));return;}
       res.writeHead(200, {'content-type': 'text/event-stream', 'cache-control': 'no-cache'});
@@ -70,11 +74,18 @@ async function main() {
     res.writeHead(200, {'content-type': 'text/html; charset=utf-8'});
     res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Saved expressions in a new reading</title><style>body{margin:0;padding:42px 7vw;background:white;color:#283042;font:20px/1.9 system-ui}main{max-width:960px}p{margin:24px 0}a{color:#506bc0}#far{margin-top:2200px}textarea{width:300px}</style></head><body><main><h1 translate="no">A new reading context</h1><p id="river">We rested on the river bank after our walk.</p><p id="phrase">We should not <em>take for</em> granted the help we receive.</p><p id="substring">The article discusses banking, bankruptcy, and banknotes.</p><p id="links"><a href="#target">bank</a> <button>bank</button></p><p hidden>bank</p><p translate="no">bank</p><pre>bank</pre><div contenteditable>bank</div><textarea>bank</textarea><p id="dynamic">A quiet afternoon.</p><div id="shadow-host"></div><div id="later-shadow"></div><p id="far">The river bank is quiet here too.</p><p id="target">The end.</p></main><script>document.getElementById('shadow-host').attachShadow({mode:'open'}).innerHTML='<p>The bank of a river is land beside it.</p>';document.getElementById('river').addEventListener('click',()=>window.hostClicks=(window.hostClicks||0)+1);</script></body></html>`);
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const url = `http://127.0.0.1:${server.address().port}`;
   const report = {ok: false, readingStress, readingBaseline, readingPerformance, studyContext, studyContextBaseline, bookActions, bookActionsBaseline, largeImport, largeImportBaseline, cases: [], screenshots: [], consoleErrors: [],
-    buildSha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex'),
     evidenceBoundary: 'Production extension and real Edge with local HTML and synthetic model responses; optional verified isolated-world reading counters are work evidence, not timing. No live model or Firefox runtime quality claim.'};
+  let session; let page;
+  try {
+    profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-reencounter-edge-'));
+    await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); reject(error);};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });
+    const url = `http://127.0.0.1:${server.address().port}`;
+    report.buildSha256 = crypto.createHash('sha256').update(fs.readFileSync(path.join(extensionDir, 'content-scripts/content.js'))).digest('hex');
   const javascriptFiles = [];
   const collectJavaScript = directory => {for (const item of fs.readdirSync(directory,{withFileTypes:true})) {
     const file = path.join(directory,item.name); if(item.isDirectory()) collectJavaScript(file);
@@ -84,8 +95,7 @@ async function main() {
   const assetHash = crypto.createHash('sha256');
   for (const file of javascriptFiles.sort()) assetHash.update(path.relative(extensionDir,file)).update('\0').update(fs.readFileSync(file));
   report.javascriptAssetsSha256 = assetHash.digest('hex');
-  let session; let page;
-  try {
+    launchAttempted = true;
     session = await helper.launchFocusSafePersistentContext({chromium, profileDir: profile, browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', background: true, headless: false,
       browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check'], viewport: {width: 1440, height: 1000}});
     Object.assign(report, {launchMode: session.launchMode, focusPolicy: session.focusPolicy, windowPlacement: session.windowPlacement});
@@ -445,7 +455,25 @@ async function main() {
     }
     assert.equal(report.consoleErrors.length,0); report.ok=true;
   } catch(error) {report.error=error.stack; if(page){report.uiDiagnostics=await page.evaluate(()=>{const host=document.getElementById('fluent-read-vocabulary-reencounter');const panel=host?.shadowRoot?.querySelector('.reencounter-ui');return {host:host?.outerHTML,content:panel?.outerHTML,roots:host?.shadowRoot?.innerHTML.slice(-5000),paint:[...(CSS.highlights.get('fluentread-vocabulary-reencounter')||[])].map(r=>r.toString())};}).catch(()=>null);await page.screenshot({path:path.join(artifacts,'failure.png')}).catch(()=>{});}throw error;}
-  finally {fs.writeFileSync(path.join(artifacts,'report.json'),JSON.stringify(report,null,2));if(session)await session.close().catch(()=>{});server.closeAllConnections();await new Promise(resolve=>server.close(resolve));fs.rmSync(profile,{recursive:true,force:true});}
+  finally {
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (session) {
+      try {await session.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});}
+    catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+    if (profile) {
+      if (closed) {
+        try {fs.rmSync(profile, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profile;}
+      } else report.retainedProfile = profile;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
+  }
   console.log(JSON.stringify(report,null,2));
 }
 main().catch(error=>{console.error(error.stack||error);process.exitCode=1;});

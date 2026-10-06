@@ -18,22 +18,28 @@ export type HarnessStreamHandlers = {
 export function streamReading(request: ReadingRequest, handlers: HarnessStreamHandlers): {cancel: () => void} {
     const port = browser.runtime.connect({name: 'fluentReadHarnessStream'});
     let closed = false;
-    const cancel = () => {
+    const close = () => {
         if (closed) return;
         closed = true;
+        port.onMessage.removeListener?.(handleMessage);
+        port.onDisconnect.removeListener?.(handleDisconnect);
         try { port.disconnect(); } catch { /* port 已断开。 */ }
+    };
+    const cancel = () => {
+        if (closed) return;
+        close();
         void browser.runtime.sendMessage({type: 'fluentReadHarness', action: 'cancel', requestId: request.requestId}).catch(() => undefined);
     };
     const handleMessage = (rawMessage: unknown) => {
-        if (closed) return;
+        if (closed || !rawMessage || typeof rawMessage !== 'object') return;
         const message = rawMessage as ReadingStreamMessage;
         if (message.requestId !== request.requestId) return;
         if (message.type === 'progress') handlers.progress?.(message.progress);
-        else { closed = true; handlers.result?.(message.response); try { port.disconnect(); } catch { /* 已断开。 */ } }
+        else if (message.type === 'result') { close(); handlers.result?.(message.response); }
     };
     const handleDisconnect = () => {
         if (closed) return;
-        closed = true;
+        close();
         handlers.error?.(new Error('阅读助手连接已断开，请重试。'));
     };
     port.onMessage.addListener(handleMessage);

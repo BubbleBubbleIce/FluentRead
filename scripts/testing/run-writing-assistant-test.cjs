@@ -118,12 +118,18 @@ function fixture(site, variant = '') {
       report.consoleErrors.push({label: 'fixture-server', error: error.message});
     }
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-writing-edge-'));
-  let launched; let currentPage;
+  let profileDir, launched, currentPage;
+  let launchAttempted = false;
   try {
+    await new Promise((resolve, reject) => {
+      const onError = error => {server.off('listening', onListening); reject(error);};
+      const onListening = () => {server.off('error', onError); resolve();};
+      server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+    });
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-writing-edge-'));
     const {chromium} = require(path.join(packages, 'playwright'));
     const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(helper);
+    launchAttempted = true;
     launched = await launchFocusSafePersistentContext({chromium, profileDir, browserPath: arg('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'), background: true, headless: false, viewport: {width: 1440, height: 1000}, timeout: 30000, browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check']});
     Object.assign(report, {launchMode: launched.launchMode, focusPolicy: launched.focusPolicy, windowPlacement: launched.windowPlacement});
     assert.equal(report.launchMode, 'macos-background-cdp'); assert.equal(report.focusPolicy, 'launchservices-no-foreground');
@@ -987,8 +993,23 @@ function fixture(site, variant = '') {
     throw error;
   } finally {
     report.requests = requests.map(({body, ordinal, outcome}) => ({ordinal, outcome, model: body.model, messages: body.messages, tools: body.tools, stream: body.stream}));
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); fs.rmSync(profileDir, {recursive: true, force: true});
+    report.cleanupErrors = [];
+    let browserClosed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); browserClosed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});}
+    catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+    if (profileDir) {
+      if (browserClosed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true}); report.profileRemoved = true;}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(`writing report write: ${error.stack || error}`); process.exitCode = 1;}
     console.log(JSON.stringify({ok: report.ok, suite: report.suite, cases: report.cases, artifactsDir, evidenceBoundary: report.evidenceBoundary, error: report.error}));
   }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -260,6 +260,7 @@ async function seedRouteRollups(page, routes) {
           for (const item of freeRollups) transaction.objectStore('rollups').put(item);
           transaction.oncomplete = () => resolve();
           transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error || new DOMException('IndexedDB statistics fixture transaction aborted', 'AbortError'));
         });
       } finally { database.close(); }
     }, {routes, freeRequests, freeRollups});
@@ -488,6 +489,7 @@ async function main() {
             startedAt: Date.now() - index * 1000});
           transaction.oncomplete = resolve;
           transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error || new DOMException('IndexedDB statistics fixture transaction aborted', 'AbortError'));
         });
       } finally { database.close(); }
     });

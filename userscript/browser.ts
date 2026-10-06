@@ -5,11 +5,12 @@ type RuntimeListener = (
     sender: any,
     sendResponse: (response?: any) => void,
 ) => unknown;
-type PlatformMessageHandler = (message: any) => Promise<any>;
+type PlatformMessageHandler = ((message: any) => Promise<any>) & {dispose?: () => void};
 
 export const UNHANDLED_RUNTIME_MESSAGE = Symbol('unhandled-runtime-message');
 
 const runtimeListeners = new Set<RuntimeListener>();
+const pendingResponses = new Map<RuntimeListener, Set<() => void>>();
 const defaultPlatformMessageHandler: PlatformMessageHandler = async () => UNHANDLED_RUNTIME_MESSAGE;
 let platformMessageHandler: PlatformMessageHandler = defaultPlatformMessageHandler;
 type StorageChange = {oldValue?: unknown; newValue?: unknown};
@@ -33,12 +34,16 @@ const storageOnChanged = {
 };
 
 export function setPlatformMessageHandler(handler: PlatformMessageHandler): void {
+    if (platformMessageHandler === handler) return;
+    const previous = platformMessageHandler;
+    // 先移交 owner：旧 cleanup 抛错或同步安装更新的 handler，都不能恢复旧闭包。
     platformMessageHandler = handler;
+    previous.dispose?.();
 }
 
 /** 初始化失败或页面离开时恢复空适配器，防止后续重注入继续调用旧页面闭包。 */
 export function resetPlatformMessageHandler(): void {
-    platformMessageHandler = defaultPlatformMessageHandler;
+    setPlatformMessageHandler(defaultPlatformMessageHandler);
 }
 
 /**
@@ -49,19 +54,31 @@ export async function dispatchContentMessage(message: any): Promise<any> {
     for (const listener of runtimeListeners) {
         let didRespond = false;
         let responseValue: any;
+        let active = true;
+        let resolveResponse!: (value?: any) => void;
+        const response = new Promise<any>((resolve) => {resolveResponse = resolve;});
         const sendResponse = (value?: any) => {
+            if (!active || didRespond) return;
             didRespond = true;
             responseValue = value;
+            resolveResponse(value);
         };
-        const returned = listener(message, {tab: {id: 1, windowId: 1}, frameId: 0}, sendResponse);
-        if (returned && typeof (returned as PromiseLike<unknown>).then === 'function') {
-            const value = await returned;
-            if (value !== undefined) return value;
-        }
-        if (didRespond) return responseValue;
-        if (returned === true) {
-            await new Promise((resolve) => setTimeout(resolve, 0));
+        const cancel = () => {active = false; resolveResponse();};
+        const pending = pendingResponses.get(listener) || new Set<() => void>();
+        pending.add(cancel); pendingResponses.set(listener, pending);
+        try {
+            const returned = listener(message, {tab: {id: 1, windowId: 1}, frameId: 0}, sendResponse);
+            if (returned && typeof (returned as PromiseLike<unknown>).then === 'function') {
+                const value = await returned;
+                if (value !== undefined) return value;
+            }
             if (didRespond) return responseValue;
+            // true 表示监听器拥有异步响应通道；不能按一个事件循环 turn 提前结束。
+            if (returned === true) return await response;
+        } finally {
+            active = false;
+            pending.delete(cancel);
+            if (pending.size === 0) pendingResponses.delete(listener);
         }
     }
     return undefined;
@@ -91,6 +108,7 @@ const runtime = {
         },
         removeListener(listener: RuntimeListener): void {
             runtimeListeners.delete(listener);
+            pendingResponses.get(listener)?.forEach((cancel) => cancel());
         },
         hasListener(listener: RuntimeListener): boolean {
             return runtimeListeners.has(listener);

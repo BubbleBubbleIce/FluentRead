@@ -11,6 +11,8 @@ import {
     addPressedHotkeyEventKey,
     deletePressedHotkeyEventKey,
     matchesConfiguredHotkey,
+    parseHotkey,
+    resolveConfiguredHotkey,
     shouldClaimConfiguredHotkey,
 } from '@/src/core/hotkey';
 import {
@@ -95,16 +97,9 @@ export function createContentHotkeyRuntime(isSiteDisabled: () => boolean,
         const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
         const configuredParts = (): string[] => {
-            const configured = config.floatingBallHotkey === 'custom'
-                ? config.customFloatingBallHotkey
-                : config.floatingBallHotkey;
-            if (!configured || configured === 'none') return [];
-            return configured.split('+').map((key) => {
-                const normalized = key.toLowerCase();
-                if (normalized === 'ctrl') return 'control';
-                if (normalized === 'option') return 'alt';
-                return normalized;
-            });
+            const parsed = parseHotkey(resolveConfiguredHotkey(config.floatingBallHotkey, config.customFloatingBallHotkey));
+            if (!parsed.isValid) return [];
+            return [...parsed.modifiers.map((key) => key === 'ctrl' ? 'control' : key), parsed.key];
         };
 
         if (isDev) {

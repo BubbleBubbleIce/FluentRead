@@ -207,13 +207,20 @@ const contrast = (foreground, background) => {
     )
     res.end(fs.readFileSync(file))
   })
-  await new Promise((r) => server.listen(0, '127.0.0.1', r))
-  const base = 'http://127.0.0.1:' + server.address().port
-  const browser = await chromium.launch({
-    headless: true,
-    executablePath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
-  })
+  let browser
   try {
+    await new Promise((resolve, reject) => {
+      server.once('error', reject)
+      server.listen(0, '127.0.0.1', () => {
+        server.off('error', reject)
+        resolve()
+      })
+    })
+    const base = 'http://127.0.0.1:' + server.address().port
+    browser = await chromium.launch({
+      headless: true,
+      executablePath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    })
     const attach = (p) => {
       p.on('pageerror', (e) => report.pageErrors.push(e.message))
       p.on('console', (m) => {
@@ -498,9 +505,12 @@ const contrast = (foreground, background) => {
     assert.deepEqual(report.consoleErrors, [])
     report.ok = true
   } finally {
-    await browser.close()
-    server.closeAllConnections()
-    await new Promise((r) => server.close(r))
+    try {
+      await browser?.close()
+    } finally {
+      server.closeAllConnections()
+      await new Promise((r) => server.close(r))
+    }
   }
 })()
   .catch((e) => {

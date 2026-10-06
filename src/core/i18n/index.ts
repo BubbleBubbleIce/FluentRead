@@ -118,18 +118,30 @@ function getExactLegacyText(value: string, language: UiLanguage): string | undef
     return bundle && (bundle.legacyText[value] ?? getMessageLegacyCatalog(language, bundle)[value]);
 }
 
-function applyLegacyPatterns(patterns: readonly CompiledLegacyPattern[], value: string, language: UiLanguage): string | undefined {
+function* applyLegacyPatterns(patterns: readonly CompiledLegacyPattern[], value: string, language: UiLanguage): Generator<string, string | undefined, string> {
     for (const {pattern, template, localizedCaptures} of patterns) {
         const match = pattern.exec(value);
         if (!match) continue;
-        return template.replace(/\{(\d+)\}/gu, (_, index: string) => {
-            const capture = match[Number(index)] ?? '';
-            if (!localizedCaptures.includes(Number(index))) return capture;
+        let translated = '';
+        let cursor = 0;
+        for (const placeholder of template.matchAll(/\{(\d+)\}/gu)) {
+            const capture = match[Number(placeholder[1])] ?? '';
+            translated += template.slice(cursor, placeholder.index);
+            cursor = placeholder.index + placeholder[0].length;
+            if (!localizedCaptures.includes(Number(placeholder[1])) || capture.trim() === value) {
+                // 损坏资源若把完整匹配声明为嵌套捕获，保持原捕获，不能无限自我翻译。
+                translated += capture;
+                continue;
+            }
             // 嵌套错误可能用中文分号串联多段原因；整句已登记时直接使用，否则逐段翻译并换成目标语言的分号写法。
-            return !capture.includes('；') || getExactLegacyText(capture, language) !== undefined
-                ? translateLegacyText(capture, language)
-                : capture.split('；').map((part) => translateLegacyText(part, language)).join(LEGACY_CLAUSE_SEPARATORS[language]);
-        });
+            if (!capture.includes('；') || getExactLegacyText(capture, language) !== undefined) translated += yield capture;
+            else {
+                const clauses: string[] = [];
+                for (const part of capture.split('；')) clauses.push(yield part);
+                translated += clauses.join(LEGACY_CLAUSE_SEPARATORS[language]);
+            }
+        }
+        return translated + template.slice(cursor);
     }
     return undefined;
 }
@@ -144,22 +156,33 @@ export function translateLegacyText(value: string, language: UiLanguage): string
     if (language === 'zh-CN' || !value.trim()) return value;
     const bundle = registeredBundles.get(language);
     if (!bundle) return value;
-    const trimmed = value.trim();
-    const exact = getExactLegacyText(trimmed, language);
-    if (exact) return preserveWhitespace(value, exact);
-
-    const patterns = getCompiledLegacyPatterns(language, bundle);
-    const dynamic = applyLegacyPatterns(patterns.early, trimmed, language);
-    if (dynamic !== undefined) return preserveWhitespace(value, dynamic);
-
-    for (const separator of [' · ', ' → ']) {
-        const compound = trimmed.split(separator);
-        if (compound.length <= 1) continue;
-        const translatedCompound = compound.map((part) => translateLegacyText(part, language)).join(separator);
-        if (translatedCompound !== trimmed) return preserveWhitespace(value, translatedCompound);
+    function* evaluate(text: string): Generator<string, string, string> {
+        if (!text.trim()) return text;
+        const trimmed = text.trim();
+        const exact = getExactLegacyText(trimmed, language);
+        if (exact) return preserveWhitespace(text, exact);
+        const patterns = getCompiledLegacyPatterns(language, bundle!);
+        const dynamic = yield* applyLegacyPatterns(patterns.early, trimmed, language);
+        if (dynamic !== undefined) return preserveWhitespace(text, dynamic);
+        for (const separator of [' · ', ' → ']) {
+            const compound = trimmed.split(separator);
+            if (compound.length <= 1) continue;
+            const translatedParts: string[] = [];
+            for (const part of compound) translatedParts.push(yield part);
+            const translatedCompound = translatedParts.join(separator);
+            if (translatedCompound !== trimmed) return preserveWhitespace(text, translatedCompound);
+        }
+        // 复合状态先于 late 兜底；子句逐次交给显式工作栈，保留深嵌套语义而不增长 JS 调用栈。
+        const fallback = yield* applyLegacyPatterns(patterns.late, trimmed, language);
+        return fallback === undefined ? text : preserveWhitespace(text, fallback);
     }
-
-    // 复合状态必须先于当前语言模板和构建期追加的 English 兜底处理，避免只漏掉一个词时整行降级为 English。
-    const fallback = applyLegacyPatterns(patterns.late, trimmed, language);
-    return fallback === undefined ? value : preserveWhitespace(value, fallback);
+    const pending = [evaluate(value)];
+    let result: string | undefined;
+    while (pending.length) {
+        const step = pending[pending.length - 1].next(result ?? '');
+        result = undefined;
+        if (step.done) {result = step.value; pending.pop();}
+        else pending.push(evaluate(step.value));
+    }
+    return result ?? value;
 }

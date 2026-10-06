@@ -18,13 +18,14 @@ async function main() {
     const {chromium} = runtimeRequire('playwright');
     fs.mkdirSync(artifacts, {recursive: true});
     const mediaFile = path.join(artifacts, 'fixture.mp4');
-    const media = spawnSync(arg('ffmpeg', '/opt/homebrew/bin/ffmpeg'), ['-y', '-f', 'lavfi', '-i', 'color=c=#263a55:s=800x450:r=5', '-t', '10', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mediaFile], {encoding: 'utf8'});
+    const media = spawnSync(arg('ffmpeg', '/opt/homebrew/bin/ffmpeg'), ['-y', '-f', 'lavfi', '-i', 'color=c=#263a55:s=800x450:r=5', '-t', '10', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mediaFile], {encoding: 'utf8', timeout: 30000, killSignal: 'SIGKILL'});
     if (media.status !== 0) throw new Error(media.stderr);
     const mediaUrl = `data:video/mp4;base64,${fs.readFileSync(mediaFile).toString('base64')}`;
     const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-caption-platform-profile-'));
     let session;
     const results = [], errors = [];
     let bilingualDownload = false;
+    const report = {results, errors};
     try {
         session = await helper.launchFocusSafePersistentContext({chromium, profileDir,
             browserPath: arg('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'),
@@ -162,13 +163,22 @@ async function main() {
         assert.equal(await meetingSwitch.getAttribute('aria-checked'), 'false'); assert.equal(await humanSwitch.getAttribute('aria-checked'), 'false');
         await control.screenshot({path: path.join(artifacts, 'settings-persisted.png')});
         assert.deepEqual(errors, []);
-        const report = {launchMode: session.launchMode, focusPolicy: session.focusPolicy, windowPlacement: session.windowPlacement,
-            scope: 'production-extension controlled DOM and TextTrack fixtures; deterministic translation provider; no authenticated live meetings or subscription videos', results, settingsPersisted: true, bilingualDownload, errors};
+        Object.assign(report, {launchMode: session.launchMode, focusPolicy: session.focusPolicy, windowPlacement: session.windowPlacement,
+            scope: 'production-extension controlled DOM and TextTrack fixtures; deterministic translation provider; no authenticated live meetings or subscription videos', results, settingsPersisted: true, bilingualDownload, errors});
+    } catch (error) {
+        report.failure = error.stack || String(error);
+        console.error(error.stack || error);
+        process.exitCode = 1;
+    } finally {
+        let sessionClosed = false;
+        try { if (session) { await session.close(); sessionClosed = true; } }
+        catch (error) { report.cleanupError = error.stack || String(error); process.exitCode = 1; }
+        if (sessionClosed) {
+            try { fs.rmSync(profileDir, {recursive: true, force: true}); }
+            catch (error) { report.profileCleanupError = error.stack || String(error); process.exitCode = 1; }
+        } else report.retainedProfile = profileDir;
         fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));
         console.log(JSON.stringify(report, null, 2));
-    } finally {
-        if (session) await session.close();
-        fs.rmSync(profileDir, {recursive: true, force: true});
     }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

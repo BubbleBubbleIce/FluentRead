@@ -5,6 +5,7 @@ type StorageListener = (nextValue: unknown, previousValue?: unknown) => void;
 const listeners = new Map<string, Set<StorageListener>>();
 const memoryFallback = new Map<string, unknown>();
 const observedValues = new Map<string, unknown>();
+const readOwners = new Map<string, object>();
 let refreshListenersInstalled = false;
 type ConfigPreparationResult = {success: true} | {success: false; error: unknown};
 let settleConfigPreparation: ((result: ConfigPreparationResult) => void) | undefined;
@@ -56,6 +57,8 @@ export async function getStoredValue<T>(key: string): Promise<T | null> {
 }
 
 export async function setStoredValue<T>(key: string, value: T): Promise<void> {
+    // 写入前后都使在途订阅读失效，避免旧读回灌已提交值。
+    readOwners.set(key, {});
     const previousValue = await getStoredValue<T>(key);
     const setValue = getUserscriptFunction('GM_setValue', 'setValue');
     if (typeof setValue === 'function') {
@@ -63,11 +66,13 @@ export async function setStoredValue<T>(key: string, value: T): Promise<void> {
     } else {
         memoryFallback.set(key, value);
     }
+    readOwners.set(key, {});
     observedValues.set(key, value);
     listeners.get(key)?.forEach((listener) => listener(value, previousValue));
 }
 
 export async function removeStoredValue(key: string): Promise<void> {
+    readOwners.set(key, {});
     const previousValue = await getStoredValue(key);
     const deleteValue = getUserscriptFunction('GM_deleteValue', 'deleteValue');
     if (typeof deleteValue === 'function') {
@@ -75,6 +80,7 @@ export async function removeStoredValue(key: string): Promise<void> {
     } else {
         memoryFallback.delete(key);
     }
+    readOwners.set(key, {});
     observedValues.set(key, null);
     listeners.get(key)?.forEach((listener) => listener(null, previousValue));
 }
@@ -100,21 +106,30 @@ function comparable(value: unknown): string {
 /** 旧式 GM API 没有可靠的变更监听，因此页面重新获得焦点或可见时主动对比已订阅键。 */
 async function refreshWatchedValues(): Promise<void> {
     await Promise.all([...listeners.keys()].map(async (key) => {
+        const bucket = listeners.get(key);
+        const owner = {};
+        readOwners.set(key, owner);
         const previousValue = observedValues.get(key);
         const nextValue = await getStoredValue(key);
+        if (readOwners.get(key) !== owner || listeners.get(key) !== bucket) return;
         if (comparable(previousValue) === comparable(nextValue)) return;
         observedValues.set(key, nextValue);
         listeners.get(key)?.forEach((listener) => listener(nextValue, previousValue));
     }));
 }
 
+const refreshOnFocus = () => {
+    void refreshWatchedValues().catch((error) => console.warn('[FluentRead userscript] 刷新存储订阅失败', error));
+};
+const refreshOnVisible = () => {
+    if (document.visibilityState === 'visible') refreshOnFocus();
+};
+
 function installRefreshListeners(): void {
     if (refreshListenersInstalled || typeof window === 'undefined') return;
     refreshListenersInstalled = true;
-    window.addEventListener('focus', () => void refreshWatchedValues());
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') void refreshWatchedValues();
-    });
+    window.addEventListener('focus', refreshOnFocus);
+    document.addEventListener('visibilitychange', refreshOnVisible);
 }
 
 export const storage = {
@@ -137,11 +152,27 @@ export const storage = {
         listeners.set(key, bucket);
         installRefreshListeners();
         if (!observedValues.has(key)) {
-            void getStoredValue(key).then((value) => observedValues.set(key, value));
+            const owner = {};
+            readOwners.set(key, owner);
+            void getStoredValue(key).then((value) => {
+                if (readOwners.get(key) === owner && listeners.get(key) === bucket && !observedValues.has(key)) {
+                    observedValues.set(key, value);
+                }
+            }).catch((error) => {
+                if (listeners.get(key) === bucket) console.warn('[FluentRead userscript] 初始化存储订阅失败', error);
+            });
         }
         return () => {
             bucket.delete(callback as StorageListener);
-            if (bucket.size === 0) listeners.delete(key);
+            if (bucket.size === 0 && listeners.get(key) === bucket) {
+                listeners.delete(key);
+                readOwners.delete(key);
+                if (listeners.size === 0 && refreshListenersInstalled) {
+                    window.removeEventListener('focus', refreshOnFocus);
+                    document.removeEventListener('visibilitychange', refreshOnVisible);
+                    refreshListenersInstalled = false;
+                }
+            }
         };
     },
 };

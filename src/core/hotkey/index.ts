@@ -87,7 +87,7 @@ function normalizeHotkeyEventCode(code: string | undefined): string {
   const normalizedCode = code?.toLowerCase() ?? '';
   if (normalizedCode.startsWith('key')) return normalizedCode.slice(3);
   if (normalizedCode.startsWith('digit')) return normalizedCode.slice(5);
-  if (REGULAR_CODE_KEYS[normalizedCode]) return REGULAR_CODE_KEYS[normalizedCode];
+  if (Object.hasOwn(REGULAR_CODE_KEYS, normalizedCode)) return REGULAR_CODE_KEYS[normalizedCode];
   if (Object.prototype.hasOwnProperty.call(REGULAR_KEYS, normalizedCode)) return normalizedCode;
   return '';
 }
@@ -167,6 +167,10 @@ export function parseHotkey(hotkeyString: string): ParsedHotkey {
   }
 
   const parts = hotkeyString.toLowerCase().split('+').map(part => part.trim());
+  // 录制器用 join('+') 保存组合；普通键本身为 '+' 时，尾部两个空段代表该键。
+  if (parts.length >= 2 && parts.at(-1) === '' && parts.at(-2) === '') {
+    parts.splice(-2, 2, '+');
+  }
 
   const modifiers: string[] = [];
   let key = '';
@@ -177,7 +181,7 @@ export function parseHotkey(hotkeyString: string): ParsedHotkey {
 
     if (i === parts.length - 1) {
       // 最后一个部分应该是普通按键
-      if (REGULAR_KEYS[part as keyof typeof REGULAR_KEYS]) {
+      if (Object.hasOwn(REGULAR_KEYS, part)) {
         key = part;
       } else {
         return {
@@ -341,7 +345,7 @@ export function matchesHotkey(event: KeyboardEvent, parsedHotkey: ParsedHotkey):
     'arrowright': ['arrowright', 'right'],
   };
 
-  if (keyMappings[parsedHotkey.key]) {
+  if (Object.hasOwn(keyMappings, parsedHotkey.key)) {
     return keyMappings[parsedHotkey.key].includes(eventKey);
   }
 
@@ -378,7 +382,7 @@ export function resolveConfiguredHotkey(configuredHotkey: string | undefined, cu
 
 /** 匹配仅含 Ctrl/Alt/Shift、用作划词修饰键的快捷键。 */
 export function matchesModifierOnlyHotkey(event: HotkeyModifierState, hotkey: string): boolean {
-  const definition = modifierOnlyHotkeys[hotkey];
+  const definition = Object.hasOwn(modifierOnlyHotkeys, hotkey) ? modifierOnlyHotkeys[hotkey] : undefined;
   if (!definition || event.key?.toLowerCase() !== definition.eventKey) return false;
 
   const actualModifiers = [

@@ -9,7 +9,7 @@ import {mangaInferenceClient, mangaExtensionUrl, type MangaPatch} from './mangaI
 import {probeMangaGpu} from './mangaGpu';
 import {protectMangaSession} from './mangaSessionFallback';
 import {configureOnnxWasmBackend} from '@/src/shared/onnx/wasmBinary';
-import {assertMangaOcrActive, loadMangaInpaintAsset, MANGA_INPAINT_ASSET} from './mangaOcrAssets';
+import {assertMangaOcrActive, loadMangaInpaintAsset, MANGA_INPAINT_ASSET, withMangaModelAdmission} from './mangaOcrAssets';
 import {mangaRegionBackground, type MangaBackground} from './mangaRendering';
 import type {MangaRegion} from './mangaRegions';
 import {mangaMaskBoxes as maskBoxes} from '../mangaPatchResult';
@@ -61,7 +61,7 @@ export function createMangaInpaintingRuntime(create: (signal?: AbortSignal,progr
     async function release() {clearTimeout(idle);idle=undefined;const current=service;service=undefined;await current?.release();}
     return {
         repair(pixels:Uint8ClampedArray,width:number,height:number,regions:MangaRegion[],signal?:AbortSignal,onPreparing?:(percent?:number,initializing?:boolean)=>void,onRepair?:(done:number,total:number)=>void,backgrounds?:MangaBackground[]) {
-            return queue(async()=>{
+            return withMangaModelAdmission(() => queue(async()=>{
                 assertMangaOcrActive(signal); clearTimeout(idle);
                 try {
                     return await (async () => {
@@ -85,7 +85,7 @@ export function createMangaInpaintingRuntime(create: (signal?: AbortSignal,progr
                         throw error;
                     });
                 } finally {idle=setTimeout(()=>{void queue(release).catch(()=>undefined);},180000);}
-            });
+            }));
         },
         dispose:()=>queue(release),
     };
@@ -112,10 +112,10 @@ export async function createBrowserMangaInpainter(signal?:AbortSignal,progress?:
         assertMangaOcrActive(activeSignal);
         const bytes=await loadMangaInpaintAsset(activeSignal);assertMangaOcrActive(activeSignal);
         const cpu=await ort.InferenceSession.create(bytes,{executionProviders:['wasm'],graphOptimizationLevel:'all'});
-        try {assertMangaOcrActive(activeSignal);}catch(error){await cpu.release();throw error;}
+        try {assertMangaOcrActive(activeSignal);}catch(error){await Promise.resolve().then(()=>cpu.release()).catch(()=>undefined);throw error;}
         return cpu;
     },()=>activeSignal);
-    try {assertMangaOcrActive(signal);} catch(error) {await session.release();throw error;}
+    try {assertMangaOcrActive(signal);} catch(error) {await Promise.resolve().then(()=>session.release()).catch(()=>undefined);throw error;}
     return {run:async (patch,runSignal)=>{
         activeSignal=runSignal;
         const image=new ort.Tensor('float32',patch.image,[1,3,patch.height,patch.width]);

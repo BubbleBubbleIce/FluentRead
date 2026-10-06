@@ -40,6 +40,7 @@ async function loadModules(root, alias = {}) {
     });
     const started = performance.now();
     const before = process.memoryUsage().heapUsed;
+    try {
     const detect = await server.ssrLoadModule('/src/core/language/detect.ts');
     const catalog = await server.ssrLoadModule('/src/core/language/catalog.ts');
     const identify = fs.existsSync(path.join(root, 'src/core/language/identify.ts'))
@@ -47,6 +48,11 @@ async function loadModules(root, alias = {}) {
     const codes = fs.existsSync(path.join(root, 'src/core/language/codes.ts'))
         ? await server.ssrLoadModule('/src/core/language/codes.ts') : undefined;
     return {server, detect, catalog, identify, codes, importMs: performance.now() - started, importHeapBytes: process.memoryUsage().heapUsed - before};
+    } catch (error) {
+        // 尚未交给调用方的 server 仍由初始化入口负责释放，保留原始加载失败。
+        await server.close().catch(() => undefined);
+        throw error;
+    }
 }
 
 function percentile(values, ratio) {

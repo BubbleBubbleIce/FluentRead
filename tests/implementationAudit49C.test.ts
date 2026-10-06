@@ -1,0 +1,701 @@
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {createHash} from 'node:crypto';
+import {mkdirSync, writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+
+// 使用 runtime-dom 和真实 SFC/template；DOM、UI 控件、配置持久化边界与后台消息端口受控。
+const dom = await vi.hoisted(async () => {
+    const {parseHTML} = await import('linkedom');
+    const {window, document} = parseHTML('<html><body></body></html>');
+    Object.defineProperty(window.Node.prototype, Symbol.toStringTag, {configurable: true, get() {return this.constructor.name;}});
+    const selectValues = new WeakMap<object, string>();
+    Object.defineProperty(window.HTMLSelectElement.prototype, 'value', {configurable: true,
+        get() {return selectValues.get(this) ?? '';}, set(value: string) {selectValues.set(this, String(value));}});
+    for (const key of ['window', 'document', 'Node', 'Element', 'HTMLElement', 'SVGElement', 'ShadowRoot', 'Event', 'CustomEvent']) {
+        Object.defineProperty(globalThis, key, {configurable: true, writable: true, value: (window as any)[key]});
+    }
+    return {document};
+});
+const ports = vi.hoisted(() => ({
+    config: {} as any, listeners: new Set<(config: any) => void>(), storageListeners: new Set<(changes: any, area: string) => void>(),
+    history: {} as any, historyListeners: new Set<(history: any) => void>(), messages: vi.fn(),
+    delayDialogClosed: false, pendingDialogClosed: new Set<() => void>(),
+    send: vi.fn(), patch: vi.fn(), confirm: vi.fn(), get: vi.fn(),
+}));
+vi.mock('@/src/ui/i18n', async () => {
+    const {ref} = await import('vue');
+    return {useUiI18n: () => ({t: (key: string) => key, translateLegacy: (value: string) => value, language: ref('zh-CN')})};
+});
+vi.mock('@/src/platform/browser/capabilities', () => ({browserCapabilities: {extensionDom: true}}));
+vi.mock('element-plus/es/components/select/style/css', () => ({}));
+vi.mock('element-plus/es/components/message-box/style/css', () => ({}));
+vi.mock('webextension-polyfill', () => ({default: {runtime: {sendMessage: (...args: unknown[]) => ports.send(...args)},
+    storage: {local: {get: (...args: unknown[]) => ports.get(...args)}, onChanged: {addListener: (listener: any) => ports.storageListeners.add(listener), removeListener: (listener: any) => ports.storageListeners.delete(listener)}}}}));
+vi.mock('@/src/platform/storage/configStorageRuntime', () => ({configStorage: {
+    writeOwner: false, getItem: async () => null, setItem: async () => undefined, removeItem: async () => undefined, watch: () => () => undefined,
+}}));
+vi.mock('@/src/services/config/store', async () => ({
+    ...await vi.importActual<typeof import('@/src/services/config/store')>('@/src/services/config/store'),
+    config: ports.config, configReady: Promise.resolve(), configHistoryReady: Promise.resolve(),
+    getConfigHistorySnapshot: () => structuredClone(ports.history),
+    subscribeConfigHistory: (listener: (history: any) => void) => {ports.historyListeners.add(listener); return () => ports.historyListeners.delete(listener);},
+    requestConfigPatch: (...args: unknown[]) => ports.patch(...args),
+    subscribeConfig: (listener: (config: any) => void) => {ports.listeners.add(listener); return () => ports.listeners.delete(listener);},
+}));
+vi.mock('element-plus', async () => {
+    const {defineComponent, h, onUnmounted, ref, watch} = await import('vue');
+    const Select = defineComponent({props: ['modelValue'], emits: ['update:modelValue', 'change'], setup(props, {attrs, slots, emit, expose}) {
+        expose({focus() {}, blur() {}});
+        return () => h('select', {...attrs, value: props.modelValue, onChange: (event: Event) => {
+            const value = (event.target as HTMLSelectElement).value; emit('update:modelValue', value); emit('change', value);
+        }}, slots.default?.());
+    }});
+    const Option = defineComponent({props: ['value', 'label'], setup: props => () => h('option', {value: props.value}, props.label)});
+    const Slot = defineComponent({setup: (_, {slots}) => () => h('span', slots.default?.())});
+    const Dialog = defineComponent({props: ['modelValue'], emits: ['closed'], setup(props, {slots, emit}) {
+        const rendered = ref(Boolean(props.modelValue));
+        let closing: (() => void) | undefined;
+        watch(() => props.modelValue, value => {
+            if (closing) {ports.pendingDialogClosed.delete(closing); closing = undefined;}
+            if (value) {rendered.value = true; return;}
+            const closed = () => {ports.pendingDialogClosed.delete(closed); closing = undefined; rendered.value = false; emit('closed');};
+            if (ports.delayDialogClosed) {closing = closed; ports.pendingDialogClosed.add(closed);} else closed();
+        });
+        onUnmounted(() => {if (closing) ports.pendingDialogClosed.delete(closing);});
+        return () => rendered.value ? h('div', {'data-dialog-visible': String(Boolean(props.modelValue)), 'aria-hidden': !props.modelValue}, [...slots.default?.() ?? [], ...slots.footer?.() ?? []]) : null;
+    }});
+    const Button = defineComponent({props: ['disabled', 'loading', 'nativeType', 'type'], setup: (props, {attrs, slots}) => () => h('button', {...attrs, disabled: props.disabled || props.loading, type: props.nativeType || 'button'}, slots.default?.())});
+    const NumberInput = defineComponent({props: ['modelValue', 'disabled'], emits: ['update:modelValue'], setup: (props, {attrs, emit}) => () => h('input', {...attrs, type: 'number', value: props.modelValue, disabled: props.disabled,
+        onInput: (event: Event) => emit('update:modelValue', Number((event.target as HTMLInputElement).value))})});
+    const Switch = defineComponent({props: ['modelValue', 'disabled'], emits: ['change'], setup: (props, {attrs, emit}) => () => h('input', {...attrs, type: 'checkbox', checked: props.modelValue, disabled: props.disabled, onChange: (event: Event) => emit('change', (event.target as HTMLInputElement).checked)})});
+    return {ElSelect: Select, ElOption: Option, ElTooltip: Slot, ElDialog: Dialog, ElButton: Button, ElInputNumber: NumberInput, ElSwitch: Switch,
+        ElMessage: {success: (...args: unknown[]) => ports.messages('success', ...args), error: (...args: unknown[]) => ports.messages('error', ...args)},
+        ElMessageBox: {confirm: (...args: unknown[]) => ports.confirm(...args)}};
+});
+// 子页面不属于恢复确认入口；保留真实 ConfigManagement 的 template、diff 与公开配置客户端。
+vi.mock('@/src/features/settings/ui/CloudConfigBackup.vue', () => ({default: {render: () => null}}));
+vi.mock('@/src/features/settings/ui/LocalDataManagement.vue', () => ({default: {render: () => null}}));
+
+import {createApp, h, nextTick, reactive, type App, type Component} from 'vue';
+import GlossarySettings from '@/src/features/glossary/ui/GlossarySettings.vue';
+import LocalTtsSettings from '@/src/features/settings/ui/LocalTtsSettings.vue';
+import LearningMemoryManager from '@/src/features/settings/ui/LearningMemoryManager.vue';
+import VideoLocalModelSettings from '@/src/features/settings/ui/VideoLocalModelSettings.vue';
+import ConfigManagement from '@/src/features/settings/ui/ConfigManagement.vue';
+import TranslationCacheSettings from '@/src/features/settings/ui/TranslationCacheSettings.vue';
+import {normalizeConfig} from '@/src/core/config/model';
+import {createGlossaryLibrary} from '@/src/core/glossary';
+import {LOCAL_TTS_MODEL_STATE_KEY} from '@/src/core/config/localTts';
+import {createDriveAuth, DriveError, type DriveAuthPorts} from '@/src/platform/google-drive/auth';
+import {createDriveApi} from '@/src/platform/google-drive/api';
+import {GOOGLE_DRIVE_SCOPES, GOOGLE_DRIVE_DEFAULT_CLIENT_ID, GOOGLE_DRIVE_EXTENSION_ID, GOOGLE_DRIVE_MAX_BYTES} from '@/src/platform/google-drive/constants';
+import {createWebDavApi} from '@/src/platform/webdav/api';
+import {createWebDavSession, type WebDavConnection} from '@/src/platform/webdav/connection';
+import {listSitePreferences, previewSitePreferences, type SitePreferences} from '@/src/features/settings/model/sitePreferences';
+import {VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY} from '@/src/features/video-subtitle/transcription';
+import {VIDEO_AI_SUBTITLE_CACHE_CLEAR_MESSAGE, VIDEO_AI_SUBTITLE_CACHE_STATS_MESSAGE} from '@/src/features/video-subtitle/transcriptionCache';
+import {createVideoSubtitleBackgroundHandlers} from '@/src/features/video-subtitle/background/handlers';
+import {createBackgroundMessageRouter, createBackgroundRuntimeMessageListener} from '@/src/app/background/messageRouter';
+import {appendConfigHistorySnapshot, toRestorableConfig} from '@/src/services/config/history';
+import {appendConfigAutoBackup} from '@/src/services/config/autoBackup';
+import {getConfigAutoBackupsSnapshot} from '@/src/services/config/autoBackupStore';
+
+const apps = new Set<App>();
+function deferred<T>() {
+    let resolve!: (value: T) => void; let reject!: (failure: unknown) => void;
+    const promise = new Promise<T>((yes, no) => {resolve = yes; reject = no;});
+    return {promise, resolve, reject};
+}
+async function settle() {for (let index = 0; index < 12; index++) {await Promise.resolve(); await nextTick();}}
+async function mount(component: Component, props: Record<string, unknown> = {}) {
+    const host = dom.document.createElement('div'); dom.document.body.append(host);
+    const state = reactive(props); const app = createApp({setup: () => () => h(component, state)});
+    const elementPlus = await import('element-plus');
+    app.component('el-select', elementPlus.ElSelect); app.component('el-option', elementPlus.ElOption); app.component('el-dialog', elementPlus.ElDialog);
+    app.component('el-button', elementPlus.ElButton); app.component('el-input-number', elementPlus.ElInputNumber); app.component('el-switch', elementPlus.ElSwitch);
+    apps.add(app); app.mount(host); await settle();
+    return {host, state, stop: () => {app.unmount(); apps.delete(app);}};
+}
+function input(host: HTMLElement, selector: string, value: string, change = true) {
+    const field = host.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector)!;
+    expect(field).not.toBeNull(); field.value = value; field.dispatchEvent(new Event('input', {bubbles: true}));
+    if (change) field.dispatchEvent(new Event('change', {bubbles: true}));
+}
+function storageChanged() {for (const listener of ports.storageListeners) listener({[LOCAL_TTS_MODEL_STATE_KEY]: {}}, 'local');}
+beforeEach(() => {
+    ports.send.mockReset(); ports.patch.mockReset(); ports.confirm.mockReset(); ports.get.mockReset(); ports.messages.mockReset();
+    ports.delayDialogClosed = false;
+    for (const key of Object.keys(ports.config)) delete ports.config[key];
+    Object.assign(ports.config, normalizeConfig({glossaryEnabled: true, glossaryLibraries: [{...createGlossaryLibrary([]), name: 'Original'}]}));
+    ports.history = {schemaVersion: 1, cursor: 1, nextVersion: 3, entries: [
+        {version: 1, savedAt: '2026-10-05T00:00:00Z', config: toRestorableConfig(normalizeConfig({on: false}))},
+        {version: 2, savedAt: '2026-10-05T00:01:00Z', config: toRestorableConfig(normalizeConfig({on: true}))},
+    ]};
+    ports.patch.mockImplementation(async (patch: any) => {Object.assign(ports.config, patch); for (const listener of ports.listeners) listener(ports.config);});
+    ports.confirm.mockResolvedValue(undefined);
+});
+afterEach(async () => {
+    for (const app of apps) app.unmount(); apps.clear(); await settle();
+    expect(ports.listeners.size).toBe(0); expect(ports.storageListeners.size).toBe(0);
+    expect(ports.historyListeners.size).toBe(0);
+    expect(ports.pendingDialogClosed.size).toBe(0);
+    dom.document.body.replaceChildren(); vi.useRealTimers();
+});
+
+function authFixture() {
+    const identity = {getAuthToken: vi.fn(async () => ({token: 'token-A', grantedScopes: [...GOOGLE_DRIVE_SCOPES]})),
+        removeCachedAuthToken: vi.fn(async (_details: {token: string}) => undefined), clearAllCachedAuthTokens: vi.fn(async () => undefined)};
+    const fetcher = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({user: {permissionId: 'A'}})));
+    const authPorts: DriveAuthPorts = {userAgent: () => 'Chrome/142.0', identity, fetch: fetcher,
+        runtime: {id: GOOGLE_DRIVE_EXTENSION_ID, getManifest: () => ({oauth2: {client_id: GOOGLE_DRIVE_DEFAULT_CLIENT_ID, scopes: [...GOOGLE_DRIVE_SCOPES]}})}};
+    return {identity, fetcher, auth: createDriveAuth(authPorts)};
+}
+describe('audit49C Google account ownership through the public session', () => {
+    it.each(['other-account', 'invalid-account', 'account-network'] as const)('never retains an unverified refreshed token after %s', async failure => {
+        const fixture = authFixture(); const session = await fixture.auth.open();
+        fixture.identity.getAuthToken.mockResolvedValue({token: 'token-B', grantedScopes: [...GOOGLE_DRIVE_SCOPES]});
+        if (failure === 'account-network') fixture.fetcher.mockRejectedValue(new Error('fixture failed'));
+        else fixture.fetcher.mockResolvedValue(new Response(JSON.stringify({user: failure === 'other-account' ? {permissionId: 'B'} : {emailAddress: 'unbound'}})));
+        await expect(session.request(async () => {throw new DriveError('expired', 401);})).rejects.toBeInstanceOf(DriveError);
+        const later = vi.fn(async (token: string) => token);
+        expect(await session.request(later)).toBe('token-A'); expect(later).toHaveBeenCalledWith('token-A');
+        expect(session.account.id).toBe('drive:A'); expect(JSON.stringify(session)).not.toContain('token-B');
+    });
+    it('refreshes within the same account and reuses only the verified replacement', async () => {
+        const fixture = authFixture(); const session = await fixture.auth.open();
+        fixture.identity.getAuthToken.mockResolvedValue({token: 'token-A2', grantedScopes: [...GOOGLE_DRIVE_SCOPES]});
+        const operation = vi.fn(async (token: string) => {if (token === 'token-A') throw new DriveError('expired', 401); return token;});
+        expect(await session.request(operation)).toBe('token-A2'); expect(await session.request(async token => token)).toBe('token-A2');
+        expect(fixture.identity.removeCachedAuthToken).toHaveBeenCalledWith({token: 'token-A'});
+    });
+    it('evicts the token used by each concurrent failing request', async () => {
+        const fixture = authFixture(); const session = await fixture.auth.open();
+        const late = deferred<void>(); const started = deferred<void>();
+        fixture.identity.getAuthToken.mockResolvedValue({token: 'token-A2', grantedScopes: [...GOOGLE_DRIVE_SCOPES]});
+        const pending = session.request(async token => {if (token === 'token-A') {started.resolve(); await late.promise; throw new DriveError('expired', 401);} return token;});
+        await started.promise;
+        await session.request(async token => {if (token === 'token-A') throw new DriveError('expired', 401); return token;});
+        late.resolve(); expect(await pending).toBe('token-A2');
+        expect(fixture.identity.removeCachedAuthToken.mock.calls.map(([details]) => details.token)).toEqual(['token-A', 'token-A']);
+    });
+});
+
+const driveSession = {account: {id: 'fixture-account', email: ''}, request: async <T>(operation: (token: string) => Promise<T>) => operation('fixture-token')};
+const connection: WebDavConnection = {url: 'https://fixture.invalid/dav/', username: 'fixture', password: 'synthetic-only', allowInsecure: false, revision: 'fixture-v1'};
+const davSession = createWebDavSession(connection, async () => connection);
+function openBody(status: number, rejecting = false, headers: Record<string, string> = {}) {
+    const cancel = vi.fn(() => rejecting ? Promise.reject(new Error('fixture cleanup failed')) : undefined);
+    const body = new ReadableStream<Uint8Array>({start(controller) {controller.enqueue(new TextEncoder().encode('unread fixture'));}, cancel});
+    return {response: new Response(body, {status, headers}), cancel};
+}
+describe('audit49C cloud response lifetime through public APIs', () => {
+    it.each([200, 404, 403, 412, 500])('releases an unread Drive DELETE body for HTTP %s', async status => {
+        const fixture = openBody(status); const fetcher = vi.fn<typeof fetch>(async () => fixture.response);
+        const operation = createDriveApi(fetcher).remove(driveSession, {id: 'one', version: '1', modifiedTime: '', etag: '"one"'});
+        if (status < 300 || status === 404) await operation; else await expect(operation).rejects.toMatchObject({status});
+        expect(fixture.cancel).toHaveBeenCalledOnce();
+    });
+    it.each([404, 401, 412, 500])('releases an unread WebDAV GET body for HTTP %s', async status => {
+        const fixture = openBody(status); const api = createWebDavApi(vi.fn(async () => fixture.response));
+        if (status === 404) expect(await api.read(davSession)).toBeNull(); else await expect(api.read(davSession)).rejects.toMatchObject({status});
+        expect(fixture.cancel).toHaveBeenCalledOnce();
+    });
+    it('releases an account-error body and keeps the original HTTP error if cleanup rejects', async () => {
+        const fixture = authFixture(); const stream = openBody(403, true); fixture.fetcher.mockResolvedValue(stream.response);
+        await expect(fixture.auth.open()).rejects.toMatchObject({status: 403}); expect(stream.cancel).toHaveBeenCalledOnce();
+    });
+    it('cancels before acquiring a reader when WebDAV rejects content-length', async () => {
+        const fixture = openBody(200, false, {'content-length': '100'});
+        await expect(createWebDavApi(vi.fn(async () => fixture.response), {maxBytes: 10}).read(davSession)).rejects.toMatchObject({code: 'tooLarge'});
+        expect(fixture.cancel).toHaveBeenCalledOnce();
+    });
+    it('keeps a WebDAV status error when its body cancellation rejects', async () => {
+        const fixture = openBody(423, true);
+        await expect(createWebDavApi(vi.fn(async () => fixture.response)).read(davSession)).rejects.toMatchObject({code: 'locked', status: 423});
+        expect(fixture.cancel).toHaveBeenCalledOnce();
+    });
+    it('preserves a streaming WebDAV size error when reader cleanup rejects and releases its lock', async () => {
+        const fixture = openBody(200, true);
+        await expect(createWebDavApi(vi.fn(async () => fixture.response), {maxBytes: 3}).read(davSession)).rejects.toMatchObject({code: 'tooLarge'});
+        expect(fixture.cancel).toHaveBeenCalledOnce(); expect(fixture.response.body!.locked).toBe(false);
+    });
+    it('releases a Drive media body rejected by its declared size before acquiring a reader', async () => {
+        const fixture = openBody(200, false, {'content-length': String(GOOGLE_DRIVE_MAX_BYTES + 1)});
+        const metadata = {id: 'one', version: '1', modifiedTime: ''};
+        const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(JSON.stringify({files: [metadata]})))
+            .mockResolvedValueOnce(new Response(JSON.stringify(metadata))).mockResolvedValueOnce(fixture.response);
+        await expect(createDriveApi(fetcher).read(driveSession)).rejects.toThrow('同步文件过大'); expect(fixture.cancel).toHaveBeenCalledOnce();
+    });
+    it('releases a Drive reader lock after invalid UTF-8 while keeping the sanitized error', async () => {
+        const body = new ReadableStream<Uint8Array>({start(controller) {controller.enqueue(new Uint8Array([255])); controller.close();}});
+        const response = new Response(body); const metadata = {id: 'one', version: '1', modifiedTime: ''};
+        const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(JSON.stringify({files: [metadata]})))
+            .mockResolvedValueOnce(new Response(JSON.stringify(metadata))).mockResolvedValueOnce(response);
+        await expect(createDriveApi(fetcher).read(driveSession)).rejects.toThrow('网络请求失败或响应无效'); expect(body.locked).toBe(false);
+    });
+});
+
+describe('audit49C glossary metadata in the real client template', () => {
+    it.each(['name', 'domains'] as const)('rolls back a rejected %s submission and supports a real retry', async field => {
+        const {host} = await mount(GlossarySettings);
+        host.querySelector<HTMLButtonElement>('.glossary-settings-toggle')!.click(); await settle();
+        const selector = field === 'name' ? '.glossary-metadata input' : '.glossary-metadata textarea';
+        const value = field === 'name' ? 'Edited name' : ' docs.example.com ';
+        ports.patch.mockRejectedValueOnce(new Error('controlled persistence failure'));
+        input(host, selector, value); await settle();
+        expect(host.querySelector<HTMLInputElement>(selector)!.value).toBe(field === 'name' ? 'Original' : '');
+        expect(host.querySelector('[role="alert"]')!.textContent).toContain('glossary.saveFailed');
+        input(host, selector, value); await settle();
+        expect(ports.config.glossaryLibraries[0][field]).toEqual(field === 'name' ? value : ['docs.example.com']);
+        expect(host.querySelector<HTMLInputElement>(selector)!.value).toBe(field === 'name' ? value : 'docs.example.com');
+    });
+    it.each(['name', 'domains'] as const)('keeps a newer %s draft when an older submission rejects', async field => {
+        const {host} = await mount(GlossarySettings); const save = deferred<void>();
+        ports.patch.mockImplementationOnce(() => save.promise);
+        const selector = field === 'name' ? '.glossary-metadata input' : '.glossary-metadata textarea';
+        input(host, selector, field === 'name' ? 'Submitted' : 'submitted.example'); await settle();
+        const newer = field === 'name' ? 'Still editing' : 'later.example'; input(host, selector, newer, false);
+        save.reject(new Error('controlled failure')); await settle();
+        expect(host.querySelector<HTMLInputElement>(selector)!.value).toBe(newer);
+        expect(ports.config.glossaryLibraries[0][field]).toEqual(field === 'name' ? 'Original' : []);
+    });
+    it('keeps newer typed text when an older successful save returns', async () => {
+        const {host} = await mount(GlossarySettings); const save = deferred<void>();
+        ports.patch.mockImplementationOnce(async (patch: any) => {await save.promise; Object.assign(ports.config, patch);});
+        input(host, '.glossary-metadata input', 'Submitted'); await settle();
+        input(host, '.glossary-metadata input', 'Still typing', false); save.resolve(); await settle();
+        expect(ports.config.glossaryLibraries[0].name).toBe('Submitted'); expect(host.querySelector<HTMLInputElement>('.glossary-metadata input')!.value).toBe('Still typing');
+    });
+    it('binds failure drafts to the library and unsubscribes on repeated mounts', async () => {
+        ports.config.glossaryLibraries.push({...createGlossaryLibrary(ports.config.glossaryLibraries), name: 'Second'});
+        const first = await mount(GlossarySettings); ports.patch.mockRejectedValueOnce(new Error('fixture'));
+        input(first.host, '.glossary-metadata input', 'First draft'); await settle();
+        const other = Array.from(first.host.querySelectorAll<HTMLButtonElement>('.glossary-library-name')).find(button => button.textContent?.includes('Second'))!;
+        other.click(); await settle(); expect(first.host.querySelector<HTMLInputElement>('.glossary-metadata input')!.value).toBe('Second');
+        first.stop(); expect(ports.listeners.size).toBe(0);
+        const second = await mount(GlossarySettings); expect(ports.listeners.size).toBe(1); second.stop(); expect(ports.listeners.size).toBe(0);
+    });
+});
+
+describe('audit49C local TTS lifecycle through real controls and backend messages', () => {
+    it.each(['download', 'remove'] as const)('does not let an older status read undo completed %s', async operation => {
+        ports.send.mockResolvedValue({success: true, downloaded: operation === 'remove'});
+        const {host} = await mount(LocalTtsSettings, {config: normalizeConfig({})});
+        const stale = deferred<unknown>(); ports.send.mockImplementationOnce(() => stale.promise);
+        storageChanged(); await settle();
+        host.querySelector<HTMLButtonElement>(`[data-testid="local-tts-${operation}"]`)!.click(); await settle();
+        stale.resolve({success: true, downloaded: operation === 'remove'}); await settle();
+        expect(host.querySelector(`[data-testid="local-tts-${operation === 'download' ? 'remove' : 'download'}"]`)).not.toBeNull();
+        expect(host.querySelector('[role="status"]')!.textContent).toContain(operation === 'download' ? 'statusReady' : 'statusNotDownloaded');
+    });
+    it('ignores an older rejected refresh after a newer success', async () => {
+        ports.send.mockResolvedValue({success: true, downloaded: false}); const {host} = await mount(LocalTtsSettings, {config: normalizeConfig({})});
+        const stale = deferred<unknown>(); ports.send.mockImplementationOnce(() => stale.promise);
+        storageChanged(); await settle(); ports.send.mockResolvedValue({success: true, downloaded: true}); storageChanged(); await settle();
+        stale.reject(new Error('stale fixture')); await settle();
+        expect(host.querySelector('[data-testid="local-tts-remove"]')).not.toBeNull(); expect(host.querySelector('[role="alert"]')).toBeNull();
+    });
+    it('releases its storage listener and survives unmount with a pending read', async () => {
+        const stale = deferred<unknown>(); ports.send.mockImplementationOnce(() => stale.promise);
+        const first = await mount(LocalTtsSettings, {config: normalizeConfig({})}); first.stop();
+        stale.reject(new Error('late fixture')); await settle(); expect(ports.storageListeners.size).toBe(0);
+        ports.send.mockResolvedValue({success: true, models: [{downloaded: true}]});
+        const second = await mount(LocalTtsSettings, {config: normalizeConfig({})}); expect(second.host.querySelector('[data-testid="local-tts-remove"]')).not.toBeNull();
+    });
+    it('recovers from malformed state via a later storage update and ignores unrelated storage', async () => {
+        ports.send.mockResolvedValue({success: false}); const {host} = await mount(LocalTtsSettings, {config: normalizeConfig({})});
+        expect(host.querySelector('[role="alert"]')!.textContent).toContain('statusReadFailed');
+        const calls = ports.send.mock.calls.length;
+        for (const listener of ports.storageListeners) {listener({other: {}}, 'local'); listener({[LOCAL_TTS_MODEL_STATE_KEY]: {}}, 'sync');}
+        expect(ports.send).toHaveBeenCalledTimes(calls);
+        ports.send.mockResolvedValue({success: true, downloaded: true}); storageChanged(); await settle();
+        expect(host.querySelector('[data-testid="local-tts-remove"]')).not.toBeNull(); expect(host.querySelector('[role="alert"]')).toBeNull();
+    });
+    it('keeps status reads out of an in-flight model command', async () => {
+        ports.send.mockResolvedValue({success: true, downloaded: false}); const {host} = await mount(LocalTtsSettings, {config: normalizeConfig({})});
+        const command = deferred<unknown>(); ports.send.mockImplementationOnce(() => command.promise);
+        host.querySelector<HTMLButtonElement>('[data-testid="local-tts-download"]')!.click(); await settle();
+        const calls = ports.send.mock.calls.length; storageChanged(); await settle(); expect(ports.send).toHaveBeenCalledTimes(calls);
+        command.resolve({success: true}); await settle(); expect(host.querySelector('[data-testid="local-tts-remove"]')).not.toBeNull();
+    });
+    it('retains a command failure when an unrelated successful status read arrives', async () => {
+        ports.send.mockResolvedValue({success: true, downloaded: false}); const {host} = await mount(LocalTtsSettings, {config: normalizeConfig({})});
+        ports.send.mockResolvedValueOnce({success: false, error: 'controlled command failure'});
+        host.querySelector<HTMLButtonElement>('[data-testid="local-tts-download"]')!.click(); await settle();
+        expect(host.querySelector('[role="alert"]')!.textContent).toContain('controlled command failure');
+        storageChanged(); await settle(); expect(host.querySelector('[role="alert"]')!.textContent).toContain('controlled command failure');
+    });
+});
+
+describe('audit49C learning-memory confirmation lifetime', () => {
+    it('does not send a clear mutation after the requesting component is unmounted', async () => {
+        const confirm = deferred<void>(); ports.confirm.mockImplementationOnce(() => confirm.promise);
+        ports.send.mockResolvedValue({success: true, memories: [{id: '12345678-1234-4234-8234-123456789abc', kind: 'note', content: 'Retained fixture', updatedAt: 1, createdAt: 1}]});
+        const {host, stop} = await mount(LearningMemoryManager, {enabled: true});
+        const clear = Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'learning.memoryClear')!;
+        expect(clear).not.toBeUndefined(); clear.click(); await settle(); stop(); confirm.resolve(); await settle();
+        expect(ports.send.mock.calls.map(([message]) => message.action)).not.toContain('memory-clear');
+    });
+    it('still clears after confirmation while mounted and keeps data when confirmation is cancelled', async () => {
+        ports.send.mockResolvedValue({success: true, memories: [{id: '12345678-1234-4234-8234-123456789abc', kind: 'note', content: 'Retained fixture', updatedAt: 1, createdAt: 1}]});
+        const {host} = await mount(LearningMemoryManager, {enabled: true});
+        const findClear = () => Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'learning.memoryClear')!;
+        ports.confirm.mockRejectedValueOnce('cancel'); findClear().click(); await settle(); expect(host.textContent).toContain('Retained fixture');
+        expect(ports.send.mock.calls.map(([message]) => message.action)).not.toContain('memory-clear');
+        findClear().click(); await settle(); expect(ports.send.mock.calls.map(([message]) => message.action)).toContain('memory-clear');
+        expect(host.textContent).not.toContain('Retained fixture'); expect(host.textContent).toContain('learning.memoryCleared');
+    });
+});
+
+describe('audit49C video model and cache lifecycle in the client template', () => {
+    const stats = (entries: number) => ({success: true, stats: {entries, bytes: entries * 100, maxEntries: 32, ttlMs: 1000}});
+    it.each(['download', 'remove'] as const)('does not let a stale storage snapshot undo completed %s', async operation => {
+        ports.get.mockResolvedValue({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: operation === 'remove' ? ['tiny'] : []});
+        ports.send.mockImplementation(async (message: any) => {
+            if (message.type === VIDEO_AI_SUBTITLE_CACHE_STATS_MESSAGE) return stats(0);
+            const models = operation === 'remove' ? [] : ['tiny'];
+            ports.get.mockResolvedValue({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: models});
+            return {success: true, models};
+        });
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        const stale = deferred<unknown>(); ports.get.mockImplementationOnce(() => stale.promise);
+        for (const listener of ports.storageListeners) listener({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: {}}, 'local'); await settle();
+        host.querySelector<HTMLButtonElement>('.video-model-card button')!.click(); await settle();
+        stale.resolve({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: operation === 'remove' ? ['tiny'] : []}); await settle();
+        expect(host.querySelector('.video-model-card .video-model-availability')!.textContent).toContain(operation === 'download' ? '可离线使用' : '尚未下载');
+    });
+    it('keeps post-clear cache statistics when an older focus read returns later', async () => {
+        ports.get.mockResolvedValue({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: []}); ports.send.mockResolvedValue(stats(5));
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        const stale = deferred<unknown>(); ports.send.mockImplementationOnce(() => stale.promise);
+        window.dispatchEvent(new Event('focus')); await settle();
+        ports.send.mockImplementation(async (message: any) => message.type === VIDEO_AI_SUBTITLE_CACHE_CLEAR_MESSAGE ? {success: true} : stats(0));
+        host.querySelector<HTMLButtonElement>('.video-ai-cache-clear')!.click(); await settle();
+        stale.resolve(stats(5)); await settle(); expect(host.querySelector<HTMLButtonElement>('.video-ai-cache-clear')!.disabled).toBe(true);
+    });
+    it('clears an old cache-read error on a newer success and removes focus listeners on unmount', async () => {
+        ports.get.mockResolvedValue({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: []}); ports.send.mockResolvedValue(stats(0));
+        const {host, stop} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        const stale = deferred<unknown>(); ports.send.mockImplementationOnce(() => stale.promise); window.dispatchEvent(new Event('focus')); await settle();
+        window.dispatchEvent(new Event('focus')); await settle(); stale.reject(new Error('old cache read')); await settle();
+        expect(host.querySelector('.video-ai-cache-panel [role="alert"]')).toBeNull(); stop();
+        const calls = ports.send.mock.calls.length; window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); await settle();
+        expect(ports.send).toHaveBeenCalledTimes(calls);
+    });
+    it('retains a model-download error when another storage state read succeeds', async () => {
+        ports.get.mockResolvedValue({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: []}); ports.send.mockResolvedValue(stats(0));
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        ports.send.mockResolvedValueOnce({success: false, error: 'controlled command failure'});
+        host.querySelector<HTMLButtonElement>('.video-model-card button')!.click(); await settle();
+        expect(host.querySelector('.video-model-management [role="alert"]')!.textContent).toContain('video.modelDownloadError');
+        for (const listener of ports.storageListeners) listener({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: {}}, 'local'); await settle();
+        expect(host.querySelector('.video-model-management [role="alert"]')!.textContent).toContain('video.modelDownloadError');
+    });
+});
+
+// 实际后台 handler + 实际路由/失败回复纪律。这里只控制 Offscreen、storage 和回包传输端口，
+// 不生成业务 snapshot；捕获的 models 完全由生产 handler 的串行写入产生。
+function videoHandlerFixture(initial: string[] = []) {
+    let values: Record<string, unknown> = {[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: [...initial]};
+    const events: unknown[] = [];
+    const storage = {
+        get: vi.fn(async (_key: string) => structuredClone(values)),
+        set: vi.fn(async (next: Record<string, unknown>) => {
+            const oldValue = values[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY];
+            values = {...values, ...structuredClone(next)};
+            events.push({write: structuredClone(next)});
+            for (const listener of ports.storageListeners) listener({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: {
+                oldValue, newValue: values[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY],
+            }}, 'local');
+        }),
+    };
+    const offscreen = {send: vi.fn(async (_message: any) => ({success: true})), sendIfPresent: vi.fn(async () => ({success: true}))};
+    const listener = createBackgroundRuntimeMessageListener(createBackgroundMessageRouter(
+        createVideoSubtitleBackgroundHandlers({offscreen: offscreen as any, storage}),
+    ), () => ({}));
+    const gates = new Map<string, {captured: ReturnType<typeof deferred<any>>; release: ReturnType<typeof deferred<void>>}>();
+    ports.get.mockImplementation((key: string) => storage.get(key));
+    ports.send.mockImplementation(async (message: any) => {
+        if (message.type === VIDEO_AI_SUBTITLE_CACHE_STATS_MESSAGE) return {success: true, stats: {entries: 0, bytes: 0, maxEntries: 32, ttlMs: 1000}};
+        const id = `${message.type}:${message.model}`;
+        const gate = gates.get(id); gates.delete(id);
+        const response = await listener(message, {});
+        events.push({reply: id, response: structuredClone(response)});
+        if (gate) {gate.captured.resolve(response); await gate.release.promise;}
+        return response;
+    });
+    return {storage, offscreen, listener, events, models: () => structuredClone(values[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]),
+        hold(type: string, model: string) {
+            const gate = {captured: deferred<any>(), release: deferred<void>()}; gates.set(`${type}:${model}`, gate); return gate;
+        },
+    };
+}
+function videoCard(host: HTMLElement, model: string) {
+    const radio = host.querySelector<HTMLInputElement>(`.video-model-card input[value="${model}"]`)!;
+    expect(radio).not.toBeNull();
+    return radio.closest('.video-model-card')!;
+}
+async function clickVideoModel(host: HTMLElement, model: string) {
+    const button = videoCard(host, model).querySelector<HTMLButtonElement>('button')!;
+    expect(button.disabled).toBe(false); button.click(); await settle();
+}
+function expectVideoModels(host: HTMLElement, models: string[]) {
+    for (const model of ['tiny', 'base']) expect(videoCard(host, model).querySelector('.video-model-availability')!.textContent)
+        .toContain(models.includes(model) ? '可离线使用' : '尚未下载');
+}
+describe('audit49C followup1 cross-model convergence through public handlers and real client buttons', () => {
+    it('keeps both successful concurrent downloads when the earlier captured reply is delivered last', async () => {
+        const fixture = videoHandlerFixture(); const tinyWorker = deferred<{success: boolean}>(); const baseWorker = deferred<{success: boolean}>();
+        fixture.offscreen.send.mockImplementation((message: any) => message.model === 'tiny' ? tinyWorker.promise : baseWorker.promise);
+        const tinyReply = fixture.hold('fluentReadPrepareLocalVideoModel', 'tiny');
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(host, 'tiny'); await clickVideoModel(host, 'base');
+        expect(fixture.offscreen.send.mock.calls.map(([message]) => message.model)).toEqual(['tiny', 'base']);
+        tinyWorker.resolve({success: true}); expect((await tinyReply.captured.promise).models).toEqual(['tiny']);
+        baseWorker.resolve({success: true}); await settle();
+        expect(fixture.models()).toEqual(['tiny', 'base']);
+        tinyReply.release.resolve(); await settle(); expectVideoModels(host, ['tiny', 'base']);
+    });
+    it('does not resurrect an externally removed model from an older successful download snapshot', async () => {
+        const fixture = videoHandlerFixture(['tiny']); const reply = fixture.hold('fluentReadPrepareLocalVideoModel', 'base');
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(host, 'base'); expect((await reply.captured.promise).models).toEqual(['tiny', 'base']);
+        expect(await fixture.listener({type: 'fluentReadRemoveLocalVideoModel', model: 'tiny'}, {})).toMatchObject({success: true, models: ['base']});
+        reply.release.resolve(); await settle(); expect(fixture.models()).toEqual(['base']); expectVideoModels(host, ['base']);
+    });
+    it('keeps an external successful download when an older remove snapshot arrives last', async () => {
+        const fixture = videoHandlerFixture(['tiny']); const reply = fixture.hold('fluentReadRemoveLocalVideoModel', 'tiny');
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(host, 'tiny'); expect((await reply.captured.promise).models).toEqual([]);
+        expect(await fixture.listener({type: 'fluentReadPrepareLocalVideoModel', model: 'base'}, {})).toMatchObject({success: true, models: ['base']});
+        reply.release.resolve(); await settle(); expect(fixture.models()).toEqual(['base']); expectVideoModels(host, ['base']);
+    });
+    it('preserves both page commands when a remove and download complete before their replies are delivered in reverse order', async () => {
+        const fixture = videoHandlerFixture(['tiny']); const tinyReply = fixture.hold('fluentReadRemoveLocalVideoModel', 'tiny');
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(host, 'tiny'); expect((await tinyReply.captured.promise).models).toEqual([]);
+        await clickVideoModel(host, 'base'); expect(fixture.models()).toEqual(['base']);
+        tinyReply.release.resolve(); await settle(); expectVideoModels(host, ['base']);
+    });
+    it('re-reads external changes after a failed command and retains the independent command error', async () => {
+        const fixture = videoHandlerFixture(); const worker = deferred<{success: boolean; error: string}>();
+        fixture.offscreen.send.mockImplementationOnce(() => worker.promise);
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(host, 'tiny');
+        expect(await fixture.listener({type: 'fluentReadPrepareLocalVideoModel', model: 'base'}, {})).toMatchObject({success: true});
+        worker.resolve({success: false, error: 'controlled failed download'}); await settle();
+        expect(fixture.models()).toEqual(['base']); expectVideoModels(host, ['base']);
+        expect(host.querySelector('.video-model-management [role="alert"]')!.textContent).toContain('video.modelDownloadError');
+        await clickVideoModel(host, 'tiny'); expectVideoModels(host, ['tiny', 'base']);
+        expect(host.querySelector('.video-model-management [role="alert"]')).toBeNull();
+    });
+    it('keeps one concurrent download success when the other command fails', async () => {
+        const fixture = videoHandlerFixture(); const tinyWorker = deferred<{success: boolean; error?: string}>();
+        fixture.offscreen.send.mockImplementation((message: any) => message.model === 'tiny' ? tinyWorker.promise : Promise.resolve({success: true}));
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(host, 'tiny'); await clickVideoModel(host, 'base');
+        tinyWorker.resolve({success: false, error: 'tiny failed'}); await settle();
+        expect(fixture.models()).toEqual(['base']); expectVideoModels(host, ['base']);
+        expect(host.querySelector('.video-model-management [role="alert"]')!.textContent).toContain('video.modelDownloadError');
+    });
+    it('ignores a stale terminal read when a new command starts before that read is delivered', async () => {
+        const fixture = videoHandlerFixture(); const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        const stale = deferred<unknown>(); ports.get.mockImplementationOnce(() => stale.promise);
+        await clickVideoModel(host, 'tiny'); await clickVideoModel(host, 'base');
+        expect(fixture.models()).toEqual(['tiny', 'base']); stale.resolve({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: ['tiny']}); await settle();
+        expectVideoModels(host, ['tiny', 'base']);
+    });
+    it('recovers from a terminal state-read failure through a later storage event', async () => {
+        const fixture = videoHandlerFixture(); const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        ports.get.mockRejectedValueOnce(new Error('controlled terminal read failure'));
+        await clickVideoModel(host, 'tiny');
+        expect(host.querySelector('.video-model-management [role="alert"]')!.textContent).toContain('无法读取模型缓存');
+        await fixture.storage.set({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: ['tiny', 'base']}); await settle();
+        expectVideoModels(host, ['tiny', 'base']); expect(host.querySelector('.video-model-management [role="alert"]')).toBeNull();
+    });
+    it('unsubscribes and avoids a terminal read after unmount while a successful reply is in transit', async () => {
+        const fixture = videoHandlerFixture(); const reply = fixture.hold('fluentReadPrepareLocalVideoModel', 'tiny');
+        const first = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(first.host, 'tiny'); await reply.captured.promise; first.stop();
+        const reads = ports.get.mock.calls.length; reply.release.resolve(); await settle();
+        expect(ports.get).toHaveBeenCalledTimes(reads); expect(ports.storageListeners.size).toBe(0);
+        const second = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        expectVideoModels(second.host, ['tiny']); second.stop(); expect(ports.storageListeners.size).toBe(0);
+    });
+    it('keeps a command error after a failed terminal read is later recovered', async () => {
+        const fixture = videoHandlerFixture(); const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        fixture.offscreen.send.mockResolvedValueOnce({success: false});
+        ports.get.mockRejectedValueOnce(new Error('read failed after command failure'));
+        await clickVideoModel(host, 'tiny');
+        await fixture.storage.set({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: ['base']}); await settle();
+        expectVideoModels(host, ['base']); expect(host.querySelector('.video-model-management [role="alert"]')!.textContent).toContain('video.modelDownloadError');
+    });
+    it('preserves external state after an actual remove handler rejects and permits retry', async () => {
+        const fixture = videoHandlerFixture(['tiny']); const worker = deferred<{success: boolean}>();
+        fixture.offscreen.send.mockImplementationOnce(() => worker.promise);
+        const {host} = await mount(VideoLocalModelSettings, {config: normalizeConfig({videoTranslationEnabled: true})});
+        await clickVideoModel(host, 'tiny');
+        await fixture.storage.set({[VIDEO_LOCAL_TRANSCRIPTION_STATE_KEY]: ['tiny', 'base']});
+        worker.resolve({success: false}); await settle();
+        expectVideoModels(host, ['tiny', 'base']); expect(host.querySelector('.video-model-management [role="alert"]')!.textContent).toContain('模型清除失败');
+        await clickVideoModel(host, 'tiny'); expect(fixture.models()).toEqual(['base']); expectVideoModels(host, ['base']);
+        expect(host.querySelector('.video-model-management [role="alert"]')).toBeNull();
+    });
+});
+
+function namedButton(host: HTMLElement, name: string) {
+    const button = Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(item => item.textContent === name)!;
+    expect(button).not.toBeUndefined(); return button;
+}
+async function openHistoryRestore() {
+    ports.send.mockImplementation(async (message: any) => message.type === 'configHistoryAction' ? {success: true, history: ports.history} : {success: true});
+    const page = await mount(ConfigManagement, {active: true, activePanel: 'history', config: normalizeConfig({on: true})});
+    Array.from(page.host.querySelectorAll<HTMLButtonElement>('.version-entry')).find(button => button.textContent?.includes('v1'))!.click(); await settle();
+    return page;
+}
+describe('audit49C followup1 configuration restore confirmation ownership', () => {
+    it.each(['unmount', 'close'] as const)('does not send a public history restore after %s while confirmation is pending', async boundary => {
+        const page = await openHistoryRestore(); const confirm = deferred<void>(); ports.confirm.mockImplementationOnce(() => confirm.promise);
+        namedButton(page.host, '恢复此版本').click(); await settle();
+        if (boundary === 'unmount') page.stop(); else {namedButton(page.host, '关闭').click(); await settle();}
+        confirm.resolve(); await settle(); expect(ports.send.mock.calls.map(([message]) => message.type)).not.toContain('configHistoryAction');
+        expect(ports.messages).not.toHaveBeenCalled();
+    });
+    it('allows only one pending confirmation and sends the selected version through the real public client', async () => {
+        const page = await openHistoryRestore(); const confirm = deferred<void>(); ports.confirm.mockImplementation(() => confirm.promise);
+        const restore = namedButton(page.host, '恢复此版本'); restore.click(); restore.click(); await settle();
+        expect(ports.confirm).toHaveBeenCalledOnce(); confirm.resolve(); await settle();
+        expect(ports.send.mock.calls.map(([message]) => message)).toEqual([{type: 'configHistoryAction', action: 'restore', version: 1}]);
+        expect(ports.messages).toHaveBeenCalledWith('success', '设置已恢复');
+    });
+    it('releases cancellation and failed restore so the same visible version can be retried', async () => {
+        const page = await openHistoryRestore(); ports.confirm.mockRejectedValueOnce('cancel'); namedButton(page.host, '恢复此版本').click(); await settle();
+        expect(ports.send).not.toHaveBeenCalled();
+        ports.send.mockResolvedValueOnce({success: false, error: 'controlled restore failure'});
+        namedButton(page.host, '恢复此版本').click(); await settle();
+        expect(ports.messages).toHaveBeenCalledWith('error', '恢复失败：controlled restore failure');
+        namedButton(page.host, '恢复此版本').click(); await settle();
+        expect(ports.send).toHaveBeenCalledTimes(2); expect(ports.messages).toHaveBeenLastCalledWith('success', '设置已恢复');
+    });
+    it('does not apply a confirmed old target after its preview is closed and another version is opened', async () => {
+        const page = await openHistoryRestore(); const confirm = deferred<void>(); ports.confirm.mockImplementationOnce(() => confirm.promise);
+        namedButton(page.host, '恢复此版本').click(); await settle(); namedButton(page.host, '关闭').click(); await settle();
+        page.host.querySelector<HTMLButtonElement>('.version-entry')!.click(); await settle(); confirm.resolve(); await settle();
+        expect(ports.send).not.toHaveBeenCalled(); expect(page.host.querySelector('.preview-summary')!.textContent).toContain('v2');
+    });
+    it.each(['success', 'error'] as const)('ignores a late public restore %s notification after unmount', async result => {
+        const page = await openHistoryRestore(); const response = deferred<any>(); ports.send.mockImplementationOnce(() => response.promise);
+        namedButton(page.host, '恢复此版本').click(); await settle(); expect(ports.send).toHaveBeenCalledOnce(); page.stop();
+        response.resolve(result === 'success' ? {success: true, history: ports.history} : {success: false, error: 'late restore failure'}); await settle();
+        expect(ports.messages).not.toHaveBeenCalled();
+    });
+});
+
+describe('audit49C followup2 restore visibility during the dialog closing transition', () => {
+    it.each([
+        ['history', 'success'], ['history', 'failure'], ['backup', 'success'], ['backup', 'failure'],
+    ] as const)('ignores the %s restore %s receipt after the public close button and before closed', async (kind, result) => {
+        const page = kind === 'history' ? await openHistoryRestore()
+            : await mount(ConfigManagement, {active: true, activePanel: 'history', config: normalizeConfig({on: false})});
+        if (kind === 'backup') {page.host.querySelector<HTMLButtonElement>('.backup-panel .version-entry')!.click(); await settle();}
+        const response = deferred<any>(); ports.send.mockImplementationOnce(() => response.promise);
+        const restore = namedButton(page.host, '恢复此版本'); expect(restore.disabled).toBe(false); restore.click(); await settle();
+        expect(ports.send).toHaveBeenCalledOnce();
+        expect(ports.send.mock.calls[0][0]).toEqual(kind === 'history'
+            ? {type: 'configHistoryAction', action: 'restore', version: 1} : {type: 'configAutoBackupRestore', version: 1});
+        const count = () => Array.from(page.host.querySelectorAll('.version-panel')).map(panel => panel.querySelectorAll('.version-entry').length);
+        const before = count();
+        // 外部 Dialog 端口保持离场内容，modelValue 已 false，但动画结束的 closed 尚未递送。
+        // 这是受控过渡语义，不能代表 Element Plus 原生浏览器验证。
+        ports.delayDialogClosed = true; namedButton(page.host, '关闭').click(); await settle();
+        expect(page.host.querySelector('.config-preview-dialog')!.getAttribute('data-dialog-visible')).toBe('false');
+        expect(page.host.querySelector('.preview-summary')!.textContent).toContain(kind === 'history' ? 'v1' : 'b1');
+        expect(ports.pendingDialogClosed.size).toBe(1);
+        const history = appendConfigHistorySnapshot(ports.history, normalizeConfig({on: false}))!;
+        const backups = appendConfigAutoBackup(getConfigAutoBackupsSnapshot(), normalizeConfig({on: false}));
+        response.resolve(result === 'failure' ? {success: false, error: 'controlled closing restore failure'}
+            : kind === 'history' ? {success: true, history} : {success: true, result: {history, backups}});
+        await settle();
+        expect.soft(ports.messages).not.toHaveBeenCalled(); expect.soft(count()).toEqual(before);
+        expect(ports.send).toHaveBeenCalledOnce();
+        for (const closed of [...ports.pendingDialogClosed]) closed(); await settle();
+        expect(page.host.querySelector('.config-preview-dialog')).toBeNull(); expect(ports.pendingDialogClosed.size).toBe(0);
+        expect(ports.send).toHaveBeenCalledOnce();
+    });
+});
+
+describe('audit49C followup1 cache-limit draft and authoritative configuration', () => {
+    const stats = {success: true, stats: {bytes: 0, entries: 0, maxBytes: 10 * 1024 * 1024, maxEntries: 10000}};
+    it('reconciles limits received from the real parent prop while the cache toggle save is pending', async () => {
+        ports.send.mockResolvedValue(stats); const page = await mount(TranslationCacheSettings, {config: normalizeConfig({})});
+        const save = deferred<void>(); ports.patch.mockImplementationOnce(() => save.promise);
+        const toggle = page.host.querySelector<HTMLInputElement>('input[type="checkbox"]')!; toggle.checked = false; toggle.dispatchEvent(new Event('change')); await settle();
+        Object.assign(page.state.config as any, {translationCacheMaxBytes: 2 * 1024 * 1024, translationCacheMaxEntries: 300}); await settle();
+        save.resolve(); await settle();
+        expect(Array.from(page.host.querySelectorAll<HTMLInputElement>('input[type="number"]')).map(field => field.value)).toEqual(['2', '300']);
+        expect(namedButton(page.host, 'common.save').disabled).toBe(true);
+        expect(ports.patch.mock.calls[0][0]).toEqual({useCache: false});
+    });
+    it('retains an unsaved user draft after a failed limit save with no external update', async () => {
+        ports.send.mockResolvedValue(stats); const page = await mount(TranslationCacheSettings, {config: normalizeConfig({})});
+        input(page.host, 'input[aria-label="settings.cache.maxEntries"]', '300'); await settle(); ports.patch.mockRejectedValueOnce(new Error('fixture failed'));
+        page.host.querySelector('form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})); await settle();
+        expect(page.host.querySelector<HTMLInputElement>('input[aria-label="settings.cache.maxEntries"]')!.value).toBe('300');
+        expect(namedButton(page.host, 'common.save').disabled).toBe(false); expect(page.host.querySelector('[role="alert"]')!.textContent).toContain('settings.cache.saveFailed');
+        page.host.querySelector('form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})); await settle();
+        expect(ports.patch.mock.calls[1][0]).toEqual({translationCacheMaxBytes: 10 * 1024 * 1024, translationCacheMaxEntries: 300});
+    });
+    it('adopts the latest external limits after a failed save and keeps its failure feedback', async () => {
+        ports.send.mockResolvedValue(stats); const page = await mount(TranslationCacheSettings, {config: normalizeConfig({})});
+        const save = deferred<void>(); ports.patch.mockImplementationOnce(() => save.promise);
+        input(page.host, 'input[aria-label="settings.cache.maxEntries"]', '300'); await settle();
+        page.host.querySelector('form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})); await settle();
+        Object.assign(page.state.config as any, {translationCacheMaxBytes: 3 * 1024 * 1024, translationCacheMaxEntries: 500}); await settle();
+        save.reject(new Error('controlled failure')); await settle();
+        expect(Array.from(page.host.querySelectorAll<HTMLInputElement>('input[type="number"]')).map(field => field.value)).toEqual(['3', '500']);
+        expect(namedButton(page.host, 'common.save').disabled).toBe(true); expect(page.host.querySelector('[role="alert"]')!.textContent).toContain('settings.cache.saveFailed');
+    });
+});
+
+const basePreferences: SitePreferences = {on: true, autoTranslate: false, disableFloatingBall: false,
+    alwaysTranslateDomains: ['docs.example.com'], disabledExtensionDomains: ['blocked.com'], floatingBallDisabledDomains: ['docs.example.com']};
+describe('audit49C single-site preferences public preview', () => {
+    it.each([
+        ['https://docs.example.com/path', {}, ['enabled', 'site', 'hidden-site']],
+        ['https://blocked.com', {}, ['disabled', 'disabled', 'disabled']],
+        ['https://docs.example.com', {on: false}, ['paused', 'paused', 'paused']],
+        ['https://manual.com', {}, ['enabled', 'manual', 'visible']],
+        ['http://localhost', {autoTranslate: true}, ['enabled', 'global', 'visible']],
+        ['https://docs.example.com', {disableFloatingBall: true}, ['enabled', 'site', 'hidden-global']],
+    ])('preserves priority for %s / %j', (url, overrides, expected) => {
+        const result = previewSitePreferences(url as string, {...basePreferences, ...overrides as object})!;
+        expect([result.extension, result.translation, result.floatingBall]).toEqual(expected);
+    });
+    it('rejects malformed or non-HTTP input while retaining sorted multi-site listing', () => {
+        for (const value of ['', '://', 'file:///fixture', 'javascript:alert(1)']) expect(previewSitePreferences(value, basePreferences)).toBeNull();
+        expect(listSitePreferences(basePreferences).map(row => row.domain)).toEqual(['blocked.com', 'example.com']);
+    });
+    it('avoids sorting all site rows for a bounded one-site preview and records the same output', () => {
+        const domains = Array.from({length: 512}, (_, index) => `site${511 - index}.com`);
+        const config = {...basePreferences, alwaysTranslateDomains: domains, disabledExtensionDomains: domains.slice(0, 256), floatingBallDisabledDomains: domains.slice(256)};
+        const original = String.prototype.localeCompare; let comparisons = 0;
+        const outputs: unknown[] = []; const start = performance.now();
+        try {
+            String.prototype.localeCompare = function (...args: Parameters<typeof original>) {comparisons++; return original.apply(this, args);};
+            for (let index = 0; index < 12; index++) outputs.push(previewSitePreferences('https://docs.site7.com/article', config));
+        } finally {String.prototype.localeCompare = original;}
+        const rawOutput = JSON.stringify(outputs);
+        const outputSHA256 = createHash('sha256').update(rawOutput).digest('hex');
+        const evidenceDirectory = process.env.AUDIT_C_EVIDENCE_DIR;
+        if (evidenceDirectory && process.env.AUDIT_C_LABEL) {
+            mkdirSync(evidenceDirectory, {recursive: true});
+            writeFileSync(join(evidenceDirectory, `${process.env.AUDIT_C_LABEL}-performance.json`), JSON.stringify({
+            mode: process.env.AUDIT_C_MODE, loaded: true, entry: 'previewSitePreferences', domainCount: 512, repetitions: 12, comparisons,
+            elapsedMs: performance.now() - start, output: outputs, outputSHA256,
+            }, null, 2));
+        }
+        expect(outputs[0]).toEqual({url: 'https://docs.site7.com/article', domain: 'site7.com', extension: 'enabled', translation: 'site', floatingBall: 'hidden-site'});
+        expect(outputSHA256).toBe('0d6eb2f1949a7aee972ecce47af20ed2376dbe72847748e369ad8f09ecbd6829');
+        expect(comparisons).toBe(0);
+    });
+});

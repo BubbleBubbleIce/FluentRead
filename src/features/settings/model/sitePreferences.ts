@@ -59,13 +59,12 @@ export function previewSitePreferences(input: string, config: SitePreferences): 
     try { url = new URL(input.trim()); } catch { return null; }
     if (!['http:', 'https:'].includes(url.protocol)) return null;
     const domain = getSiteBaseDomain(url);
-    const row = listSitePreferences(config).find(item => item.domain === domain);
-    const extension = !config.on ? 'paused' : row?.extensionDisabled ? 'disabled' : 'enabled';
+    const extension = !config.on ? 'paused' : domain && normalizeSiteDomains(config.disabledExtensionDomains).includes(domain) ? 'disabled' : 'enabled';
     return {
         url: url.href, domain, extension,
         translation: extension !== 'enabled' ? extension : shouldAutoTranslatePage(url, config)
             ? config.autoTranslate ? 'global' : 'site' : 'manual',
         floatingBall: extension !== 'enabled' ? extension : config.disableFloatingBall ? 'hidden-global'
-            : row?.floatingBallHidden ? 'hidden-site' : 'visible',
+            : domain && normalizeSiteDomains(config.floatingBallDisabledDomains).includes(domain) ? 'hidden-site' : 'visible',
     };
 }

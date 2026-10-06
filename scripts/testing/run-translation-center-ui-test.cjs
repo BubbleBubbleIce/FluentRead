@@ -16,15 +16,27 @@ const artifactsDir = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-
 const {chromium} = require(path.join(arg('playwright-root', ''), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(arg('focus-safe-helper', ''));
 const report = {ok: false, extensionDir, providerEvidence: 'local-http-fixture', clipboardEvidence: 'page-fixture-not-system-clipboard', cases: [], requests: [], screenshots: [], layouts: [], consoleErrors: [], persistenceCases: [], quickClose: false, crossPageSync: false, latestWriteWins: false};
-let launched, page, mode = 'normal', failedB = true;
+let launched, page, profileDir, mode = 'normal', failedB = true;
+let launchAttempted = false;
 fs.mkdirSync(artifactsDir, {recursive: true});
 const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') {res.writeHead(204, {'access-control-allow-origin': '*', 'access-control-allow-headers': '*'}); res.end(); return;}
   let raw = ''; req.on('data', chunk => {raw += chunk;});
   req.on('end', () => {
-    const body = JSON.parse(raw), isB = req.url.startsWith('/b/'), fail = isB && failedB, delayed = isB && mode === 'delay';
+    let body;
+    try {
+      body = JSON.parse(raw);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('Invalid request body');
+    }
+    catch {
+      res.writeHead(400, {'content-type': 'application/json', 'access-control-allow-origin': '*'});
+      res.end(JSON.stringify({error: {message: 'Invalid synthetic fixture request'}}));
+      return;
+    }
+    const isB = req.url.startsWith('/b/'), fail = isB && failedB, delayed = isB && mode === 'delay';
     report.requests.push({path: req.url, model: body.model, mode, fail});
     const reply = () => {
+      if (res.destroyed) return;
       res.writeHead(fail ? 503 : 200, {'content-type': 'application/json', 'access-control-allow-origin': '*'});
       res.end(JSON.stringify(fail ? {error: {message: 'comparison fixture temporarily unavailable'}} : {
         id: 'center-fixture', object: 'chat.completion', created: 1, model: body.model,
@@ -32,7 +44,10 @@ const server = http.createServer((req, res) => {
         usage: {prompt_tokens: 10, completion_tokens: 10, total_tokens: 20},
       }));
     };
-    if (delayed) setTimeout(reply, 1600); else reply();
+    if (delayed) {
+      const timer = setTimeout(reply, 1600);
+      res.once('close', () => clearTimeout(timer));
+    } else reply();
   });
 });
 const record = name => report.cases.push(name);
@@ -58,9 +73,15 @@ async function checkContrast(theme) {
   (report.contrast ||= []).push(result);
 }
 async function main() {
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); reject(error);};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });
   const host = 'http://127.0.0.1:' + server.address().port;
-  launched = await launchFocusSafePersistentContext({chromium, profileDir: fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-translation-center-')),
+  profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-translation-center-'));
+  launchAttempted = true;
+  launched = await launchFocusSafePersistentContext({chromium, profileDir,
     browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', background: true, headless: false,
     browserArgs: ['--disable-extensions-except=' + extensionDir, '--load-extension=' + extensionDir, '--no-first-run'], viewport: {width: 1440, height: 1000}, timeout: 30000});
   Object.assign(report, {launchMode: launched.launchMode, focusPolicy: launched.focusPolicy, windowPlacement: launched.windowPlacement});
@@ -176,7 +197,23 @@ async function main() {
   record('six-translated-locales-and-dark-mode'); assert.equal(report.consoleErrors.length, 0); report.ok = true;
 }
 main().catch(async error => {report.error = error.stack || String(error); process.exitCode = 1; if (page && !page.isClosed()) {report.failurePage = await page.evaluate(() => ({title: document.title, text: document.body.innerText.slice(0, 1500)})).catch(() => null); await shot('failure').catch(() => {});}}).finally(async () => {
-  fs.writeFileSync(path.join(artifactsDir, 'browser-report.json'), JSON.stringify(report, null, 2));
-  await launched?.close(); server.closeAllConnections(); server.close();
+  report.cleanupErrors = [];
+  let browserClosed = !launchAttempted;
+  if (launched) {
+    try {await launched.close(); browserClosed = true;}
+    catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+  }
+  try {
+    await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});
+  } catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+  if (profileDir) {
+    if (browserClosed) {
+      try {fs.rmSync(profileDir, {recursive: true, force: true}); report.profileRemoved = true;}
+      catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+    } else report.retainedProfile = profileDir;
+  }
+  if (report.cleanupErrors.length) {report.ok = false; process.exitCode = 1;}
+  try {fs.writeFileSync(path.join(artifactsDir, 'browser-report.json'), JSON.stringify(report, null, 2));}
+  catch (error) {console.error(`translation center report write: ${error.stack || error}`); process.exitCode = 1;}
   console.log(JSON.stringify({ok: report.ok, cases: report.cases.length, screenshots: report.screenshots.length, error: report.error}));
 });

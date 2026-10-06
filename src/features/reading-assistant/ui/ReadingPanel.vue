@@ -469,12 +469,14 @@ async function openSettings(section = 'settings-selection'): Promise<void> {
   } catch { feedback.value = section === 'settings-services' ? '打开设置失败，请从扩展菜单进入“翻译服务”。' : '打开设置失败，请从专项翻译进入“划词翻译”。'; }
 }
 async function copyAnswer(): Promise<void> {
+  const owner = generation;
   try {
     await navigator.clipboard.writeText(`${activeText.value}\n\n${answer.value}`);
+    if (owner !== generation || !props.active) return;
     copied.value = true;
     clearTimeout(copyTimer);
     copyTimer = setTimeout(() => { copied.value = false; }, 1800);
-  } catch { feedback.value = '复制失败，可以选中回答后复制。'; }
+  } catch { if (owner === generation && props.active) feedback.value = '复制失败，可以选中回答后复制。'; }
 }
 async function openLearningMemory(): Promise<void> {
   try {
@@ -513,7 +515,15 @@ async function saveWord(): Promise<void> {
   finally { saving.value = false; }
 }
 watch(() => JSON.stringify([props.preferences, props.targetLanguage, props.sourceLanguage, props.modelRevision]), () => { actionCache.clear(); cancelRequest(); stopped.value = true; feedback.value = '设置已更新，重新生成可使用新的设置。'; });
-watch(() => JSON.stringify(props.selection), () => { actionCache.clear(); cancelRequest(); historicalText.value = ''; historicalContext.value = ''; previousAnswers.value = []; history.splice(0); sessionId = ''; question.value = ''; answer.value = ''; wholeSentence.value = false; saved.value = false; });
+watch(() => JSON.stringify(props.selection), () => {
+  actionCache.clear(); cancelRequest(); restoreEpoch += 1;
+  historicalText.value = ''; historicalContext.value = ''; previousAnswers.value = []; history.splice(0);
+  sessionId = ''; anchorTurnId = ''; lastAnchorTurnId = ''; lastQuestion = ''; lastHistory = [];
+  currentTurnKey.value = ''; currentQuestion.value = ''; question.value = ''; answer.value = '';
+  error.value = ''; stopped.value = false; model.value = ''; memoryCount.value = 0;
+  wholeSentence.value = false; saved.value = false; remembered.value = false; copied.value = false;
+  feedback.value = ''; sessionWarning.value = ''; clearTimeout(copyTimer);
+});
 watch(activeText, text => { closeTools(); saved.value = false; emit('source-change', text); });
 watch(() => [props.initialAction, props.historyOnly, props.active] as const, ([action, only, active], [oldAction, oldOnly, oldActive]) => {
   restoreEpoch += 1;

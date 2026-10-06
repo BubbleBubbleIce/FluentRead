@@ -3637,9 +3637,16 @@ async function main() {
     }
     throw error;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.close();
-    fs.rmSync(profileDir, {recursive: true, force: true});
+    try {
+      fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
+    } finally {
+      if (launched) {
+        await launched.close();
+        fs.rmSync(profileDir, {recursive: true, force: true});
+      } else {
+        try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
+      }
+    }
   }
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 }

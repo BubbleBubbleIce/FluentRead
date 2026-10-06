@@ -112,6 +112,7 @@ async function verifyArtifact(file: TranslationArtifact, signal: AbortSignal): P
     }
     abortIfNeeded(signal);
     await cache.put(receiptKey(file), new Response(JSON.stringify({size: file.size, sha256: file.sha256})));
+    abortIfNeeded(signal);
 }
 
 async function receiveArtifact(
@@ -194,6 +195,7 @@ async function receiveArtifact(
         clearTimeout(timer);
         controller.abort();
         await reader?.cancel().catch(() => undefined);
+        reader?.releaseLock();
         signal.removeEventListener('abort', abort);
     }
 }
@@ -203,7 +205,10 @@ export async function downloadTranslationArtifact(
     signal: AbortSignal,
     progress: (bytes: number, verifying: boolean) => void,
 ): Promise<void> {
-    if (await artifactComplete(file)) { progress(file.size, false); return; }
+    abortIfNeeded(signal);
+    const complete = await artifactComplete(file);
+    abortIfNeeded(signal);
+    if (complete) { progress(file.size, false); return; }
     const sources = huggingFaceDownloadOrigins();
     let lastError: unknown;
     for (const origin of sources) {

@@ -24,21 +24,14 @@ if (!fs.existsSync(path.join(extensionDir, 'manifest.json'))) throw new Error(`æ
 fs.mkdirSync(artifacts, {recursive: true});
 const {chromium} = createRequire(path.join(path.resolve(playwrightRoot), 'x-portrait-geometry.cjs'))('playwright');
 const helper = require(path.resolve(helperPath));
-const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-x-portrait-'));
-const mediaDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-x-portrait-media-'));
-const videoPath = path.join(mediaDir, 'portrait.mp4');
+let profileDir, mediaDir, videoPath, videoBytes;
 
 function run(program, args) {
-  const result = spawnSync(program, args, {encoding: 'utf8'});
+  const result = spawnSync(program, args, {encoding: 'utf8', timeout: 30000, killSignal: 'SIGKILL'});
   if (result.status !== 0) throw new Error(`${program} failed: ${result.stderr || result.stdout}`);
 }
 
-run('/opt/homebrew/bin/ffmpeg', [
-  '-y', '-f', 'lavfi', '-i', 'color=c=0x17212b:s=360x640:r=24', '-t', '3',
-  '-an', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p',
-  '-movflags', '+faststart', videoPath,
-]);
-const videoBytes = fs.readFileSync(videoPath).toString('base64');
+
 const fixtureUrl = 'https://x.com/cerebras/status/2089870131291943228';
 const youtubeUrl = 'https://www.youtube.com/watch?v=fluentread-portrait-compat';
 const sourceText = 'ThisIsAnExtremelyLongUnbrokenEnglishSubtitleThatMustWrapInsideThePortraitVideoContentRectWithoutEscapingTheLayerBounds';
@@ -94,7 +87,19 @@ async function main() {
   let browserSession;
   let control;
   let page;
+  let launchAttempted = false;
   try {
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-x-portrait-'));
+    mediaDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-x-portrait-media-'));
+    videoPath = path.join(mediaDir, 'portrait.mp4');
+    
+    run('/opt/homebrew/bin/ffmpeg', [
+      '-y', '-f', 'lavfi', '-i', 'color=c=0x17212b:s=360x640:r=24', '-t', '3',
+      '-an', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p',
+      '-movflags', '+faststart', videoPath,
+    ]);
+    videoBytes = fs.readFileSync(videoPath).toString('base64');
+    launchAttempted = true;
     browserSession = await helper.launchFocusSafePersistentContext({
       chromium, profileDir, browserPath, headless: false, background: true,
       displayTarget: 'secondary',
@@ -317,18 +322,24 @@ async function main() {
     report.requests = await worker.evaluate(() => globalThis.xPortraitTranslationRequests || []);
     assert.ok(report.requests.length > 0 && report.requests.every(text => text.includes('ThisIsAnExtremelyLong') || text.includes('YouTube native caption')));
     await page.screenshot({path:path.join(artifacts, 'cleanup.png')});
-    fs.writeFileSync(path.join(artifacts, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
-    console.log(JSON.stringify({ok:true, artifacts, cases:report.cases.length, translationRequests:report.requests.length}, null, 2));
   } catch (error) {
     report.errors.push(error.stack || String(error));
-    fs.writeFileSync(path.join(artifacts, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
-    throw error;
+    console.error(error.stack || error);
+    process.exitCode = 1;
   } finally {
     await page?.close().catch(() => {});
     await control?.close().catch(() => {});
-    await browserSession?.close?.().catch(() => {});
-    try { fs.rmSync(profileDir, {recursive:true, force:true, maxRetries:5, retryDelay:200}); } catch (error) { report.cleanupError = error.message; }
-    try { fs.rmSync(mediaDir, {recursive:true, force:true, maxRetries:5, retryDelay:200}); } catch (error) { report.mediaCleanupError = error.message; }
+    let sessionClosed = !launchAttempted;
+    try { if (browserSession) { await browserSession.close(); sessionClosed = true; } }
+    catch (error) { report.cleanupError = error.stack || String(error); process.exitCode = 1; }
+    if (profileDir && sessionClosed) {
+      try { fs.rmSync(profileDir, {recursive:true, force:true, maxRetries:5, retryDelay:200}); }
+      catch (error) { report.profileCleanupError = error.stack || String(error); process.exitCode = 1; }
+    } else if (profileDir) report.retainedProfile = profileDir;
+    try { if (mediaDir) fs.rmSync(mediaDir, {recursive:true, force:true, maxRetries:5, retryDelay:200}); }
+    catch (error) { report.mediaCleanupError = error.stack || String(error); process.exitCode = 1; }
+    fs.writeFileSync(path.join(artifacts, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
+    console.log(JSON.stringify({ok:!process.exitCode, artifacts, cases:report.cases.length, translationRequests:report.requests.length}, null, 2));
   }
 }
 

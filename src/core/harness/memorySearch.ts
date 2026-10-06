@@ -138,9 +138,12 @@ export function hasMeaningfulQuery(query: string): boolean {
  * +2.0 to the base score.
  */
 export function bm25Signal(query: string, content: string, avgLen = 40): number {
-  const qTokens = [...new Set(tokenizeBigram(query))];
-  if (qTokens.length === 0) return 0;
-  const cTokens = tokenizeBigram(content);
+  const qTokens = new Set(tokenizeBigram(query));
+  if (qTokens.size === 0) return 0;
+  return bm25Tokens(qTokens, tokenizeBigram(content), avgLen);
+}
+
+function bm25Tokens(qTokens: ReadonlySet<string>, cTokens: readonly string[], avgLen = 40): number {
   const contentLen = Math.max(1, cTokens.length);
   const freq = new Map<string, number>();
   for (const t of cTokens) freq.set(t, (freq.get(t) ?? 0) + 1);
@@ -172,11 +175,25 @@ export interface ExplainResult {
  * audit "why did this memory surface".
  */
 export function explainRecord(record: MemoryRecord, query: string, options: RankOptions = {}): ExplainResult {
-  const q = query.trim();
+  return explainPreparedRecord(record, prepareQuery(query), options);
+}
+
+function prepareQuery(query: string) {
+  const text = query.trim();
+  return {
+    text, lower: text.toLowerCase(),
+    words: new Set(text.match(/[\u4e00-\u9fff]{2,}|[a-z][a-z0-9_]{2,}/gi) ?? []),
+    bigrams: tokenSetBigram(text), unigrams: cjkUnigrams(text),
+  };
+}
+
+/** 同一轮排名只解析查询一次；每条正文的分词同时供 Jaccard 与 BM25 使用。 */
+function explainPreparedRecord(record: MemoryRecord, query: ReturnType<typeof prepareQuery>, options: RankOptions): ExplainResult {
+  const q = query.text;
   if (q === '') return { score: 0, reasons: [] };
 
   const contentLower = record.content.toLowerCase();
-  const queryLower = q.toLowerCase();
+  const queryLower = query.lower;
   const reasons: string[] = [];
   const baseParts: string[] = [];
   let base = 0;
@@ -193,7 +210,7 @@ export function explainRecord(record: MemoryRecord, query: string, options: Rank
     reasons.push(`tag:${matchedTags.join('/')} 命中(+1.5)`);
   }
 
-  const qWords = new Set(q.match(/[\u4e00-\u9fff]{2,}|[a-z][a-z0-9_]{2,}/gi) ?? []);
+  const qWords = query.words;
   let qwordHits = 0;
   for (const w of qWords) {
     if (contentLower.includes(w.toLowerCase())) {
@@ -204,8 +221,9 @@ export function explainRecord(record: MemoryRecord, query: string, options: Rank
   }
   if (qwordHits > 0) baseParts.push(`qword(${qwordHits}×1.2)`);
 
-  const qBigrams = tokenSetBigram(q);
-  const cBigrams = tokenSetBigram(record.content);
+  const qBigrams = query.bigrams;
+  const contentTokens = tokenizeBigram(record.content);
+  const cBigrams = new Set(contentTokens);
   const bigramJ = jaccard(qBigrams, cBigrams);
   if (bigramJ > 0) {
     base += bigramJ * 2;
@@ -213,7 +231,7 @@ export function explainRecord(record: MemoryRecord, query: string, options: Rank
     reasons.push(`bigram:${bigramJ.toFixed(2)}(+${(bigramJ * 2).toFixed(2)})`);
   }
 
-  const qUnis = cjkUnigrams(q);
+  const qUnis = query.unigrams;
   const cUnis = cjkUnigrams(record.content);
   const uniJ = jaccard(qUnis, cUnis);
   if (uniJ > 0) {
@@ -222,7 +240,7 @@ export function explainRecord(record: MemoryRecord, query: string, options: Rank
     reasons.push(`unigram:${uniJ.toFixed(2)}(+${(uniJ * 0.8).toFixed(2)})`);
   }
 
-  const bm = bm25Signal(q, record.content);
+  const bm = bm25Tokens(qBigrams, contentTokens);
   if (bm > 0) {
     base += bm;
     baseParts.push(`bm25(${bm.toFixed(2)})`);
@@ -259,9 +277,10 @@ export function isExpired(record: MemoryRecord, now: number = Date.now()): boole
 export function rankRecords(records: readonly MemoryRecord[], query: string, limit: number, options: RankOptions = {}): ScoredRecord[] {
   const now = options.now ?? Date.now();
   const scored: ScoredRecord[] = [];
+  const prepared = prepareQuery(query);
   for (const record of records) {
     if (isExpired(record, now)) continue;
-    const explained = explainRecord(record, query, { ...options, now });
+    const explained = explainPreparedRecord(record, prepared, { ...options, now });
     if (explained.score > 0) scored.push({ record, score: explained.score, reasons: explained.reasons });
   }
   scored.sort((a, b) => b.score - a.score);

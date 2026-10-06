@@ -53,9 +53,17 @@ function containsContextOnlyCjkFragment(context: string, origin: string, result:
     const resultCjk = cjkOnly(result);
     const fragmentLength = 8;
     if (contextCjk.length < fragmentLength || resultCjk.length < fragmentLength) return false;
+    // 固定宽度片段只建立一次，避免每个上下文片段都重扫原文和译文。
+    const contextFragments = new Set<string>();
     for (let index = 0; index <= contextCjk.length - fragmentLength; index += 1) {
-        const fragment = contextCjk.slice(index, index + fragmentLength);
-        if (!originCjk.includes(fragment) && resultCjk.includes(fragment)) return true;
+        contextFragments.add(contextCjk.slice(index, index + fragmentLength));
+    }
+    for (let index = 0; index <= originCjk.length - fragmentLength; index += 1) {
+        contextFragments.delete(originCjk.slice(index, index + fragmentLength));
+    }
+    if (!contextFragments.size) return false;
+    for (let index = 0; index <= resultCjk.length - fragmentLength; index += 1) {
+        if (contextFragments.has(resultCjk.slice(index, index + fragmentLength))) return true;
     }
     return false;
 }

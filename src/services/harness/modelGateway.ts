@@ -29,6 +29,9 @@ import {parseCustomHeaders, mergeCustomHeaders} from '@/src/core/config/customHe
 import {getServiceApiKeys} from '@/src/core/config/apiKeys';
 import {runWithApiKeyRotation, withServiceApiKey} from '@/src/services/translation/apiKeyRotation';
 import {createTranslationProviderConfigSnapshot} from '@/src/services/translation/requestSnapshot';
+import {isApiKeyRequired} from '@/src/core/config/validation';
+import {normalizeApiKeyRecoveryMs} from '@/src/core/config/scheduling';
+import {sha256Hex} from '@/src/shared/function/sha256';
 
 function zhipuBearer(apiKey: string): string {
   const [key, secret] = apiKey.split('.', 2);
@@ -148,6 +151,25 @@ type LanguageModelStreamOptions = Parameters<ConcreteLanguageModel['doStream']>[
 
 function snapshotHarnessConfig(config: Config): Config {
   return createTranslationProviderConfigSnapshot(config) as unknown as Config;
+}
+
+/** 后台取消只比较 gateway 的生效输入；摘要不包含可展示或发送的凭据。 */
+export function getHarnessModelInputKey(config: Config, service: string, model: string): string {
+  const requestedModel = model.trim();
+  const keys = getServiceApiKeys(config, service);
+  const rotating = keys.length > 1 && config.apiKeyRotationEnabled[service] !== false;
+  const native = service === services.claude || service === services.gemini;
+  let endpoint: unknown;
+  try { endpoint = native ? config.proxy[service]?.trim() || null : endpointFor(config, service, requestedModel); }
+  catch { endpoint = 'invalid'; }
+  const headers = !native && isCustomOpenAIProviderId(service) ? parseCustomHeaders(config.customHeaders[service]) : {};
+  return sha256Hex(JSON.stringify([
+    service, requestedModel, isHarnessService(service, config.customOpenAIProviders), endpoint,
+    headers ? Object.entries(headers).sort(([a], [b]) => a.localeCompare(b)) : null,
+    rotating ? keys : [keys[0] ?? ''], rotating, rotating ? normalizeApiKeyRecoveryMs(config.apiKeyRecoveryMs) : null,
+    isApiKeyRequired(service, {...config, model: {...config.model, [service]: requestedModel}}) && !config.token[service]?.trim(),
+    service === services.deepseek && isModelThinkingEnabled(config.modelThinking, service, requestedModel),
+  ]));
 }
 
 /**

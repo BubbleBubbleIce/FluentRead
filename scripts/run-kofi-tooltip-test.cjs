@@ -12,14 +12,17 @@ async function main() {
   if (args.url !== 'https://ko-fi.com/thinkstu') throw new Error('必须显式指定 --url https://ko-fi.com/thinkstu');
   const {chromium} = require(path.join(args['playwright-root'], 'playwright'));
   const safe = require(args['focus-safe-helper']);
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-kofi-'));
+  let profileDir, fixture; let launchAttempted = false; let report = {};
   const artifacts = args['artifacts-dir'];
   fs.mkdirSync(artifacts, {recursive: true});
   const unexpected = [];
-  const fixture = await startTranslationFixtureServer(unexpected, 1200);
+
   let session;
   try {
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-kofi-'));
+    fixture = await startTranslationFixtureServer(unexpected, 1200);
     const extension = path.resolve(args['extension-dir']);
+    launchAttempted = true;
     session = await safe.launchFocusSafePersistentContext({chromium, profileDir,
       browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
       background: true, headless: false, viewport: {width: 1280, height: 900},
@@ -60,7 +63,7 @@ async function main() {
     });
     await trigger.hover();
     await page.waitForTimeout(6000);
-    const report = await page.evaluate(() => {
+    report = await page.evaluate(() => {
       cancelAnimationFrame(window.kofiRaf);
       return {hover: window.kofiHover, tooltips: [...document.querySelectorAll('.tooltip')].map(el => el.outerHTML)};
     });
@@ -87,13 +90,25 @@ async function main() {
     report.windowPlacement = session.windowPlacement;
     report.transport = 'loopback Microsoft response fixture, 1200ms delay';
     report.unexpectedProviderRequests = unexpected;
-    fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report, null, 2));
     if (report.hover.enters !== 1 || report.hover.leaves !== 0 || report.hover.translatedFrames === 0 || !report.closed || report.secondHover.enters !== 2 || report.secondHover.leaves !== 1 || !report.secondHover.translated || !report.restored || report.originalTooltip !== 'Support ThinkStu monthly') throw new Error('Ko-fi tooltip 悬停不稳定');
-  } finally {
-    await session?.close();
-    await fixture.close();
-    fs.rmSync(profileDir, {recursive: true, force: true});
+  } catch (error) {report.error = error.stack || String(error); throw error;} finally {
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (session) {
+      try {await session.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await fixture?.close();} catch (error) {report.cleanupErrors.push(`fixture close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
   }
 }
 main().catch(error => {console.error(error); process.exitCode = 1;});

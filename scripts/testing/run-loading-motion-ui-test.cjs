@@ -34,6 +34,9 @@ const timeout = Number(argument('timeout', '30000'));
 const sampleCount = Math.max(3, Number(argument('samples', '16')) || 16);
 const sampleIntervalMs = Math.max(50, Number(argument('sample-interval-ms', '160')) || 160);
 
+if (!Number.isFinite(sampleCount)) throw new Error('samples 无效：必须为 finite 数值');
+if (!Number.isFinite(sampleIntervalMs)) throw new Error('sample-interval-ms 无效：必须为 finite 数值');
+
 if (!fs.existsSync(path.join(extensionDir, 'manifest.json'))) {
   throw new Error(`扩展产物不存在：${extensionDir}`);
 }

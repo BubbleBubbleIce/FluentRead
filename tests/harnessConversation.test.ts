@@ -43,7 +43,7 @@ describe('Harness persistent conversation coordination', () => {
         await conversation.run(request({sessionId: 'saved', intent: 'grammar', question: '  ', history: [{question: 'old', answer: 'unrelated'}]}), new AbortController().signal);
         expect(runtime.run.mock.calls[0][0]).toMatchObject({question: '', intent: 'grammar', selection: {text: previous.text, context: previous.context}, history: []});
         expect(store.upsertTurn.mock.calls[1][0]).toMatchObject({id: 'saved', intent: 'grammar'});
-        expect(store.upsertTurn.mock.calls[1][1]).toMatchObject({question: '拆句', intent: 'grammar'});
+        expect(store.upsertTurn.mock.calls[1][1]).toMatchObject({question: '词性与句法', intent: 'grammar'});
     });
     it('anchors follow-ups to the visible action and excludes later, empty, foreign-action and forged history', async () => {
         const {conversation, store, runtime} = setup();

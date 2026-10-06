@@ -4,14 +4,13 @@ const fs = require('node:fs');
 
 async function attachOffscreen(context) {
   const cdp = await context.browser().newBrowserCDPSession();
-  const target = (await cdp.send('Target.getTargets')).targetInfos.find(t => t.url.endsWith('/offscreen.html'));
-  if (!target) throw new Error('No offscreen document in the isolated test browser');
-  const {sessionId} = await cdp.send('Target.attachToTarget', {targetId: target.targetId, flatten: false});
+  let sessionId;
+  let disposed = false;
   let seq = 0;
   const pending = new Map();
   const events = [];
-  cdp.on('Target.receivedMessageFromTarget', event => {
-    if (event.sessionId !== sessionId) return;
+  const receive = event => {
+    if (disposed || event.sessionId !== sessionId) return;
     const message = JSON.parse(event.message);
     if (!message.id) { events.push(message); return; }
     const call = pending.get(message.id);
@@ -19,47 +18,80 @@ async function attachOffscreen(context) {
     pending.delete(message.id);
     clearTimeout(call.timer);
     message.error ? call.reject(message.error) : call.resolve(message.result);
-  });
+  };
+  async function dispose() {
+    if (disposed) return;
+    disposed = true;
+    cdp.off('Target.receivedMessageFromTarget', receive);
+    for (const call of pending.values()) {
+      clearTimeout(call.timer);
+      call.reject(new Error('Offscreen CDP session disposed'));
+    }
+    pending.clear();
+    try {
+      if (sessionId) await cdp.send('Target.detachFromTarget', {sessionId});
+    } finally { await cdp.detach(); }
+  }
+  try {
+  const target = (await cdp.send('Target.getTargets')).targetInfos.find(t => t.url.endsWith('/offscreen.html'));
+  if (!target) throw new Error('No offscreen document in the isolated test browser');
+  ({sessionId} = await cdp.send('Target.attachToTarget', {targetId: target.targetId, flatten: false}));
+  cdp.on('Target.receivedMessageFromTarget', receive);
   function rpc(method, params = {}) {
+    if (disposed) return Promise.reject(new Error('Offscreen CDP session disposed'));
     return new Promise((resolve, reject) => {
       const id = ++seq;
       const timer = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 15000);
       pending.set(id, {resolve, reject, timer});
-      cdp.send('Target.sendMessageToTarget', {sessionId, message: JSON.stringify({id, method, params})}).catch(reject);
+      cdp.send('Target.sendMessageToTarget', {sessionId, message: JSON.stringify({id, method, params})}).catch(error => {
+        if (!pending.delete(id)) return;
+        clearTimeout(timer);
+        reject(error);
+      });
     });
   }
   await rpc('Network.enable');
   await rpc('Runtime.enable');
-  return {rpc, events};
+  return {rpc, events, dispose};
+  } catch (error) {
+    await dispose().catch(() => undefined);
+    throw error;
+  }
 }
 
 async function measureBrowser(context, name, evidenceDir, action) {
   const cdp = await context.browser().newBrowserCDPSession();
   const samples = [];
-  let busy = false;
-  async function sample() {
-    if (busy) return;
-    busy = true;
-    try {
+  let inFlight;
+  function sample() {
+    if (inFlight) return inFlight;
+    inFlight = (async () => {
       const {processInfo} = await cdp.send('SystemInfo.getProcessInfo');
       const pids = processInfo.map(p => p.id);
       const rows = execFileSync('/bin/ps', ['-o', 'pid=,rss=', '-p', pids.join(',')], {encoding: 'utf8'}).trim().split('\n');
       const rss = Object.fromEntries(rows.map(row => row.trim().split(/\s+/).map(Number)));
       samples.push({at: Date.now(), processes: processInfo.map(p => ({...p, rssBytes: (rss[p.id] || 0) * 1024}))});
-    } finally { busy = false; }
+    })().finally(() => { inFlight = undefined; });
+    return inFlight;
   }
-  await sample();
   const started = Date.now();
-  const interval = setInterval(() => { void sample().catch(() => undefined); }, 250);
+  let interval;
   let result;
   let error;
-  try { result = await action(); } catch (reason) { error = String(reason); }
-  finally {
-    clearInterval(interval);
+  const measurementErrors = [];
+  try {
     await sample();
+    interval = setInterval(() => { void sample().catch(reason => measurementErrors.push(String(reason))); }, 250);
+    try { result = await action(); } catch (reason) { error = String(reason); }
+    clearInterval(interval);
+    // 等待已发出的采样结束，不能在 CDP 请求尚未完成时 detach 或写下不完整的报告。
+    if (inFlight) await inFlight.catch(reason => measurementErrors.push(String(reason)));
+    await sample().catch(reason => measurementErrors.push(String(reason)));
+  } finally {
+    clearInterval(interval);
     await cdp.detach();
   }
-  const report = {name, elapsedMs: Date.now() - started, result, error, samples};
+  const report = {name, elapsedMs: Date.now() - started, result, error, measurementErrors, samples};
   fs.writeFileSync(`${evidenceDir}/${name}.json`, JSON.stringify(report, null, 2));
   return {name, elapsedMs: report.elapsedMs, result, error,
     baselineRssBytes: samples[0].processes.reduce((n, p) => n + p.rssBytes, 0),
@@ -87,9 +119,11 @@ async function capturedTranslationError(context, page) {
     for (const listener of listeners.filter(item => item.type === 'click')) {
       if (!listener.handler) {
         const {breakpointId} = await cdp.send('Debugger.setBreakpoint', {location:{scriptId:listener.scriptId, lineNumber:listener.lineNumber, columnNumber:listener.columnNumber}});
+        let timer;
+        let paused;
         const captured = new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('No failure click breakpoint')), 10000);
-          cdp.once('Debugger.paused', async event => {
+          timer = setTimeout(() => reject(new Error('No failure click breakpoint')), 10000);
+          paused = async event => {
             const strings = [];
             try {
               for (const scope of event.callFrames[0].scopeChain.filter(s => ['local','closure'].includes(s.type)).slice(0,2)) {
@@ -98,15 +132,19 @@ async function capturedTranslationError(context, page) {
               }
               resolve(strings);
             } catch (error) { reject(error); }
-            finally { clearTimeout(timer); await cdp.send('Debugger.resume'); }
-          });
+            finally { clearTimeout(timer); await cdp.send('Debugger.resume').catch(() => undefined); }
+          };
+          cdp.once('Debugger.paused', paused);
         });
         try {
           const click = page.locator('.fluent-read-reason').first().click();
-          const values = await captured;
-          await click;
+          const [values] = await Promise.all([captured, click]);
           return values;
-        } finally { await cdp.send('Debugger.removeBreakpoint',{breakpointId}); }
+        } finally {
+          clearTimeout(timer);
+          cdp.off('Debugger.paused', paused);
+          await cdp.send('Debugger.removeBreakpoint',{breakpointId});
+        }
       }
       const handler = await cdp.send('Runtime.getProperties', {objectId:listener.handler.objectId, ownProperties:true});
       const scopes = handler.internalProperties?.find(p => p.name === '[[Scopes]]')?.value?.objectId;

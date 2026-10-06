@@ -24,7 +24,10 @@ async function startFixture() {
     if (request.method === 'OPTIONS') {response.writeHead(204); response.end(); return;}
     if (request.method === 'POST') {
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
-      const body = JSON.parse(Buffer.concat(chunks).toString());
+      let body;
+      try {body = JSON.parse(Buffer.concat(chunks).toString());}
+      catch {response.writeHead(400, {'Content-Type': 'application/json'}); response.end(JSON.stringify({error: {message: 'Invalid synthetic fixture JSON'}})); return;}
+      if (body === null || !Array.isArray(body.messages) || body.messages.some(item => item === null)) {response.writeHead(400, {'Content-Type': 'application/json'}); response.end(JSON.stringify({error: {message: 'Invalid synthetic fixture request'}})); return;}
       const prompt = body.messages.filter(item => item.role === 'user').map(item => item.content).join('\n');
       const text = /SOURCE_BEGIN([\s\S]*?)SOURCE_END/u.exec(prompt)?.[1] || '';
       const observed = {source: text, aborted: false}; requests.push(observed);
@@ -40,8 +43,12 @@ async function startFixture() {
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Translation style fixture</title><style>body{margin:0;padding:48px 8vw;font:18px/1.8 system-ui;color:#263044;background:#fff}main{max-width:900px}p{margin:28px 0}</style></head><body><main><h1 translate="no">Translation style fixture</h1><p id="primary">${SOURCE}</p></main></body></html>`);
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  return {url: `http://127.0.0.1:${server.address().port}`, requests, hold: value => {hold = value; if (!hold) {for (const resolve of pending) resolve(); pending.clear();}}, close: () => new Promise(resolve => server.close(resolve))};
+  await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); server.close(() => reject(error)); server.closeAllConnections();};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });
+  return {url: `http://127.0.0.1:${server.address().port}`, requests, hold: value => {hold = value; if (!hold) {for (const resolve of pending) resolve(); pending.clear();}}, close: () => new Promise(resolve => {server.close(resolve); server.closeAllConnections();})};
 }
 
 async function main() {
@@ -51,13 +58,17 @@ async function main() {
   assert(packages && helperPath, '需要 --playwright-root 与 --focus-safe-helper'); assert(fs.existsSync(path.join(extensionDir, 'manifest.json')));
   const {chromium} = require(require.resolve('playwright', {paths: [packages]}));
   const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(helperPath);
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-global-toggle-edge-'));
+  let profileDir; let launchAttempted = false;
   fs.mkdirSync(artifactsDir, {recursive: true});
-  const fixture = await startFixture();
+  let fixture;
   const report = {ok: false, extensionDir, profileDir, artifactsDir, checks: [], consoleErrors: [], screenshots: [], metrics: {},
     evidenceBoundary: 'Local deterministic HTML/provider in an isolated Edge profile; no Firefox runtime or external provider claim.'};
   let launched;
   try {
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-global-toggle-edge-'));
+    report.profileDir = profileDir;
+    fixture = await startFixture();
+    launchAttempted = true;
     launched = await launchFocusSafePersistentContext({chromium, profileDir, background: true, headless: false,
       browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', viewport: {width: 1440, height: 960}, timeout: 30000,
       browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check']});
@@ -256,8 +267,23 @@ async function main() {
   } catch (error) {
     report.error = error.stack || String(error); throw error;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    fixture.hold(false); await launched?.close(); await fixture.close(); fs.rmSync(profileDir, {recursive: true, force: true});
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {fixture?.hold(false);} catch (error) {report.cleanupErrors.push(`release hold: ${error.message}`);}
+    try {await fixture?.close();} catch (error) {report.cleanupErrors.push(`fixture close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
   }
   console.log(JSON.stringify(report, null, 2));
 }

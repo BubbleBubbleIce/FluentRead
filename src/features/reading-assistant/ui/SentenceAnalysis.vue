@@ -70,7 +70,9 @@ function navigateAnnotations(event: KeyboardEvent): void {
 }
 
 const active = computed(() => props.annotations[selected.value] || props.annotations[0]);
-watch(() => props.source, () => { selected.value = 0; });
+watch(() => [props.source, props.annotations.length] as const, ([source, length], [previousSource]) => {
+  if (source !== previousSource || selected.value >= length) selected.value = 0;
+});
 </script>
 <style scoped>
 .fr-sentence-analysis { margin: 10px 0; }

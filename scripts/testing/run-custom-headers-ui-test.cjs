@@ -17,20 +17,29 @@ const {chromium} = require(path.join(arg('playwright-root', ''), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(arg('focus-safe-helper', ''));
 fs.mkdirSync(artifactsDir, {recursive: true});
 const report = {extensionDir, providerEvidence: 'local-http-mock-model', cases: [], requests: [], consoleErrors: []};
-let launched;
+let launched; let launchAttempted = false;
 const server = http.createServer((req, res) => {
   let body = '';
   req.on('data', chunk => { body += chunk; });
   req.on('end', () => {
-    report.requests.push({path: req.url, headers: req.headers, body: JSON.parse(body)});
+    let parsedBody;
+    try {parsedBody = JSON.parse(body);}
+    catch {res.writeHead(400, {'content-type': 'application/json', 'access-control-allow-origin': '*'}); res.end(JSON.stringify({error: {message: 'Invalid synthetic fixture JSON'}})); return;}
+    report.requests.push({path: req.url, headers: req.headers, body: parsedBody});
     res.writeHead(200, {'content-type': 'application/json', 'access-control-allow-origin': '*'});
     res.end(JSON.stringify({id: 'fixture', object: 'chat.completion', created: 1, model: 'fixture', choices: [{index: 0, message: {role: 'assistant', content: '连接成功'}, finish_reason: 'stop'}], usage: {prompt_tokens: 1, completion_tokens: 1, total_tokens: 2}}));
   });
 });
-const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-issue522-'));
+let profileDir;
 async function main() {
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); reject(error);};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });
+  profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-issue522-'));
   const endpoint = `http://127.0.0.1:${server.address().port}/v1/chat/completions`;
+  launchAttempted = true;
   launched = await launchFocusSafePersistentContext({chromium, profileDir,
     browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', headless: false, background: true,
     browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check'],
@@ -116,9 +125,22 @@ async function main() {
 }
 main().catch(error => {report.status = 'failed'; report.error = error.stack; process.exitCode = 1;})
   .finally(async () => {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.close();
-    await new Promise(resolve => server.close(resolve));
-    fs.rmSync(profileDir, {recursive: true, force: true});
-    console.log(JSON.stringify({status: report.status, cases: report.cases, error: report.error, artifactsDir}, null, 2));
+      report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});}
+    catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
+  console.log(JSON.stringify({status: report.status, cases: report.cases, error: report.error, artifactsDir}, null, 2));
   });

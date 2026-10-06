@@ -132,7 +132,7 @@ const sameReferenceLanguage = computed(() => Boolean(referenceLanguage.value && 
 const showReferenceTranslation = computed(() => Boolean(referenceLanguage.value && !sameReferenceLanguage.value));
 const busy = ref(false); const result = ref(''); const pending = ref(''); const error = ref(''); const notice = ref('');
 type DraftVersion = {text: string; service: string; model: string; language: string; incomplete: boolean};
-const versions = ref<DraftVersion[]>([]); const versionIndex = ref(0); let session: number | undefined; let attempted = false;
+const versions = ref<DraftVersion[]>([]); const versionIndex = ref(0); let session: number | undefined | null = null; let attempted = false;
 const hasDraft = computed(() => versions.value.length > 0);
 const requestedLanguage = ref(''); const resultLanguage = ref('');
 const actualModel = ref(''); const requestedService = ref(''); const resultService = ref(''); const resultModel = ref('');

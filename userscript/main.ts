@@ -104,25 +104,32 @@ async function bootstrap(): Promise<void> {
     const disposeRuntime = (pageLeaving = false) => {
         if (runtimeDisposed) return;
         runtimeDisposed = true;
-        window.removeEventListener('fluentread-userscript-open-settings', openSettingsEvent);
-        window.removeEventListener('fluentread-userscript-close-settings', closeSettings);
-        window.removeEventListener('focus', synchronizeVisibleCount);
-        document.removeEventListener('visibilitychange', synchronizeVisibleCount);
-        if (pagehideListener) window.removeEventListener('pagehide', pagehideListener);
+        const ownedPagehideListener = pagehideListener;
         pagehideListener = undefined;
-        browser.runtime.onMessage.removeListener(toggleTranslationListener);
-        try {
-            closeSettings();
-        } catch (error) {
-            console.error('[FluentRead userscript] 关闭设置面板失败', error);
+        const cleanup = [
+            () => window.removeEventListener('fluentread-userscript-open-settings', openSettingsEvent),
+            () => window.removeEventListener('fluentread-userscript-close-settings', closeSettings),
+            () => window.removeEventListener('focus', synchronizeVisibleCount),
+            () => document.removeEventListener('visibilitychange', synchronizeVisibleCount),
+            () => {if (ownedPagehideListener) window.removeEventListener('pagehide', ownedPagehideListener);},
+            () => browser.runtime.onMessage.removeListener(toggleTranslationListener),
+            () => {
+                try {closeSettings();}
+                catch (error) {console.error('[FluentRead userscript] 关闭设置面板失败', error);}
+            },
+            () => ctx.invalidate(),
+        ];
+        // pagehide 的计数 flush 可能还在等待 GM 存储；离页时保留同页消息处理器，
+        // 直到脚本沙箱随文档销毁，避免把最后一批增量送进空适配器。
+        if (!pageLeaving) cleanup.push(() => resetPlatformMessageHandler());
+        let failed = false;
+        let firstError: unknown;
+        for (const stop of cleanup) {
+            try {stop();} catch (error) {
+                if (!failed) {failed = true; firstError = error;}
+            }
         }
-        try {
-            ctx.invalidate();
-        } finally {
-            // pagehide 的计数 flush 可能还在等待 GM 存储；离页时保留同页消息处理器，
-            // 直到脚本沙箱随文档销毁，避免把最后一批增量送进空适配器。
-            if (!pageLeaving) resetPlatformMessageHandler();
-        }
+        if (failed) throw firstError;
     };
     disposeUserscriptRuntime = disposeRuntime;
     setPlatformMessageHandler(platformModule.createPlatformMessageHandler(openSettings));
@@ -163,10 +170,13 @@ async function bootstrap(): Promise<void> {
     pagehideListener = (event) => {
         // BFCache 往返由共享 pageLifecycle 暂停/恢复；只有真正离页才销毁沙箱运行时。
         if (!event.isTrusted || event.persisted) return;
-        disposeRuntime(true);
         disposeUserscriptRuntime = undefined;
-        disposeShadowAndRouteBridge?.();
+        const disposeBridge = disposeShadowAndRouteBridge;
         disposeShadowAndRouteBridge = undefined;
+        for (const stop of [() => disposeRuntime(true), disposeBridge]) {
+            try {stop?.();}
+            catch (error) {console.error('[FluentRead userscript] 离页清理失败', error);}
+        }
     };
     window.addEventListener('pagehide', pagehideListener);
 
@@ -181,10 +191,13 @@ async function bootstrap(): Promise<void> {
 }
 
 void bootstrap().catch((error) => {
-    disposeUserscriptRuntime?.();
+    const cleanup = [disposeUserscriptRuntime, disposeShadowAndRouteBridge];
     disposeUserscriptRuntime = undefined;
-    disposeShadowAndRouteBridge?.();
     disposeShadowAndRouteBridge = undefined;
+    for (const stop of cleanup) {
+        try {stop?.();}
+        catch (cleanupError) {console.error('[FluentRead userscript] 初始化清理失败', cleanupError);}
+    }
     globalThis.__fluentReadUserscriptBootstrapped = false;
     console.error('[FluentRead userscript] 初始化失败', error);
 });

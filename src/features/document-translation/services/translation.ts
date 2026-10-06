@@ -168,6 +168,7 @@ export function createDocumentSegmentTranslator(
         let completed = segments.length - pending.length;
         const reportProgress = () => options.onProgress?.({completed, total: segments.length});
         const commit = (id: number, translation: string) => {
+            throwIfAborted(options.signal);
             translations[id] = translation;
             completed += 1;
             options.onSegment?.({id, translation});
@@ -193,7 +194,8 @@ export function createDocumentSegmentTranslator(
                         },
                     );
                     throwIfAborted(options.signal);
-                    if (result.length !== batch.length || result.some((value) => typeof value !== 'string' || !value.trim())) {
+                    // 按请求位置校验，Array.some 会跳过返回数组中的空洞。
+                    if (result.length !== batch.length || batch.some((_, index) => typeof result[index] !== 'string' || !result[index].trim())) {
                         throw new Error('翻译服务返回的片段不完整，请重试');
                     }
                     result.forEach((translation, index) => commit(batch[index].id, translation));

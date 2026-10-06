@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {basename, dirname, resolve} from 'node:path';
 import {gzipSync} from 'node:zlib';
+import {runInNewContext} from 'node:vm';
 import vue from '@vitejs/plugin-vue';
 import ts from 'typescript';
 import {defineConfig, normalizePath, transformWithEsbuild, type Plugin} from 'vite';
@@ -95,6 +96,10 @@ const siteCatalogFiles = new Set(['established.json', 'websites.json', 'profiles
     .map((name) => resolve(siteCatalogDir, name)));
 const siteCatalogData = Object.fromEntries([...siteCatalogFiles]
     .map((sourcePath) => [basename(sourcePath, '.json'), JSON.parse(fs.readFileSync(sourcePath, 'utf8'))]));
+// 固定资源仍保留原有规则；新增规则从构建时的权威目录推导，随手写消费者补齐。
+const pinnedSiteCatalogs = greasyForkSource
+    ? (runInNewContext(fs.readFileSync(resolve(root, 'userscript/resources/fluentread-data.v1.js'), 'utf8'), {}, {timeout: 1_000}) as {siteCatalogs: Record<string, unknown>}).siteCatalogs
+    : undefined;
 const compressedCatalogPrefix = '\0fluentread-userscript-site-catalog:';
 const externalChineseMessagesId = '\0fluentread-userscript-zh-cn.js';
 
@@ -127,7 +132,22 @@ export function createUserscriptCatalogCompressionPlugin(): Plugin {
             const sourcePath = id.slice(compressedCatalogPrefix.length, -'.js'.length);
             if (!siteCatalogFiles.has(sourcePath)) throw new Error(`Unexpected userscript site catalog: ${sourcePath}`);
             if (greasyForkSource) {
-                return `export default globalThis.__FLUENTREAD_USERSCRIPT_DATA__.siteCatalogs.${basename(sourcePath, '.json')};`;
+                const name = basename(sourcePath, '.json');
+                const current = siteCatalogData[name];
+                const pinned = pinnedSiteCatalogs?.[name];
+                if (!Array.isArray(current) || !Array.isArray(pinned)) {
+                    return `export default globalThis.__FLUENTREAD_USERSCRIPT_DATA__.siteCatalogs.${name};`;
+                }
+                const pinnedIds = new Set(pinned.map((rule) => rule.id));
+                const additions = current.filter((rule) => !pinnedIds.has(rule.id));
+                if (!additions.length) return `export default globalThis.__FLUENTREAD_USERSCRIPT_DATA__.siteCatalogs.${name};`;
+                return [
+                    `const catalog = globalThis.__FLUENTREAD_USERSCRIPT_DATA__.siteCatalogs.${name};`,
+                    'const present = new Set(catalog.map((rule) => rule.id));',
+                    `const additions = ${JSON.stringify(additions)}.filter((rule) => !present.has(rule.id));`,
+                    `const order = new Map(${JSON.stringify(current.map((rule) => rule.id))}.map((id, index) => [id, index]));`,
+                    'export default additions.length ? [...catalog, ...additions].sort((left, right) => (order.get(left.id) ?? Infinity) - (order.get(right.id) ?? Infinity)) : catalog;',
+                ].join('\n');
             }
             const contents = JSON.stringify(JSON.parse(fs.readFileSync(sourcePath, 'utf8')));
             const compressed = gzipSync(Buffer.from(contents), {level: 9}).toString('base64');
@@ -268,6 +288,8 @@ type BrowserGlobal = 'browser' | 'chrome';
  * 不应触发注入，避免对普通业务对象产生误改写。
  */
 export function findFreeBrowserGlobals(code: string, id: string): BrowserGlobal[] {
+    // 没有候选时不建立编译器 program；反斜杠保留 Unicode 转义标识符的完整解析路径。
+    if (!code.includes('browser') && !code.includes('chrome') && !code.includes('\\')) return [];
     const sourceFile = ts.createSourceFile(id, code, ts.ScriptTarget.Latest, true);
     const options: ts.CompilerOptions = {
         allowJs: true,

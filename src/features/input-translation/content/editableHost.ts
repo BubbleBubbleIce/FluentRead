@@ -178,9 +178,11 @@ export async function replaceEditableText(
     const before = readEditableText(element);
     if (dispatchPlainTextPaste(element, text)) {
         if (await waitForEditableChange(element, before)) return 'replaced';
-        // 页面拦截了粘贴却没有写入：再次确认请求与选区后才走原生插入，避免迟到粘贴重复落地。
-        if (!isCurrent() || !selectionMatches()) return 'stale';
     }
+
+    // paste 的同步宿主回调即使未 preventDefault，也可能取消请求或移动选区。
+    // 两种粘贴结果都须在原生写入前重新核对，不能让 fallback 覆盖新编辑。
+    if (!isCurrent() || !selectionMatches()) return 'stale';
 
     // 步骤 3：普通 contenteditable 不处理合成粘贴，原生 insertText 会触发 beforeinput/input 并进入撤销栈。
     return document.execCommand('insertText', false, text) ? 'replaced' : 'unsupported';

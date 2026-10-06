@@ -20,15 +20,30 @@ const inventory = [];
 const bodies = new Map();
 for (const file of candidates) {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
-    const blocks = file.endsWith('.vue')
-        ? [parse(source, {filename: file}).descriptor.script, parse(source, {filename: file}).descriptor.scriptSetup].filter(Boolean)
+    const descriptor = file.endsWith('.vue') ? parse(source, {filename: file}).descriptor : null;
+    const blocks = descriptor
+        ? [descriptor.script, descriptor.scriptSetup].filter(Boolean)
         : [{content: source, loc: {start: {offset: 0}}}];
+    const lineStarts = [0];
+    for (let offset = source.indexOf('\n'); offset !== -1; offset = source.indexOf('\n', offset + 1)) {
+        lineStarts.push(offset + 1);
+    }
     const functions = [];
     const imports = [];
     const exports = [];
     for (const block of blocks) {
         const ast = ts.createSourceFile(file + '.ts', block.content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-        const line = position => source.slice(0, block.loc.start.offset + position).split('\n').length;
+        const line = position => {
+            const offset = block.loc.start.offset + position;
+            let lower = 0;
+            let upper = lineStarts.length;
+            while (lower < upper) {
+                const middle = lower + Math.floor((upper - lower) / 2);
+                if (lineStarts[middle] <= offset) lower = middle + 1;
+                else upper = middle;
+            }
+            return lower;
+        };
         function visit(node) {
             if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
                 imports.push(node.moduleSpecifier.text);

@@ -19,6 +19,9 @@ import {modelUsageRepository} from '@/src/platform/storage/modelUsageRepository'
 import {isExtensionDisabledOnSite} from '@/src/core/site-rules/domain';
 import type {BackgroundMessageHandler} from './messageRouter';
 import type {ReadingSender} from '@/src/features/reading-assistant/background';
+import type {Config} from '@/src/core/config/model';
+import {resolveConfiguredModel} from '@/src/core/config/catalog';
+import {getHarnessModelInputKey} from '@/src/services/harness/modelGateway';
 
 export function installHarnessBackgroundRuntime(cancelWriting?: () => void): BackgroundMessageHandler<{sender?: ReadingSender}> {
     const runtime = createHarnessRuntime(() => config, () => {
@@ -57,9 +60,16 @@ export function installHarnessBackgroundRuntime(cancelWriting?: () => void): Bac
     prune();
     browser.alarms.onAlarm.addListener(alarm => { if (alarm.name === 'fluentReadHarnessSessionCleanup') prune(); });
     void Promise.resolve(browser.alarms.create('fluentReadHarnessSessionCleanup', {periodInMinutes: 60})).catch(() => undefined);
-    let preferencesKey = JSON.stringify(config.harness);
+    const configurationKey = (next: Config) => {
+        const service = next.harness.service || next.service;
+        const model = next.harness.model || resolveConfiguredModel(next.model[service], next.customModel[service]);
+        return JSON.stringify([next.on, next.to, next.uiLanguage,
+            {...next.harness, service: undefined, model: undefined, trigger: undefined, customHotkey: undefined, hoverDelay: undefined, defaultAction: undefined},
+            getHarnessModelInputKey(next, service, model)]);
+    };
+    let preferencesKey = configurationKey(config);
     subscribeConfig(next => {
-        const nextKey = JSON.stringify(next.harness);
+        const nextKey = configurationKey(next);
         if (nextKey !== preferencesKey) handler.cancelAll();
         preferencesKey = nextKey;
         handler.cancelDisallowed();

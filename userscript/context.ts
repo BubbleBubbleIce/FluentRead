@@ -19,8 +19,18 @@ export function createUserscriptContentContext(): UserscriptContentContext {
         invalidate() {
             if (invalid) return;
             invalid = true;
-            callbacks.forEach((callback) => callback());
+            const pending = [...callbacks];
             callbacks.clear();
+            let failed = false;
+            let firstError: unknown;
+            for (const callback of pending) {
+                try {callback();}
+                catch (error) {
+                    if (!failed) {failed = true; firstError = error;}
+                }
+            }
+            // 每个资源均有机会清理，再保留首个异常供上层诊断；重复失效仍为幂等。
+            if (failed) throw firstError;
         },
     };
 }

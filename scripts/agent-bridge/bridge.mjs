@@ -136,6 +136,8 @@ export class AcpClient {
     this.chunks = [];
     this.process = null;
     this.capabilities = {};
+    this.stopping = new Set();
+    this.stopError = null;
   }
 
   async start() {
@@ -152,6 +154,10 @@ export class AcpClient {
     child.on('exit', () => {
       if (this.process === child) this.fail(new BridgeError('Agent 已退出，请检查登录状态或 CLI 配置。', 503, 'agent_exited'));
     });
+    child.stdin.on('error', () => {
+      if (this.process === child) this.fail(new BridgeError('Agent 输入连接已断开。', 503, 'agent_unavailable'));
+    });
+    try {
     const initialized = await this.request('initialize', {
       protocolVersion: 1,
       clientCapabilities: {fs: {readTextFile: false, writeTextFile: false}, terminal: false},
@@ -162,6 +168,11 @@ export class AcpClient {
       throw new BridgeError('Agent 不支持 ACP v1。', 502, 'protocol_mismatch');
     }
     this.capabilities = initialized.agentCapabilities || {};
+    } catch (error) {
+      // initialize 拒绝/超时后不能把半初始化进程当作可复用连接。
+      if (this.process === child) this.fail(error);
+      throw error;
+    }
   }
 
   send(message) {
@@ -196,6 +207,10 @@ export class AcpClient {
       let message;
       try { message = JSON.parse(line); }
       catch { this.fail(new BridgeError('Agent 返回了无效的 ACP 消息。', 502, 'protocol_error')); return; }
+      if (!message || typeof message !== 'object' || Array.isArray(message)) {
+        this.fail(new BridgeError('Agent 返回了无效的 ACP 消息。', 502, 'protocol_error'));
+        return;
+      }
       this.onMessage(message);
     }
     if (Buffer.byteLength(this.buffer, 'utf8') > MAX_ACP_LINE_BYTES) {
@@ -236,12 +251,43 @@ export class AcpClient {
     this.process = null;
     this.buffer = '';
     this.capabilities = {};
-    if (child && !child.killed) child.kill();
     for (const pending of this.pending.values()) {
       clearTimeout(pending.timer);
       pending.reject(error);
     }
     this.pending.clear();
+    if (child) {
+      // killed 只表示已发送信号；必须等到 close，才能确认自有进程及管道已释放。
+      const stopped = new Promise((resolve, reject) => {
+        let termTimer, killTimer, firstError;
+        const finish = (error) => {
+          clearTimeout(termTimer);
+          clearTimeout(killTimer);
+          child.off('close', closed);
+          if (error || firstError) reject(firstError || error);
+          else resolve();
+        };
+        const closed = () => finish();
+        child.once('close', closed);
+        termTimer = setTimeout(() => {
+          killTimer = setTimeout(() => {
+            finish(new BridgeError('Agent 停止后未确认进程与管道关闭。', 503, 'agent_stop_timeout'));
+            for (const stream of [child.stdin, child.stdout, child.stderr]) {
+              try { stream?.destroy(); } catch { /* 已记录停止错误；继续释放其他自有管道。 */ }
+            }
+          }, 2_000);
+          try { child.kill('SIGKILL'); }
+          catch (error) { firstError ||= error; }
+        }, 2_000);
+        try { child.kill('SIGTERM'); }
+        catch (error) { firstError ||= error; }
+      });
+      this.stopping.add(stopped);
+      void stopped.then(() => this.stopping.delete(stopped), (error) => {
+        this.stopError ||= error;
+        this.stopping.delete(stopped);
+      });
+    }
   }
 
   async turn(model, prompt) {
@@ -270,10 +316,11 @@ export class AcpClient {
       const result = await this.request('session/prompt', {
         sessionId, prompt: [{type: 'text', text: prompt}],
       }, TURN_TIMEOUT_MS);
-      if (result?.stopReason !== 'end_turn' || !this.chunks.join('').trim()) {
+      const content = this.chunks.join('');
+      if (result?.stopReason !== 'end_turn' || !content.trim()) {
         throw new BridgeError('Agent 未完成文本回答。', 502, 'empty_response');
       }
-      return this.chunks.join('');
+      return content;
     } finally {
       this.activeSession = null;
       this.chunks = [];
@@ -287,8 +334,10 @@ export class AcpClient {
     }
   }
 
-  close() {
+  async close() {
     this.fail(new BridgeError('桥接已停止。', 503, 'bridge_stopped'));
+    await Promise.allSettled(this.stopping);
+    if (this.stopError) throw this.stopError;
   }
 }
 
@@ -323,6 +372,7 @@ export async function createBridge({agent = 'copilot', port = 47627, token = ran
   const acp = new AcpClient(profile, cwd, spawnProcess);
   let queued = 0;
   let tail = Promise.resolve();
+  let closing;
   const server = createServer(async (request, response) => {
     const origin = request.headers.origin;
     const host = request.headers.host;
@@ -356,7 +406,7 @@ export async function createBridge({agent = 'copilot', port = 47627, token = ran
       queued++;
       let active = false;
       response.once('close', () => {
-        if (active && !response.writableEnded) acp.close();
+        if (active && !response.writableEnded) void acp.close().catch(() => {});
       });
       const job = tail.then(async () => {
         if (response.destroyed) throw new BridgeError('请求已取消。', 499, 'cancelled');
@@ -376,7 +426,7 @@ export async function createBridge({agent = 'copilot', port = 47627, token = ran
         choices: [{index: 0, message: {role: 'assistant', content}, finish_reason: 'stop'}],
       }, origin);
     } catch (error) {
-      if (error?.code === 'agent_timeout' || error?.code === 'protocol_error') acp.close();
+      if (error?.code === 'agent_timeout' || error?.code === 'protocol_error') void acp.close().catch(() => {});
       if (!response.destroyed) {
         const known = error instanceof BridgeError ? error : new BridgeError('桥接处理失败。');
         writeJson(response, known.status, {error: {message: known.message, code: known.code}}, origin);
@@ -389,16 +439,25 @@ export async function createBridge({agent = 'copilot', port = 47627, token = ran
       server.listen(port, '127.0.0.1', resolve);
     });
   } catch (error) {
-    acp.close();
-    rmSync(cwd, {recursive: true, force: true});
+    await acp.close().catch(() => {});
+    try { rmSync(cwd, {recursive: true, force: true}); } catch { /* 保留监听失败这一首错。 */ }
     throw error;
   }
   return {
     server, token, port: server.address().port,
-    async close() {
-      acp.close();
-      await new Promise((resolve) => server.close(resolve));
-      rmSync(cwd, {recursive: true, force: true});
+    close() {
+      return closing ||= (async () => {
+        let firstError, serverError;
+        // 先停止接收/销毁连接，避免等待 Agent 退出时新请求又取得自有进程。
+        try { server.closeAllConnections(); } catch (error) { serverError = error; }
+        const serverClosed = new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+        void serverClosed.catch((error) => { serverError ||= error; });
+        try { await acp.close(); } catch (error) { firstError ||= error; }
+        try { await serverClosed; } catch (error) { serverError ||= error; }
+        firstError ||= serverError;
+        try { rmSync(cwd, {recursive: true, force: true}); } catch (error) { firstError ||= error; }
+        if (firstError) throw firstError;
+      })();
     },
   };
 }
@@ -416,7 +475,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   });
   console.log(`FluentRead ACP 桥接已启动： http://127.0.0.1:${bridge.port}/v1/chat/completions`);
   console.log(`Agent: ${args.agent || 'copilot'}；将此令牌填入 FluentRead 自定义服务的 API Key：${bridge.token}`);
-  const stop = async () => { await bridge.close(); process.exit(0); };
+  const stop = async () => {
+    try { await bridge.close(); process.exit(0); }
+    catch (error) { console.error(error); process.exit(1); }
+  };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
 }

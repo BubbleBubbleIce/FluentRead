@@ -34,7 +34,10 @@ async function startFixture() {
     if (request.method === 'OPTIONS') {response.writeHead(204); response.end(); return;}
     if (request.method === 'POST') {
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
-      const body = JSON.parse(Buffer.concat(chunks).toString());
+      let body;
+      try {body = JSON.parse(Buffer.concat(chunks).toString());}
+      catch {response.writeHead(400, {'Content-Type': 'application/json'}); response.end(JSON.stringify({error: {message: 'Invalid synthetic fixture JSON'}})); return;}
+      if (body === null || !Array.isArray(body.messages) || body.messages.some(item => item === null)) {response.writeHead(400, {'Content-Type': 'application/json'}); response.end(JSON.stringify({error: {message: 'Invalid synthetic fixture request'}})); return;}
       const prompt = body.messages.filter(item => item.role === 'user').map(item => item.content).join('\n');
       const text = /SOURCE_BEGIN([\s\S]*?)SOURCE_END/u.exec(prompt)?.[1];
       requests.push({source: text});
@@ -48,8 +51,12 @@ async function startFixture() {
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Bilingual sentence comparison</title><style>body{margin:0;padding:50px 8vw;font:20px/1.9 system-ui;color:#263044;background:#fff}main{max-width:950px}p{margin:30px 0}a{color:#5268c1}.fluent-read-bilingual-content{margin-top:14px!important}h1{font-size:28px}</style></head><body><main><h1 translate="no">Bilingual sentence comparison</h1><p id="primary">${source.join(' ')}</p><p id="rich">First rich sentence has a <a href="#example">linked phrase</a>. Second rich sentence contains <strong>bold words</strong>. Third rich sentence ends here.</p><p id="neighbor">This neighboring paragraph must remain unchanged during hover translation.</p></main></body></html>`);
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  return {url: `http://127.0.0.1:${server.address().port}`, requests, close: () => new Promise(resolve => server.close(resolve))};
+  await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); server.close(() => reject(error)); server.closeAllConnections();};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });
+  return {url: `http://127.0.0.1:${server.address().port}`, requests, close: () => new Promise(resolve => {server.close(resolve); server.closeAllConnections();})};
 }
 async function main() {
   const extensionDir = path.resolve(argument('extension-dir', '.output/chrome-mv3'));
@@ -58,13 +65,17 @@ async function main() {
   assert(packages && helperPath); assert(fs.existsSync(path.join(extensionDir, 'manifest.json')));
   const {chromium} = require(path.join(packages, 'playwright'));
   const {launchFocusSafePersistentContext, newPageWithoutForeground, activateExtensionTabWithoutForeground} = require(helperPath);
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-sentence-edge-'));
+  let profileDir; let launchAttempted = false;
   fs.mkdirSync(artifactsDir, {recursive: true});
-  const fixture = await startFixture();
+  let fixture;
   const report = {ok: false, extensionDir, profileDir, artifactsDir, checks: [], consoleErrors: [], screenshots: [],
     evidenceBoundary: 'Local deterministic HTML/provider; no external provider quality or Firefox runtime claim.'};
   let launched; let page; let worker;
   try {
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-sentence-edge-'));
+    report.profileDir = profileDir;
+    fixture = await startFixture();
+    launchAttempted = true;
     launched = await launchFocusSafePersistentContext({chromium, profileDir, background: true, headless: false,
       browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', viewport: {width: 1440, height: 960}, timeout: 30000,
       browserArgs: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, '--no-first-run', '--no-default-browser-check']});
@@ -453,8 +464,22 @@ async function main() {
     if (page && !page.isClosed()) await page.screenshot({path: path.join(artifactsDir, 'failure.png')}).catch(() => {});
     throw error;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.close(); await fixture.close(); fs.rmSync(profileDir, {recursive: true, force: true});
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await fixture?.close();} catch (error) {report.cleanupErrors.push(`fixture close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
   }
   console.log(JSON.stringify(report, null, 2));
 }

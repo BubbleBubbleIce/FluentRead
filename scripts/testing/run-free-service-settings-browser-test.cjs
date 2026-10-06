@@ -17,9 +17,11 @@ const defaultIds = ids;
 const report = {ok: false, extensionDir, evidenceBoundary: live ? 'Real anonymous connection tests on a fixed synthetic sentence; one network and one run.' : 'Production extension UI with controlled connection-message results; provider behavior is tested separately.', caseCoverage: [], screenshots: [], consoleErrors: [], layouts: []};
 fs.mkdirSync(artifactsDir, {recursive: true});
 (async () => {
-  let launched;
+  let launched, profileDir;
+  let launchAttempted = false;
   try {
-    const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-free-settings-'));
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-free-settings-'));
+    launchAttempted = true;
     launched = await launchFocusSafePersistentContext({chromium, profileDir, browserPath: arg('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'), background: true, headless: false, viewport: {width: 1440, height: 960}, timeout: 30000, browserArgs: [...(loadViaCdp ? ['--enable-unsafe-extension-debugging'] : [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`]), '--no-first-run', '--no-default-browser-check']});
     Object.assign(report, {browserPath: arg('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'), launchMode: launched.launchMode, focusPolicy: launched.focusPolicy, windowPlacement: launched.windowPlacement});
     assert.equal(report.windowPlacement.browserFrontmost, false);
@@ -165,5 +167,22 @@ fs.mkdirSync(artifactsDir, {recursive: true});
     assert.deepEqual(report.consoleErrors, []);
     report.ok = true;
   } catch (error) {report.error = error.stack || String(error); process.exitCode = 1;}
-  finally {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2)); await launched?.close(); console.log(JSON.stringify(report, null, 2));}
+  finally {
+    report.cleanupErrors = [];
+    let browserClosed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); browserClosed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    if (profileDir) {
+      if (browserClosed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true}); report.profileRemoved = true;}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(`free settings report write: ${error.stack || error}`); process.exitCode = 1;}
+    console.log(JSON.stringify(report, null, 2));
+  }
 })();

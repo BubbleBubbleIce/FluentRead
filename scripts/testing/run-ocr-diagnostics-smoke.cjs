@@ -14,19 +14,21 @@ const artifacts = path.resolve(arg('artifacts-dir', '/private/tmp/fluentread-ocr
 const {chromium} = require(path.join(arg('playwright-root', '/Users/thinkstu/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules'), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(arg('focus-safe-helper', '/Users/thinkstu/.codex/skills/fluentread-extension-ui-test/scripts/focus-safe-browser.cjs'));
 for (const language of ['chi_sim', 'eng']) assert.ok(fs.existsSync(path.join(languages, `${language}.traineddata`)), `Missing ${language} test data`);
-const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-ocr-diagnostics-profile-'));
-const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-ocr-diagnostics-extension-'));
-fs.mkdirSync(artifacts, {recursive: true});
-fs.cpSync(source, fixture, {recursive: true});
-fs.mkdirSync(path.join(fixture, 'probe-data'));
-for (const language of ['chi_sim', 'eng']) fs.copyFileSync(path.join(languages, `${language}.traineddata`), path.join(fixture, 'probe-data', `${language}.traineddata`));
-fs.copyFileSync(path.resolve('public/fluent-read-ocr/core/tesseract-core-simd-lstm.wasm.js'), path.join(fixture, 'probe-ocr-baseline.js'));
-fs.copyFileSync(path.resolve('node_modules/tesseract.js/dist/tesseract.min.js'), path.join(fixture, 'probe-tesseract.js'));
-fs.writeFileSync(path.join(fixture, 'probe.html'), '<!doctype html><title>OCR diagnostics verification</title><h1>OCR diagnostics verification</h1>');
 const report = {source, cases: [], pageErrors: [], evidence: 'Real packaged Tesseract SIMD LSTM core, local chi_sim + eng models and a generated printed-text fixture; no handwriting or live-page accuracy claim.'};
 (async () => {
     let session;
+    let profile;
+    let fixture;
     try {
+        fs.mkdirSync(artifacts, {recursive: true});
+        profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-ocr-diagnostics-profile-'));
+        fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-ocr-diagnostics-extension-'));
+        fs.cpSync(source, fixture, {recursive: true});
+        fs.mkdirSync(path.join(fixture, 'probe-data'));
+        for (const language of ['chi_sim', 'eng']) fs.copyFileSync(path.join(languages, `${language}.traineddata`), path.join(fixture, 'probe-data', `${language}.traineddata`));
+        fs.copyFileSync(path.resolve('public/fluent-read-ocr/core/tesseract-core-simd-lstm.wasm.js'), path.join(fixture, 'probe-ocr-baseline.js'));
+        fs.copyFileSync(path.resolve('node_modules/tesseract.js/dist/tesseract.min.js'), path.join(fixture, 'probe-tesseract.js'));
+        fs.writeFileSync(path.join(fixture, 'probe.html'), '<!doctype html><title>OCR diagnostics verification</title><h1>OCR diagnostics verification</h1>');
         session = await launchFocusSafePersistentContext({chromium, profileDir: profile,
             browserPath: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', headless: false, background: true,
             viewport: {width: 1100, height: 800}, browserArgs: ['--no-first-run', '--no-default-browser-check', `--disable-extensions-except=${fixture}`, `--load-extension=${fixture}`]});
@@ -95,10 +97,32 @@ const report = {source, cases: [], pageErrors: [], evidence: 'Real packaged Tess
         report.ok = true;
     } catch (error) {report.ok = false; report.failure = error.stack; process.exitCode = 1;}
     finally {
-        fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));
+        let closed = !session;
+        try {
+            if (session) await session.close();
+            closed = true;
+        } catch (error) {
+            report.cleanupError = error.stack || String(error);
+            report.ok = false;
+            process.exitCode = 1;
+        }
+        if (closed) {
+            for (const directory of [profile, fixture]) {
+                if (!directory) continue;
+                try {fs.rmSync(directory, {recursive: true, force: true});}
+                catch (error) {
+                    (report.directoryCleanupErrors ||= []).push({directory, error: error.stack || String(error)});
+                    report.ok = false;
+                    process.exitCode = 1;
+                }
+            }
+        } else {
+            // close 未确认完成时保留本次 profile 与加载中的扩展副本，供人工精确清理。
+            report.retainedProfile = profile;
+            report.retainedFixture = fixture;
+        }
+        try {fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));}
+        catch (error) {console.error(error); report.ok = false; process.exitCode = 1;}
         console.log(JSON.stringify(report, null, 2));
-        if (session) await session.close();
-        fs.rmSync(profile, {recursive: true, force: true});
-        fs.rmSync(fixture, {recursive: true, force: true});
     }
 })();

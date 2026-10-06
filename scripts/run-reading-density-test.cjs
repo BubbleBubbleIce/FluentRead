@@ -19,6 +19,7 @@ let chunkDelay = 15;
 const report = {providerEvidence:'Production extension in isolated Edge; translation and AI responses use deterministic local fixtures. No live translation or AI quality claim.',ok:false,cases:[],screenshots:[],consoleErrors:[],translationRequests:0,aiRequests:0};
 const record = name => {report.cases.push(name); console.log('PASS',name);};
 const wait = ms => new Promise(resolve=>setTimeout(resolve,ms));
+let launchAttempted = false;
 let session, context, worker, server, optionsPage, popup, page;
 async function screenshot(target,name) {const file=path.join(output,name+'.png'); await target.screenshot({path:file,fullPage:false}); report.screenshots.push(file);}
 async function node(predicate) {const {root}=await support.getSelectionUiTree(page); return support.findCdpNode(root,predicate);}
@@ -45,8 +46,10 @@ async function patch(value) {await support.patchStoredConfig(popup,value); await
 async function ui(fn, value) {
  const state=await support.getSelectionUiTree(page), card=support.findCdpNode(state.root,cls('fr-translation-tooltip'));assert(card,'popup missing');
  const object=await state.session.send('DOM.resolveNode',{nodeId:card.nodeId});
+ try {
  const result=await state.session.send('Runtime.callFunctionOn',{objectId:object.object.objectId,functionDeclaration:fn.toString(),arguments:[{value}],returnByValue:true});
  if(result.exceptionDetails)throw new Error(JSON.stringify(result.exceptionDetails));return result.result.value;
+ } finally {await state.session.send('Runtime.releaseObject', {objectId:object.object.objectId});}
 }
 async function settled() {await until(()=>ui(function(){return !!this.querySelector('.fr-reading-answer[aria-busy="false"]')}),'answer did not finish');}
 async function menu() {await clickNode(n=>n.nodeName==='SUMMARY'&&support.cdpAttribute(n,'aria-label')==='更多操作');}
@@ -139,9 +142,15 @@ async function main(){
   for(const part of response.match(/[\s\S]{1,40}/g)){res.write('data: '+JSON.stringify({id:'fixture',choices:[{index:0,delta:{content:part},finish_reason:null}]})+'\n\n');await wait(chunkDelay);}
   res.end('data: '+JSON.stringify({id:'fixture',choices:[{index:0,delta:{},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n');
  });
- await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;
+ 
  try{
-   session=await helper.launchFocusSafePersistentContext({chromium,profileDir,browserPath:'/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',headless:false,background:true,browserArgs:[`--disable-extensions-except=${extensionDir}`,`--load-extension=${extensionDir}`,'--no-first-run','--no-default-browser-check'],viewport:{width:1440,height:960}});
+   await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); reject(error);};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });const port=server.address().port;
+    launchAttempted = true;
+    session=await helper.launchFocusSafePersistentContext({chromium,profileDir,browserPath:'/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',headless:false,background:true,browserArgs:[`--disable-extensions-except=${extensionDir}`,`--load-extension=${extensionDir}`,'--no-first-run','--no-default-browser-check'],viewport:{width:1440,height:960}});
    context=session.context;Object.assign(report,{launchMode:session.launchMode,focusPolicy:session.focusPolicy,windowPlacement:session.windowPlacement,extensionDir});
    const ready=await support.waitForWorker(context);worker=ready.worker;const id=ready.extensionId;
    const newPage=async()=>{const p=await helper.newPageWithoutForeground(context);p.on('pageerror',error=>report.consoleErrors.push(error.message));return p;};
@@ -249,6 +258,24 @@ async function main(){
   await page.mouse.wheel(0,5000);await wait(150);await page.mouse.wheel(0,500);await wait(150);assert.equal(await page.evaluate(()=>scrollY),0);record('long analysis scrolls internally and contains wheel movement at its boundary');
   assert.equal(report.consoleErrors.length,0);report.ok=true;
  }catch(error){report.error=error.stack;if(page&&!page.isClosed())await screenshot(page,'failure').catch(()=>{});throw error;}
- finally{fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));await session?.close();server.close();fs.rmSync(profileDir,{recursive:true,force:true});}
+ finally {
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (session) {
+      try {await session.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});}
+    catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
+  }
 }
 main().catch(error=>{console.error(error.stack);process.exitCode=1;});

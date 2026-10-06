@@ -182,7 +182,7 @@ describe('translation prompt safety', () => {
 });
 
 describe('translation slot packet safety', () => {
-    it('拒绝在预检后被改写为空值的槽位标记', () => {
+    it('只读取一次槽位标记快照，忽略 getter 随后的空值', () => {
         const starts = [''];
         let startReads = 0;
         Object.defineProperty(starts, 0, {
@@ -192,7 +192,8 @@ describe('translation slot packet safety', () => {
         expect(parseTranslationSlots(
             {payload: '', starts, ends: ['END']},
             'STARTEND',
-        )).toBeNull();
+        )).toEqual(['']);
+        expect(startReads).toBe(1);
 
         const ends = [''];
         let endReads = 0;
@@ -203,7 +204,10 @@ describe('translation slot packet safety', () => {
         expect(parseTranslationSlots(
             {payload: '', starts: ['START'], ends},
             'STARTEND',
-        )).toBeNull();
+        )).toEqual(['']);
+        expect(endReads).toBe(1);
+        expect(parseTranslationSlots({payload: '', starts: [''], ends: ['END']}, 'STARTEND')).toBeNull();
+        expect(parseTranslationSlots({payload: '', starts: ['START'], ends: ['']}, 'STARTEND')).toBeNull();
     });
 
     it('拒绝仅在起始标记内出现结束标记的数据包', () => {
@@ -213,7 +217,7 @@ describe('translation slot packet safety', () => {
         )).toBeNull();
     });
 
-    it('拒绝在预检后暴露出嵌套起始标记的数据包', () => {
+    it('按初始标记快照保留正文中的其他字面标记', () => {
         const starts = [''];
         let reads = 0;
         Object.defineProperty(starts, 0, {
@@ -224,6 +228,7 @@ describe('translation slot packet safety', () => {
         expect(parseTranslationSlots(
             {payload: '', starts, ends: ['END']},
             'START_UNIQUE translated START nested END',
-        )).toBeNull();
+        )).toEqual([' translated START nested ']);
+        expect(reads).toBe(1);
     });
 });

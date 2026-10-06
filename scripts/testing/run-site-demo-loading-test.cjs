@@ -27,7 +27,9 @@ const report = {
   pageErrors: [],
 }
 const server = http.createServer((request, response) => {
-  let route = decodeURIComponent(new URL(request.url, 'http://localhost').pathname)
+  let route
+  try {route = decodeURIComponent(new URL(request.url, 'http://localhost').pathname)}
+  catch {response.writeHead(400); response.end('Invalid fixture URL'); return}
   if (route.endsWith('/')) route += 'index.html'
   let file = path.join(dist, route)
   if (!fs.existsSync(file)) file += '.html'
@@ -80,7 +82,11 @@ async function capture(demo, name) {
   report.screenshots.push(file)
 }
 ;(async () => {
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); server.close(() => reject(error)); server.closeAllConnections();};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  })
   const base = 'http://127.0.0.1:' + server.address().port
   browser = await chromium.launch({ headless: true, executablePath: argument('browser-path') })
   for (const en of [false, true]) {
@@ -198,8 +204,9 @@ async function capture(demo, name) {
   report.failure = error.stack
   process.exitCode = 1
 }).finally(async () => {
-  await browser?.close()
-  await new Promise(resolve => server.close(resolve))
-  fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2))
+  report.cleanupErrors = []
+  try {await browser?.close()} catch (error) {report.cleanupErrors.push(`browser close: ${error.message}`); report.ok = false; process.exitCode = 1}
+  try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections()})} catch (error) {report.cleanupErrors.push(`server close: ${error.message}`); report.ok = false; process.exitCode = 1}
+  try {fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2))} catch (error) {console.error(error); process.exitCode = 1}
   console.log(JSON.stringify(report, null, 2))
 })

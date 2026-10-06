@@ -36,7 +36,7 @@ export function createAreaTranslationOffscreenAdapter(client: OffscreenClient = 
                 ? await client.send<AreaOffscreenResponse>(message, {signal: options.signal, timeoutMs: options.timeoutMs,
                     cancelMessage: {type: OFFSCREEN_CANCEL_IMAGE_OPERATION_MESSAGE_TYPE, requestId: options.requestId}})
                 : await client.send<AreaOffscreenResponse>(message);
-            if (!response?.success || typeof response.image !== 'string' || !Array.isArray(response.lines)) {
+            if (response?.success !== true || typeof response.image !== 'string' || !Array.isArray(response.lines)) {
                 throw new Error(response?.error || '圈选裁剪失败');
             }
             return {image: response.image, lines: response.lines as AreaRecognitionResult['lines']};
@@ -66,7 +66,7 @@ export function createAreaTranslationOffscreenAdapter(client: OffscreenClient = 
                     },
                 })
                 : await client.send<AreaOffscreenResponse>(message);
-            if (!response?.success || typeof response.image !== 'string' || !Array.isArray(response.lines)) {
+            if (response?.success !== true || typeof response.image !== 'string' || !Array.isArray(response.lines)) {
                 throw new Error(response?.error || '圈选翻译失败');
             }
             return {image: response.image, lines: response.lines as AreaRecognitionResult['lines']};

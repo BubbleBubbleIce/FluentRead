@@ -9,11 +9,15 @@ import {
     CONFIG_HISTORY_MESSAGE,
     CONFIG_PERSIST_MESSAGE,
     CONFIG_PERSIST_BATCH_MESSAGE,
+    CONFIG_STORAGE_KEY,
     getConfigRevision,
     prepareConfigPatchRequest,
     prepareConfigSaveRequest,
+    parseStoredConfig,
     saveConfig,
 } from '@/src/services/config/store';
+import {extractConfigCredentials, LOCAL_CREDENTIALS_STORAGE_KEY, mergeConfigCredentials, parseStoredCredentials} from '@/src/core/config/credentials';
+import {configStorage} from './storage';
 import {
     createConfigPersistenceBatchHandler,
     createConfigPersistenceHandler,
@@ -52,16 +56,24 @@ export function createPlatformMessageHandler(openSettings: (section?: string) =>
 
     // Options 表单可能先乐观更新同一 realm 的 config；CAS 必须以已提交快照为准。
     let committedConfig = normalizeConfig(config);
-    const saveCommittedConfig = async (nextConfig: typeof config, options: {recordHistory: true}): Promise<void> => {
-        await saveConfig(nextConfig, options);
-        committedConfig = normalizeConfig(nextConfig);
-    };
+    let disposed = false;
+    const stopWatching: Array<() => void> = [];
+    // bootstrap 已等待 configReady；同步取得基线，后续只消费 GM 权威记录，避开乐观 UI 通知。
+    stopWatching.push(configStorage.watch(CONFIG_STORAGE_KEY, (value) => {
+        if (disposed) return;
+        const parsed = parseStoredConfig(value);
+        if (parsed) committedConfig = normalizeConfig(mergeConfigCredentials(parsed, extractConfigCredentials(committedConfig)));
+    }));
+    stopWatching.push(configStorage.watch(LOCAL_CREDENTIALS_STORAGE_KEY, (value) => {
+        if (disposed) return;
+        committedConfig = normalizeConfig(mergeConfigCredentials(committedConfig, parseStoredCredentials(value) || extractConfigCredentials({})));
+    }));
     const configPersistenceHandler = createConfigPersistenceHandler({
         ready: configReady,
         getCurrentConfig: () => committedConfig,
         prepareConfigPatchRequest,
         prepareConfigSaveRequest,
-        saveConfig: saveCommittedConfig,
+        saveConfig,
         getCurrentRevision: getConfigRevision,
         isExtensionUrl: (url) => isUserscriptSettingsUrl(url),
     });
@@ -82,7 +94,8 @@ export function createPlatformMessageHandler(openSettings: (section?: string) =>
         logOperationFailure: (error) => console.error('[FluentRead userscript] 单词本操作失败', error),
     });
 
-    return async (message: any): Promise<any> => {
+    const handle = async (message: any): Promise<any> => {
+        if (disposed) return UNHANDLED_RUNTIME_MESSAGE;
         if (!message || typeof message !== 'object') return UNHANDLED_RUNTIME_MESSAGE;
         const visionHandler = visionHandlers.find(handler => handler.type === message.type);
         if (visionHandler) {
@@ -204,4 +217,17 @@ export function createPlatformMessageHandler(openSettings: (section?: string) =>
 
         return UNHANDLED_RUNTIME_MESSAGE;
     };
+    return Object.assign(handle, {dispose() {
+        if (disposed) return;
+        disposed = true;
+        let failed = false;
+        let firstError: unknown;
+        // 清空归属后再逐个释放，允许 stop 同步重入；首个异常不能阻断另一订阅。
+        for (const stop of stopWatching.splice(0)) {
+            try {stop();} catch (error) {
+                if (!failed) {failed = true; firstError = error;}
+            }
+        }
+        if (failed) throw firstError;
+    }});
 }

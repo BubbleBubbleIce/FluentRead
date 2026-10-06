@@ -139,6 +139,9 @@ const progress = ref<DownloadProgressValue>()
 const removing = ref(false)
 const errorMessage = ref('')
 let stopWatchingProgress: (() => void) | undefined
+let active = true
+let generation = 0
+let statusReadFailed = false
 
 function readDownloaded(response: unknown): boolean {
   if (!response || typeof response !== 'object' || Array.isArray(response)) return false
@@ -149,25 +152,43 @@ function readDownloaded(response: unknown): boolean {
 }
 
 async function refresh(): Promise<void> {
+  if (!active || downloading.value || removing.value) return
+  const request = ++generation
   if (!browserCapabilities.extensionDom) {
     statusLoaded.value = true
     return
   }
-  const response = await browser.runtime.sendMessage({type: 'fluentReadGetLocalTtsModelState'}) as unknown
-  if (!response || typeof response !== 'object' || (response as {success?: unknown}).success !== true) {
-    throw new Error(t('settings.localTts.statusReadFailed'))
+  try {
+    const response = await browser.runtime.sendMessage({type: 'fluentReadGetLocalTtsModelState'}) as unknown
+    if (!active || request !== generation) return
+    if (!response || typeof response !== 'object' || (response as {success?: unknown}).success !== true) {
+      throw new Error(t('settings.localTts.statusReadFailed'))
+    }
+    downloaded.value = readDownloaded(response)
+    if (statusReadFailed) {
+      errorMessage.value = ''
+      statusReadFailed = false
+    }
+  } catch {
+    if (active && request === generation) {
+      statusReadFailed = true
+      errorMessage.value = t('settings.localTts.statusReadFailed')
+    }
+  } finally {
+    if (active && request === generation) statusLoaded.value = true
   }
-  downloaded.value = readDownloaded(response)
-  statusLoaded.value = true
 }
 
 async function downloadModel(): Promise<void> {
-  if (!statusLoaded.value || downloading.value || removing.value || !browserCapabilities.extensionDom) return
+  if (!active || !statusLoaded.value || downloading.value || removing.value || !browserCapabilities.extensionDom) return
+  generation++
+  statusReadFailed = false
   errorMessage.value = ''
   progress.value = undefined
   requesting.value = true
   try {
     const response = await browser.runtime.sendMessage({type: 'fluentReadPrepareLocalTtsModel'}) as unknown
+    if (!active) return
     if (!response || typeof response !== 'object' || (response as {success?: unknown}).success !== true) {
       throw new Error(response && typeof response === 'object' && typeof (response as {error?: unknown}).error === 'string'
         ? (response as {error: string}).error
@@ -175,14 +196,18 @@ async function downloadModel(): Promise<void> {
     }
     downloaded.value = true
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : t('settings.localTts.downloadFailed')
+    if (active) errorMessage.value = error instanceof Error ? error.message : t('settings.localTts.downloadFailed')
   } finally {
-    requesting.value = false
-    observedDownload.value = false
+    if (active) {
+      requesting.value = false
+      observedDownload.value = false
+      await refresh()
+    }
   }
 }
 
 function handleDownloadProgress(_id: string, next: DownloadProgressValue | undefined): void {
+  if (!active) return
   progress.value = next
   if (next) {
     observedDownload.value = true
@@ -191,15 +216,18 @@ function handleDownloadProgress(_id: string, next: DownloadProgressValue | undef
   // 结束事件不说明成败；不是本页发起的下载需要重新读取模型状态。
   const external = observedDownload.value && !requesting.value
   observedDownload.value = false
-  if (external) void refresh().catch(() => { errorMessage.value = t('settings.localTts.statusReadFailed') })
+  if (external) void refresh().catch(() => { if (active) errorMessage.value = t('settings.localTts.statusReadFailed') })
 }
 
 async function removeModel(): Promise<void> {
-  if (removing.value || downloading.value || !browserCapabilities.extensionDom) return
+  if (!active || removing.value || downloading.value || !browserCapabilities.extensionDom) return
+  generation++
+  statusReadFailed = false
   errorMessage.value = ''
   removing.value = true
   try {
     const response = await browser.runtime.sendMessage({type: 'fluentReadRemoveLocalTtsModel'}) as unknown
+    if (!active) return
     if (!response || typeof response !== 'object' || (response as {success?: unknown}).success !== true) {
       throw new Error(response && typeof response === 'object' && typeof (response as {error?: unknown}).error === 'string'
         ? (response as {error: string}).error
@@ -207,28 +235,30 @@ async function removeModel(): Promise<void> {
     }
     downloaded.value = false
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : t('modelCache.removeFailed')
+    if (active) errorMessage.value = error instanceof Error ? error.message : t('modelCache.removeFailed')
   } finally {
-    removing.value = false
+    if (active) {
+      removing.value = false
+      await refresh()
+    }
   }
 }
 
 function handleStorageChange(changes: Record<string, browser.Storage.StorageChange>, areaName: string): void {
   if (areaName === 'local' && changes[LOCAL_TTS_MODEL_STATE_KEY]) {
-    void refresh().catch(() => { errorMessage.value = t('settings.localTts.statusReadFailed') })
+    void refresh()
   }
 }
 
 onMounted(() => {
-  void refresh().catch(() => {
-    statusLoaded.value = true
-    errorMessage.value = t('settings.localTts.statusReadFailed')
-  })
+  void refresh()
   browser.storage.onChanged.addListener(handleStorageChange)
   stopWatchingProgress = watchDownloadProgress([LOCAL_TTS_DOWNLOAD_ID], handleDownloadProgress)
 })
 
 onUnmounted(() => {
+  active = false
+  generation++
   browser.storage.onChanged.removeListener(handleStorageChange)
   stopWatchingProgress?.()
 })

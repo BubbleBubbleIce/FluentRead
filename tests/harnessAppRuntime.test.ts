@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-    config: {on: true, harness: {enabled: true}, disabledExtensionDomains: ['blocked']},
+    config: {} as Config,
     ready: Promise.resolve(), subscribe: vi.fn(), createHandler: vi.fn(), createRuntime: vi.fn(), createConversation: vi.fn(), createSessions: vi.fn(), createMemories: vi.fn(), createRecall: vi.fn(), recall: vi.fn(), memories: vi.fn(), memoryRepository: {}, attachPort: vi.fn(),
     handler: {handle: vi.fn(), cancelAll: vi.fn(), cancelDisallowed: vi.fn(), cancelTab: vi.fn()},
     runtime: {run: vi.fn()}, conversation: {run: vi.fn()}, sessions: vi.fn(), repository: {prune: vi.fn(), recoverInterrupted: vi.fn()},
@@ -19,14 +19,16 @@ vi.mock('@/src/services/harness/memoryRecall', () => ({createLearningMemoryRecal
 vi.mock('@/src/platform/storage/learningMemoryRepository', () => ({learningMemoryRepository: mocks.memoryRepository}));
 vi.mock('@/src/features/reading-assistant/streamPort', () => ({attachReadingStreamPort: mocks.attachPort}));
 vi.mock('@/src/platform/storage/harnessSessionRepository', () => ({harnessSessionRepository: mocks.repository}));
-vi.mock('@/src/core/site-rules/domain', () => ({isExtensionDisabledOnSite: (url: string) => url.includes('blocked')}));
 vi.mock('@/src/platform/storage/modelUsageRepository', () => ({modelUsageRepository: {recordMany: mocks.record, captureGeneration: mocks.generation}}));
 import {installHarnessBackgroundRuntime} from '@/src/app/background/harnessRuntime';
+import {Config} from '@/src/core/config/model';
 const tick = async () => {for (let i=0; i<5; i++) await Promise.resolve();};
 
 describe('Harness background composition', () => {
     beforeEach(() => {
-        vi.clearAllMocks(); mocks.config.on = true; mocks.config.harness.enabled = true; mocks.extension.inIncognitoContext = false;
+        vi.clearAllMocks(); Object.assign(mocks.config, new Config());
+        mocks.config.on = true; mocks.config.harness.enabled = true;
+        mocks.config.disabledExtensionDomains = ['blocked.test']; mocks.extension.inIncognitoContext = false;
         mocks.createHandler.mockReturnValue(mocks.handler); mocks.createRuntime.mockReturnValue(mocks.runtime);
         mocks.createConversation.mockReturnValue(mocks.conversation); mocks.createSessions.mockReturnValue(mocks.sessions);
         mocks.createMemories.mockReturnValue(mocks.memories); mocks.createRecall.mockReturnValue(mocks.recall);
@@ -71,8 +73,8 @@ describe('Harness background composition', () => {
         expect(memoryDeps.privateContext()).toBe(false);
         const port = {name: 'stream'}; mocks.connect.mock.calls[0][0](port); expect(mocks.attachPort).toHaveBeenCalledWith(port, mocks.handler);
         const changed = mocks.subscribe.mock.calls[0][0];
-        changed({harness: {enabled: true}}); expect(mocks.handler.cancelAll).not.toHaveBeenCalled();
-        changed({harness: {enabled: false}}); expect(mocks.handler.cancelAll).toHaveBeenCalledOnce();
+        changed({...mocks.config, harness: {...mocks.config.harness, enabled: true}}); expect(mocks.handler.cancelAll).not.toHaveBeenCalled();
+        changed({...mocks.config, harness: {...mocks.config.harness, enabled: false}}); expect(mocks.handler.cancelAll).toHaveBeenCalledOnce();
         expect(mocks.handler.cancelDisallowed).toHaveBeenCalledTimes(2);
         mocks.removed.mock.calls[0][0](7); const updated = mocks.updated.mock.calls[0][0];
         updated(8, {status: 'loading'}); updated(9, {url: 'https://new.test'}); updated(10, {status: 'complete'});

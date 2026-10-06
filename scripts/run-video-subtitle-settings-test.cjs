@@ -42,35 +42,43 @@ function loadPlaywright(root) {
 }
 
 async function waitWorker(context, manifest, timeout = 30000) {
-  const matches = async () => {
-    for (const worker of context.serviceWorkers()) {
-      try {
-        const loaded = await worker.evaluate(() => chrome.runtime.getManifest());
-        if (loaded?.action?.default_popup === manifest.action?.default_popup
-          && (loaded?.options_ui?.page || loaded?.options_page) === (manifest.options_ui?.page || manifest.options_page)) {
-          return worker;
-        }
-      } catch {
-        // Component workers and non-extension targets are not the loaded FluentRead worker.
-      }
-    }
-    return null;
-  };
-  const worker = await matches() || await new Promise(async (resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('等待 FluentRead 扩展 worker 超时')), timeout);
-    const onWorker = async (candidate) => {
+  const worker = await new Promise((resolve, reject) => {
+    let settled = false;
+    let timer;
+    const finish = (candidate, error = null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      context.off('serviceworker', onWorker);
+      error ? reject(error) : resolve(candidate);
+    };
+    const check = async candidate => {
+      if (settled) return;
       try {
         const loaded = await candidate.evaluate(() => chrome.runtime.getManifest());
         if (loaded?.action?.default_popup === manifest.action?.default_popup
           && (loaded?.options_ui?.page || loaded?.options_page) === (manifest.options_ui?.page || manifest.options_page)) {
-          clearTimeout(timer);
-          resolve(candidate);
+          finish(candidate);
         }
       } catch {
-        // Ignore unrelated workers.
+        // Ignore unrelated or already-destroyed workers.
       }
     };
-    context.on('serviceworker', onWorker);
+    const onWorker = candidate => { void check(candidate); };
+    try {
+      context.on('serviceworker', onWorker);
+      timer = setTimeout(() => finish(null, new Error('等待 FluentRead 扩展 worker 超时')), timeout);
+      const candidates = context.serviceWorkers();
+      const scan = async () => {
+        for (const candidate of candidates) {
+          if (settled) return;
+          await check(candidate);
+        }
+      };
+      void scan().catch(error => finish(null, error));
+    } catch (error) {
+      finish(null, error);
+    }
   });
   const match = worker.url().match(/^chrome-extension:\/\/([^/]+)/);
   if (!match) fail(`扩展 worker URL 无法解析：${worker.url()}`);
@@ -317,7 +325,12 @@ async function main() {
     result.error = error instanceof Error ? error.stack || error.message : String(error);
     throw error;
   } finally {
-    if (session) await session.close();
+    if (session) {
+      await session.close();
+      fs.rmSync(profileDir, {recursive: true, force: true});
+    } else {
+      try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
+    }
     fs.writeFileSync(path.join(options.artifactsDir, 'report.json'), JSON.stringify(result, null, 2));
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);

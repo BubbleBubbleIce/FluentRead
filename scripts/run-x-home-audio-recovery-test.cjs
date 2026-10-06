@@ -17,7 +17,7 @@ if (!runtime || !helperPath) throw new Error('Explicit Playwright runtime and fo
 const {chromium} = createRequire(path.join(runtime, 'x-home-proof.cjs'))('playwright');
 const helper = require(path.resolve(helperPath));
 fs.mkdirSync(artifacts, {recursive: true});
-const runFfmpeg = args => { const result = spawnSync(arg('ffmpeg', '/opt/homebrew/bin/ffmpeg'), ['-y', ...args], {encoding: 'utf8'}); assert.equal(result.status, 0, result.stderr); };
+const runFfmpeg = args => { const result = spawnSync(arg('ffmpeg', '/opt/homebrew/bin/ffmpeg'), ['-y', ...args], {encoding: 'utf8', timeout: 30000, killSignal: 'SIGKILL'}); assert.equal(result.status, 0, result.stderr); };
 runFfmpeg(['-f', 'lavfi', '-i', 'color=c=0x123044:s=320x180:r=20', '-f', 'lavfi', '-i', 'sine=frequency=300:sample_rate=48000',
   '-t', '2', '-c:v', 'libx264', '-profile:v', 'baseline', '-level:v', '3.0', '-pix_fmt', 'yuv420p', '-c:a', 'aac',
   '-movflags', 'frag_keyframe+empty_moov+default_base_moof', path.join(artifacts, 'mse.mp4')]);
@@ -189,10 +189,15 @@ const state = () => page.evaluate(() => ({
   check('Test browser stays in the background', report.launchMode === 'macos-background-cdp'
     && report.focusPolicy === 'launchservices-no-foreground' && report.windowPlacement.browserFrontmost === false);
   report.success = true;
-})().catch(async error => {report.failure = error.stack; process.exitCode = 1; if (page) {report.failureState = await state().catch(() => null); await page.screenshot({path: path.join(artifacts, 'failure.png')}).catch(() => {});}}).finally(async () => {
+})().catch(async error => {report.failure = error.stack; console.error(error.stack || error); process.exitCode = 1; if (page) {report.failureState = await state().catch(() => null); await page.screenshot({path: path.join(artifacts, 'failure.png')}).catch(() => {});}}).finally(async () => {
   if (probe) await probe.detach().catch(() => {});
-  if (session) await session.close();
-  fs.rmSync(profileDir, {recursive: true, force: true});
+  let sessionClosed = false;
+  try { if (session) { await session.close(); sessionClosed = true; } }
+  catch (error) { report.cleanupError = error.stack || String(error); process.exitCode = 1; }
+  if (sessionClosed) {
+    try { fs.rmSync(profileDir, {recursive: true, force: true}); }
+    catch (error) { report.profileCleanupError = error.stack || String(error); process.exitCode = 1; }
+  } else report.retainedProfile = profileDir;
   fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({success: report.success, checks: report.checks, failure: report.failure, artifacts}, null, 2));
-});
+}).catch(error => { console.error(error.stack || error); process.exitCode = 1; });

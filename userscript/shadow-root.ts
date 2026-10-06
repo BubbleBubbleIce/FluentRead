@@ -75,23 +75,44 @@ export async function createShadowRootUi<T>(
         shadow.addEventListener(eventName, (event) => event.stopPropagation());
     }
 
-    let isMounted = false;
+    // 每次挂载拥有独立令牌；外部 hook 可同步 remove/remount，旧调用不能清理新宿主。
+    let mountOwner: {ready: boolean; value?: T} | undefined;
     const ui: ShadowRootContentScriptUi<T> = {
         shadowHost,
         shadow,
         uiContainer: container,
         mount() {
-            if (isMounted) return;
-            isMounted = true;
+            if (mountOwner) return;
+            const owner: {ready: boolean; value?: T} = {ready: false};
+            mountOwner = owner;
             (document.documentElement || document.body).appendChild(shadowHost);
-            ui.mounted = options.onMount(container);
+            try {
+                const mounted = options.onMount(container);
+                owner.value = mounted;
+                owner.ready = true;
+                if (mountOwner === owner) ui.mounted = mounted;
+                // onMount 内已取消时，资源现在才返回；只释放这次取消挂载的返回值。
+                else options.onRemove?.(mounted);
+            } catch (error) {
+                if (mountOwner === owner) {
+                    mountOwner = undefined;
+                    ui.mounted = undefined;
+                    shadowHost.remove();
+                }
+                throw error;
+            }
         },
         remove() {
-            if (!isMounted) return;
-            isMounted = false;
-            options.onRemove?.(ui.mounted);
+            const owner = mountOwner;
+            if (!owner) return;
+            mountOwner = undefined;
             ui.mounted = undefined;
-            shadowHost.remove();
+            try {
+                // 尚在 onMount 中的返回值由 mount 完成后释放，避免先传 undefined 再重复清理。
+                if (owner.ready) options.onRemove?.(owner.value);
+            } finally {
+                if (!mountOwner) shadowHost.remove();
+            }
         },
     };
     return ui;

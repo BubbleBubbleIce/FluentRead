@@ -9,7 +9,7 @@ import {mangaInferenceClient, mangaExtensionUrl, type MangaInferenceProgress} fr
 import {probeMangaGpu} from './mangaGpu';
 import {protectMangaSession} from './mangaSessionFallback';
 import {configureOnnxWasmBackend} from '@/src/shared/onnx/wasmBinary';
-import {assertMangaOcrActive, loadMangaOcrAssets, removeMangaOcrAssets} from './mangaOcrAssets';
+import {assertMangaOcrActive, loadMangaOcrAssets, removeMangaOcrAssets, withMangaModelAdmission, withMangaModelRemoval} from './mangaOcrAssets';
 import type {MangaRegion} from './mangaRegions';
 import {findMangaBubbles,collectMangaRegions,type MangaOcrPage} from './mangaBubbles';
 import {mangaInpaintingRuntime} from './mangaInpainting';
@@ -37,7 +37,7 @@ export function createMangaOcrRuntime(create: (signal?: AbortSignal, progress?: 
     }
     return {
         recognize(image: string, language: string, width: number, height: number, signal?: AbortSignal, progress?: Progress, decodedImage?: HTMLImageElement, profile: 'manga' | 'image' = 'manga'): Promise<MangaRegion[]> {
-            const result = queue(async () => {
+            const result = withMangaModelAdmission(() => queue(async () => {
                 assertMangaOcrActive(signal); clearIdle();
                 try {
                     return await (async () => {
@@ -58,7 +58,7 @@ export function createMangaOcrRuntime(create: (signal?: AbortSignal, progress?: 
                     // 不把输入图或结果缓存在库内；跨页结果缓存仍由 content 的像素预算管理。
                     idle = setTimeout(() => { void queue(release).catch(() => undefined); }, 180_000);
                 }
-            });
+            }));
             if (!signal) return result;
             return new Promise((resolve, reject) => {
                 const abort = () => reject(new DOMException('漫画识别已取消', 'AbortError'));
@@ -68,7 +68,7 @@ export function createMangaOcrRuntime(create: (signal?: AbortSignal, progress?: 
             });
         },
         dispose: () => queue(release),
-        removeModels: () => queue(async () => { await release(); await removeMangaOcrAssets(); }),
+        removeModels: () => queue(async () => { try { await release(); } finally { await removeMangaOcrAssets(); } }),
     };
 }
 
@@ -99,7 +99,7 @@ export async function createBrowserMangaOcr(signal?: AbortSignal, progress?: Pro
                     const assets=await loadMangaOcrAssets(activeSignal);
                     assertMangaOcrActive(activeSignal);
                     const cpu=await ort.InferenceSession.create(assets[key],{executionProviders:['wasm'],graphOptimizationLevel:'all'});
-                    try {assertMangaOcrActive(activeSignal);}catch(error){await cpu.release();throw error;}
+                    try {assertMangaOcrActive(activeSignal);}catch(error){await Promise.resolve().then(()=>cpu.release()).catch(()=>undefined);throw error;}
                     return cpu;
                 },()=>activeSignal));
                 if(session){const run=session.run.bind(session);const invoke=run as (...args:Parameters<typeof run>)=>ReturnType<typeof run>;session.run=((...args:Parameters<typeof run>)=>paceLocalInference(()=>invoke(...args))) as typeof session.run;}
@@ -155,7 +155,7 @@ export async function createBrowserMangaOcr(signal?: AbortSignal, progress?: Pro
             },
             destroy: () => service.destroy(),
         };
-    } catch (error) { await service.destroy(); throw error; }
+    } catch (error) { await Promise.resolve().then(()=>service.destroy()).catch(()=>undefined); throw error; }
 }
 
 function createOcrCanvas(): HTMLCanvasElement | OffscreenCanvas {
@@ -170,5 +170,11 @@ async function createWorkerMangaOcr(signal?: AbortSignal, progress?: Progress): 
 export const mangaOcrRuntime = createMangaOcrRuntime(createWorkerMangaOcr);
 
 /** 设置清理和页面销毁共用模型会话生命周期。 */
-export async function removeMangaModels():Promise<void>{await mangaInpaintingRuntime.dispose();await mangaOcrRuntime.removeModels();}
+export function removeMangaModels():Promise<void>{
+    return withMangaModelRemoval(async () => {
+        // 先等修补队列退出，再由 OCR 队列清除缓存；释放失败仍须尝试剩余清理。
+        try { await mangaInpaintingRuntime.dispose(); }
+        finally { await mangaOcrRuntime.removeModels(); }
+    });
+}
 export function disposeMangaModels():void{void mangaOcrRuntime.dispose().catch(()=>undefined);void mangaInpaintingRuntime.dispose().catch(()=>undefined);}

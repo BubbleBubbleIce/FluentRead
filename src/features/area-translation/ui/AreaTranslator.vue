@@ -335,10 +335,13 @@ async function copyText(text: string): Promise<void> {
   }
 }
 async function openSettings(): Promise<void> {
+  const requestId = translationRequestId;
   try {
     const response = await browser.runtime.sendMessage({type: 'openOptionsPage', section: 'settings-area-translation'}) as {success?: boolean} | undefined;
     if (response?.success === false) throw new Error('打开设置失败');
-  } catch { showFeedback('无法打开设置，请从扩展菜单打开圈选设置'); }
+  } catch {
+    if (requestId === translationRequestId) showFeedback('无法打开设置，请从扩展菜单打开圈选设置');
+  }
 }
 function handleViewportChange(event: Event): void {
   // 卡片自己的滚动不触发重排；截图前的页面滚动/缩放会使旧选区坐标失效。

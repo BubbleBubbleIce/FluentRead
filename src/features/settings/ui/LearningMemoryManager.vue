@@ -149,10 +149,10 @@ async function removeMemory(id: string) {
   }
 }
 async function clearMemories() {
-  if (mutating.value) return
+  if (!active || mutating.value) return
   try { await ElMessageBox.confirm(t('learning.memoryClearConfirm'), t('common.confirm'), {type: 'warning', confirmButtonText: t('common.confirm'), cancelButtonText: t('common.cancel')}) }
   catch { return }
-  if (mutating.value) return
+  if (!active || mutating.value) return
   generation += 1
   loading.value = false
   mutating.value = true

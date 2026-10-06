@@ -23,7 +23,7 @@ const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(pat
 
 async function main() {
   fs.mkdirSync(artifacts, {recursive: true});
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-loop-'));
+  let profileDir; let launchAttempted = false;
   const report = {ok: false, scope: 'native browser fixture using the actual production modal controller', cases: {}, errors: []};
   const server = http.createServer((request, response) => {
     const mode = request.url.includes('baseline') ? 'baseline' : 'fixed';
@@ -53,9 +53,15 @@ async function main() {
       window.fixture = {controller, range, observer, host};
       </script></body></html>`);
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   let launched;
   try {
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-loop-'));
+    await new Promise((resolve, reject) => {
+    const onError = error => {server.off('listening', onListening); reject(error);};
+    const onListening = () => {server.off('error', onError); resolve();};
+    server.once('error', onError); server.once('listening', onListening); server.listen(0, '127.0.0.1');
+  });
+    launchAttempted = true;
     launched = await launchFocusSafePersistentContext({chromium, profileDir,
       browserPath: argument('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'),
       background: true, headless: false, viewport: {width: 1100, height: 800}, timeout: 30000});
@@ -104,10 +110,23 @@ async function main() {
     report.failure = String(error.stack || error);
     throw error;
   } finally {
-    fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.close();
-    await new Promise(resolve => server.close(resolve));
-    fs.rmSync(profileDir, {recursive: true, force: true});
+    report.cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (launched) {
+      try {await launched.close(); closed = true;}
+      catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    try {await new Promise(resolve => {server.close(resolve); server.closeAllConnections();});}
+    catch (error) {report.cleanupErrors.push(`server close: ${error.message}`);}
+    if (profileDir) {
+      if (closed) {
+        try {fs.rmSync(profileDir, {recursive: true, force: true});}
+        catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir;}
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) {report.ok = false; if ('status' in report) report.status = 'failed'; process.exitCode = 1;}
+    try {fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {console.error(error.stack || error); process.exitCode = 1;}
   }
   process.stdout.write(JSON.stringify(report, null, 2));
 }

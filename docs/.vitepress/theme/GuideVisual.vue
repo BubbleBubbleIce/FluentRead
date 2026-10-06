@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useData, withBase } from 'vitepress'
+import { useData } from 'vitepress'
 import BrandReader from './BrandReader.vue'
 import BrowserGuide from './BrowserGuide.vue'
 import FeatureDemo from './FeatureDemo.vue'
@@ -13,14 +13,13 @@ const { lang } = useData()
 const english = computed(() => props.en ?? lang.value.startsWith('en'))
 const t = (zh: string, en: string) => (english.value ? en : zh)
 const root = ref<HTMLElement | null>(null)
-const { step, playing, running, reduced, choose, select, replay } = useDemoPlayback(
+const { step, playing, running, reduced, select, replay } = useDemoPlayback(
   root,
   6,
   true,
   [1800, 1200, 1200, 1800, 1800, 1800]
 )
 const changed = computed(() => step.value >= 3)
-const style = computed(() => Math.max(0, step.value - 3) % 3)
 const words = computed(
   () =>
     ({

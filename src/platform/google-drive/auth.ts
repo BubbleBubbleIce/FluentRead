@@ -49,13 +49,18 @@ export function createDriveAuth(ports: DriveAuthPorts) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 30_000);
         const operation = (async () => {
-            const response = await ports.fetch('https://www.googleapis.com/drive/v3/about?fields=user(permissionId,emailAddress)', {headers: {Authorization: `Bearer ${accessToken}`}, signal: controller.signal});
-            if (!response.ok) throw new DriveError(`读取 Google 账号失败（HTTP ${response.status}）。`, response.status);
-            const data: unknown = await response.json();
-            const user = data && typeof data === 'object' && 'user' in data ? data.user : null;
-            if (!user || typeof user !== 'object' || !('permissionId' in user) || typeof user.permissionId !== 'string' || !user.permissionId) throw new DriveError('Google 账号响应无效，请重新同步。');
-            // 与旧 OAuth 身份 ID 分开命名，旧基线回到明确选方向的首次同步，不能按邮箱冒认同一账号。
-            return {id: `drive:${user.permissionId}`, email: 'emailAddress' in user && typeof user.emailAddress === 'string' ? user.emailAddress : ''};
+            let response: Response | undefined;
+            try {
+                response = await ports.fetch('https://www.googleapis.com/drive/v3/about?fields=user(permissionId,emailAddress)', {headers: {Authorization: `Bearer ${accessToken}`}, signal: controller.signal});
+                if (!response.ok) throw new DriveError(`读取 Google 账号失败（HTTP ${response.status}）。`, response.status);
+                const data: unknown = await response.json();
+                const user = data && typeof data === 'object' && 'user' in data ? data.user : null;
+                if (!user || typeof user !== 'object' || !('permissionId' in user) || typeof user.permissionId !== 'string' || !user.permissionId) throw new DriveError('Google 账号响应无效，请重新同步。');
+                // 与旧 OAuth 身份 ID 分开命名，旧基线回到明确选方向的首次同步，不能按邮箱冒认同一账号。
+                return {id: `drive:${user.permissionId}`, email: 'emailAddress' in user && typeof user.emailAddress === 'string' ? user.emailAddress : ''};
+            } finally {
+                if (response?.body && !response.body.locked) await response.body.cancel().catch(() => undefined);
+            }
         })();
         return operation.catch(error => {
             if (error instanceof DriveError) throw error;
@@ -74,13 +79,16 @@ export function createDriveAuth(ports: DriveAuthPorts) {
         return {
             account: owner,
             async request(operation) {
-                try {return await operation(accessToken);} catch (error) {
+                const requestToken = accessToken;
+                try {return await operation(requestToken);} catch (error) {
                     if (!(error instanceof DriveError) || error.status !== 401) throw error;
-                    await ports.identity!.removeCachedAuthToken({token: accessToken});
-                    accessToken = await token(false);
-                    const refreshed = await account(accessToken);
+                    await ports.identity!.removeCachedAuthToken({token: requestToken});
+                    const refreshedToken = await token(false);
+                    const refreshed = await account(refreshedToken);
                     if (refreshed.id !== owner.id) throw new DriveError('Google 账号已切换，请重新生成同步预览。');
-                    return operation(accessToken);
+                    // 只有验证属于本会话账号的令牌才可成为后续请求的凭据。
+                    accessToken = refreshedToken;
+                    return operation(refreshedToken);
                 }
             },
         };

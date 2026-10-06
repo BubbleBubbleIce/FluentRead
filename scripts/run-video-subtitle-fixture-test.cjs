@@ -181,13 +181,15 @@ async function main() {
   const browserPath = arg('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge');
   const focusSafeHelper = arg('focus-safe-helper', process.env.FLUENTREAD_FOCUS_SAFE_HELPER || '');
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-edge-video-fixture-'));
+  let browserSession, providerFixtureServer; let launchAttempted = false; let primaryError;
+  try {
   assertDedicatedTemporaryProfile(profileDir);
   if (!fs.existsSync(path.join(extensionDir, 'manifest.json'))) throw new Error(`找不到扩展构建：${extensionDir}`);
   fs.mkdirSync(artifactsDir, { recursive: true });
   // 预取窗口覆盖到 20 秒，媒体本身必须足够长，才能用真实 currentTime 验证显示时间。
   const mediaFile = path.join(artifactsDir, 'fixture.mp4');
   const media = spawnSync(arg('ffmpeg', '/opt/homebrew/bin/ffmpeg'), ['-y', '-f', 'lavfi', '-i', 'color=c=black:s=16x16:r=1',
-    '-t', '30', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mediaFile], {encoding: 'utf8'});
+    '-t', '30', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mediaFile], {encoding: 'utf8', timeout: 30000, killSignal: 'SIGKILL'});
   if (media.status !== 0) throw new Error(`无法生成视频时间轴夹具：${media.stderr}`);
   const videoFixtureDataUrl = `data:video/mp4;base64,${fs.readFileSync(mediaFile).toString('base64')}`;
 
@@ -197,7 +199,8 @@ async function main() {
     launchFocusSafePersistentContext,
     newPageWithoutForeground,
   } = loadFocusSafeBrowser(focusSafeHelper);
-  const browserSession = await launchFocusSafePersistentContext({
+  launchAttempted = true;
+  browserSession = await launchFocusSafePersistentContext({
     chromium,
     profileDir,
     browserPath,
@@ -230,7 +233,7 @@ async function main() {
     'Timeline subtitle catches up.': '时间轴已追上字幕。',
     'This subtitle was translated in advance.': '预先翻译的字幕。',
   };
-  const providerFixtureServer = http.createServer(async (request, response) => {
+  providerFixtureServer = http.createServer(async (request, response) => {
     const responseHeaders = {
       'access-control-allow-origin': '*',
       'cache-control': 'no-store',
@@ -288,7 +291,6 @@ async function main() {
     response.end(JSON.stringify({ error: 'unknown fixture route' }));
   });
 
-  try {
     await new Promise((resolve, reject) => {
       providerFixtureServer.once('error', reject);
       providerFixtureServer.listen(0, '127.0.0.1', resolve);
@@ -1293,12 +1295,22 @@ async function main() {
     if (!evidence.ok) {
       throw new Error(`视频字幕浏览器回归未通过：${JSON.stringify({pageErrors, consoleErrors, unexpectedNetworkRequests})}`);
     }
-  } finally {
-    await browserSession.close();
-    if (providerFixtureServer.listening) {
-      await new Promise(resolve => providerFixtureServer.close(resolve));
+  } catch (error) {primaryError = error; throw error;} finally {
+    const cleanupErrors = [];
+    let closed = !launchAttempted;
+    if (browserSession) {
+      try {await browserSession.close(); closed = true;}
+      catch (error) {cleanupErrors.push(error);}
     }
-    fs.rmSync(profileDir, { recursive: true, force: true });
+    try {if (providerFixtureServer) await new Promise(resolve => {providerFixtureServer.close(resolve); providerFixtureServer.closeAllConnections();});}
+    catch (error) {cleanupErrors.push(error);}
+    if (closed) {try {fs.rmSync(profileDir, {recursive: true, force: true});} catch (error) {cleanupErrors.push(error);}}
+    else console.error(`Unconfirmed browser closure; retained profile: ${profileDir}`);
+    if (cleanupErrors.length) {
+      for (const error of cleanupErrors) console.error(error.stack || error);
+      process.exitCode = 1;
+      if (!primaryError) throw cleanupErrors[0];
+    }
   }
 }
 

@@ -18,10 +18,11 @@ export function streamWriting(request: WritingRequest, handlers: {
         try { port.disconnect(); } catch { /* 端口可能已经关闭。 */ }
     };
     const onMessage = (raw: unknown) => {
+        if (closed || !raw || typeof raw !== 'object') return;
         const message = raw as WritingStreamMessage;
-        if (closed || message.requestId !== request.requestId) return;
+        if (message.requestId !== request.requestId) return;
         if (message.type === 'progress') handlers.progress(message.progress);
-        else { close(); handlers.result(message.response); }
+        else if (message.type === 'result') { close(); handlers.result(message.response); }
     };
     const onDisconnect = () => {
         if (closed) return;

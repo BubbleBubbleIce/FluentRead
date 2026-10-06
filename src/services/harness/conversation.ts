@@ -97,8 +97,9 @@ export function createHarnessConversationRuntime(deps: ConversationDependencies)
             const restoredRequest: ReadingRequest = {
                 ...request, question, selection: {text, context: preferences.contextMode === 'paragraph' ? context : '', sentence: ''}, history,
             };
+            let finished = false;
             const publish = (progress: ReadingProgress) => {
-                if (signal.aborted) return;
+                if (finished || signal.aborted) return;
                 if (progress.kind === 'text') turn.answer = progress.text.slice(0, 16000);
                 if (progress.kind === 'model') { turn.service = progress.service; turn.model = progress.model; }
                 notify(progress);
@@ -107,6 +108,7 @@ export function createHarnessConversationRuntime(deps: ConversationDependencies)
             let response: ReadingResponse;
             try { response = await deps.runtime.run(restoredRequest, signal, publish, privateContext); }
             catch { response = {success: false, error: '理解请求未完成，请重试'}; }
+            finished = true;
             clearTimeout(timer);
             if (signal.aborted) response = CANCELLED;
             turn.status = response.success ? 'completed' : response.cancelled ? 'stopped' : 'error';

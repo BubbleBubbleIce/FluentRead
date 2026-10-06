@@ -132,12 +132,20 @@ function find(node, predicate) { if (!node)
         return hit;
 } return null; }
 function text(node) { return !node ? '' : node.nodeName === '#text' ? node.nodeValue || '' : cdpChildren(node).map(text).join(''); }
-async function shadowSnapshot(page) { const session = await page.context().newCDPSession(page); const { root } = await session.send('DOM.getDocument', { depth: -1, pierce: true }); const host = find(root, n => attr(n, 'id') === 'fluent-read-selection-translator-container'); return { host, text: text(host), session }; }
+const shadowSessions = new WeakMap();
+const ownedShadowSessions = new Set();
+async function shadowSnapshot(page) {
+    let session = shadowSessions.get(page);
+    if (!session) {session = await page.context().newCDPSession(page); shadowSessions.set(page, session); ownedShadowSessions.add(session);}
+    const {root} = await session.send('DOM.getDocument', {depth: -1, pierce: true});
+    const host = find(root, n => attr(n, 'id') === 'fluent-read-selection-translator-container');
+    return {host, text: text(host), session};
+}
 async function clickShadowButton(page, label) { const { host, session } = await shadowSnapshot(page); const buttons = []; const collect = node => { if (!node)
     return; if (node.nodeName?.toLowerCase() === 'button')
     buttons.push({ aria: attr(node, 'aria-label'), text: text(node).trim(), nodeId: node.nodeId }); for (const child of cdpChildren(node))
     collect(child); }; collect(host); const button = find(host, n => n.nodeName?.toLowerCase() === 'button' && (attr(n, 'aria-label') === label || text(n).trim() === label)); assert(button?.nodeId, `找不到闭合 Shadow 按钮: ${label}; buttons=${JSON.stringify(buttons)}`); const box = await session.send('DOM.getBoxModel', { nodeId: button.nodeId }); const quad = box.model?.content || box.model?.border; assert(quad?.length >= 8, `按钮没有可点击几何位置: ${label}; box=${JSON.stringify(box)}`); const x = (quad[0] + quad[2] + quad[4] + quad[6]) / 4; const y = (quad[1] + quad[3] + quad[5] + quad[7]) / 4; await session.send('DOM.focus', { nodeId: button.nodeId }).catch(() => { }); await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, button: 'none' }); await session.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }); await session.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }); return { buttons, x, y }; }
-async function fillShadowInput(page, label, value) { const { host, session } = await shadowSnapshot(page); const input = find(host, n => n.nodeName?.toLowerCase() === 'input' && attr(n, 'aria-label') === label); assert(input?.nodeId, `找不到闭合 Shadow 输入框: ${label}`); const resolved = await session.send('DOM.resolveNode', { nodeId: input.nodeId }); await session.send('Runtime.callFunctionOn', { objectId: resolved.object.objectId, functionDeclaration: `function(value) { this.focus(); const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(this, value); this.dispatchEvent(new Event('input', {bubbles: true})); }`, arguments: [{ value }] }); await session.send('Runtime.releaseObject', { objectId: resolved.object.objectId }).catch(() => { }); }
+async function fillShadowInput(page, label, value) { const { host, session } = await shadowSnapshot(page); const input = find(host, n => n.nodeName?.toLowerCase() === 'input' && attr(n, 'aria-label') === label); assert(input?.nodeId, `找不到闭合 Shadow 输入框: ${label}`); const resolved = await session.send('DOM.resolveNode', { nodeId: input.nodeId }); try {await session.send('Runtime.callFunctionOn', { objectId: resolved.object.objectId, functionDeclaration: `function(value) { this.focus(); const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(this, value); this.dispatchEvent(new Event('input', {bubbles: true})); }`, arguments: [{ value }] });} finally {await session.send('Runtime.releaseObject', {objectId: resolved.object.objectId}).catch(() => {});} }
 async function clickShadowFirstSession(page) { const { host, session } = await shadowSnapshot(page); const node = find(host, n => n.nodeName?.toLowerCase() === 'button' && attr(n, 'class').split(' ').includes('fr-reading-session')); assert(node?.nodeId, '最近会话列表没有可恢复的历史按钮'); const box = await session.send('DOM.getBoxModel', { nodeId: node.nodeId }); const quad = box.model?.content || box.model?.border; assert(quad?.length >= 8, '最近会话按钮没有可点击几何位置'); const x = (quad[0] + quad[2] + quad[4] + quad[6]) / 4; const y = (quad[1] + quad[3] + quad[5] + quad[7]) / 4; await session.send('Input.dispatchMouseEvent', {type: 'mousePressed', x, y, button: 'left', clickCount: 1}); await session.send('Input.dispatchMouseEvent', {type: 'mouseReleased', x, y, button: 'left', clickCount: 1}); }
 async function clickShadowSummary(page, label) { const {host, session} = await shadowSnapshot(page); const node = find(host, n => n.nodeName?.toLowerCase() === 'summary' && text(n).trim() === label); assert(node?.nodeId, `找不到闭合 Shadow summary: ${label}`); const box = await session.send('DOM.getBoxModel', {nodeId: node.nodeId}); const quad = box.model?.content || box.model?.border; assert(quad?.length >= 8, `summary 没有可点击几何位置: ${label}`); const x = (quad[0] + quad[2] + quad[4] + quad[6]) / 4; const y = (quad[1] + quad[3] + quad[5] + quad[7]) / 4; await session.send('Input.dispatchMouseEvent', {type: 'mousePressed', x, y, button: 'left', clickCount: 1}); await session.send('Input.dispatchMouseEvent', {type: 'mouseReleased', x, y, button: 'left', clickCount: 1}); }
 function findAll(node, predicate, out = []) { if (!node) return out; if (predicate(node)) out.push(node); for (const child of cdpChildren(node)) findAll(child, predicate, out); return out; }
@@ -152,7 +160,8 @@ async function verifyReadingTheme({page, configPage, requests, record, args, res
         const panel = find(host, node => attr(node, 'data-reading-panel') !== '' || attr(node, 'class').split(' ').includes('fr-reading'));
         assert(panel?.nodeId, '主题检查缺少阅读面板');
         const {object} = await session.send('DOM.resolveNode', {nodeId: panel.nodeId});
-        const measured = await session.send('Runtime.callFunctionOn', {
+        let measured;
+        try {measured = await session.send('Runtime.callFunctionOn', {
             objectId: object.objectId, returnByValue: true,
             functionDeclaration: `function() {
                 const surface = this.closest('.fr-translation-tooltip');
@@ -175,9 +184,7 @@ async function verifyReadingTheme({page, configPage, requests, record, args, res
                 if (input) samples.push({tag: 'placeholder', ratio: contrast(getComputedStyle(input, '::placeholder').color, background(input))});
                 return {dark: surface.classList.contains('fr-dark-theme'), samples, richElements: [...this.querySelectorAll('.fr-reading-markdown blockquote,.fr-reading-markdown code,.fr-reading-markdown th,.fr-reading-markdown td')].map(node => node.tagName)};
             }`,
-        });
-        await session.send('Runtime.releaseObject', {objectId: object.objectId});
-        await session.detach();
+        });} finally {await session.send('Runtime.releaseObject', {objectId: object.objectId});}
         const details = measured.result.value;
         assert(details?.samples?.length, `没有获取到文字对比度: ${JSON.stringify(measured)}`);
         const failures = details.samples.filter(sample => sample.ratio < 4.5);
@@ -335,7 +342,8 @@ async function verifyCardTriggers({page, configPage, requests, record, args, res
     const darkAnswer = find(darkSnapshot.host, node => attr(node, 'class').split(' ').includes('fr-reading-markdown'));
     assert(darkAnswer?.nodeId, '暗色阅读卡缺少回答');
     const resolvedAnswer = await darkSnapshot.session.send('DOM.resolveNode', {nodeId: darkAnswer.nodeId});
-    const measuredAnswer = await darkSnapshot.session.send('Runtime.callFunctionOn', {
+    let measuredAnswer;
+        try {measuredAnswer = await darkSnapshot.session.send('Runtime.callFunctionOn', {
       objectId: resolvedAnswer.object.objectId, returnByValue: true,
       functionDeclaration: `function() { const answer = this;
       const reading = answer.closest('[data-reading-panel]');
@@ -349,8 +357,7 @@ async function verifyCardTriggers({page, configPage, requests, record, args, res
       const tabs = [...reading.querySelectorAll('.fr-reading-actions button[aria-pressed]')].map(button => luminance(getComputedStyle(button).backgroundColor));
       return {contrast: (Math.max(text, background) + .05) / (Math.min(text, background) + .05), tabs};
     }`,
-    });
-    await darkSnapshot.session.send('Runtime.releaseObject', {objectId: resolvedAnswer.object.objectId});
+    });} finally {await darkSnapshot.session.send('Runtime.releaseObject', {objectId: resolvedAnswer.object.objectId});}
     const darkReadability = measuredAnswer.result.value;
     assert(darkReadability.contrast >= 4.5, `暗色阅读正文对比度不足：${JSON.stringify(darkReadability)}`);
     assert(darkReadability.tabs.every(value => value < .2), '暗色学习方式按钮仍使用浅色背景');
@@ -1350,6 +1357,8 @@ async function main() {
         process.exitCode = 1;
     }
     finally {
+        for (const session of ownedShadowSessions) {await session.detach().catch(error => {console.error(error); process.exitCode = 1;});}
+        ownedShadowSessions.clear();
         await close().catch(() => { });
         await new Promise(resolve => server.close(resolve));
         fs.rmSync(profile, { recursive: true, force: true });

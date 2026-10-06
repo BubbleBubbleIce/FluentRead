@@ -124,8 +124,12 @@ export function normalizeFloatingBallDisabledDomains(value: unknown): string[] {
 
 function isSiteInDomainList(input: string | URL, domains: unknown): boolean {
     const currentDomain = getSiteBaseDomain(input);
-    if (!currentDomain) return false;
-    return normalizeSiteDomains(domains).includes(currentDomain);
+    if (!currentDomain || !Array.isArray(domains)) return false;
+    // 匹配只需要存在性；命中后不再解析其余条目，也不建立无用途的去重名单。
+    for (const item of domains) {
+        if (typeof item === 'string' && getSiteBaseDomain(item) === currentDomain) return true;
+    }
+    return false;
 }
 
 export function isAlwaysTranslateSite(

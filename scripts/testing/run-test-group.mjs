@@ -33,14 +33,15 @@ function filesForGroup(matrix, group) {
 }
 
 function run(command, args) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const child = spawn(command, args, {
             cwd: PROJECT_ROOT,
             env: process.env,
             stdio: 'inherit',
             shell: false,
         });
-        child.on('close', (code, signal) => resolve({code, signal}));
+        child.once('error', reject);
+        child.once('close', (code, signal) => resolve({code, signal}));
     });
 }
 

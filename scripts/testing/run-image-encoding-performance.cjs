@@ -92,6 +92,8 @@ const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-encoding-')
         if (launched) {
             await launched.close();
             fs.rmSync(profileDir, { recursive: true, force: true });
+        } else {
+            try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
         }
     }
 })().catch(error => { console.error(error); process.exitCode = 1; });

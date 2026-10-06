@@ -36,6 +36,10 @@ export async function runHarnessLoop(input: HarnessLoopInput): Promise<HarnessLo
     input.signal.addEventListener('abort', relayAbort, {once: true});
     const timer = setTimeout(() => controller.abort(new Error('阅读助手请求超时')), Math.min(60_000, Math.max(1_000, input.timeoutMs ?? 40_000)));
     const signal = controller.signal;
+    let finished = false;
+    const onText = input.onText ? (text: string) => {
+        if (!finished && !signal.aborted && !input.signal.aborted) input.onText!(text);
+    } : undefined;
     const ensureActive = () => {
         if (input.signal.aborted) throw new Error('阅读助手请求已取消');
         if (signal.aborted) throw new Error('阅读助手请求超时');
@@ -63,9 +67,9 @@ export async function runHarnessLoop(input: HarnessLoopInput): Promise<HarnessLo
         const callIds = new Set<string>();
         for (let step = 0; step < maxModelCalls; step += 1) {
             ensureActive();
-            if (step > 0) input.onText?.('');
+            if (step > 0) onText?.('');
             ledger.append('step/start', {step});
-            const result = await wait(input.generate({system: input.system, messages: ledger.messagesSnapshot(), tools: input.tools, signal, onText: input.onText}));
+            const result = await wait(input.generate({system: input.system, messages: ledger.messagesSnapshot(), tools: input.tools, signal, onText}));
             ensureActive();
             if (result.assistant.role !== 'assistant') throw new Error('模型返回了无效的助手消息');
             if (toolCount + result.toolCalls.length > maxTools) throw new Error('阅读助手工具调用次数已达上限');
@@ -94,6 +98,8 @@ export async function runHarnessLoop(input: HarnessLoopInput): Promise<HarnessLo
         }
         throw new Error('模型请求次数已达上限，请缩短问题后重试');
     } finally {
+        finished = true;
+        controller.abort();
         clearTimeout(timer);
         input.signal.removeEventListener('abort', relayAbort);
     }

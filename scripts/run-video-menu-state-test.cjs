@@ -23,7 +23,7 @@ const mediaFile = path.join(artifacts, 'fixture.mp4');
 const media = spawnSync(arg('ffmpeg', '/opt/homebrew/bin/ffmpeg'), [
   '-y', '-f', 'lavfi', '-i', 'color=c=0x10283f:s=960x540:r=10',
   '-t', '10', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mediaFile,
-], {encoding: 'utf8'});
+], {encoding: 'utf8', timeout: 30000, killSignal: 'SIGKILL'});
 assert.equal(media.status, 0, media.stderr);
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-menu-state-'));
 const report = {success: false, evidence: 'Production extension; X DOM fixture; seeded AI cache; mocked translation; no live ASR', checks: [], errors: []};
@@ -505,6 +505,7 @@ async function main() {
 }
 main().catch(async error => {
   report.failure = error.stack;
+  console.error(error.stack || error);
   if (page) report.failureState = await page.evaluate(() => {
     const video = document.querySelector('video');
     return {time: video?.currentTime, duration: video?.duration, seeking: video?.seeking,
@@ -515,8 +516,13 @@ main().catch(async error => {
   if (page) await page.screenshot({path: path.join(artifacts, 'failure.png')}).catch(() => {});
   process.exitCode = 1;
 }).finally(async () => {
+  let sessionClosed = false;
+  try { if (session) { await session.close(); sessionClosed = true; } }
+  catch (error) { report.cleanupError = error.stack || String(error); process.exitCode = 1; }
+  if (sessionClosed) {
+    try { fs.rmSync(profileDir, {recursive: true, force: true}); }
+    catch (error) { report.profileCleanupError = error.stack || String(error); process.exitCode = 1; }
+  } else report.retainedProfile = profileDir;
   fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
-  await session?.close();
-  fs.rmSync(profileDir, {recursive: true, force: true});
-});
+}).catch(error => { console.error(error.stack || error); process.exitCode = 1; });

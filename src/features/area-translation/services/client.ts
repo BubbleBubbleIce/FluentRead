@@ -20,7 +20,7 @@ interface AreaTranslationResponse extends Partial<AreaTranslationResult> {
 
 export async function captureVisibleAreaInExtension(): Promise<string> {
     const response = await browser.runtime.sendMessage({ type: 'fluentReadAreaCapture' }) as { success?: boolean; image?: string; error?: string } | undefined;
-    if (!response?.success || !response.image) {
+    if (response?.success !== true || typeof response.image !== 'string' || !response.image.startsWith('data:image/')) {
         throw new Error(response?.error || '无法读取当前页面区域');
     }
     return response.image;
@@ -41,7 +41,7 @@ export async function translateCapturedAreaInExtension(
         title,
     }, options, '圈选翻译超时', 'fluentReadAreaCancel');
 
-    if (!response?.success || typeof response.image !== 'string' || !response.image
+    if (response?.success !== true || typeof response.image !== 'string' || !response.image
         || typeof response.service !== 'string' || !response.service.trim()
         || typeof response.serviceName !== 'string' || !response.serviceName.trim()
         || typeof response.model !== 'string'

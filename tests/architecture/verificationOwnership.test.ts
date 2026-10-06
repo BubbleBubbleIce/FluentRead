@@ -78,9 +78,29 @@ function listFiles(directory: string): string[] {
 }
 
 function coverageSourcePaths(): Set<string> {
-    const source = readFileSync(projectPath('vitest.coverage.config.ts'), 'utf8');
-    const paths = source.match(/['"]src\/[^'"]+\.(?:ts|vue)['"]/gu) ?? [];
-    return new Set(paths.map((path) => path.slice(1, -1)));
+    const file = projectPath('vitest.coverage.config.ts');
+    const sourceFile = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const declaration = sourceFile.statements.find(ts.isExportAssignment);
+    if (!declaration || !ts.isCallExpression(declaration.expression)
+        || !ts.isObjectLiteralExpression(declaration.expression.arguments[0])) {
+        throw new Error('Strict coverage configuration must export defineConfig with an object');
+    }
+    const property = (object: ts.ObjectLiteralExpression, name: string): ts.Expression => {
+        const entry = object.properties.find((node) => ts.isPropertyAssignment(node)
+            && (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) && node.name.text === name);
+        if (!entry || !ts.isPropertyAssignment(entry)) throw new Error(`Missing strict coverage property: ${name}`);
+        return entry.initializer;
+    };
+    const test = property(declaration.expression.arguments[0], 'test');
+    if (!ts.isObjectLiteralExpression(test)) throw new Error('Strict coverage test must be an object');
+    const coverage = property(test, 'coverage');
+    if (!ts.isObjectLiteralExpression(coverage)) throw new Error('Strict coverage settings must be an object');
+    const include = property(coverage, 'include');
+    if (!ts.isArrayLiteralExpression(include)) throw new Error('Strict coverage include must be a literal array');
+    return new Set(include.elements.map((element) => {
+        if (!ts.isStringLiteral(element)) throw new Error('Strict coverage source must be a literal path');
+        return element.text;
+    }).filter((path) => path.startsWith('src/') && /\.(?:ts|vue)$/u.test(path)));
 }
 
 function verificationOwners(path: string, strictCoverage: Set<string>): VerificationOwner[] {
@@ -336,6 +356,10 @@ describe('repository verification ownership', () => {
         expect(captureSource).not.toContain('ctx.newPage(');
     });
     const strictCoverage = coverageSourcePaths();
+    it('Vue 客户端编译白名单不冒充严格覆盖率边界', () => {
+        expect(strictCoverage.has('src/features/area-translation/ui/AreaTranslator.vue')).toBe(false);
+        expect(strictCoverage.has('src/core/harness/loop.ts')).toBe(true);
+    });
     const auditedFiles = [
         ...PRODUCT_ROOTS.flatMap(listFiles),
         ...ROOT_FILES,

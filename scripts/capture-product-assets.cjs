@@ -131,39 +131,9 @@ const server = http.createServer(async (req, res) => {
   res.end(article)
 })
 ;(async () => {
-  fs.mkdirSync(out, { recursive: true })
-  fs.writeFileSync(
-    path.join(out, english ? '../article-en.html' : '../article.html'),
-    article
-  )
-  fs.writeFileSync(
-    path.join(out, '../reading-answer-' + (english ? 'en' : 'zh-CN') + '.md'),
-    readingAnswer + '\n'
-  )
-  fs.writeFileSync(
-    path.join(
-      out,
-      english ? '../translations-en.json' : '../translations.json'
-    ),
-    JSON.stringify(Object.fromEntries(translations), null, 2) + '\n'
-  )
-  fs.writeFileSync(
-    path.join(out, '../document-' + (english ? 'en' : 'zh-CN') + '.html'),
-    documentSample
-  )
-  await new Promise((r) => server.listen(0, '127.0.0.1', r))
-  const base = `http://127.0.0.1:${server.address().port}`
-  const profile = fs.mkdtempSync(
-    path.join(os.tmpdir(), 'fluentread-product-capture-')
-  )
   let launched
+  let profile
   const report = {
-    baseCommit: require('node:child_process')
-      .execFileSync('git', ['rev-parse', 'HEAD'], {
-        cwd: root,
-        encoding: 'utf8',
-      })
-      .trim(),
     extension: 'production chrome-mv3',
     captureScale: 2,
     content:
@@ -172,6 +142,49 @@ const server = http.createServer(async (req, res) => {
     pageErrors: [],
   }
   try {
+    fs.mkdirSync(out, { recursive: true })
+    fs.writeFileSync(
+      path.join(out, english ? '../article-en.html' : '../article.html'),
+      article
+    )
+    fs.writeFileSync(
+      path.join(out, '../reading-answer-' + (english ? 'en' : 'zh-CN') + '.md'),
+      readingAnswer + '\n'
+    )
+    fs.writeFileSync(
+      path.join(
+        out,
+        english ? '../translations-en.json' : '../translations.json'
+      ),
+      JSON.stringify(Object.fromEntries(translations), null, 2) + '\n'
+    )
+    fs.writeFileSync(
+      path.join(out, '../document-' + (english ? 'en' : 'zh-CN') + '.html'),
+      documentSample
+    )
+    await new Promise((resolve, reject) => {
+      const onError = (error) => {
+        server.off('listening', onListening)
+        reject(error)
+      }
+      const onListening = () => {
+        server.off('error', onError)
+        resolve()
+      }
+      server.once('error', onError)
+      server.once('listening', onListening)
+      server.listen(0, '127.0.0.1')
+    })
+    const base = `http://127.0.0.1:${server.address().port}`
+    profile = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'fluentread-product-capture-')
+    )
+    report.baseCommit = require('node:child_process')
+      .execFileSync('git', ['rev-parse', 'HEAD'], {
+        cwd: root,
+        encoding: 'utf8',
+      })
+      .trim()
     launched = await helper.launchFocusSafePersistentContext({
       chromium,
       profileDir: profile,
@@ -496,21 +509,47 @@ const server = http.createServer(async (req, res) => {
     console.error(e)
     process.exitCode = 1
   } finally {
-    fs.writeFileSync(
-      path.join(
-        out,
-        english ? '../capture-report-en.json' : '../capture-report.json'
-      ),
-      JSON.stringify(report, null, 2) + '\n'
-    )
-    if (launched) await launched.close()
+    // 各资源独立清理；报告写盘失败不能跳过浏览器和 loopback server 的关闭。
+    let closed = !launched
+    try {
+      if (launched) await launched.close()
+      closed = true
+    } catch (e) {
+      report.cleanupError = e.stack || String(e)
+      process.exitCode = 1
+      console.error(e)
+    }
     server.closeAllConnections()
     await new Promise((r) => server.close(r))
-    fs.rmSync(profile, {
-      recursive: true,
-      force: true,
-      maxRetries: 8,
-      retryDelay: 150,
-    })
+    if (profile && closed) {
+      try {
+        fs.rmSync(profile, {
+          recursive: true,
+          force: true,
+          maxRetries: 8,
+          retryDelay: 150,
+        })
+      } catch (e) {
+        report.profileCleanupError = e.stack || String(e)
+        process.exitCode = 1
+        console.error(e)
+      }
+    } else if (profile) {
+      // close 失败时不能删除仍可能被本次浏览器使用的目录。
+      report.retainedProfile = profile
+    }
+    if (process.exitCode) report.ok = false
+    try {
+      fs.writeFileSync(
+        path.join(
+          out,
+          english ? '../capture-report-en.json' : '../capture-report.json'
+        ),
+        JSON.stringify(report, null, 2) + '\n'
+      )
+    } catch (e) {
+      console.error(e)
+      process.exitCode = 1
+    }
   }
 })()

@@ -25,10 +25,15 @@ async function inflateBundle(base64: string): Promise<UiLanguageBundle> {
 function isBundle(value: unknown): value is UiLanguageBundle {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
     const candidate = value as Partial<UiLanguageBundle>;
-    return Boolean(candidate.messages && typeof candidate.messages === 'object'
-        && candidate.legacyText && typeof candidate.legacyText === 'object'
+    return Boolean(candidate.messages && typeof candidate.messages === 'object' && !Array.isArray(candidate.messages)
+        && Object.values(candidate.messages).every((message) => typeof message === 'string')
+        && candidate.legacyText && typeof candidate.legacyText === 'object' && !Array.isArray(candidate.legacyText)
+        && Object.values(candidate.legacyText).every((message) => typeof message === 'string')
         && Array.isArray(candidate.legacyPatterns?.early)
-        && Array.isArray(candidate.legacyPatterns?.late));
+        && Array.isArray(candidate.legacyPatterns?.late)
+        && [...candidate.legacyPatterns.early, ...candidate.legacyPatterns.late].every((entry) => Array.isArray(entry)
+            && typeof entry[0] === 'string' && typeof entry[1] === 'string'
+            && (entry[2] === undefined || (Array.isArray(entry[2]) && entry[2].every(Number.isSafeInteger)))));
 }
 
 async function fetchRemoteBundle(fileName: string): Promise<UiLanguageBundle> {

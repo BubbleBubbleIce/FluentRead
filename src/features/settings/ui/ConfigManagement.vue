@@ -1,7 +1,7 @@
 <!--
 @file src/features/settings/ui/ConfigManagement.vue
 文件职责：提供备份与恢复页面的配置云备份、完整数据备份和设置历史。
-主要内容：按页内分类切换完整备份入口与设置历史；列表每行只保留版本、一句概要和时间——单项修改给出“改前 → 改后”，多项修改只给数量，自动快照只给时间和与当前的差异数——具体修改在详情里区分当时的修改和恢复时的差异，并保留动态服务名称、多语言与安全恢复。
+主要内容：按页内分类切换完整备份入口与设置历史；列表每行只保留版本、一句概要和时间——单项修改给出“改前 → 改后”，多项修改只给数量，自动快照只给时间和与当前的差异数——具体修改在详情里区分当时的修改和恢复时的差异，并保留动态服务名称、多语言与安全恢复。恢复确认及回包保持页面和预览目标归属。
 模块边界：本组件拥有设置历史的预览与恢复；本机备份与导入由 LocalDataManagement 编排，配置云备份由独立 CloudConfigBackup 组件及后台服务负责。
 -->
 <template>
@@ -188,7 +188,9 @@ void configHistoryReady.then(() => { configHistory.value = getConfigHistorySnaps
 void configAutoBackupsReady.then(() => { configBackups.value = getConfigAutoBackupsSnapshot(); });
 const unsubscribeHistory = subscribeConfigHistory((history) => { configHistory.value = history; });
 const unsubscribeBackups = subscribeConfigAutoBackups((backups) => { configBackups.value = backups; });
+let active = true;
 onUnmounted(() => {
+  active = false;
   unsubscribeHistory();
   unsubscribeBackups();
 });
@@ -296,37 +298,40 @@ function openBackupPreview(entry: ConfigAutoBackupEntry) {
 
 function clearPreview() {
   previewTarget.value = null;
-  applyBusy.value = false;
 }
 
 async function applyPreviewTarget() {
   const target = previewTarget.value;
-  if (!target || previewChangeCount.value === 0 || applyBusy.value) return;
-  try {
-    await ElMessageBox.confirm(
-      `将恢复 ${target.label}，并生成一份新的最近修改记录。是否继续？`,
-      '确认恢复设置',
-      {confirmButtonText: '恢复', cancelButtonText: '取消', type: 'warning'},
-    );
-  } catch {
-    return;
-  }
-
+  if (!active || !target || previewChangeCount.value === 0 || applyBusy.value) return;
   applyBusy.value = true;
   try {
+    try {
+      await ElMessageBox.confirm(
+        `将恢复 ${target.label}，并生成一份新的最近修改记录。是否继续？`,
+        '确认恢复设置',
+        {confirmButtonText: '恢复', cancelButtonText: '取消', type: 'warning'},
+      );
+    } catch {
+      return;
+    }
+    // 确认期间可能已关闭预览或卸载页面，旧目标不能再发出恢复请求。
+    if (!active || !previewVisible.value || previewTarget.value !== target) return;
     if (target.kind === 'history') {
-      configHistory.value = await requestConfigHistoryAction('restore', target.version, sendRuntimeMessage);
+      const history = await requestConfigHistoryAction('restore', target.version, sendRuntimeMessage);
+      if (!active || !previewVisible.value || previewTarget.value !== target) return;
+      configHistory.value = history;
     } else if (target.kind === 'backup') {
       const result = await requestConfigAutoBackupRestore(target.version!, sendRuntimeMessage);
+      if (!active || !previewVisible.value || previewTarget.value !== target) return;
       configBackups.value = result.backups;
       configHistory.value = result.history;
     }
     previewVisible.value = false;
     ElMessage.success('设置已恢复');
   } catch (error) {
-    ElMessage.error(`恢复失败：${error instanceof Error ? error.message : '请稍后重试'}`);
+    if (active && previewVisible.value && previewTarget.value === target) ElMessage.error(`恢复失败：${error instanceof Error ? error.message : '请稍后重试'}`);
   } finally {
-    applyBusy.value = false;
+    if (active) applyBusy.value = false;
   }
 }
 </script>

@@ -117,6 +117,7 @@ export function createLocalTranslationDownloadManager(dependencies: LocalTransla
                         void persist().catch(() => controller.abort());
                     }
                 });
+                if (controller.signal.aborted) throw new DOMException('Paused', 'AbortError');
             }
             update(model, {phase: 'ready', downloadedBytes: states.get(model)!.totalBytes, bytesPerSecond: 0});
         } catch (error) {
@@ -189,8 +190,9 @@ export function createLocalTranslationDownloadManager(dependencies: LocalTransla
             const job = jobs.get(model);
             job?.controller.abort();
             update(model, {phase: 'removing', bytesPerSecond: 0});
-            await persist();
             try {
+                // 状态写入也是删除操作的一部分；写入失败仍须释放互斥并允许重试。
+                await persist();
                 if (job?.started) await job.done;
                 else if (job) jobs.delete(model);
                 dependencies.beforeRemove?.(model);

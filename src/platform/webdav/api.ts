@@ -40,7 +40,9 @@ export function createWebDavApi(fetcher: typeof fetch, options: {timeoutMs?: num
                 if (size > limit) throw new WebDavError('tooLarge');
                 chunks.push(part.value);
             }
-        } finally {await reader.cancel();}
+        } finally {
+            try {await reader.cancel().catch(() => undefined);} finally {reader.releaseLock();}
+        }
         const bytes = new Uint8Array(size);
         let offset = 0;
         for (const chunk of chunks) {bytes.set(chunk, offset); offset += chunk.length;}
@@ -51,12 +53,15 @@ export function createWebDavApi(fetcher: typeof fetch, options: {timeoutMs?: num
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 30_000);
             return (async () => {
+                let response: Response | undefined;
                 try {
-                    const response = await fetcher(url, {...init, headers: {...init.headers, Authorization: authorization}, signal: controller.signal, redirect: 'error', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer'});
+                    response = await fetcher(url, {...init, headers: {...init.headers, Authorization: authorization}, signal: controller.signal, redirect: 'error', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer'});
                     return await consume(response);
                 } catch (error) {
                     if (error instanceof WebDavError) throw error;
                     throw new WebDavError(controller.signal.aborted ? 'timeout' : 'network');
+                } finally {
+                    if (response?.body && !response.body.locked) await response.body.cancel().catch(() => undefined);
                 }
             })().finally(() => clearTimeout(timer));
         });

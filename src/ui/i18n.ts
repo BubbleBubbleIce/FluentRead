@@ -5,7 +5,7 @@
  * 订阅共享配置、即时切换语言和安全迁移尚未 key 化的旧文案。
  * 主要内容：提供 createUiI18nPlugin、useUiI18n 和 v-ui-i18n 指令；语言切换时按需加载资源包，
  * 选择以调用身份串行提交字段补丁，旧资源、旧失败和已销毁 runtime 不得回写新选择；资源到达后通过 bundleRevision 刷新渲染与旧文案扫描；源语言界面跳过无效全树扫描，切回源语言时仍恢复旧文案。指令只扫描
- * 显式标记的扩展 UI 根节点，跳过代码、文本编辑器和用户内容，避免把网页正文
+ * 显式标记的扩展 UI 根节点，插件在正常卸载或构建失败时释放订阅、watch、observer 和延迟扫描；跳过代码、文本编辑器和用户内容，避免把网页正文
  * 或翻译结果误当成扩展文案。
  * 模块边界：这里负责 Vue 响应式和配置 patch，不定义语言文案；文案资源与纯
  * fallback 规则在 src/core/i18n，配置持久化仍由 services/config/store 负责。
@@ -364,11 +364,29 @@ function scanUiRoot(root: HTMLElement, context: UiI18nContext, state: UiI18nDire
     }
 }
 
-function createUiI18nDirective(context: UiI18nContext): Directive<HTMLElement> {
-    const states = new WeakMap<HTMLElement, UiI18nDirectiveState>();
+function disposeUiState(state: UiI18nDirectiveState): void {
+    if (state.disposed) return;
+    state.disposed = true;
+    try {
+        state.stopLanguageWatch();
+    } finally {
+        try {
+            if (state.refreshTimer !== undefined) clearTimeout(state.refreshTimer);
+            state.refreshTimer = undefined;
+        } finally {
+            state.observer.disconnect();
+        }
+    }
+}
+
+function createUiI18nDirective(context: UiI18nContext): Directive<HTMLElement> & {dispose(): void} {
+    // 部分 render 失败时 Vue 尚未拥有可卸载的根节点；插件仍须释放已经创建的指令资源。
+    const states = new Map<HTMLElement, UiI18nDirectiveState>();
+    let disposed = false;
 
     return {
         mounted(root) {
+            if (disposed) return;
             const state = {} as UiI18nDirectiveState;
             state.context = context;
             state.observer = new MutationObserver((records) => {
@@ -385,8 +403,14 @@ function createUiI18nDirective(context: UiI18nContext): Directive<HTMLElement> {
                 state.refresh();
             }, {flush: 'post'});
             states.set(root, state);
-            observeUiRoot(root, state.observer);
-            state.refresh();
+            try {
+                observeUiRoot(root, state.observer);
+                state.refresh();
+            } catch (error) {
+                states.delete(root);
+                try { disposeUiState(state); } catch { /* 保留初始化错误。 */ }
+                throw error;
+            }
         },
         updated(root) {
             const state = states.get(root);
@@ -395,11 +419,22 @@ function createUiI18nDirective(context: UiI18nContext): Directive<HTMLElement> {
         beforeUnmount(root) {
             const state = states.get(root);
             if (!state) return;
-            state.disposed = true;
-            state.stopLanguageWatch();
-            if (state.refreshTimer !== undefined) clearTimeout(state.refreshTimer);
-            state.observer.disconnect();
             states.delete(root);
+            disposeUiState(state);
+        },
+        dispose() {
+            if (disposed) return;
+            disposed = true;
+            const owned = Array.from(states.values());
+            states.clear();
+            let firstError: unknown;
+            let failed = false;
+            for (const state of owned) {
+                try { disposeUiState(state); } catch (error) {
+                    if (!failed) { failed = true; firstError = error; }
+                }
+            }
+            if (failed) throw firstError;
         },
     };
 }
@@ -420,14 +455,14 @@ function observeUiDocument(root: HTMLElement, context: UiI18nContext): () => voi
     state.attributes = new WeakMap();
     state.refresh = refresh;
     state.stopLanguageWatch = watch([context.language, context.bundleRevision], refresh, {flush: 'post'});
-    observeUiRoot(root, state.observer);
-    refresh();
-    return () => {
-        state.disposed = true;
-        state.stopLanguageWatch();
-        if (state.refreshTimer !== undefined) clearTimeout(state.refreshTimer);
-        state.observer.disconnect();
-    };
+    try {
+        observeUiRoot(root, state.observer);
+        refresh();
+    } catch (error) {
+        try { disposeUiState(state); } catch { /* 保留初始化错误。 */ }
+        throw error;
+    }
+    return () => disposeUiState(state);
 }
 
 let fallbackContext: UiI18nContext | null = null;
@@ -450,9 +485,30 @@ export function createUiI18nPlugin(options: UiI18nPluginOptions = {}): Plugin {
     return {
         install(app: App) {
             const context = createUiI18nContext();
-            const stopDocumentObserver = options.documentRoot
-                ? observeUiDocument(options.documentRoot, context)
-                : () => undefined;
+            const directive = createUiI18nDirective(context);
+            const cleanup = [() => context.dispose(), () => directive.dispose()];
+            let disposed = false;
+            const dispose = (): void => {
+                if (disposed) return;
+                disposed = true;
+                let firstError: unknown;
+                let failed = false;
+                for (const stop of cleanup) {
+                    try { stop(); } catch (error) {
+                        if (!failed) { failed = true; firstError = error; }
+                    }
+                }
+                cleanup.length = 0;
+                if (failed) throw firstError;
+            };
+            // Vue 的原生 unmount 在 mount 成功前不运行组件或 app 清理 hook。
+            // 插件拥有的订阅和 observer 在入口先释放；根 mixin 共用同一个幂等清理。
+            if (typeof app.unmount === 'function') {
+                const unmount = app.unmount.bind(app);
+                app.unmount = () => {
+                    try { dispose(); } finally { unmount(); }
+                };
+            }
             const updateDocumentMetadata = (): void => {
                 if (!options.documentRoot) return;
                 document.documentElement.lang = context.language.value;
@@ -460,19 +516,22 @@ export function createUiI18nPlugin(options: UiI18nPluginOptions = {}): Plugin {
                     document.title = context.t(options.documentTitleKey);
                 }
             };
-            updateDocumentMetadata();
-            const stopMetadataWatch = watch([context.language, context.bundleRevision], updateDocumentMetadata, {flush: 'post'});
-            app.provide(UI_I18N_KEY, context);
-            app.config.globalProperties.$fluentT = context.t;
-            app.directive('ui-i18n', createUiI18nDirective(context));
-            app.mixin({
-                beforeUnmount() {
-                    if (this.$root !== this) return;
-                    stopMetadataWatch();
-                    stopDocumentObserver();
-                    context.dispose();
-                },
-            });
+            try {
+                if (options.documentRoot) cleanup.push(observeUiDocument(options.documentRoot, context));
+                updateDocumentMetadata();
+                cleanup.push(watch([context.language, context.bundleRevision], updateDocumentMetadata, {flush: 'post'}));
+                app.provide(UI_I18N_KEY, context);
+                app.config.globalProperties.$fluentT = context.t;
+                app.directive('ui-i18n', directive);
+                app.mixin({
+                    beforeUnmount() {
+                        if (this.$root === this) dispose();
+                    },
+                });
+            } catch (error) {
+                try { dispose(); } catch { /* 保留插件安装错误。 */ }
+                throw error;
+            }
         },
     };
 }

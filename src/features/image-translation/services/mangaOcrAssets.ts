@@ -1,7 +1,7 @@
 /**
  * @file src/features/image-translation/services/mangaOcrAssets.ts
  * 文件职责：按固定上游版本加载并缓存本地漫画识别模型，不上传漫画图片。
- * 主要内容：固定模型版本、尺寸和 SHA-256，流式显示下载进度，断流或损坏时切换已登记的备用来源；缓存已完成文件，保留来源偏好，支持校验后导入离线模型、读取状态与清除。
+ * 主要内容：固定模型版本、尺寸和 SHA-256，流式显示当前下载操作的进度，断流或损坏时切换已登记的备用来源；缓存已完成文件，保留来源偏好，支持校验后导入离线模型、读取状态与清除；删除会话期间暂缓新推理任务入队，普通识别与修补仍各自并行排队。
  * 模块边界：只处理模型数据文件，不加载远程代码、不执行 OCR、不读取用户配置；仅下载 Apache-2.0 模型数据；镜像与离线文件必须通过相同完整性校验，来源偏好不包含用户凭据。
  */
 import {modelDownloadSources} from '@/src/platform/http/modelDownloads';
@@ -31,6 +31,23 @@ export interface MangaDownloadState {phase:'downloading'|'verifying'|'error'|'pa
 const PREFERENCES_CACHE = 'fluent-read-manga-settings-v1';
 const PREFERENCE_URL = 'https://fluent-read.invalid/manga-model-source';
 let download: MangaDownloadState | undefined;
+let downloadOwner: number | undefined;
+let nextDownloadRequest = 0, latestDownloadRequest = 0;
+let removal: Promise<void> | undefined;
+
+/** 删除只阻止新任务入队，已入队的工作仍由各自运行时完成，不中止其他调用方。 */
+export function withMangaModelAdmission<T>(operation: () => Promise<T>): Promise<T> {
+    // 等待恢复的微任务运行前可能已开始下一次删除，入队时必须重新检查当前边界。
+    return removal ? removal.catch(() => undefined).then(() => withMangaModelAdmission(operation)) : operation();
+}
+
+/** 同一模块实例的两个会话队列共用删除边界；失败也须开放后续任务，重复删除复用当前操作。 */
+export function withMangaModelRemoval(operation: () => Promise<void>): Promise<void> {
+    if (removal) return removal;
+    const pending = Promise.resolve().then(operation).finally(() => {if (removal === pending) removal = undefined;});
+    removal = pending;
+    return pending;
+}
 export async function getMangaModelSource():Promise<MangaModelSource> {
     const value=await (await (await caches.open(PREFERENCES_CACHE)).match(PREFERENCE_URL))?.text();
     return value==='official'||value==='mirror'?value:'auto';
@@ -40,7 +57,9 @@ export async function setMangaModelSource(source:MangaModelSource):Promise<void>
     await (await caches.open(PREFERENCES_CACHE)).put(PREFERENCE_URL,new Response(source));
 }
 
-async function downloadAsset(url:string,asset:{bytes:number;sha256:string},signal?:AbortSignal,onProgress?:(bytes:number)=>void):Promise<ArrayBuffer> {
+async function downloadAsset(url:string,asset:{bytes:number;sha256:string},owner:number,signal?:AbortSignal,onProgress?:(bytes:number)=>void):Promise<ArrayBuffer> {
+    // 同一公开加载请求的多个文件和备用来源共享身份，旧请求进入下一文件也不能夺回新请求的快照。
+    if (owner > latestDownloadRequest) {latestDownloadRequest = owner;downloadOwner = owner;}
     const preference=await getMangaModelSource();
     const sources=modelDownloadSources(url,preference);
     let failure:unknown;
@@ -49,7 +68,8 @@ async function downloadAsset(url:string,asset:{bytes:number;sha256:string},signa
         const controller=new AbortController();let timeout:ReturnType<typeof setTimeout>;
         const abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
         const arm=()=>{clearTimeout(timeout);timeout=setTimeout(abort,20_000);};
-        const state:MangaDownloadState={phase:'downloading',file:url.split('/').pop()!,loaded:0,total:asset.bytes,source:new URL(source).host};download=state;
+        const state:MangaDownloadState={phase:'downloading',file:url.split('/').pop()!,loaded:0,total:asset.bytes,source:new URL(source).host};
+        if (downloadOwner === owner) download = state;
         try {
             arm();const response=await fetch(source,{signal:controller.signal,credentials:'omit',referrerPolicy:'no-referrer'});
             if(!response.ok)throw new Error(`漫画模型下载失败 (${response.status})`);
@@ -66,22 +86,28 @@ async function downloadAsset(url:string,asset:{bytes:number;sha256:string},signa
                 } finally {void reader.cancel().catch(()=>undefined);reader.releaseLock();}
             }else buffer=await response.arrayBuffer();
             clearTimeout(timeout!);assertMangaOcrActive(signal);state.phase='verifying';
-            const verified=await verifiedArrayBuffer(buffer,asset);assertMangaOcrActive(signal);download=undefined;return verified;
+            const verified=await verifiedArrayBuffer(buffer,asset);assertMangaOcrActive(signal);
+            // 成功的单个文件不撤销同一请求后续文件的发布资格；删除或更新请求才撤销资格。
+            if (downloadOwner === owner) download=undefined;
+            return verified;
         }catch(error){failure=error;if(signal?.aborted){state.phase='paused';assertMangaOcrActive(signal);}}
         finally{clearTimeout(timeout!);controller.abort();signal?.removeEventListener('abort',abort);}
     }
-    download!.phase='error';
+    if (downloadOwner === owner && download) download.phase='error';
     throw new Error('漫画模型下载未完成，请切换下载来源或导入模型后重试',{cause:failure});
 }
 
 /** 文件名、尺寸、哈希都匹配后才写入，浏览器选择的文件从不上传。 */
 export async function importMangaModel(file:File):Promise<void> {
+    const snapshot = download, owner = downloadOwner;
     const asset=MANGA_OCR_ASSETS.find(asset=>asset.path.split('/').pop()===file.name);
     const metadata=asset??(file.name==='lama-manga-dynamic.onnx'?MANGA_INPAINT_ASSET:undefined);
     if(!metadata||file.size!==metadata.bytes)throw new Error('请选择配套的漫画模型文件');
     const buffer=await verifiedArrayBuffer(await file.arrayBuffer(),metadata);
     await (await caches.open(MANGA_OCR_CACHE)).put(asset?ROOT+asset.path:MANGA_INPAINT_ASSET.url,new Response(buffer));
-    download=undefined;
+    if (download === snapshot && downloadOwner === owner && snapshot?.file === file.name && ['paused','error'].includes(snapshot.phase)) {
+        download=undefined;downloadOwner=undefined;
+    }
 }
 
 async function verifiedBuffer(response: Response, asset: {bytes: number; sha256: string}): Promise<ArrayBuffer> {
@@ -99,19 +125,21 @@ async function verifiedArrayBuffer(buffer:ArrayBuffer,asset:{bytes:number;sha256
 
 export async function loadMangaInpaintAsset(signal?: AbortSignal,onProgress?:(bytes:number)=>void): Promise<ArrayBuffer> {
     assertMangaOcrActive(signal);
+    const owner = ++nextDownloadRequest;
     const cache = await caches.open(MANGA_OCR_CACHE), asset = MANGA_INPAINT_ASSET;
     const cached = await cache.match(asset.url);
     if (cached) {
         try {const buffer = await verifiedBuffer(cached, asset); assertMangaOcrActive(signal); return buffer;}
         catch (error) {assertMangaOcrActive(signal); await cache.delete(asset.url);}
     }
-    const buffer = await downloadAsset(asset.url,asset,signal,onProgress);
+    const buffer = await downloadAsset(asset.url,asset,owner,signal,onProgress);
     assertMangaOcrActive(signal); await cache.put(asset.url, new Response(buffer));
     return buffer;
 }
 
 export async function loadMangaOcrAssets(signal?: AbortSignal, onProgress?: (percent: number) => void) {
     assertMangaOcrActive(signal);
+    const owner = ++nextDownloadRequest;
     const cache = await caches.open(MANGA_OCR_CACHE);
     const model: Record<string, ArrayBuffer> = {};
     let completed = 0;
@@ -128,7 +156,7 @@ export async function loadMangaOcrAssets(signal?: AbortSignal, onProgress?: (per
         }
         assertMangaOcrActive(signal);
         if (!buffer) {
-            buffer = await downloadAsset(url,asset,signal,bytes=>report(Math.min(99,Math.floor((completed+bytes)*100/MANGA_OCR_MODEL_BYTES))));
+            buffer = await downloadAsset(url,asset,owner,signal,bytes=>report(Math.min(99,Math.floor((completed+bytes)*100/MANGA_OCR_MODEL_BYTES))));
             assertMangaOcrActive(signal);
             await cache.put(url, new Response(buffer));
         }
@@ -147,9 +175,13 @@ export async function mangaOcrModelStatus(): Promise<{ready: boolean; bytes: num
     // 设置页的离线导入与 Offscreen 属于不同模块实例，共享缓存后解除旧的暂停/失败提示。
     if (download && ['paused','error'].includes(download.phase)) {
         const index = MANGA_OCR_ASSETS.findIndex(asset => asset.path.endsWith('/' + download!.file));
-        if (index >= 0 ? !!responses[index] : download.file === 'lama-manga-dynamic.onnx' && inpaintingReady) download = undefined;
+        if (index >= 0 ? !!responses[index] : download.file === 'lama-manga-dynamic.onnx' && inpaintingReady) {download = undefined;downloadOwner = undefined;}
     }
     return {ready: bytes === MANGA_OCR_MODEL_BYTES, bytes: bytes + (inpaintingReady ? MANGA_INPAINT_ASSET.bytes : 0), inpaintingReady,source:await getMangaModelSource(),...(download?{download:{...download}}:{})};
 }
 
-export async function removeMangaOcrAssets(): Promise<void> { await caches.delete(MANGA_OCR_CACHE);download=undefined; }
+export async function removeMangaOcrAssets(): Promise<void> {
+    const owner = downloadOwner;
+    await caches.delete(MANGA_OCR_CACHE);
+    if (downloadOwner === owner) {download=undefined;downloadOwner=undefined;}
+}

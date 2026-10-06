@@ -7,7 +7,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const {createRequire} = require('node:module');
 const {createHash} = require('node:crypto');
-const {execFileSync} = require('node:child_process');
+const {execFileSync, spawn} = require('node:child_process');
 function arg(name, fallback) {const i = process.argv.indexOf(`--${name}`); return i < 0 ? fallback : process.argv[i + 1];}
 const root = path.resolve(__dirname, '../..');
 const source = path.resolve(arg('extension-dir', path.join(root, '.output/chrome-mv3')));
@@ -17,32 +17,68 @@ const installWithCdp = arg('extension-install', 'flags') === 'cdp';
 const {chromium} = require(path.join(arg('playwright-root', '/Users/thinkstu/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules'), 'playwright'));
 const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(arg('focus-safe-helper', '/Users/thinkstu/.codex/skills/fluentread-browser-translation-test/scripts/focus-safe-browser.cjs'));
 const {measureBrowser} = require('./local-model-browser-helpers.cjs');
-const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-audio-gpu-extension-'));
-const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-audio-gpu-profile-'));
-fs.mkdirSync(artifacts, {recursive: true});
-fs.cpSync(source, fixture, {recursive: true});
-if (process.argv.includes('--cross-origin-isolated')) {
-  const manifestPath = path.join(fixture, 'manifest.json');
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  manifest.cross_origin_embedder_policy = {value: 'require-corp'};
-  manifest.cross_origin_opener_policy = {value: 'same-origin'};
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+const nativeTimeoutMs = Number(arg('native-timeout-ms', '30000'));
+assert.ok(Number.isSafeInteger(nativeTimeoutMs) && nativeTimeoutMs > 0, 'native-timeout-ms must be a positive integer');
+let fixture, profile;
+async function runNative(command, args) {
+  await new Promise((resolve, reject) => {
+    let failure, stopReason, force;
+    const child = spawn(command, args, {stdio: 'inherit', detached: process.platform !== 'win32'});
+    const signal = value => {
+      if (!child.pid) return;
+      try {process.kill(process.platform === 'win32' ? child.pid : -child.pid, value);} catch { /* Already exited. */ }
+    };
+    const stop = (reason) => {
+      if (stopReason) return;
+      stopReason = reason;
+      signal('SIGTERM');
+      force = setTimeout(() => signal('SIGKILL'), 5000);
+    };
+    const onInterrupt = () => stop('interrupted');
+    const timer = setTimeout(() => stop('timed out'), nativeTimeoutMs);
+    process.once('SIGTERM', onInterrupt);
+    process.once('SIGINT', onInterrupt);
+    child.once('error', error => {failure = error;});
+    child.once('close', (code, exitSignal) => {
+      clearTimeout(timer); clearTimeout(force);
+      process.off('SIGTERM', onInterrupt); process.off('SIGINT', onInterrupt);
+      if (failure) reject(failure);
+      else if (stopReason) reject(new Error(`${command} ${stopReason}${stopReason === 'timed out' ? ` after ${nativeTimeoutMs}ms` : ''}`));
+      else if (code !== 0) reject(new Error(`${command} failed: ${exitSignal || code}`));
+      else resolve();
+    });
+  });
 }
-execFileSync('/usr/bin/say', ['-v', 'Samantha', '-o', path.join(fixture, 'speech.aiff'), 'Hello world. This is a local speech test.']);
-execFileSync('/usr/bin/afconvert', ['-f', 'WAVE', '-d', 'LEI16', path.join(fixture, 'speech.aiff'), path.join(fixture, 'speech.wav')]);
-fs.writeFileSync(path.join(fixture, 'audio-probe.html'), '<!doctype html><meta charset="utf-8"><title>本地音频 GPU 验证</title><h1>本地音频 GPU 验证</h1><pre id="result">正在下载并验证模型…</pre>');
 const report = {source, cases: [], errors: [], injectedFaultErrors: [], workerSha256: {}, evidence: 'Real production Kokoro FP32 and Whisper Tiny q4/q8 workers; controlled synthesized speech, plus explicitly injected GPU initialization/device-loss or q4 initialization faults. Does not cover live website audio capture.'};
-for (const worker of ['localTtsWorker', 'videoTranscriptionWorker']) {
-  report.workerSha256[worker] = createHash('sha256').update(fs.readFileSync(path.join(source, `${worker}.js`))).digest('hex');
-  for (const fault of ['unavailable', 'init-failure', 'device-loss', 'q4-failure', 'thread-failure']) {
-    if (fault === 'q4-failure') {
-      if (worker !== 'videoTranscriptionWorker') continue;
-      const code = fs.readFileSync(path.join(source, `${worker}.js`), 'utf8');
-      const q4Call = /return await [A-Za-z_$][\w$]*\(["']q4["']\)/g;
-      assert.equal([...code.matchAll(q4Call)].length, 1, 'Only the CPU q4 initialization call may be fault injected');
-      fs.writeFileSync(path.join(fixture, `${worker}-q4-failure.js`), code.replace(q4Call, 'throw new Error("Injected q4 initialization failure")'));
+
+(async () => {
+  let session;
+  try {
+    fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-audio-gpu-extension-'));
+    profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-audio-gpu-profile-'));
+    fs.mkdirSync(artifacts, {recursive: true});
+    fs.cpSync(source, fixture, {recursive: true});
+    if (process.argv.includes('--cross-origin-isolated')) {
+      const manifestPath = path.join(fixture, 'manifest.json');
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      manifest.cross_origin_embedder_policy = {value: 'require-corp'};
+      manifest.cross_origin_opener_policy = {value: 'same-origin'};
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest));
     }
-    fs.writeFileSync(path.join(fixture, `${worker}-${fault}.mjs`), `
+    await runNative('/usr/bin/say', ['-v', 'Samantha', '-o', path.join(fixture, 'speech.aiff'), 'Hello world. This is a local speech test.']);
+    await runNative('/usr/bin/afconvert', ['-f', 'WAVE', '-d', 'LEI16', path.join(fixture, 'speech.aiff'), path.join(fixture, 'speech.wav')]);
+    fs.writeFileSync(path.join(fixture, 'audio-probe.html'), '<!doctype html><meta charset="utf-8"><title>本地音频 GPU 验证</title><h1>本地音频 GPU 验证</h1><pre id="result">正在下载并验证模型…</pre>');
+    for (const worker of ['localTtsWorker', 'videoTranscriptionWorker']) {
+      report.workerSha256[worker] = createHash('sha256').update(fs.readFileSync(path.join(source, `${worker}.js`))).digest('hex');
+      for (const fault of ['unavailable', 'init-failure', 'device-loss', 'q4-failure', 'thread-failure']) {
+        if (fault === 'q4-failure') {
+          if (worker !== 'videoTranscriptionWorker') continue;
+          const code = fs.readFileSync(path.join(source, `${worker}.js`), 'utf8');
+          const q4Call = /return await [A-Za-z_$][\w$]*\(["']q4["']\)/g;
+          assert.equal([...code.matchAll(q4Call)].length, 1, 'Only the CPU q4 initialization call may be fault injected');
+          fs.writeFileSync(path.join(fixture, `${worker}-q4-failure.js`), code.replace(q4Call, 'throw new Error("Injected q4 initialization failure")'));
+        }
+        fs.writeFileSync(path.join(fixture, `${worker}-${fault}.mjs`), `
 const queuedMessages = [];
 const queueEarlyMessage = event => queuedMessages.push(event);
 self.addEventListener('message', queueEarlyMessage);
@@ -82,12 +118,8 @@ await import('./${worker}${fault === 'q4-failure' ? '-q4-failure' : ''}.js');
 self.removeEventListener('message', queueEarlyMessage);
 for (const event of queuedMessages) self.onmessage?.(event);
 self.postMessage({probeReady: true});`);
-  }
-}
-
-(async () => {
-  let session;
-  try {
+      }
+    }
     await createRequire(require.resolve('vite'))('esbuild').build({stdin: {contents: `export {createSelectionTtsPlayer} from './src/app/offscreen/ttsPlayback'; export {cacheLocalTtsModelFiles} from './src/features/local-tts/offscreen/modelCache'; export {cacheVideoAiQ4ModelFiles} from './src/features/video-subtitle/offscreen/modelCache'; export {prepareLocalVideoTranscriptionModel, transcribeLocalVideoAudio, cancelLocalVideoTranscription} from './src/features/video-subtitle/offscreen/transcription';`, resolveDir: root}, alias: {'@': root}, bundle: true, platform: 'browser', format: 'esm', outfile: path.join(fixture, 'audio-cache.mjs')});
     session = await launchFocusSafePersistentContext({chromium, profileDir: profile,
       browserPath: arg('browser-path', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'), headless: false, background: true,
@@ -270,9 +302,18 @@ self.postMessage({probeReady: true});`);
     console.log(JSON.stringify({ok:report.ok, cases:report.cases.map(c=>({name:c.name, elapsedMs:c.elapsedMs, error:c.error, result:c.result}))}));
   } catch(error) {report.ok=false; report.failure=error.stack; console.error(error); process.exitCode=1;}
   finally {
-    fs.writeFileSync(path.join(artifacts,'report.json'),JSON.stringify(report,null,2));
-    if(session)await session.close();
-    fs.rmSync(profile,{recursive:true,force:true});
-    fs.rmSync(fixture,{recursive:true,force:true});
+    try {
+      fs.writeFileSync(path.join(artifacts,'report.json'),JSON.stringify(report,null,2));
+    } finally {
+      let safeToRemoveFixture = false;
+      if (session) {
+        await session.close();
+        if (profile) fs.rmSync(profile,{recursive:true,force:true});
+        safeToRemoveFixture = true;
+      } else if (profile) {
+        try {fs.rmdirSync(profile); safeToRemoveFixture = true;} catch { /* Retain a possibly active partial launch. */ }
+      } else safeToRemoveFixture = true;
+      if (fixture && safeToRemoveFixture) fs.rmSync(fixture,{recursive:true,force:true});
+    }
   }
 })();

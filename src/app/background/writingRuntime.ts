@@ -14,6 +14,8 @@ import {createWritingRuntime} from '@/src/services/writing/runtime';
 import {createLearningMemoryRecall} from '@/src/services/harness/memoryRecall';
 import {learningMemoryRepository} from '@/src/platform/storage/learningMemoryRepository';
 import {modelUsageRepository} from '@/src/platform/storage/modelUsageRepository';
+import {resolveWritingReadiness} from '@/src/core/config/writingReadiness';
+import {getHarnessModelInputKey} from '@/src/services/harness/modelGateway';
 
 export function installWritingBackgroundRuntime(): () => void {
     const handler = createWritingHandler({
@@ -33,7 +35,12 @@ export function installWritingBackgroundRuntime(): () => void {
         },
     });
     browser.runtime.onConnect.addListener(port => handler.connect(port));
-    const configurationKey = (next: Config) => JSON.stringify([next.on, next.harness.memoryEnabled, {...next.writing, referenceLanguage: undefined}, next.disabledExtensionDomains, next.service, next.model, next.customModel, next.proxy, next.token, next.customOpenAIProviders]);
+    const configurationKey = (next: Config) => {
+        const {service, model} = resolveWritingReadiness(next, false);
+        return JSON.stringify([next.on, next.to, next.harness.memoryEnabled,
+            {...next.writing, service: undefined, model: undefined, referenceLanguage: undefined}, next.disabledExtensionDomains,
+            getHarnessModelInputKey(next, service, model)]);
+    };
     let previous = configurationKey(config);
     subscribeConfig(next => {
         const key = configurationKey(next);

@@ -40,7 +40,8 @@ function readableText(): string {
     const root = [...document.querySelectorAll('main, article, [role="main"]')]
         .find((element) => !element.closest(excludedSelector))
         || document.body || document.documentElement;
-    if (!root) return '';
+    // TreeWalker 不对 root 调用 acceptNode；回退到 body/html 时也须保留排除策略。
+    if (!root || root.closest(excludedSelector)) return '';
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
             if (node.nodeType !== Node.ELEMENT_NODE) return NodeFilter.FILTER_ACCEPT;

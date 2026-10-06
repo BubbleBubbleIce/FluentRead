@@ -187,9 +187,19 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     if (currentPage && !currentPage.isClosed()) await currentPage.screenshot({path: path.join(artifactsDir, 'failure.png')}).catch(() => {});
     process.exitCode = 1;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.close();
-    await new Promise(resolve => server.close(resolve));
+    try {
+      fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
+    } finally {
+      try {
+        await launched?.close();
+        if (launched) fs.rmSync(profileDir, {recursive: true, force: true});
+        else {
+          try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
+        }
+      } finally {
+        await new Promise(resolve => server.close(resolve));
+      }
+    }
     console.log(JSON.stringify(report, null, 2));
   }
 })();

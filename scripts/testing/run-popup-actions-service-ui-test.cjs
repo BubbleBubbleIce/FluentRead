@@ -43,7 +43,8 @@ const server = http.createServer(async (request, response) => {
   response.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Popup actions fixture</title><style>body{padding:50px;font:18px/1.8 system-ui;background:#fff;color:#263044}article{max-width:800px}section{padding:20px;border:1px solid #ddd;margin:16px 0}</style></head><body><article><h1 translate="no">Popup actions fixture</h1><section id="chosen"><p id="primary">${SOURCE}</p></section><section id="other"><p translate="no">This other section must stay unchanged.</p></section></article></body></html>`);
 });
 let launched, context, control, popup, content, origin, currentCase = 'launch';
-let focusMonitor, focusMonitorBusy = false;
+let focusMonitor, focusMonitorTask, closePromise;
+let focusMonitorBusy = false, focusMonitorStopping = false;
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-popup-actions-'));
 fs.mkdirSync(artifactsDir, {recursive: true});
 async function until(test, label, duration = 15000) {const end = Date.now() + duration; while (Date.now() < end) {if (await test()) return; await wait(60);} throw new Error(`${label}: timeout`);}
@@ -145,8 +146,8 @@ async function monitorBackgroundWindow() {
   const browserPid = processInfo.find(process => process.type === 'browser').id;
   await session.detach();
   report.focusMonitor = {samples: 0, violations: []};
-  focusMonitor = setInterval(async () => {
-    if (focusMonitorBusy) return; focusMonitorBusy = true;
+  const sampleFocus = async () => {
+    focusMonitorBusy = true;
     try {
       const {stdout} = await execFileAsync('/usr/bin/osascript', ['-l', 'JavaScript', '-e',
         "ObjC.import('AppKit'); const app = $.NSWorkspace.sharedWorkspace.frontmostApplication; JSON.stringify({pid:Number(app.processIdentifier),name:ObjC.unwrap(app.localizedName)});"], {timeout: 5000});
@@ -154,12 +155,20 @@ async function monitorBackgroundWindow() {
       if (foreground.pid === browserPid) {
         report.windowPlacement.browserFrontmost = true;
         report.focusMonitor.violations.push({at: new Date().toISOString(), foreground});
-        clearInterval(focusMonitor); await launched.close();
+        clearInterval(focusMonitor);
+        if (!focusMonitorStopping) await (closePromise ||= launched.close());
       }
     } catch (error) {
       report.focusMonitor.violations.push({at: new Date().toISOString(), error: error.message});
-      clearInterval(focusMonitor); await launched.close();
+      clearInterval(focusMonitor);
+        if (!focusMonitorStopping) await (closePromise ||= launched.close());
     } finally {focusMonitorBusy = false;}
+  };
+  focusMonitor = setInterval(() => {
+    if (focusMonitorBusy || focusMonitorStopping) return;
+    focusMonitorTask = sampleFocus();
+    // The finalizer awaits the original task; suppress an early unhandled rejection.
+    focusMonitorTask.catch(() => {});
   }, 1000);
 }
 async function pick(field, value) {
@@ -565,11 +574,24 @@ async function main() {
     if (popup && !popup.isClosed()) {await shot(popup, 'failure').catch(() => {}); report.failure.text = await popup.locator('body').innerText().catch(() => '');}
     throw error;
   } finally {
+    focusMonitorStopping = true;
     clearInterval(focusMonitor);
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    if (launched) await launched.close();
-    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
-    fs.rmSync(profileDir, {recursive: true, force: true});
+    try {
+      await focusMonitorTask;
+      fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
+    } finally {
+      try {
+        if (launched) {
+          await (closePromise ||= launched.close());
+          fs.rmSync(profileDir, {recursive: true, force: true});
+        } else {
+          try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
+        }
+      } finally {
+        server.closeAllConnections();
+        await new Promise(resolve => server.close(resolve));
+      }
+    }
   }
 }
 main().then(() => console.log(JSON.stringify({ok: report.ok, cases: report.cases.length, screenshots: report.screenshots.length, report: path.join(artifactsDir, 'report.json')}))).catch(error => {console.error(error.stack); process.exitCode = 1;});

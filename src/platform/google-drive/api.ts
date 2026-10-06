@@ -36,13 +36,19 @@ export function createDriveApi(fetcher: typeof fetch) {
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 30_000);
             const operation = (async () => {
-                const response = await fetcher(url, {...init, headers: {...init.headers, Authorization: `Bearer ${token}`}, signal: controller.signal, redirect: 'error', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer'});
-                if (!response.ok && !(allowMissing && response.status === 404)) {
-                    if (response.status === 412) throw new DriveError('云端配置已变化，请重新生成预览。', 412);
-                    if (response.status === 403) throw new DriveError('Google Drive 拒绝访问，请检查授权范围、测试用户及 API 配额。', 403);
-                    throw new DriveError(`Google Drive 请求失败（HTTP ${response.status}），请重试。`, response.status);
+                let response: Response | undefined;
+                try {
+                    response = await fetcher(url, {...init, headers: {...init.headers, Authorization: `Bearer ${token}`}, signal: controller.signal, redirect: 'error', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer'});
+                    if (!response.ok && !(allowMissing && response.status === 404)) {
+                        if (response.status === 412) throw new DriveError('云端配置已变化，请重新生成预览。', 412);
+                        if (response.status === 403) throw new DriveError('Google Drive 拒绝访问，请检查授权范围、测试用户及 API 配额。', 403);
+                        throw new DriveError(`Google Drive 请求失败（HTTP ${response.status}），请重试。`, response.status);
+                    }
+                    return await consume(response);
+                } finally {
+                    // 错误响应与无需正文的 DELETE 也必须释放流；清理失败不替换业务错误。
+                    if (response?.body && !response.body.locked) await response.body.cancel().catch(() => undefined);
                 }
-                return await consume(response);
             })();
             return operation.catch(error => {
                 if (error instanceof DriveError) throw error;
@@ -77,7 +83,9 @@ export function createDriveApi(fetcher: typeof fetch) {
                     if (size > GOOGLE_DRIVE_MAX_BYTES) throw new DriveError('同步文件过大，请使用完整数据备份。');
                     chunks.push(chunk.value);
                 }
-            } finally {await reader.cancel();}
+            } finally {
+                try {await reader.cancel().catch(() => undefined);} finally {reader.releaseLock();}
+            }
             const bytes = new Uint8Array(size);
             let offset = 0;
             for (const chunk of chunks) {bytes.set(chunk, offset); offset += chunk.byteLength;}

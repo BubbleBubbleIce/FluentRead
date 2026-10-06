@@ -195,6 +195,7 @@ async function main() {
       to: 'zh-Hans',
       service: 'deeplx',
       videoTranslationEnabled: true,
+      uiLanguage: 'zh-CN',
       uiLanguageSetupCompleted: true,
       useCache: false,
     });
@@ -282,6 +283,7 @@ async function main() {
     const playerMenuState = await page.evaluate(() => ({
       title: document.querySelector('#fluent-read-video-subtitle-menu .fluent-read-video-menu-title')?.textContent?.replace(/\s+/g, ' ').trim(),
       modeCount: document.querySelectorAll('#fluent-read-video-subtitle-menu [data-mode]').length,
+      modes: [...document.querySelectorAll('#fluent-read-video-subtitle-menu [data-mode]')].map(node => node.getAttribute('data-mode')),
       downloadPresent: Boolean(document.querySelector('#fluent-read-video-subtitle-menu [data-action="download-subtitles"]')),
       bilingualSelected: document.querySelector('#fluent-read-video-subtitle-menu [data-mode="bilingual"]')?.getAttribute('aria-checked') === 'true',
       service: document.querySelector('#fluent-read-video-subtitle-menu [data-service-label]')?.textContent,
@@ -289,7 +291,7 @@ async function main() {
       betaMarkers: [...document.querySelectorAll('#fluent-read-video-subtitle-menu *')]
         .filter((node) => /beta|测试版/iu.test(node.textContent || '')).length,
     }));
-    if (playerMenuState.modeCount !== 3 || !playerMenuState.downloadPresent || !playerMenuState.bilingualSelected || playerMenuState.service !== '微软翻译' || playerMenuState.brand !== 'FluentRead' || playerMenuState.betaMarkers !== 0) {
+    if (playerMenuState.modeCount !== 4 || JSON.stringify(playerMenuState.modes) !== JSON.stringify(['bilingual', 'translation-only', 'original-only', 'off']) || !playerMenuState.downloadPresent || !playerMenuState.bilingualSelected || playerMenuState.service !== '微软翻译' || playerMenuState.brand !== '流畅阅读' || playerMenuState.betaMarkers !== 0) {
       throw new Error(`播放器字幕翻译菜单校验失败：${JSON.stringify(playerMenuState)}`);
     }
     await page.screenshot({ path: path.join(artifactsDir, 'youtube-video-subtitle-menu.png'), fullPage: false });
@@ -358,7 +360,7 @@ async function main() {
     await page.waitForFunction(() => {
       const overlay = document.querySelector('#fluent-read-video-subtitle');
       return Boolean(overlay?.textContent?.match(/[\u3400-\u9fff]/));
-    }, { timeout: 45000 });
+    }, null, { timeout: 45000 });
     const first = await page.locator('#fluent-read-video-subtitle').textContent();
 
     await page.evaluate(() => {

@@ -13,9 +13,9 @@ const {launchFocusSafePersistentContext, newPageWithoutForeground} = require(arg
 const report = {ok: false, artifact: extensionDir.endsWith('-dev') ? 'development' : 'production', evidenceBoundary: 'Real extension UI and background persistence in a temporary profile; connection results are fixtures. No external providers or model downloads.', cases: [], persistenceCases: [], quickClose: false, latestWriteWins: false, crossPageSync: false, screenshots: [], layouts: [], consoleErrors: []};
 fs.mkdirSync(artifactsDir, {recursive: true});
 (async () => {
-  let launched, page;
+  let launched, page, profileDir;
   try {
-    const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fr-service-config-'));
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fr-service-config-'));
     launched = await launchFocusSafePersistentContext({chromium, profileDir, browserPath: arg('browser-path', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'), background: true, headless: false, viewport: {width: 1440, height: 960}, timeout: 30000, browserArgs: ['--enable-unsafe-extension-debugging', '--no-first-run', '--no-default-browser-check']});
     Object.assign(report, {launchMode: launched.launchMode, focusPolicy: launched.focusPolicy, windowPlacement: launched.windowPlacement});
     assert.equal(report.windowPlacement.browserFrontmost, false);
@@ -292,8 +292,18 @@ fs.mkdirSync(artifactsDir, {recursive: true});
   } catch (error) {
     report.error = error.stack || String(error); if (page && !page.isClosed()) await page.screenshot({path: path.join(artifactsDir, 'failure.png')}).catch(() => {}); process.exitCode = 1;
   } finally {
-    fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    if (launched) await launched.close().catch(() => {});
+    try {
+      fs.writeFileSync(path.join(artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
+    } finally {
+      let browserClosed = false;
+      if (launched) {
+        try {await launched.close(); browserClosed = true;} catch { /* Retain the profile until its browser is confirmed closed. */ }
+      }
+      if (browserClosed) fs.rmSync(profileDir, {recursive: true, force: true});
+      else if (!launched && profileDir) {
+        try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
+      }
+    }
     console.log(JSON.stringify({ok: report.ok, cases: report.cases.length, layouts: report.layouts.length, screenshots: report.screenshots.length, error: report.error, report: path.join(artifactsDir, 'report.json')}));
   }
 })();

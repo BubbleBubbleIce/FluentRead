@@ -43,20 +43,6 @@ const pipelineRounds=Number(arg('pipeline-rounds','3'));
 const graphOverride=arg('pipeline-graph',null);
 const gpuDiagnosis=process.argv.includes('--gpu-diagnosis');
 const forceCpu=process.argv.includes('--pipeline-cpu');
-if (process.argv.includes('--worker-diagnostics')) {
-    diagnosticFixture=fs.mkdtempSync('/private/tmp/fluentread-manga-diagnostics-');
-    fs.cpSync(extensionDir,diagnosticFixture,{recursive:true});extensionDir=diagnosticFixture;
-    fs.renameSync(path.join(extensionDir,'mangaInferenceWorker.js'),path.join(extensionDir,'mangaInferenceWorker.real.js'));
-    fs.writeFileSync(path.join(extensionDir,'mangaInferenceWorker.js'),`
-const early=[],queue=event=>early.push(event);self.addEventListener('message',queue);
-const diagnostics={gpuSubmissions:0,pthreads:0,crossOriginIsolated:self.crossOriginIsolated,cores:navigator.hardwareConcurrency,forceCpu:${forceCpu}};
-if(${forceCpu})Object.defineProperty(navigator,'gpu',{value:undefined,configurable:true});
-if(self.GPUQueue){const submit=GPUQueue.prototype.submit;GPUQueue.prototype.submit=function(...args){diagnostics.gpuSubmissions++;return submit.apply(this,args);};}
-const NativeWorker=self.Worker;self.Worker=class extends NativeWorker{constructor(...args){super(...args);if(args[1]?.name==='em-pthread')diagnostics.pthreads++;}};
-const post=self.postMessage.bind(self);self.postMessage=(message,...args)=>post({...message,diagnostics:{...diagnostics}},...args);
-await import('./mangaInferenceWorker.real.js');self.removeEventListener('message',queue);for(const event of early)self.onmessage?.(event);
-`);
-}
 const extensionDebugging=process.argv.includes('--extension-debugging');
 const startupExtensionId=arg('extension-id',null);
 if(startupExtensionId)assert.match(startupExtensionId,/^[a-p]{32}$/,'Use a verified unpacked extension ID');
@@ -116,7 +102,7 @@ const imageStableUrl=process.argv.includes('--image-stable-url');
 if(imageStableUrl)assert.ok(imageTurnKey,'Stable page URLs require explicit paged image scope');
 const readerDismissSelector=arg('reader-dismiss-selector',null);
 if(readerDismissSelector)assert.ok(imageTurnKey,'Public reader notices are limited to explicit paged image scope');
-const profile = fs.mkdtempSync('/private/tmp/fluentread-manga-profile-');
+let profile; let launchAttempted = false;
 fs.mkdirSync(artifacts, {recursive: true});
 const report = {site: liveSite ? 'live MANGA Plus' : 'controlled MANGA Plus reader fixture',
     translation: liveTranslation ? 'live Google' : 'deterministic Google text transport',
@@ -142,36 +128,60 @@ function focusGuard() {
 async function observeModelDownloads(extensionId) {
     const [port,endpoint]=fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').trim().split('\n');
     const socket=new WebSocket(`ws://127.0.0.1:${Number(port)}${endpoint}`),pending=new Map();let sequence=0;
-    await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});
+    const nativeClose = socket.close.bind(socket);
+    let terminalError, closeRequested = false, rejectOpen, openTimer;
+    const fail = error => {
+        terminalError ??= error;
+        clearTimeout(openTimer);
+        rejectOpen?.(terminalError);
+        for (const callback of pending.values()) callback.reject(terminalError);
+        pending.clear();
+        if (!closeRequested) {closeRequested = true; nativeClose();}
+    };
+    socket.close = () => fail(new Error('CDP socket closed by its owner'));
+    socket.addEventListener('error', () => fail(new Error('CDP socket error')));
+    socket.addEventListener('close', () => fail(new Error('CDP socket closed')));
     function command(method,params={},sessionId) {
+        if (terminalError) return Promise.reject(terminalError);
         const id=++sequence;
         return new Promise((resolve,reject)=>{
             const timeout=setTimeout(()=>{pending.delete(id);reject(new Error(`CDP timeout: ${method}`));},10000);
             pending.set(id,{resolve:value=>{clearTimeout(timeout);resolve(value);},reject:error=>{clearTimeout(timeout);reject(error);}});
-            socket.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));
+            try {socket.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));}
+            catch (error) {fail(error);}
         });
     }
     socket.addEventListener('message',event=>{
-        const message=JSON.parse(String(event.data));
-        if(message.id){const callback=pending.get(message.id);if(callback){pending.delete(message.id);message.error?callback.reject(new Error(message.error.message)):callback.resolve(message.result);}}
-        if(message.method==='Runtime.consoleAPICalled'){
-            const text=message.params.args.map(a=>a.value ?? a.description ?? '').join(' ');
-            (report.offscreenDiagnostics ??= []).push({level:message.params.type,text});
-            if(message.params.type==='error')report.consoleErrors.push(text);
-        }
-        if(message.method==='Network.requestWillBeSent'){
-            const url=new URL(message.params.request.url);
-            if(['huggingface.co','hf-mirror.com','hf-mirror.net'].includes(url.host) || (url.host==='cdn.jsdelivr.net' && url.pathname.endsWith('.traineddata.gz')))report.modelRequests.push({source:url.host,file:url.pathname.split('/').pop(),target:'offscreen'});
-        }
+        if (terminalError) return;
+        try {
+            const message=JSON.parse(String(event.data));
+            if(message.id){const callback=pending.get(message.id);if(callback){pending.delete(message.id);message.error?callback.reject(new Error(message.error.message)):callback.resolve(message.result);}}
+            if(message.method==='Runtime.consoleAPICalled'){
+                const text=message.params.args.map(a=>a.value ?? a.description ?? '').join(' ');
+                (report.offscreenDiagnostics ??= []).push({level:message.params.type,text});
+                if(message.params.type==='error')report.consoleErrors.push(text);
+            }
+            if(message.method==='Network.requestWillBeSent'){
+                const url=new URL(message.params.request.url);
+                if(['huggingface.co','hf-mirror.com','hf-mirror.net'].includes(url.host) || (url.host==='cdn.jsdelivr.net' && url.pathname.endsWith('.traineddata.gz')))report.modelRequests.push({source:url.host,file:url.pathname.split('/').pop(),target:'offscreen'});
+            }
+        } catch (error) {fail(new Error(`CDP JSON/event protocol error: ${error.message}`));}
     });
-    const {targetInfos}=await command('Target.getTargets');
-    const target=targetInfos.find(target=>target.url.startsWith(`chrome-extension://${extensionId}/offscreen.html`));
-    assert.ok(target,'Own isolated extension Offscreen target exists');
-    const {sessionId}=await command('Target.attachToTarget',{targetId:target.targetId,flatten:true});
-    await command('Network.enable',{},sessionId);
-    await command('Runtime.enable',{},sessionId);
-    if(blockedOfficial || blockedAll)await command('Network.setBlockedURLs',{urls:blockedAll?['https://huggingface.co/*','https://hf-mirror.com/*','https://hf-mirror.net/*']:['https://huggingface.co/*']},sessionId);
-    socket.command=(method,params)=>command(method,params,sessionId);return socket;
+    try {
+        await new Promise((resolve,reject)=>{
+            rejectOpen = reject;
+            openTimer = setTimeout(() => fail(new Error('CDP socket open timeout')),10000);
+            socket.addEventListener('open',()=>{clearTimeout(openTimer); rejectOpen = undefined; resolve();},{once:true});
+        });
+        const {targetInfos}=await command('Target.getTargets');
+        const target=targetInfos.find(target=>target.url.startsWith(`chrome-extension://${extensionId}/offscreen.html`));
+        assert.ok(target,'Own isolated extension Offscreen target exists');
+        const {sessionId}=await command('Target.attachToTarget',{targetId:target.targetId,flatten:true});
+        await command('Network.enable',{},sessionId);
+        await command('Runtime.enable',{},sessionId);
+        if(blockedOfficial || blockedAll)await command('Network.setBlockedURLs',{urls:blockedAll?['https://huggingface.co/*','https://hf-mirror.com/*','https://hf-mirror.net/*']:['https://huggingface.co/*']},sessionId);
+        socket.command=(method,params)=>command(method,params,sessionId);return socket;
+    } catch (error) {fail(error); throw error;}
 }
 
 const fixture = `<!doctype html><html><head><meta charset="utf-8"><title>Manga reader fixture</title><style>
@@ -1054,6 +1064,22 @@ async function verifyReadAhead() {
     auditPageErrors();assert.deepEqual(report.errors,[]);assert.deepEqual(report.consoleErrors,[]);
 }
 (async()=>{
+if (process.argv.includes('--worker-diagnostics')) {
+    diagnosticFixture=fs.mkdtempSync('/private/tmp/fluentread-manga-diagnostics-');
+    fs.cpSync(extensionDir,diagnosticFixture,{recursive:true});extensionDir=diagnosticFixture;
+    fs.renameSync(path.join(extensionDir,'mangaInferenceWorker.js'),path.join(extensionDir,'mangaInferenceWorker.real.js'));
+    fs.writeFileSync(path.join(extensionDir,'mangaInferenceWorker.js'),`
+const early=[],queue=event=>early.push(event);self.addEventListener('message',queue);
+const diagnostics={gpuSubmissions:0,pthreads:0,crossOriginIsolated:self.crossOriginIsolated,cores:navigator.hardwareConcurrency,forceCpu:${forceCpu}};
+if(${forceCpu})Object.defineProperty(navigator,'gpu',{value:undefined,configurable:true});
+if(self.GPUQueue){const submit=GPUQueue.prototype.submit;GPUQueue.prototype.submit=function(...args){diagnostics.gpuSubmissions++;return submit.apply(this,args);};}
+const NativeWorker=self.Worker;self.Worker=class extends NativeWorker{constructor(...args){super(...args);if(args[1]?.name==='em-pthread')diagnostics.pthreads++;}};
+const post=self.postMessage.bind(self);self.postMessage=(message,...args)=>post({...message,diagnostics:{...diagnostics}},...args);
+await import('./mangaInferenceWorker.real.js');self.removeEventListener('message',queue);for(const event of early)self.onmessage?.(event);
+`);
+}
+    profile = fs.mkdtempSync('/private/tmp/fluentread-manga-profile-');
+    launchAttempted = true;
     launched=await launchFocusSafePersistentContext({chromium,profileDir:profile,
         browserPath:arg('browser-path','/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'),headless:false,background:true,
         browserArgs:[...(extensionDebugging?['--enable-unsafe-extension-debugging']:[`--disable-extensions-except=${extensionDir}`,`--load-extension=${extensionDir}`]),'--no-first-run','--no-default-browser-check'],
@@ -1411,6 +1437,8 @@ async function verifyReadAhead() {
     focusGuard();
 })().catch(async error=>{report.status='failed';report.failure=error.stack;process.exitCode=1;console.error(error);if(cdp){report.lastImageUi=await imageUi('return [...this.querySelectorAll(".fr-image-feedback .fr-image-status")].map(s=>s.textContent)').catch(()=>null);report.lastCanvasUi=await canvasUi('return [...this.querySelectorAll("canvas")].map(c=>({width:c.width,height:c.height,style:c.style.cssText}))').catch(()=>null);report.lastProgress=await worker.evaluate(()=>globalThis.__mangaTest.progress).catch(()=>null);}if(page)await page.screenshot({path:path.join(artifacts,'failed-reader.png')}).catch(()=>{});})
 .finally(async()=>{
+    report.cleanupErrors = [];
+    try {
     if(worker)await worker.evaluate(()=>({operations:globalThis.__mangaTest?.operations.length,inputs:globalThis.__mangaTest?.inputs,textBatches:globalThis.__mangaTest?.textBatches,sourceRequests:globalThis.__mangaTest?.sourceRequests,transportRequests:globalThis.__mangaTest?.transportRequests})).then(data=>Object.assign(report,data)).catch(()=>{});
     if(popup&&['ru','ko'].includes(sourceLanguage))report.ocrLanguageStatus=await popup.evaluate(()=>chrome.runtime.sendMessage({type:'fluentReadImageOcrStatus'})).catch(()=>null);
     if(page&&traceReader)report.readerTrace=await page.evaluate(()=>globalThis.__readerTrace).catch(()=>null);
@@ -1420,10 +1448,28 @@ async function verifyReadAhead() {
         if(modelObserver)report.layoutDraws=(await modelObserver.command('Runtime.evaluate',{expression:'globalThis.__mangaLayoutTrace',returnByValue:true}).catch(()=>({result:{value:[]}}))).result.value;
     }
     if(modelObserver && pipelineInputs)report.pipelineLast=(await modelObserver.command('Runtime.evaluate',{expression:'globalThis.__pipelineSamples',returnByValue:true}).catch(()=>({result:{value:null}}))).result.value;
-    modelObserver?.close();
-    if(launched)await launched.close();
-    fs.rmSync(profile,{recursive:true,force:true});report.profileRemoved=!fs.existsSync(profile);
-    if(diagnosticFixture)fs.rmSync(diagnosticFixture,{recursive:true,force:true});
-    fs.writeFileSync(path.join(artifacts,'report.json'),JSON.stringify(report,null,2));
+    } catch (error) {report.cleanupErrors.push(`final diagnostics: ${error.message}`);}
+    try {modelObserver?.close();} catch (error) {report.observerCleanupError = error.message; report.cleanupErrors.push(`observer close: ${error.message}`);}
+    let closed = !launchAttempted;
+    if (launched) {
+        try {await launched.close(); closed = true;}
+        catch (error) {report.cleanupErrors.push(`session close: ${error.message}`);}
+    }
+    if (profile) {
+        if (closed) {
+            try {fs.rmSync(profile, {recursive: true, force: true});}
+            catch (error) {report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profile;}
+        } else report.retainedProfile = profile;
+    }
+    if (diagnosticFixture) {
+        if (closed) {
+            try {fs.rmSync(diagnosticFixture, {recursive: true, force: true});}
+            catch (error) {report.cleanupErrors.push(`diagnostic fixture removal: ${error.message}`); report.retainedDiagnosticFixture = diagnosticFixture;}
+        } else report.retainedDiagnosticFixture = diagnosticFixture;
+    }
+    if (report.cleanupErrors.length) {report.status = 'failed'; process.exitCode = 1;}
+    report.profileRemoved=!!profile&&!fs.existsSync(profile);
+    try {fs.writeFileSync(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));}
+    catch (error) {report.reportWriteError = error.message; report.status = 'failed'; console.error(error.stack || error); process.exitCode = 1;}
     console.log(JSON.stringify({status:report.status,cases:report.cases,report:path.join(artifacts,'report.json')},null,2));
 });

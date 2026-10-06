@@ -596,6 +596,8 @@ async function main() {
     if (session) {
       await session.close();
       fs.rmSync(profileDir, {recursive: true, force: true});
+    } else {
+      try {fs.rmdirSync(profileDir);} catch { /* Retain nonempty profiles after uncertain initialization. */ }
     }
   }
 }

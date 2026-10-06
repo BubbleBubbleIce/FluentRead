@@ -5,8 +5,10 @@
  * 模块边界：调用前必须通过当前 DOM 图片授权；不更改宿主请求，不附带 Cookie，不修改响应/CORS，不绕过登录付费限制；网络读取和字节验证仍属于 Offscreen。
  */
 import type {DeclarativeNetRequest} from 'webextension-polyfill';
+
 const RULE_ID = 2_001_460;
 type RulesPort = Pick<typeof browser.declarativeNetRequest, 'updateSessionRules'>;
+type SessionRule = DeclarativeNetRequest.Rule;
 let tail: Promise<unknown> = Promise.resolve();
 
 export function withPixivImageReferrer<T>(source: string, documentUrl: string | undefined, operation: () => Promise<T>,
@@ -22,7 +24,7 @@ export function withPixivImageReferrer<T>(source: string, documentUrl: string | 
     const port = api ?? browser.declarativeNetRequest;
     if (!port?.updateSessionRules) return operation();
     const id = extensionId ?? new URL(browser.runtime.getURL('')).hostname;
-    const rule: DeclarativeNetRequest.Rule = {id:RULE_ID,priority:1,
+    const rule: SessionRule = {id:RULE_ID,priority:1,
         action:{type:'modifyHeaders',requestHeaders:[{header:'Referer',operation:'set',value:'https://www.pixiv.net/'}]},
         condition:{regexFilter:`^${source.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}$`,initiatorDomains:[id],resourceTypes:['xmlhttprequest']}};
     const result = tail.then(async () => {

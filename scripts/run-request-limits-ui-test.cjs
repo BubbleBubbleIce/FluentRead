@@ -47,13 +47,12 @@ async function main() {
   const {chromium} = loadPlaywright(args.playwrightRoot);
   const helper = loadHelper(args.focusSafeHelper);
   fs.mkdirSync(args.artifactsDir, {recursive: true});
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-issue-521-edge-'));
+  let profileDir;
   const report = {
     ok: false,
     issue: 521,
     extensionDir: args.extensionDir,
     artifactsDir: args.artifactsDir,
-    profileDir,
     launchMode: null,
     focusPolicy: null,
     windowPlacement: null,
@@ -67,6 +66,7 @@ async function main() {
     consoleErrors: [],
   };
   let launched;
+  let launchAttempted = false;
   let currentPage;
   const requestLimitModel = 'deepseek-flash';
   const screenshot = async (page, name, fullPage = true) => {
@@ -82,6 +82,9 @@ async function main() {
     page.on('pageerror', error => report.consoleErrors.push({source, message: error.message}));
   };
   try {
+    profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-issue-521-edge-'));
+    report.profileDir = profileDir;
+    launchAttempted = true;
     launched = await helper.launchFocusSafePersistentContext({
       chromium,
       profileDir,
@@ -335,8 +338,21 @@ async function main() {
     }
     throw error;
   } finally {
-    fs.writeFileSync(path.join(args.artifactsDir, 'report.json'), JSON.stringify(report, null, 2));
-    await launched?.context?.close().catch(() => {});
+    report.cleanupErrors = [];
+    let browserClosed = !launchAttempted;
+    if (launched) {
+      try { await launched.close(); browserClosed = true; }
+      catch (error) { report.cleanupErrors.push(`session close: ${error.message}`); }
+    }
+    if (profileDir) {
+      if (browserClosed) {
+        try { fs.rmSync(profileDir, {recursive: true, force: true}); report.profileRemoved = true; }
+        catch (error) { report.cleanupErrors.push(`profile removal: ${error.message}`); report.retainedProfile = profileDir; }
+      } else report.retainedProfile = profileDir;
+    }
+    if (report.cleanupErrors.length) { report.ok = false; process.exitCode = 1; }
+    try { fs.writeFileSync(path.join(args.artifactsDir, 'report.json'), JSON.stringify(report, null, 2)); }
+    catch (error) { console.error(`[issue-521-ui] report write: ${error.stack || error}`); process.exitCode = 1; }
   }
 }
 

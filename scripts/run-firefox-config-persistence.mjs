@@ -46,9 +46,13 @@ async function selectedFrame(client) {
 
 async function evaluate(client, frame, source) {
     let resultPacket;
+    let resultID;
+    const pendingResults = new Map();
     const onError = error => {
         const packet = packetFromError(error);
-        if (packet?.type === 'evaluationResult') resultPacket = packet;
+        if (packet?.type !== 'evaluationResult' || packet.from !== frame.consoleActor) return;
+        if (resultID === undefined) pendingResults.set(packet.resultID, packet);
+        else if (packet.resultID === resultID) resultPacket = packet;
     };
     client.on('error', onError);
     try {
@@ -58,6 +62,10 @@ async function evaluate(client, frame, source) {
             text: source,
             frameActor: frame.actor,
         });
+        resultID = response.resultID;
+        if (resultID === undefined) throw new Error('Firefox RDP evaluation response has no resultID');
+        resultPacket = pendingResults.get(resultID);
+        pendingResults.clear();
         const deadline = Date.now() + 10000;
         while (!resultPacket && Date.now() < deadline) await sleep(25);
         if (!resultPacket) throw new Error(`Firefox RDP evaluation timeout: ${response.resultID}`);
@@ -659,8 +667,11 @@ async function main() {
         result.errors.push(String(error?.stack || error?.message || error));
         throw error;
     } finally {
-        fs.writeFileSync(path.join(artifactsDir, 'firefox-config-persistence.json'), `${JSON.stringify(result, null, 2)}\n`);
-        firefox.disconnect();
+        try {
+            fs.writeFileSync(path.join(artifactsDir, 'firefox-config-persistence.json'), `${JSON.stringify(result, null, 2)}\n`);
+        } finally {
+            firefox.disconnect();
+        }
     }
 
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);

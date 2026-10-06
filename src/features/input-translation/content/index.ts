@@ -191,6 +191,7 @@ export async function setInputBoxText(
     if (!isInputElement(element)) return false;
 
     if (isFormControl(element)) {
+        if (!isCurrent()) return false;
         // React/Vue 等受控输入框通过自身 tracker 观察原生 setter；直接赋值可能被宿主回滚。
         const valueSetter = Object.getOwnPropertyDescriptor(
             Object.getPrototypeOf(element),
@@ -232,7 +233,9 @@ async function translateInputBox(
         targetLang,
     }) as { success?: boolean; translatedText?: string; error?: string } | undefined;
 
-    if (result?.success) return result.translatedText || '';
+    if (result?.success === true && typeof result.translatedText === 'string' && result.translatedText.trim()) {
+        return result.translatedText;
+    }
     throw new Error(result?.error || '翻译失败');
 }
 
