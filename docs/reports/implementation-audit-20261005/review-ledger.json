@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 830,
-    "functions": 15199,
+    "functions": 15253,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -78,18 +78,18 @@
       },
       "integrations/obsidian": {
         "files": 7,
-        "functions": 57,
-        "lines": 448
+        "functions": 71,
+        "lines": 541
       },
       "src/app": {
         "files": 103,
-        "functions": 1312,
-        "lines": 11772
+        "functions": 1313,
+        "lines": 11793
       },
       "src/core/config": {
         "files": 52,
-        "functions": 703,
-        "lines": 9070
+        "functions": 705,
+        "lines": 9166
       },
       "src/core/context-menu": {
         "files": 2,
@@ -98,8 +98,8 @@
       },
       "src/core/glossary": {
         "files": 6,
-        "functions": 81,
-        "lines": 805
+        "functions": 87,
+        "lines": 880
       },
       "src/core/harness": {
         "files": 5,
@@ -143,8 +143,8 @@
       },
       "src/features/document-translation": {
         "files": 8,
-        "functions": 228,
-        "lines": 2608
+        "functions": 219,
+        "lines": 2805
       },
       "src/features/floating-ball": {
         "files": 5,
@@ -264,7 +264,7 @@
       "src/platform": {
         "files": 37,
         "functions": 485,
-        "lines": 4490
+        "lines": 4496
       },
       "src/providers": {
         "files": 40,
@@ -279,12 +279,12 @@
       "src/shared": {
         "files": 8,
         "functions": 24,
-        "lines": 331
+        "lines": 332
       },
       "src/ui": {
         "files": 16,
-        "functions": 149,
-        "lines": 3894
+        "functions": 189,
+        "lines": 4067
       },
       "userscript/SettingsPanel.vue": {
         "files": 1,
@@ -465,8 +465,14 @@
   },
   "reviewed": [
     {
+      "file": "integrations/obsidian/main.ts",
+      "sha256": "b780a572308e12a3b04a9107d86df11935d68f5a3e96e6033546140e77a62f87",
+      "functionBodies": 29,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "integrations/obsidian/markdown.ts",
-      "sha256": "40112963f25a4619ec4e6196ad9c129653e0285c32ab39016996363aba1f4704",
+      "sha256": "443a4475f13f6fea3e5be17669b19e36857d033254e40b96302e9c81653184d9",
       "functionBodies": 2,
       "status": "source-read-and-traced"
     },
@@ -474,6 +480,12 @@
       "file": "integrations/obsidian/output.ts",
       "sha256": "ef44f3d868e65c117140d14f5688dcc16c45c3d71147c41a3bb69d891a13a908",
       "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "integrations/obsidian/pdf.ts",
+      "sha256": "67aaa882f01b5c1dc57d31214d20b1806b7fad38defa90d83ac005e1b577dac4",
+      "functionBodies": 12,
       "status": "source-read-and-traced"
     },
     {
@@ -485,6 +497,12 @@
     {
       "file": "integrations/obsidian/vault.ts",
       "sha256": "b8a77e3e564300aa5cdc35bed0c373f0e0e44a96c2bbd756514fbae15cf60805",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "integrations/obsidian/vite.config.ts",
+      "sha256": "c345fef9973d7a1e0b61caa2e840e078454fc3720989cd1388c91d7f770f6c71",
       "functionBodies": 2,
       "status": "source-read-and-traced"
     },
@@ -717,6 +735,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/popup/index.ts",
+      "sha256": "c129c687178c5b5dae20cc0d334b94bed8e4fbc92e117034511785101de6c665",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/popup/mount.ts",
+      "sha256": "49bc2605766f224ff0885e9e39518540be05a5dcc20f2a346dff14214ed1a536",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/popup/pageActions.ts",
       "sha256": "02f23b41cc16047d0c7a1f5602d380700ebb5a91692495dc06dba68a3116e9c6",
       "functionBodies": 21,
@@ -750,6 +780,42 @@
       "file": "src/core/config/apiKeyCheckIdentity.ts",
       "sha256": "6d2ed08d6b926ce0524c00d216fe4aaae505e061bf27e7e8a93907700da6dec8",
       "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/apiKeys.ts",
+      "sha256": "5be417243a2e3b92d2b973cd967cd678beff1fbecac61a1d52d5aab62ff72dc2",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/credentialBinding.ts",
+      "sha256": "5f3019708866a29d69d71f1aaf24e62c5d9fb52da2b33754bdde913a69c3802f",
+      "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/credentials.ts",
+      "sha256": "5a66deda428c72d5d9a37abeabf941b55f6db1ab78b438f10eb7d51d85ddc0c5",
+      "functionBodies": 21,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/customBody.ts",
+      "sha256": "24f0dbedc6c32a755fd7cb116f0e094d49fe98073d932013709d182a9a1b2c5a",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/customHeaders.ts",
+      "sha256": "34cef7b5376250b3b6fe3ce82ff9519fe6428821e9872c53e03e7efda2006813",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/customOpenAI.ts",
+      "sha256": "944ad426286e9655d8010bd16d41ad6a760309513d0070456b35a4bc20f90097",
+      "functionBodies": 21,
       "status": "source-read-and-traced"
     },
     {
@@ -831,9 +897,39 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/glossary/builtins.ts",
+      "sha256": "ee49f9c33616f554b95f3853478e6a37c6e59bfa19307e1113fe580630997a8e",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/glossary/index.ts",
+      "sha256": "1db9eadf0e5cd6d7751494bd44da70fd7e5817c6d99824ebc07c17d4d2e16a50",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/glossary/match.ts",
+      "sha256": "b18d709adeb61cf65cd764b30db69297fe3156e84cf47be7166bc7589f1c9eef",
+      "functionBodies": 23,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/glossary/model.ts",
       "sha256": "4791901ee0a51518f9d7edd76f470e1fcb38e985b739770c8ca4fb3d1fe2fdd5",
       "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/glossary/protection.ts",
+      "sha256": "7129857240453fd072bb05b93544b456a0f67d3362bcb22fd542d646e90b6340",
+      "functionBodies": 12,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/glossary/transfer.ts",
+      "sha256": "26020eb1667ae30d3b10418fdd1a77529a34dd54126a9d58ee1a60f625c5d571",
+      "functionBodies": 23,
       "status": "source-read-and-traced"
     },
     {
@@ -966,6 +1062,18 @@
       "file": "src/features/area-translation/types.ts",
       "sha256": "c07bc18b192e0881bdce5bc0b47581232396b8b5359bdfcb2aaaf128f3d55776",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/document-translation/core/document.ts",
+      "sha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+      "functionBodies": 45,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/document-translation/core/preview.ts",
+      "sha256": "2b4a962624e64130245433a2aac2b600c25d0aa3ff8b08464851ea479c568c7d",
+      "functionBodies": 15,
       "status": "source-read-and-traced"
     },
     {
@@ -1660,7 +1768,7 @@
     },
     {
       "file": "src/features/settings/ui/SettingsSections.vue",
-      "sha256": "ea74dafd9fa4b74f0cc36cf948ba5f14761dc038c2a0174b10c3d70a536c5e7d",
+      "sha256": "72c03ae243ff140c22c5a852908d835d076c156be45cc97e206bc13c4993c7e7",
       "functionBodies": 166,
       "status": "source-read-and-traced"
     },
@@ -1696,7 +1804,7 @@
     },
     {
       "file": "src/features/settings/ui/services/FreeTranslationSettings.vue",
-      "sha256": "0a900c3cc1c69b7694011eff01697990461adfb2141a9a4ee577d42736541efd",
+      "sha256": "fb740d08d9d44cd2e84fc5a317b1ff89bed0f85dc979c1956d91905f31dec979",
       "functionBodies": 57,
       "status": "source-read-and-traced"
     },
@@ -1947,9 +2055,27 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/platform/browser/capabilities.ts",
+      "sha256": "10fad76f00ab3ec68035c71f5624406aca4fb3b861e1762bf96853c6b89b49b2",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/platform/browser/chromeTranslationPreparationRequest.ts",
       "sha256": "32a4fc57bb1dbe6c152b7a8b3a5fcf4300d4197fe25798351c6d6a10048a5c9a",
       "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/browser/ids.ts",
+      "sha256": "08289494cd6f9f9af3d2fbe99264b00d8d7ee35148320a3e770b25b63efa5460",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/browser/localTranslationSupport.ts",
+      "sha256": "e821dc2f0ce7d6da57298027e23f77337b698dd547eac19f37081d3ab87b9c95",
+      "functionBodies": 1,
       "status": "source-read-and-traced"
     },
     {
@@ -2122,7 +2248,7 @@
     },
     {
       "file": "src/services/translation/glossaryProtection.ts",
-      "sha256": "9d83fc50a53af6f753bd29cb74d2fa8b45be95e460e08eb01f41f6bacd212140",
+      "sha256": "74c5550e899b160e85c738bdffbf98105a91c57929c9dd580784b8441dbcd54e",
       "functionBodies": 10,
       "status": "source-read-and-traced"
     },
@@ -2199,6 +2325,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/shared/function/sha256.ts",
+      "sha256": "b6c83a561dddaac262a2537886b0d8fe8f78b6b97218e6b576f9a6128e9b6442",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/shared/function/throttle.ts",
       "sha256": "025292ebfffb6e97d2a6bab30d528eb81c6d5541d6350b40154c5460c2643af5",
       "functionBodies": 2,
@@ -2217,9 +2349,39 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/shared/onnx/wasmBinary.ts",
+      "sha256": "1a3dc49b5465ca2988225971e81b9c83ef329ed742c9dd6accb5797b444e5a9c",
+      "functionBodies": 12,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/shared/onnx/webgpu.ts",
+      "sha256": "68a535a9373c4337b34b0186ebd663dd353f08ed5055ed29731c54fc27e8dbfd",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/ui/components/CustomHotkeyInput.vue",
       "sha256": "063be95747f0dc30d3db7759b42b4e6b5af4e66713c9fe0da30cce732ec08474",
       "functionBodies": 26,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/UiLanguageOnboarding.vue",
+      "sha256": "3a6d7543c88897aa85a7498fa6c0ad96540a7b812b138503096f1279ff791cb8",
+      "functionBodies": 31,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/UiLanguageSelector.vue",
+      "sha256": "1511b0e8446adb661060a154077a26071cf9450975b08550b7446508c425b4a5",
+      "functionBodies": 17,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/i18n.ts",
+      "sha256": "a64e6c74497d6eb00a10f42b280304a683760ba9ae822fcb158e74181314b68b",
+      "functionBodies": 45,
       "status": "source-read-and-traced"
     },
     {
@@ -2250,9 +2412,6 @@
     "entrypoints/videoTranscriptionWorker.ts",
     "entrypoints/xVideoBridge.content.ts",
     "entrypoints/youtubeBridge.content.ts",
-    "integrations/obsidian/main.ts",
-    "integrations/obsidian/pdf.ts",
-    "integrations/obsidian/vite.config.ts",
     "src/app/background/areaRuntime.ts",
     "src/app/background/capabilityRegistry.ts",
     "src/app/background/configAutoBackupRuntime.ts",
@@ -2311,19 +2470,11 @@
     "src/app/offscreen/ttsPlayback.ts",
     "src/app/offscreen/videoTranscriptionWorker.ts",
     "src/app/options/index.ts",
-    "src/app/popup/index.ts",
-    "src/app/popup/mount.ts",
-    "src/core/config/apiKeys.ts",
     "src/core/config/areaTranslation.ts",
     "src/core/config/azure.ts",
     "src/core/config/catalog.ts",
     "src/core/config/cloudSync.ts",
     "src/core/config/constants.ts",
-    "src/core/config/credentialBinding.ts",
-    "src/core/config/credentials.ts",
-    "src/core/config/customBody.ts",
-    "src/core/config/customHeaders.ts",
-    "src/core/config/customOpenAI.ts",
     "src/core/config/deepl.ts",
     "src/core/config/deeplx.ts",
     "src/core/config/diff.ts",
@@ -2353,11 +2504,6 @@
     "src/core/config/writing.ts",
     "src/core/config/writingPreview.ts",
     "src/core/config/writingReadiness.ts",
-    "src/core/glossary/builtins.ts",
-    "src/core/glossary/index.ts",
-    "src/core/glossary/match.ts",
-    "src/core/glossary/protection.ts",
-    "src/core/glossary/transfer.ts",
     "src/core/harness/loop.ts",
     "src/core/harness/memorySearch.ts",
     "src/core/harness/promptLocales.ts",
@@ -2421,8 +2567,6 @@
     "src/features/area-translation/services/client.ts",
     "src/features/area-translation/services/textTranslation.ts",
     "src/features/area-translation/ui/AreaTranslator.vue",
-    "src/features/document-translation/core/document.ts",
-    "src/features/document-translation/core/preview.ts",
     "src/features/document-translation/public.ts",
     "src/features/document-translation/services/archive.ts",
     "src/features/document-translation/services/binary.ts",
@@ -2629,9 +2773,6 @@
     "src/features/writing-assistant/ui/WritingPopover.vue",
     "src/features/writing-assistant/ui/WritingStyleEditor.vue",
     "src/features/writing-assistant/ui/WritingSurface.vue",
-    "src/platform/browser/capabilities.ts",
-    "src/platform/browser/ids.ts",
-    "src/platform/browser/localTranslationSupport.ts",
     "src/platform/browser/requestHeaderRules.ts",
     "src/platform/browser/runtimeMessages.ts",
     "src/platform/google-drive/api.ts",
@@ -2719,19 +2860,13 @@
     "src/services/harness/usage.ts",
     "src/services/translation/types.ts",
     "src/services/writing/runtime.ts",
-    "src/shared/function/sha256.ts",
-    "src/shared/onnx/wasmBinary.ts",
-    "src/shared/onnx/webgpu.ts",
     "src/ui/components/FeatureEnableCard.vue",
     "src/ui/components/GlossaryLibrarySelect.vue",
     "src/ui/components/InterfaceBackdrop.vue",
     "src/ui/components/ServiceIcon.vue",
     "src/ui/components/TranslationLoadingPreview.vue",
     "src/ui/components/UiIcon.vue",
-    "src/ui/components/UiLanguageOnboarding.vue",
-    "src/ui/components/UiLanguageSelector.vue",
     "src/ui/components/UiSelect.vue",
-    "src/ui/i18n.ts",
     "src/ui/translationLoadingIndicator.ts",
     "src/ui/view-model/aiContext.ts",
     "src/ui/view-model/serviceLibrary.ts",
@@ -2773,7 +2908,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue535pending production files/functions, starting shared Markdown parsing, Obsidian entry rename jobs and shared language onboarding candidates. Supporting Popup entry/mount and PDF reads not counted as full audits. Cached main reconciliation295files pending. After entire scope: fresh main, safe rewritten-history rebase, whole code/chain review/fixes, verify and authorized merge.",
+    "Continue508pending production files/functions and confirmed next-scope config pair/template/document candidates. Latest cached-main delta329files remains unreconciled. After entire scope: fresh latest main, safe rewritten-history rebase, whole chain/code review/fixes, verify, authorized merge.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2806,12 +2941,13 @@
     "Fortieth:2new reviewed files95bodies;268reviewed4931bodies559pending. New35executed/18static;12affected files186pass. Immutable two-source comparison35cases29failed6passed, one unhandled old malformed-entries render error preserved, not a count of independent bugs. Current zero unhandled errors. Strict unchanged shared context/task wait11cases four100; no threshold/exemption changes. Native11flows3screens inspected/errors0; first attempt hidden ElSwitch input selector corrected to visible switch click, no product error inferred. Earlier test preparation timers/no-tree renderer errors preserved but excluded from baseline claims. Existing13executable/3docs ownership debt; scope and final latest-main delivery pending.",
     "Forty-first:4new reviewed files110bodies;272reviewed5041bodies555pending. New32component+11unit executed/22static;14affectedfiles312pass. Immutable2SFC comparison32cases30failed2passed, zero unhandled; failure count not independent defects. Strict5files67cases3modules four100; no exemptions/threshold changes. Native14unique flows3 inspected narrow/light/dark screenshots/errors0, owned profile/browser cleanup0processes; composition synthetic only. Wrong tab-label fixture failed first and was corrected, no product regression inferred. Existing13executable/3docs ownership debt; whole audit and latest-main delivery remain pending.",
     "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending.",
-    "Forty-fifth:11new complete files256bodies;295reviewed5571bodies535pending. Parallel agentsA/B reviewed and closed. Root25baseline23fail2pass; child26baseline21fail5pass; picker new real-helper regression fails before/pass after native Enter.21related files378pass;strict94cases4modules four100;production15flows4screens/errors0/clean. Shared Markdown quoted fences/inline dash and Obsidian renamed job reproduced, shared onboarding candidates await reproduction; no native Obsidian/live-provider proof. Cached main295files reconciliation and final whole delivery pending."
+    "Forty-fifth:11new complete files256bodies;295reviewed5571bodies535pending. Parallel agentsA/B reviewed and closed. Root25baseline23fail2pass; child26baseline21fail5pass; picker new real-helper regression fails before/pass after native Enter.21related files378pass;strict94cases4modules four100;production15flows4screens/errors0/clean. Shared Markdown quoted fences/inline dash and Obsidian renamed job reproduced, shared onboarding candidates await reproduction; no native Obsidian/live-provider proof. Cached main295files reconciliation and final whole delivery pending.",
+    "Forty-sixth:27new complete files/372bodies;322reviewed/5943bodies/508pending.6agents closed after parent review.25private mapped modules four100;SFC numerical coverage not claimed. Actual startup/foreign-language save/reopen and3format preview/edit/export/ZIP,9screenshots/errors0/clean; no live-provider/native-Obsidian/GPU proof. Remaining12executable and3doc-tool ownership debt; cachedmain329files reconciliation and final whole delivery pending."
   ],
   "progress": {
-    "sourceReadFiles": 295,
-    "sourceReadFunctionBodies": 5571,
-    "pendingFiles": 535,
+    "sourceReadFiles": 322,
+    "sourceReadFunctionBodies": 5943,
+    "pendingFiles": 508,
     "goalComplete": false
   },
   "observations": [
@@ -3575,6 +3711,12 @@
       "status": "fixed-reviewed-and-verified-forty-fifth",
       "issue": "Extracted existing Popup full-page/restore/section/site messaging into one injected pageActions controller, removing five old root function bodies and unused feature icon VM data. In-flight operation locks before tab lookup; status reads, operations and lifecycle revisions are distinct; old query/reply/failure/finally cannot overwrite or release a new operation. Safe integer tab 0, strict status booleans, legacy fallback, credential restore, global/off/site save semantics and existing protocol retained. Actual page/config render callbacks capture their page phase; real URL/loading/activation/removal listeners invalidate navigation, including consecutive URL updates during a query. Window filtering and title/complete/unrelated update exclusion avoid repeated status work; listeners removed on unmount. Child site buttons also capture props/context so cached child emit cannot borrow a new parent listener/domain. Cached drawer/selection/display/modal/header/cache/route callbacks own current active configuration and phase. Disable/deactivate/pagehide/unmount invalidate pending operations; pause closes quick drawers while services remain available. Cache clear is exclusive, old completion cannot release a new request. Donation pending focus respects user focus, close restores only owned focus, old overlay cannot close a new dialog; navigation API rejections produce current-session notice instead of unhandled errors. Existing hydration/config CAS/exit handoff retained. Parallel A: language select rejects stale/closed/disabled/source/value/lifecycle events and invalid current choices. Control remount only for source/availability changes preserves ordinary value-sync focus and language directory caching. Onboarding preload/open/retry and appearance subscriptions own active lifetime; late import/error cannot update closed context and media/config observers are released. Parallel B: Obsidian nested Markdown prefixes stripped together, deleted/replaced source object rejected, occupied output creation races retry with source/cancel recheck, and synchronous native-request cancellation still adopts late promise rejection. Existing original-file/output semantics and bounded timeout retained; no native transaction/transport cancellation guarantee. Production Enter regression: own closed section-picker bar was treated by generic opaque-host editing protection as page input, blocking arrows and Enter. Apply page typing protection only to page events and inspect known own ShadowRoot focus for own events; other controls retain native keys. One new real-helper regression fails before and passes after, with 120 related cases and strict picker four100 plus native Enter confirmation.",
       "validation": "21distinct related files378pass;4strict test files94cases/4modules four100. Production15flows4inspected screenshots/errors0 and owned resources clean. Parallel child/Obsidian patches reviewed.535files/followups and final delivery remain pending."
+    },
+    {
+      "file": "src/ui/i18n.ts",
+      "status": "fixed-reviewed-and-verified-forty-sixth",
+      "issue": "Language components own current visibility, values and lifecycle; confirmation freezes submitted language, prevents duplicate writes/celebrations and releases timer/focus/listeners. Retained SettingsSections wires selector active state. Shared i18n serializes owned saves, coalesces obsolete selections, separates same-revision rollback from external updates, preserves current errors, releases queued DOM refreshes and ignores obsolete bundle completions. Actual store/repository/IndexedDB failure integration and native foreign-language save/reopen verified. Shared document parser preserves quote/list fenced code and inline positions, emits reusable code metadata, skips VTT NOTE blocks, bounds JSON nesting and uses iterative walkers/copying. Linear Markdown scanning and bounded excerpts avoid pathological backtracking/unused translation reads. Preview consumes shared metadata, removes placeholder collisions/repeated rendering and injects real reader head plus HTML5 doctype. Native iframe verifies standards mode; source/model/exports preserved. Obsidian entry owns TFile identity jobs, frozen language/source state, actual read size checks, cancellation and late callbacks; setting tabs and queued writes own the load session, copied saves remain ordered. PDF task/page/worker lifetime is cleaned with destroy deduplication. Controlled actual plugin/PDF imports verified; no native Obsidian vault or instantaneous native cancellation guarantee. Glossary conflict lookups indexed locally, rejected overlapping candidates resume safely; Unicode canonical comparisons retain original ranges/spelling and pure-glossary broker acceptance. Transfers require valid enabled shape/BOM handling. Hardware capability decisions follow actual adapter fields and reject software fallbacks; WASM validates header/owned backend queue and avoids copying large bytes. Credentials reject inherited secret fields, preserve own prototype-like keys, use iterative clone/compare, keep legal HTTP header whitespace and exact custom provider identity. Selected Key queries and destination comparisons share work. Fixed-cloud destinations ignore unused proxy, Aliyun follows actual region endpoint, proxy-consuming providers keep rebind protection. Existing static architecture assertion migrated minimally with native-behavior tests retained.",
+      "validation": "1711distinct affected cases;25mapped modules four100;9native screenshots inspected, actual language save/reopen and three-format reader/edit/download/ZIP;508source files and final delivery remain pending."
     }
   ],
   "finalDelivery": {

@@ -1,11 +1,13 @@
 /**
  * @file src/features/document-translation/core/preview.ts
  * 文件职责：把已解析文档与对应译文转换成安全、可阅读的预览 HTML，统一支持原文、双语和纯译文三种预览模式。
- * 主要内容：相同译文保留原文且不重复展示；包含主动 HTML 剥离、阅读器外壳、行内 Markdown 渲染、标题/列表/引用标记处理、原译配对单元，以及针对 Markdown、HTML、字幕、JSON 和普通文本的预览分派，按所需格式生成内容，避免构建未使用的整份导出字符串。
+ * 主要内容：包含主动 HTML 剥离、统一提供 HTML5 doctype 的阅读器外壳、无原文占位符的行内 Markdown 渲染、按解析器代码块元数据展示容器围栏、原译配对单元，以及 HTML、Markdown 和普通文本的预览分派，按所需格式生成内容，避免构建未使用的整份导出字符串；相同译文保留原文且不重复展示。
  * 模块边界：本模块只生成展示字符串，不操作真实 DOM、不执行脚本也不修改文档模型；源文件解析由 document.ts 完成，二进制分页预览由 pdfPreview.ts 负责，页面样式由上层 UI 提供。
  */
 import {hasDistinctTranslation} from '@/src/core/translation/result';
 import {
+    inspectMarkdownLine,
+    parseDocument,
     renderDocument,
     type DocumentRenderMode,
     type ParsedDocument,
@@ -66,40 +68,62 @@ function stripActiveHtml(value: string): string {
         .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/giu, '');
 }
 
+/** 只检查文档开头及所属 head；跳过前导注释，并保持属性中的引号和大于号完整。 */
+function openingHtmlTagEnd(value: string, tag: 'html' | 'head', offset = 0): number | null {
+    const whitespace = /\s*/uy;
+    let start = offset;
+    for (;;) {
+        whitespace.lastIndex = start;
+        start += whitespace.exec(value)![0].length;
+        if (!value.startsWith('<!--', start)) break;
+        const end = value.indexOf('-->', start + 4);
+        if (end === -1) return null;
+        start = end + 3;
+    }
+    const pattern = /<(html|head)\b(?:[^>"']|"[^"]*"|'[^']*')*>/iuy;
+    pattern.lastIndex = start;
+    const match = pattern.exec(value);
+    return match?.[1].toLowerCase() === tag ? start + match[0].length : null;
+}
+
 function readerShell(content: string): string {
     const security = `<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; font-src data:; base-uri 'none'; form-action 'none'"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${PREVIEW_STYLE}</style>`;
     const safeContent = stripActiveHtml(content);
-    if (/<html\b/iu.test(safeContent)) {
-        if (/<head\b[^>]*>/iu.test(safeContent)) {
-            return safeContent.replace(/<head\b[^>]*>/iu, (head) => `${head}${security}`);
-        }
-        return safeContent.replace(/<html\b[^>]*>/iu, (html) => `${html}<head>${security}</head>`);
+    const rootEnd = openingHtmlTagEnd(safeContent, 'html');
+    if (rootEnd !== null) {
+        const headEnd = openingHtmlTagEnd(safeContent, 'head', rootEnd);
+        const insertion = headEnd ?? rootEnd;
+        const readerHead = headEnd === null ? `<head>${security}</head>` : security;
+        return '<!doctype html>' + safeContent.slice(0, insertion) + readerHead + safeContent.slice(insertion);
     }
     return `<!doctype html><html><head>${security}</head><body><main>${safeContent}</main></body></html>`;
 }
 
 function inlineMarkdown(value: string): string {
-    const tokens: string[] = [];
-    const token = (html: string) => {
-        const index = tokens.push(html) - 1;
-        return `\u0000${index}\u0000`;
-    };
-    let working = value.replace(new RegExp(PREVIEW_SOFT_BREAK, 'gu'), () => token('<br>'));
-    working = working.replace(/`([^`\n]+)`/gu, (_, code: string) => token(`<code>${escapeHtml(code)}</code>`));
-    working = working.replace(/!\[([^\]]*)\]\([^)]+\)/gu, (_, alt: string) => token(`<span class="reader-link">${escapeHtml(alt || '图片')}</span>`));
-    working = working.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+|#[^)]+)\)/gu, (_, label: string) => token(`<span class="reader-link">${escapeHtml(label)}</span>`));
-    working = escapeHtml(working)
+    const protectedText = (text: string) => escapeHtml(text).replace(/[*_]/gu, (marker) => marker === '*' ? '&#42;' : '&#95;');
+    const output: string[] = [];
+    let offset = 0;
+    // 直接拼接保护片段，不借用原文中可能存在的占位符，也不反复扫描整段文本。
+    for (const match of value.matchAll(/\u2028|`([^`\n]+)`|!\[([^\[\]\n]*)\]\((?:[^()\n]|\([^()\n]*\))+\)|\[([^\[\]\n]+)\]\((?:https?:\/\/|#)(?:[^()\n]|\([^()\n]*\))+\)/gu)) {
+        output.push(escapeHtml(value.slice(offset, match.index)));
+        output.push(match[0] === PREVIEW_SOFT_BREAK
+            ? '<br>'
+            : match[1] !== undefined
+                ? `<code>${protectedText(match[1])}</code>`
+                : `<span class="reader-link">${protectedText(match[2] !== undefined ? match[2] || '图片' : match[3])}</span>`);
+        offset = match.index + match[0].length;
+    }
+    output.push(escapeHtml(value.slice(offset)));
+    return output.join('')
         .replace(/\*\*([^*]+)\*\*/gu, '<strong>$1</strong>')
         .replace(/__([^_]+)__/gu, '<strong>$1</strong>')
         .replace(/(?<!\*)\*([^*]+)\*(?!\*)/gu, '<em>$1</em>');
-    return working.replace(/\u0000(\d+)\u0000/gu, (_, index: string) => tokens[Number(index)]!);
 }
 
 function removeMarkdownMarker(value: string, kind: 'heading' | 'list-item' | 'quote' | 'paragraph'): string {
-    if (kind === 'heading') return value.replace(/^\s{0,3}#{1,6}\s*/u, '');
-    if (kind === 'list-item') return value.replace(/^\s*(?:[-+*]|\d+[.)])\s+/u, '');
-    if (kind === 'quote') return value.replace(/^\s*>\s?/u, '');
-    return value;
+    if (kind === 'paragraph') return value;
+    const content = inspectMarkdownLine(value).content;
+    return kind === 'heading' ? content.replace(/^#{1,6}\s*/u, '') : content;
 }
 
 function pairedUnit(
@@ -109,8 +133,8 @@ function pairedUnit(
     kind: 'heading' | 'list-item' | 'quote' | 'paragraph',
     headingLevel = 2,
 ): string {
-    const sourceText = inlineMarkdown(removeMarkdownMarker(source, kind));
-    const translatedText = inlineMarkdown(removeMarkdownMarker(translation, kind));
+    const sourceText = mode === 'translated' ? '' : inlineMarkdown(removeMarkdownMarker(source, kind));
+    const translatedText = mode === 'source' ? '' : inlineMarkdown(removeMarkdownMarker(translation, kind));
     const tag = kind === 'heading' ? `h${headingLevel}` : kind === 'quote' ? 'blockquote' : 'p';
     const sourceNode = `<${tag} class="reader-source">${sourceText}</${tag}>`;
     const translatedNode = `<${tag} class="reader-translation fluentread-translation">${translatedText}</${tag}>`;
@@ -119,50 +143,38 @@ function pairedUnit(
     return `<section class="reader-unit ${kind}" data-reader-unit>${body}</section>`;
 }
 
-function renderMarkdownPreview(source: string, translated: string, mode: DocumentPreviewMode): string {
+function renderMarkdownPreview(document: ParsedDocument, source: string, translated: string, mode: DocumentPreviewMode): string {
     const sourceLines = source.replace(/\r\n?/gu, '\n').split('\n');
     const translatedLines = translated.replace(/\r\n?/gu, '\n').split('\n');
     const output: string[] = [];
-    let fence = '';
-    let codeLines: string[] = [];
-
-    const flushCode = () => {
-        if (codeLines.length === 0) return;
-        output.push(`<pre data-reader-unit><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
-        codeLines = [];
-    };
-
-    sourceLines.forEach((sourceLine, index) => {
-        const fenceMatch = sourceLine.match(/^\s*(`{3,}|~{3,})/u)?.[1] || '';
-        if (fence) {
-            if (fenceMatch && fenceMatch[0] === fence[0] && fenceMatch.length >= fence.length) {
-                flushCode();
-                fence = '';
-            } else {
-                codeLines.push(sourceLine);
-            }
-            return;
+    // 正常模型复用解析时的结果；外部构造的旧模型也通过同一解析器补齐，不另设围栏状态机。
+    const codeBlocks = document.markdownCodeBlocks ?? parseDocument('preview.md', source).markdownCodeBlocks!;
+    let codeBlockIndex = 0;
+    for (let index = 0; index < sourceLines.length; index += 1) {
+        const block = codeBlocks[codeBlockIndex];
+        if (block?.startLine === index) {
+            output.push(`<pre data-reader-unit><code>${escapeHtml(block.contentLines.join('\n'))}</code></pre>`);
+            index = block.endLine - 1;
+            codeBlockIndex += 1;
+            continue;
         }
-        if (fenceMatch) {
-            fence = fenceMatch;
-            return;
-        }
-        if (!sourceLine.trim()) return;
-        if (/^\s*(?:[-*_]\s*){3,}$/u.test(sourceLine)) {
+        const sourceLine = sourceLines[index];
+        if (!sourceLine.trim()) continue;
+        const info = inspectMarkdownLine(sourceLine);
+        if (/^(?:[-*_]\s*){3,}$/u.test(info.content)) {
             output.push('<div class="reader-unit horizontal-rule" data-reader-unit></div>');
-            return;
+            continue;
         }
-        const heading = sourceLine.match(/^\s{0,3}(#{1,6})\s+/u);
+        const heading = info.content.match(/^(#{1,6})\s+/u);
         const kind = heading
             ? 'heading'
-            : /^\s*(?:[-+*]|\d+[.)])\s+/u.test(sourceLine)
+            : info.listIndent > 0
                 ? 'list-item'
-                : /^\s*>\s?/u.test(sourceLine)
+                : info.quoteDepth > 0
                     ? 'quote'
                     : 'paragraph';
         output.push(pairedUnit(sourceLine, translatedLines[index] || sourceLine, mode, kind, heading?.[1].length || 2));
-    });
-    flushCode();
+    }
     return readerShell(`<article class="markdown-article">${output.join('')}</article>`);
 }
 
@@ -173,7 +185,7 @@ function renderTextPreview(
 ): string {
     const body = sourceBlocks.map((sourceBlock, index) => pairedUnit(
         sourceBlock,
-        translatedBlocks[index] || sourceBlock,
+        mode === 'source' ? '' : translatedBlocks[index] || sourceBlock,
         mode,
         'paragraph',
     )).join('');
@@ -185,7 +197,7 @@ export function createDocumentPreviewHtml(
     translations: readonly string[],
     mode: DocumentPreviewMode,
 ): string {
-    const previewTranslations = ['markdown', 'txt'].includes(document.format)
+    const previewTranslations = mode !== 'source' && ['markdown', 'txt'].includes(document.format)
         ? Array.from({length: document.segments.length}, (_, index) => {
             const translation = translations[index];
             return translation === undefined
@@ -199,7 +211,7 @@ export function createDocumentPreviewHtml(
     if (document.format === 'markdown') {
         const source = renderDocument(document, [], 'translated');
         const translated = mode === 'source' ? source : renderDocument(document, previewTranslations, 'translated');
-        return renderMarkdownPreview(source, translated, mode);
+        return renderMarkdownPreview(document, source, translated, mode);
     }
     if (document.format === 'txt') {
         return renderTextPreview(

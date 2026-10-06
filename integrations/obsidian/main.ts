@@ -26,11 +26,15 @@ function canTranslate(file: TFile | null): file is TFile {
 }
 
 class FluentReadSettingsTab extends PluginSettingTab {
+    private readonly isCurrent: () => boolean;
+
     constructor(private readonly plugin: FluentReadObsidianPlugin) {
         super(plugin.app, plugin);
+        this.isCurrent = plugin.captureSettingsSession();
     }
 
     display(): void {
+        if (!this.isCurrent()) return;
         const {containerEl} = this;
         containerEl.empty();
         new Setting(containerEl).setName('FluentRead document translation').setHeading();
@@ -41,17 +45,19 @@ class FluentReadSettingsTab extends PluginSettingTab {
             dropdown.addOption('auto', 'Auto detect');
             Object.entries(LANGUAGE_OPTIONS).forEach(([code, label]) => dropdown.addOption(code, label));
             dropdown.setValue(this.plugin.settings.sourceLanguage);
-            dropdown.onChange(async (value) => {
+            dropdown.onChange((value) => {
+                if (!this.isCurrent()) return;
                 this.plugin.settings.sourceLanguage = value;
-                await this.plugin.saveSettings();
+                void this.plugin.saveSettings().catch(() => undefined);
             });
         });
         new Setting(containerEl).setName('Target language').addDropdown((dropdown) => {
             Object.entries(LANGUAGE_OPTIONS).forEach(([code, label]) => dropdown.addOption(code, label));
             dropdown.setValue(this.plugin.settings.targetLanguage);
-            dropdown.onChange(async (value) => {
+            dropdown.onChange((value) => {
+                if (!this.isCurrent()) return;
                 this.plugin.settings.targetLanguage = value;
-                await this.plugin.saveSettings();
+                void this.plugin.saveSettings().catch(() => undefined);
             });
         });
     }
@@ -60,25 +66,33 @@ class FluentReadSettingsTab extends PluginSettingTab {
 export default class FluentReadObsidianPlugin extends Plugin {
     settings: FluentReadObsidianSettings = {...DEFAULT_SETTINGS};
     private readonly translator = createObsidianTranslator(requestUrl);
-    private readonly jobs = new Map<string, {controller: AbortController; notice: Notice}>();
+    // TFile 身份在 rename/move 后保持稳定，路径则会被 Obsidian 原地修改。
+    private readonly jobs = new Map<TFile, {controller: AbortController; notice: Notice}>();
+    private unloaded = true;
+    private lifetime = 0;
+    private settingsWrites: Promise<void> = Promise.resolve();
 
     async onload(): Promise<void> {
+        const lifetime = ++this.lifetime;
+        this.unloaded = true;
         const stored = await this.loadData() as Partial<FluentReadObsidianSettings> | null;
+        if (lifetime !== this.lifetime) return;
         const source = stored?.sourceLanguage;
         const target = stored?.targetLanguage;
         this.settings = {
-            sourceLanguage: source && (source === 'auto' || Object.hasOwn(LANGUAGE_OPTIONS, source))
+            sourceLanguage: typeof source === 'string' && (source === 'auto' || Object.hasOwn(LANGUAGE_OPTIONS, source))
                 ? source : DEFAULT_SETTINGS.sourceLanguage,
-            targetLanguage: target && Object.hasOwn(LANGUAGE_OPTIONS, target)
+            targetLanguage: typeof target === 'string' && Object.hasOwn(LANGUAGE_OPTIONS, target)
                 ? target : DEFAULT_SETTINGS.targetLanguage,
         };
+        this.unloaded = false;
         this.addSettingTab(new FluentReadSettingsTab(this));
         this.addCommand({
             id: 'translate-active-document',
             name: 'Translate current Markdown note or PDF',
             checkCallback: (checking) => {
                 const file = this.app.workspace.getActiveFile();
-                if (!canTranslate(file)) return false;
+                if (this.unloaded || !canTranslate(file)) return false;
                 if (!checking) void this.translateFile(file);
                 return true;
             },
@@ -93,7 +107,7 @@ export default class FluentReadObsidianPlugin extends Plugin {
             },
         });
         this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => {
-            if (!(file instanceof TFile) || !canTranslate(file)) return;
+            if (this.unloaded || !(file instanceof TFile) || !canTranslate(file)) return;
             menu.addItem((item) => item
                 .setTitle('Translate with FluentRead')
                 .setIcon('languages')
@@ -102,6 +116,8 @@ export default class FluentReadObsidianPlugin extends Plugin {
     }
 
     onunload(): void {
+        this.unloaded = true;
+        this.lifetime += 1;
         this.jobs.forEach(({controller, notice}) => {
             controller.abort();
             notice.hide();
@@ -110,13 +126,31 @@ export default class FluentReadObsidianPlugin extends Plugin {
         disposePdfWorker();
     }
 
+    /** 设置 UI 与排队写入均绑定创建时的会话，不能因同实例重新加载而复活。 */
+    captureSettingsSession(): () => boolean {
+        const lifetime = this.lifetime;
+        return () => !this.unloaded && lifetime === this.lifetime;
+    }
+
     async saveSettings(): Promise<void> {
-        await this.saveData(this.settings);
+        if (this.unloaded) return;
+        const isCurrent = this.captureSettingsSession();
+        const snapshot = {...this.settings};
+        const saving = this.settingsWrites.catch(() => undefined).then(() => {
+            if (isCurrent()) return this.saveData(snapshot);
+        });
+        this.settingsWrites = saving;
+        try {
+            await saving;
+        } catch (error) {
+            if (isCurrent()) new Notice(`FluentRead: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw error;
+        }
     }
 
     private async translateFile(file: TFile): Promise<void> {
-        if (!canTranslate(file)) return;
-        if (this.jobs.has(file.path)) {
+        if (this.unloaded || !canTranslate(file)) return;
+        if (this.jobs.has(file)) {
             new Notice('FluentRead is already translating this file.');
             return;
         }
@@ -125,50 +159,67 @@ export default class FluentReadObsidianPlugin extends Plugin {
             return;
         }
         const sourceSnapshot = {mtime: file.stat.mtime, size: file.stat.size};
+        const settings = {...this.settings};
+        const fileName = file.name;
         const controller = new AbortController();
         const notice = new Notice(`FluentRead: reading ${file.name}…`, 0);
-        this.jobs.set(file.path, {controller, notice});
+        const job = {controller, notice};
+        this.jobs.set(file, job);
+        const isCurrent = () => !this.unloaded && !controller.signal.aborted && this.jobs.get(file) === job;
         try {
             const isPdf = file.extension.toLowerCase() === 'pdf';
             const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-            const source = isPdf ? '' : activeView?.file?.path === file.path
+            const beganInView = activeView?.file === file;
+            const source = isPdf ? '' : beganInView
                 ? activeView.getViewData() : await this.app.vault.read(file);
-            if (!isPdf && new TextEncoder().encode(source).byteLength > DOCUMENT_MAX_BYTES) {
+            if (!isCurrent()) return;
+            if (!isPdf && (source.length > DOCUMENT_MAX_BYTES || new TextEncoder().encode(source).byteLength > DOCUMENT_MAX_BYTES)) {
                 throw new Error('This note exceeds FluentRead’s 10 MB document limit.');
             }
-            const document = isPdf ? null : parseDocument(file.name, source);
-            const segments = isPdf
-                ? await extractPdfSegments(await this.app.vault.readBinary(file))
-                : document!.segments;
-            if (controller.signal.aborted) return;
+            const document = isPdf ? null : parseDocument(fileName, source);
+            let segments;
+            if (isPdf) {
+                const bytes = await this.app.vault.readBinary(file);
+                if (!isCurrent()) return;
+                if (bytes.byteLength > DOCUMENT_MAX_BYTES) throw new Error('This PDF exceeds FluentRead’s 10 MB document limit.');
+                segments = await extractPdfSegments(bytes, controller.signal);
+            } else segments = document!.segments;
+            if (!isCurrent()) return;
             if (segments.length === 0) throw new Error('No translatable text was found in this file.');
             const translations = await this.translator(isPdf ? segments : prepareMarkdownSegments(segments), {
-                fileName: file.name,
-                sourceLanguage: this.settings.sourceLanguage,
-                targetLanguage: this.settings.targetLanguage,
+                fileName,
+                sourceLanguage: settings.sourceLanguage,
+                targetLanguage: settings.targetLanguage,
                 signal: controller.signal,
-                onProgress: ({completed, total}) => notice.setMessage(`FluentRead: ${file.name} · ${completed}/${total}`),
+                onProgress: ({completed, total}) => {
+                    if (isCurrent()) notice.setMessage(`FluentRead: ${file.name} · ${completed}/${total}`);
+                },
             });
-            if (controller.signal.aborted) return;
-            if (!isPdf && activeView?.file?.path === file.path && activeView.getViewData() !== source) {
-                throw new Error('The source note changed during translation. Please try again.');
+            if (!isCurrent()) return;
+            if (!isPdf) {
+                const currentView = this.app.workspace.getActiveViewOfType(MarkdownView);
+                const sourceView = activeView?.file === file ? activeView : currentView?.file === file ? currentView : null;
+                const currentSource = sourceView ? sourceView.getViewData()
+                    : beganInView ? await this.app.vault.read(file) : source;
+                if (!isCurrent()) return;
+                if (currentSource !== source) throw new Error('The source note changed during translation. Please try again.');
             }
             const content = isPdf
                 ? renderBilingualPdfNote(file.path, segments, translations)
                 : renderDocument(document!, translations, 'bilingual');
             const output = await createBilingualNote(this.app.vault, file, sourceSnapshot, content, controller.signal);
-            if (!controller.signal.aborted) {
+            if (isCurrent()) {
                 await this.app.workspace.getLeaf('split').openFile(output);
-                new Notice(`FluentRead: created ${output.name}`);
+                if (isCurrent()) new Notice(`FluentRead: created ${output.name}`);
             }
         } catch (error) {
-            if (!controller.signal.aborted) {
+            if (isCurrent()) {
                 const message = error instanceof Error ? error.message : 'Unknown error';
                 new Notice(`FluentRead: ${message}`);
             }
         } finally {
             notice.hide();
-            this.jobs.delete(file.path);
+            if (this.jobs.get(file) === job) this.jobs.delete(file);
         }
     }
 }

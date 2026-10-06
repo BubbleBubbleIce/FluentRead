@@ -30020,6 +30020,1917 @@
         "Source-read external snapshot script initially reused old filename; old private44 snapshot restored from committed verification record and current read stored separately45; no old report edited",
         "Native retries preserved; a real picker regression was diagnosed rather than silently bypassing Enter"
       ]
+    },
+    {
+      "batch": "forty-sixth",
+      "baselineHead": "755bb89a0dfd8981609817a3453a74e836efdca9",
+      "progress": {
+        "sourceReadFiles": 322,
+        "sourceReadFunctionBodies": 5943,
+        "pendingFiles": 508,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "integrations/obsidian/main.ts",
+          "integrations/obsidian/pdf.ts",
+          "integrations/obsidian/vite.config.ts",
+          "src/app/popup/index.ts",
+          "src/app/popup/mount.ts",
+          "src/core/config/apiKeys.ts",
+          "src/core/config/credentialBinding.ts",
+          "src/core/config/credentials.ts",
+          "src/core/config/customBody.ts",
+          "src/core/config/customHeaders.ts",
+          "src/core/config/customOpenAI.ts",
+          "src/core/glossary/builtins.ts",
+          "src/core/glossary/index.ts",
+          "src/core/glossary/match.ts",
+          "src/core/glossary/protection.ts",
+          "src/core/glossary/transfer.ts",
+          "src/features/document-translation/core/document.ts",
+          "src/features/document-translation/core/preview.ts",
+          "src/platform/browser/capabilities.ts",
+          "src/platform/browser/ids.ts",
+          "src/platform/browser/localTranslationSupport.ts",
+          "src/shared/function/sha256.ts",
+          "src/shared/onnx/wasmBinary.ts",
+          "src/shared/onnx/webgpu.ts",
+          "src/ui/components/UiLanguageOnboarding.vue",
+          "src/ui/components/UiLanguageSelector.vue",
+          "src/ui/i18n.ts"
+        ],
+        "newFunctionBodies": 372,
+        "previouslyReviewedChangedFiles": [
+          "integrations/obsidian/markdown.ts",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/services/translation/glossaryProtection.ts",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue"
+        ],
+        "sourceProof": {
+          "integrations/obsidian/main.ts": {
+            "sha256": "b780a572308e12a3b04a9107d86df11935d68f5a3e96e6033546140e77a62f87",
+            "functionBodies": 29,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "integrations/obsidian/pdf.ts": {
+            "sha256": "67aaa882f01b5c1dc57d31214d20b1806b7fad38defa90d83ac005e1b577dac4",
+            "functionBodies": 12,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "integrations/obsidian/vite.config.ts": {
+            "sha256": "c345fef9973d7a1e0b61caa2e840e078454fc3720989cd1388c91d7f770f6c71",
+            "functionBodies": 2,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/app/popup/index.ts": {
+            "sha256": "c129c687178c5b5dae20cc0d334b94bed8e4fbc92e117034511785101de6c665",
+            "functionBodies": 8,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/app/popup/mount.ts": {
+            "sha256": "49bc2605766f224ff0885e9e39518540be05a5dcc20f2a346dff14214ed1a536",
+            "functionBodies": 2,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/config/apiKeys.ts": {
+            "sha256": "5be417243a2e3b92d2b973cd967cd678beff1fbecac61a1d52d5aab62ff72dc2",
+            "functionBodies": 8,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/config/credentialBinding.ts": {
+            "sha256": "5f3019708866a29d69d71f1aaf24e62c5d9fb52da2b33754bdde913a69c3802f",
+            "functionBodies": 16,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/config/credentials.ts": {
+            "sha256": "5a66deda428c72d5d9a37abeabf941b55f6db1ab78b438f10eb7d51d85ddc0c5",
+            "functionBodies": 21,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/config/customBody.ts": {
+            "sha256": "24f0dbedc6c32a755fd7cb116f0e094d49fe98073d932013709d182a9a1b2c5a",
+            "functionBodies": 7,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/config/customHeaders.ts": {
+            "sha256": "34cef7b5376250b3b6fe3ce82ff9519fe6428821e9872c53e03e7efda2006813",
+            "functionBodies": 6,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/config/customOpenAI.ts": {
+            "sha256": "944ad426286e9655d8010bd16d41ad6a760309513d0070456b35a4bc20f90097",
+            "functionBodies": 21,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/glossary/builtins.ts": {
+            "sha256": "ee49f9c33616f554b95f3853478e6a37c6e59bfa19307e1113fe580630997a8e",
+            "functionBodies": 5,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/glossary/index.ts": {
+            "sha256": "1db9eadf0e5cd6d7751494bd44da70fd7e5817c6d99824ebc07c17d4d2e16a50",
+            "functionBodies": 0,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/glossary/match.ts": {
+            "sha256": "b18d709adeb61cf65cd764b30db69297fe3156e84cf47be7166bc7589f1c9eef",
+            "functionBodies": 23,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/glossary/protection.ts": {
+            "sha256": "7129857240453fd072bb05b93544b456a0f67d3362bcb22fd542d646e90b6340",
+            "functionBodies": 12,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/core/glossary/transfer.ts": {
+            "sha256": "26020eb1667ae30d3b10418fdd1a77529a34dd54126a9d58ee1a60f625c5d571",
+            "functionBodies": 23,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/features/document-translation/core/document.ts": {
+            "sha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+            "functionBodies": 45,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/features/document-translation/core/preview.ts": {
+            "sha256": "2b4a962624e64130245433a2aac2b600c25d0aa3ff8b08464851ea479c568c7d",
+            "functionBodies": 15,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/platform/browser/capabilities.ts": {
+            "sha256": "10fad76f00ab3ec68035c71f5624406aca4fb3b861e1762bf96853c6b89b49b2",
+            "functionBodies": 6,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/platform/browser/ids.ts": {
+            "sha256": "08289494cd6f9f9af3d2fbe99264b00d8d7ee35148320a3e770b25b63efa5460",
+            "functionBodies": 1,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/platform/browser/localTranslationSupport.ts": {
+            "sha256": "e821dc2f0ce7d6da57298027e23f77337b698dd547eac19f37081d3ab87b9c95",
+            "functionBodies": 1,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/shared/function/sha256.ts": {
+            "sha256": "b6c83a561dddaac262a2537886b0d8fe8f78b6b97218e6b576f9a6128e9b6442",
+            "functionBodies": 1,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/shared/onnx/wasmBinary.ts": {
+            "sha256": "1a3dc49b5465ca2988225971e81b9c83ef329ed742c9dd6accb5797b444e5a9c",
+            "functionBodies": 12,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/shared/onnx/webgpu.ts": {
+            "sha256": "68a535a9373c4337b34b0186ebd663dd353f08ed5055ed29731c54fc27e8dbfd",
+            "functionBodies": 3,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/ui/components/UiLanguageOnboarding.vue": {
+            "sha256": "3a6d7543c88897aa85a7498fa6c0ad96540a7b812b138503096f1279ff791cb8",
+            "functionBodies": 31,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/ui/components/UiLanguageSelector.vue": {
+            "sha256": "1511b0e8446adb661060a154077a26071cf9450975b08550b7446508c425b4a5",
+            "functionBodies": 17,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "src/ui/i18n.ts": {
+            "sha256": "a64e6c74497d6eb00a10f42b280304a683760ba9ae822fcb158e74181314b68b",
+            "functionBodies": 45,
+            "fullyReadAndTracedThisBatch": true,
+            "previouslyReviewed": false
+          },
+          "integrations/obsidian/markdown.ts": {
+            "sha256": "443a4475f13f6fea3e5be17669b19e36857d033254e40b96302e9c81653184d9",
+            "functionBodies": 2,
+            "fullyReadAndTracedThisBatch": false,
+            "previouslyReviewed": true
+          },
+          "src/features/settings/ui/SettingsSections.vue": {
+            "sha256": "72c03ae243ff140c22c5a852908d835d076c156be45cc97e206bc13c4993c7e7",
+            "functionBodies": 166,
+            "fullyReadAndTracedThisBatch": false,
+            "previouslyReviewed": true
+          },
+          "src/services/translation/glossaryProtection.ts": {
+            "sha256": "74c5550e899b160e85c738bdffbf98105a91c57929c9dd580784b8441dbcd54e",
+            "functionBodies": 10,
+            "fullyReadAndTracedThisBatch": false,
+            "previouslyReviewed": true
+          },
+          "src/features/settings/ui/services/FreeTranslationSettings.vue": {
+            "sha256": "fb740d08d9d44cd2e84fc5a317b1ff89bed0f85dc979c1956d91905f31dec979",
+            "functionBodies": 57,
+            "fullyReadAndTracedThisBatch": false,
+            "previouslyReviewed": true
+          }
+        },
+        "additionalFullyReadStyles": [
+          {
+            "file": "src/app/popup/popup.css",
+            "sha256": "13028fe2105d18e83a7a6a6413ff5c642a6ce2d0f93d87fcdb46c70773f71b9d",
+            "lines": 695,
+            "modified": false,
+            "functionInventoryCountAdded": 0,
+            "evidence": "parallel-language-46/english-layout-followup/audit-final.md"
+          }
+        ]
+      },
+      "implementation": [
+        "Language components own current visibility, values and lifecycle; confirmation freezes submitted language, prevents duplicate writes/celebrations and releases timer/focus/listeners. Retained SettingsSections wires selector active state. Shared i18n serializes owned saves, coalesces obsolete selections, separates same-revision rollback from external updates, preserves current errors, releases queued DOM refreshes and ignores obsolete bundle completions. Actual store/repository/IndexedDB failure integration and native foreign-language save/reopen verified.",
+        "Shared document parser preserves quote/list fenced code and inline positions, emits reusable code metadata, skips VTT NOTE blocks, bounds JSON nesting and uses iterative walkers/copying. Linear Markdown scanning and bounded excerpts avoid pathological backtracking/unused translation reads. Preview consumes shared metadata, removes placeholder collisions/repeated rendering and injects real reader head plus HTML5 doctype. Native iframe verifies standards mode; source/model/exports preserved.",
+        "Obsidian entry owns TFile identity jobs, frozen language/source state, actual read size checks, cancellation and late callbacks; setting tabs and queued writes own the load session, copied saves remain ordered. PDF task/page/worker lifetime is cleaned with destroy deduplication. Controlled actual plugin/PDF imports verified; no native Obsidian vault or instantaneous native cancellation guarantee.",
+        "Glossary conflict lookups indexed locally, rejected overlapping candidates resume safely; Unicode canonical comparisons retain original ranges/spelling and pure-glossary broker acceptance. Transfers require valid enabled shape/BOM handling. Hardware capability decisions follow actual adapter fields and reject software fallbacks; WASM validates header/owned backend queue and avoids copying large bytes.",
+        "Credentials reject inherited secret fields, preserve own prototype-like keys, use iterative clone/compare, keep legal HTTP header whitespace and exact custom provider identity. Selected Key queries and destination comparisons share work. Fixed-cloud destinations ignore unused proxy, Aliyun follows actual region endpoint, proxy-consuming providers keep rebind protection. Existing static architecture assertion migrated minimally with native-behavior tests retained."
+      ],
+      "parallelAgents": {
+        "requestedByUser": true,
+        "maxConcurrent": 6,
+        "mainRole": "operations, scope, patch/evidence judgment, integration and delivery",
+        "businessSourceEditsDelegated": true,
+        "agents": [
+          {
+            "agent": "A",
+            "id": "01a10eea-1c18-7500-84bd-091e922094c1",
+            "scope": [
+              "src/ui/components/UiLanguageOnboarding.vue",
+              "src/ui/components/UiLanguageSelector.vue",
+              "src/features/settings/ui/SettingsSections.vue",
+              "src/ui/i18n.ts"
+            ],
+            "parentPatchAndHashReviewed": true,
+            "closed": true,
+            "writeScopeDisjoint": true,
+            "sourceReport": "parallel-language-46/audit-result.json",
+            "newSources": 3,
+            "newFunctionBodies": 93,
+            "ownFinalCases": 87,
+            "affectedCases": 104,
+            "originalSameHarness": {
+              "cases": 87,
+              "passed": 14,
+              "failed": 73
+            },
+            "actualStoreSubset": {
+              "cases": 5,
+              "oldPassed": 1,
+              "oldFailed": 4
+            },
+            "numericalSfcCoverageClaimed": false,
+            "englishLayoutCandidate": "ruled out existing intrinsic width contract; CSS full read/no source patch/no new tests"
+          },
+          {
+            "agent": "B",
+            "id": "01a10eea-1cae-7263-b7cd-bae53748dc56",
+            "scope": [
+              "src/features/document-translation/core/document.ts",
+              "integrations/obsidian/main.ts",
+              "integrations/obsidian/markdown.ts"
+            ],
+            "parentPatchAndHashReviewed": true,
+            "closed": true,
+            "writeScopeDisjoint": true,
+            "sourceReport": "parallel-document-46/audit-result.json",
+            "newSources": 2,
+            "newFunctionBodies": 74,
+            "affectedCases": 188,
+            "originalSameHarness": {
+              "cases": 188,
+              "passed": 107,
+              "failed": 81,
+              "apiMismatchFailures": 5
+            },
+            "strictModules": 3,
+            "strictFourDimensions": 100,
+            "privateDuplicateSourceAttributionReplay": 38
+          },
+          {
+            "agent": "C",
+            "id": "01a10f21-8aa1-7950-8f5a-fdcc675f2fd6",
+            "scope": [
+              "src/app/popup/index.ts",
+              "src/app/popup/mount.ts",
+              "integrations/obsidian/pdf.ts",
+              "integrations/obsidian/vite.config.ts",
+              "src/features/document-translation/core/preview.ts"
+            ],
+            "parentPatchAndHashReviewed": true,
+            "closed": true,
+            "writeScopeDisjoint": true,
+            "sourceReport": "parallel-boundaries-46/audit-result.json",
+            "newSources": 5,
+            "newFunctionBodies": 39,
+            "affectedCases": 141,
+            "originalSameHarness": {
+              "cases": 84,
+              "passed": 28,
+              "failed": 56
+            },
+            "strictModules": 4,
+            "strictFourDimensions": 100,
+            "doctypeBefore": {
+              "cases": 46,
+              "passed": 31,
+              "failed": 15
+            }
+          },
+          {
+            "agent": "D",
+            "id": "01a10f21-8aed-7ae3-9434-af55501921a0",
+            "scope": [
+              "src/core/glossary/builtins.ts",
+              "src/core/glossary/index.ts",
+              "src/core/glossary/match.ts",
+              "src/core/glossary/protection.ts",
+              "src/core/glossary/transfer.ts",
+              "src/services/translation/glossaryProtection.ts"
+            ],
+            "parentPatchAndHashReviewed": true,
+            "closed": true,
+            "writeScopeDisjoint": true,
+            "sourceReport": "parallel-glossary-46/audit-result.json",
+            "newSources": 5,
+            "newFunctionBodies": 63,
+            "affectedCases": 185,
+            "originalSameHarness": {
+              "cases": 97,
+              "passed": 76,
+              "failed": 21
+            },
+            "strictCases": 123,
+            "strictModules": 6,
+            "strictFourDimensions": 100
+          },
+          {
+            "agent": "E",
+            "id": "01a10f21-8e4b-7e20-98f9-af97d5c9a3a1",
+            "scope": [
+              "src/shared/function/sha256.ts",
+              "src/shared/onnx/wasmBinary.ts",
+              "src/shared/onnx/webgpu.ts",
+              "src/platform/browser/capabilities.ts",
+              "src/platform/browser/ids.ts",
+              "src/platform/browser/localTranslationSupport.ts",
+              "src/features/settings/ui/services/FreeTranslationSettings.vue"
+            ],
+            "parentPatchAndHashReviewed": true,
+            "closed": true,
+            "writeScopeDisjoint": true,
+            "sourceReport": "parallel-platform-46/audit-result.json",
+            "newSources": 6,
+            "newFunctionBodies": 24,
+            "affectedCases": 439,
+            "ownStrictCases": 149,
+            "originalSameHarness": {
+              "cases": 149,
+              "passed": 127,
+              "failed": 22
+            },
+            "strictModules": 6,
+            "strictFourDimensions": 100,
+            "internalDiagnosticFollowup": {
+              "newSourceCount": 0,
+              "oldI18n": {
+                "cases": 57,
+                "passed": 56,
+                "failed": 1
+              },
+              "final": {
+                "files": 4,
+                "cases": 114,
+                "passed": 114
+              },
+              "noResourcesScannerTestsChanged": true
+            }
+          },
+          {
+            "agent": "F",
+            "id": "01a10f21-8ea2-7c10-9351-9cc53a344372",
+            "scope": [
+              "src/core/config/apiKeys.ts",
+              "src/core/config/credentialBinding.ts",
+              "src/core/config/credentials.ts",
+              "src/core/config/customBody.ts",
+              "src/core/config/customHeaders.ts",
+              "src/core/config/customOpenAI.ts"
+            ],
+            "parentPatchAndHashReviewed": true,
+            "closed": true,
+            "writeScopeDisjoint": true,
+            "sourceReport": "parallel-credentials-46/audit-result.json",
+            "newSources": 6,
+            "newFunctionBodies": 79,
+            "affectedCases": 546,
+            "strictCases": 104,
+            "originalSameHarness": {
+              "cases": 104,
+              "passed": 81,
+              "failed": 23
+            },
+            "strictModules": 6,
+            "strictFourDimensions": 100
+          }
+        ]
+      },
+      "newTests": {
+        "newFiles": [
+          "tests/credentialAuditBoundaries.test.ts",
+          "tests/documentMarkdownContainers.test.ts",
+          "tests/documentPreviewOwnership.test.ts",
+          "tests/glossaryAuditBoundaries.test.ts",
+          "tests/obsidianPdfLifecycle.test.ts",
+          "tests/obsidianPluginLifecycle.test.ts",
+          "tests/platformAuditBoundaries.test.ts",
+          "tests/popupBootstrap.test.ts",
+          "tests/settingsUiLanguageOwnership.test.ts",
+          "tests/uiI18nOwnership.test.ts",
+          "tests/uiLanguageOnboardingLifecycle.test.ts",
+          "tests/uiLanguageSelectorLifecycle.test.ts"
+        ],
+        "helper": "tests/uiI18nAuditHarness.ts",
+        "helperIsProductionSource": false,
+        "netStaticDefinitions": 252,
+        "comparisonsNotIndependentBugCounts": true
+      },
+      "integration": {
+        "distinctFiles": 77,
+        "cases": 1711,
+        "passed": 1711,
+        "allRegressionRun": false
+      },
+      "strictCoverage": {
+        "modules": {
+          "integrations/obsidian/main.ts": {
+            "sourceSha256": "b780a572308e12a3b04a9107d86df11935d68f5a3e96e6033546140e77a62f87",
+            "metrics": {
+              "lines": {
+                "total": 196,
+                "covered": 196,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 14,
+                "covered": 14,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 196,
+                "covered": 196,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 133,
+                "covered": 133,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "B"
+          },
+          "integrations/obsidian/markdown.ts": {
+            "sourceSha256": "443a4475f13f6fea3e5be17669b19e36857d033254e40b96302e9c81653184d9",
+            "metrics": {
+              "lines": {
+                "total": 7,
+                "covered": 7,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 7,
+                "covered": 7,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 5,
+                "covered": 5,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "B"
+          },
+          "src/features/document-translation/core/document.ts": {
+            "sourceSha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+            "metrics": {
+              "lines": {
+                "total": 751,
+                "covered": 751,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 37,
+                "covered": 37,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 751,
+                "covered": 751,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 506,
+                "covered": 506,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "B"
+          },
+          "integrations/obsidian/pdf.ts": {
+            "sourceSha256": "67aaa882f01b5c1dc57d31214d20b1806b7fad38defa90d83ac005e1b577dac4",
+            "metrics": {
+              "lines": {
+                "total": 92,
+                "covered": 92,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 6,
+                "covered": 6,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 92,
+                "covered": 92,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 49,
+                "covered": 49,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "C"
+          },
+          "src/app/popup/index.ts": {
+            "sourceSha256": "c129c687178c5b5dae20cc0d334b94bed8e4fbc92e117034511785101de6c665",
+            "metrics": {
+              "lines": {
+                "total": 26,
+                "covered": 26,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 3,
+                "covered": 3,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 26,
+                "covered": 26,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 19,
+                "covered": 19,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "C"
+          },
+          "src/app/popup/mount.ts": {
+            "sourceSha256": "49bc2605766f224ff0885e9e39518540be05a5dcc20f2a346dff14214ed1a536",
+            "metrics": {
+              "lines": {
+                "total": 36,
+                "covered": 36,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 2,
+                "covered": 2,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 36,
+                "covered": 36,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 26,
+                "covered": 26,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "C"
+          },
+          "src/features/document-translation/core/preview.ts": {
+            "sourceSha256": "2b4a962624e64130245433a2aac2b600c25d0aa3ff8b08464851ea479c568c7d",
+            "metrics": {
+              "lines": {
+                "total": 163,
+                "covered": 163,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 11,
+                "covered": 11,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 163,
+                "covered": 163,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 94,
+                "covered": 94,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "C"
+          },
+          "src/core/glossary/builtins.ts": {
+            "sourceSha256": "ee49f9c33616f554b95f3853478e6a37c6e59bfa19307e1113fe580630997a8e",
+            "metrics": {
+              "lines": {
+                "total": 139,
+                "covered": 139,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 139,
+                "covered": 139,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 13,
+                "covered": 13,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "D"
+          },
+          "src/core/glossary/index.ts": {
+            "sourceSha256": "1db9eadf0e5cd6d7751494bd44da70fd7e5817c6d99824ebc07c17d4d2e16a50",
+            "metrics": {
+              "lines": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 0,
+                "covered": 0,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 0,
+                "covered": 0,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "D"
+          },
+          "src/core/glossary/match.ts": {
+            "sourceSha256": "b18d709adeb61cf65cd764b30db69297fe3156e84cf47be7166bc7589f1c9eef",
+            "metrics": {
+              "lines": {
+                "total": 119,
+                "covered": 119,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 10,
+                "covered": 10,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 119,
+                "covered": 119,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 101,
+                "covered": 101,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "D"
+          },
+          "src/core/glossary/protection.ts": {
+            "sourceSha256": "7129857240453fd072bb05b93544b456a0f67d3362bcb22fd542d646e90b6340",
+            "metrics": {
+              "lines": {
+                "total": 100,
+                "covered": 100,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 7,
+                "covered": 7,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 100,
+                "covered": 100,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 65,
+                "covered": 65,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "D"
+          },
+          "src/core/glossary/transfer.ts": {
+            "sourceSha256": "26020eb1667ae30d3b10418fdd1a77529a34dd54126a9d58ee1a60f625c5d571",
+            "metrics": {
+              "lines": {
+                "total": 207,
+                "covered": 207,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 11,
+                "covered": 11,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 207,
+                "covered": 207,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 181,
+                "covered": 181,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "D"
+          },
+          "src/services/translation/glossaryProtection.ts": {
+            "sourceSha256": "74c5550e899b160e85c738bdffbf98105a91c57929c9dd580784b8441dbcd54e",
+            "metrics": {
+              "lines": {
+                "total": 41,
+                "covered": 41,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 5,
+                "covered": 5,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 41,
+                "covered": 41,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 40,
+                "covered": 40,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "D"
+          },
+          "src/platform/browser/capabilities.ts": {
+            "sourceSha256": "10fad76f00ab3ec68035c71f5624406aca4fb3b861e1762bf96853c6b89b49b2",
+            "metrics": {
+              "lines": {
+                "total": 56,
+                "covered": 56,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 6,
+                "covered": 6,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 56,
+                "covered": 56,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 32,
+                "covered": 32,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "E"
+          },
+          "src/platform/browser/ids.ts": {
+            "sourceSha256": "08289494cd6f9f9af3d2fbe99264b00d8d7ee35148320a3e770b25b63efa5460",
+            "metrics": {
+              "lines": {
+                "total": 3,
+                "covered": 3,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 3,
+                "covered": 3,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 3,
+                "covered": 3,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "E"
+          },
+          "src/platform/browser/localTranslationSupport.ts": {
+            "sourceSha256": "e821dc2f0ce7d6da57298027e23f77337b698dd547eac19f37081d3ab87b9c95",
+            "metrics": {
+              "lines": {
+                "total": 9,
+                "covered": 9,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 9,
+                "covered": 9,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 4,
+                "covered": 4,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "E"
+          },
+          "src/shared/function/sha256.ts": {
+            "sourceSha256": "b6c83a561dddaac262a2537886b0d8fe8f78b6b97218e6b576f9a6128e9b6442",
+            "metrics": {
+              "lines": {
+                "total": 4,
+                "covered": 4,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 4,
+                "covered": 4,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "E"
+          },
+          "src/shared/onnx/wasmBinary.ts": {
+            "sourceSha256": "1a3dc49b5465ca2988225971e81b9c83ef329ed742c9dd6accb5797b444e5a9c",
+            "metrics": {
+              "lines": {
+                "total": 98,
+                "covered": 98,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 9,
+                "covered": 9,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 98,
+                "covered": 98,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 45,
+                "covered": 45,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "E"
+          },
+          "src/shared/onnx/webgpu.ts": {
+            "sourceSha256": "68a535a9373c4337b34b0186ebd663dd353f08ed5055ed29731c54fc27e8dbfd",
+            "metrics": {
+              "lines": {
+                "total": 25,
+                "covered": 25,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 1,
+                "covered": 1,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 25,
+                "covered": 25,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 22,
+                "covered": 22,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "E"
+          },
+          "src/core/config/apiKeys.ts": {
+            "sourceSha256": "5be417243a2e3b92d2b973cd967cd678beff1fbecac61a1d52d5aab62ff72dc2",
+            "metrics": {
+              "lines": {
+                "total": 41,
+                "covered": 41,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 6,
+                "covered": 6,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 41,
+                "covered": 41,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 31,
+                "covered": 31,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "F"
+          },
+          "src/core/config/credentialBinding.ts": {
+            "sourceSha256": "5f3019708866a29d69d71f1aaf24e62c5d9fb52da2b33754bdde913a69c3802f",
+            "metrics": {
+              "lines": {
+                "total": 212,
+                "covered": 212,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 11,
+                "covered": 11,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 212,
+                "covered": 212,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 129,
+                "covered": 129,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "F"
+          },
+          "src/core/config/credentials.ts": {
+            "sourceSha256": "5a66deda428c72d5d9a37abeabf941b55f6db1ab78b438f10eb7d51d85ddc0c5",
+            "metrics": {
+              "lines": {
+                "total": 165,
+                "covered": 165,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 16,
+                "covered": 16,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 165,
+                "covered": 165,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 111,
+                "covered": 111,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "F"
+          },
+          "src/core/config/customBody.ts": {
+            "sourceSha256": "24f0dbedc6c32a755fd7cb116f0e094d49fe98073d932013709d182a9a1b2c5a",
+            "metrics": {
+              "lines": {
+                "total": 45,
+                "covered": 45,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 5,
+                "covered": 5,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 45,
+                "covered": 45,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 37,
+                "covered": 37,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "F"
+          },
+          "src/core/config/customHeaders.ts": {
+            "sourceSha256": "34cef7b5376250b3b6fe3ce82ff9519fe6428821e9872c53e03e7efda2006813",
+            "metrics": {
+              "lines": {
+                "total": 26,
+                "covered": 26,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 4,
+                "covered": 4,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 26,
+                "covered": 26,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 19,
+                "covered": 19,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "F"
+          },
+          "src/core/config/customOpenAI.ts": {
+            "sourceSha256": "944ad426286e9655d8010bd16d41ad6a760309513d0070456b35a4bc20f90097",
+            "metrics": {
+              "lines": {
+                "total": 138,
+                "covered": 138,
+                "skipped": 0,
+                "pct": 100
+              },
+              "functions": {
+                "total": 15,
+                "covered": 15,
+                "skipped": 0,
+                "pct": 100
+              },
+              "statements": {
+                "total": 138,
+                "covered": 138,
+                "skipped": 0,
+                "pct": 100
+              },
+              "branches": {
+                "total": 76,
+                "covered": 76,
+                "skipped": 0,
+                "pct": 100
+              }
+            },
+            "agent": "F"
+          }
+        },
+        "all100ModuleCount": 25,
+        "thresholdsWeakened": false,
+        "globalMountOwnershipAdded": true,
+        "sfcNumericalCoverageClaimed": false,
+        "scope": "Private mapped actual-source runs in five independent agent groups; overlapping test executions are not summed as unique coverage"
+      },
+      "performance": {
+        "previewIncompleteMarker": {
+          "characters": 52000,
+          "iterationsEach": 5,
+          "beforeSourceSha256": "52c7717eb1a9682fa8e96081b42b601708c7396071770e04d2c4918a6557e880",
+          "afterSourceSha256": "2b4a962624e64130245433a2aac2b600c25d0aa3ff8b08464851ea479c568c7d",
+          "beforeMedianMs": 307.74524999999994,
+          "afterMedianMs": 0.16941599999972823,
+          "outputsEqual": true,
+          "boundary": "Same paired52k input, five controlled local Node samples; not whole-page or provider latency"
+        },
+        "unusedPreview": {
+          "method": "Actual current parser plus unchanged handoff/final preview source, transpiled in isolated Node VM; only inlineMarkdown entry receives a counter. Numeric translation reads observed through Proxy; output byte equality asserted.",
+          "beforeSha256": "f9c18d139510223c8550fe307fa01df3de01780a08eb21de5700578f295cbb43",
+          "afterSha256": "2b4a962624e64130245433a2aac2b600c25d0aa3ff8b08464851ea479c568c7d",
+          "documentSha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+          "rows": [
+            {
+              "extension": "txt",
+              "mode": "source",
+              "sourceLines": 2000,
+              "sourceSegments": 2000,
+              "before": {
+                "translationElementReads": 2000,
+                "inlineMarkdownCalls": 4000
+              },
+              "after": {
+                "translationElementReads": 0,
+                "inlineMarkdownCalls": 2000
+              },
+              "outputByteEqual": true
+            },
+            {
+              "extension": "txt",
+              "mode": "translated",
+              "sourceLines": 2000,
+              "sourceSegments": 2000,
+              "before": {
+                "translationElementReads": 2000,
+                "inlineMarkdownCalls": 4000
+              },
+              "after": {
+                "translationElementReads": 2000,
+                "inlineMarkdownCalls": 2000
+              },
+              "outputByteEqual": true
+            },
+            {
+              "extension": "txt",
+              "mode": "bilingual",
+              "sourceLines": 2000,
+              "sourceSegments": 2000,
+              "before": {
+                "translationElementReads": 2000,
+                "inlineMarkdownCalls": 4000
+              },
+              "after": {
+                "translationElementReads": 2000,
+                "inlineMarkdownCalls": 4000
+              },
+              "outputByteEqual": true
+            },
+            {
+              "extension": "md",
+              "mode": "source",
+              "sourceLines": 2000,
+              "sourceSegments": 4000,
+              "before": {
+                "translationElementReads": 4000,
+                "inlineMarkdownCalls": 4000
+              },
+              "after": {
+                "translationElementReads": 0,
+                "inlineMarkdownCalls": 2000
+              },
+              "outputByteEqual": true
+            },
+            {
+              "extension": "md",
+              "mode": "translated",
+              "sourceLines": 2000,
+              "sourceSegments": 4000,
+              "before": {
+                "translationElementReads": 4000,
+                "inlineMarkdownCalls": 4000
+              },
+              "after": {
+                "translationElementReads": 4000,
+                "inlineMarkdownCalls": 2000
+              },
+              "outputByteEqual": true
+            },
+            {
+              "extension": "md",
+              "mode": "bilingual",
+              "sourceLines": 2000,
+              "sourceSegments": 4000,
+              "before": {
+                "translationElementReads": 4000,
+                "inlineMarkdownCalls": 4000
+              },
+              "after": {
+                "translationElementReads": 4000,
+                "inlineMarkdownCalls": 4000
+              },
+              "outputByteEqual": true
+            }
+          ],
+          "boundary": "Deterministic operation counts on these ordinary 2000-line fixtures; no browser frame time, total CPU improvement, provider or real-account proof."
+        },
+        "parser": [
+          {
+            "version": "old",
+            "sourceSha256": "d44d7b3c4c6ff66d8a495840de06a32f83e10f675b7990de96af01fb96ff2dab",
+            "name": "blank-10000",
+            "characters": 10000,
+            "timesMs": [
+              32.668166,
+              32.55116699999999,
+              32.17066700000001,
+              32.57050000000001,
+              31.977374999999995
+            ],
+            "medianMs": 32.55116699999999
+          },
+          {
+            "version": "old",
+            "sourceSha256": "d44d7b3c4c6ff66d8a495840de06a32f83e10f675b7990de96af01fb96ff2dab",
+            "name": "unclosed-wiki-12000",
+            "characters": 12000,
+            "timesMs": [
+              439.804041,
+              437.6212089999999,
+              437.18004199999996,
+              436.18516699999986,
+              437.4156250000001
+            ],
+            "medianMs": 437.4156250000001
+          },
+          {
+            "version": "old",
+            "sourceSha256": "d44d7b3c4c6ff66d8a495840de06a32f83e10f675b7990de96af01fb96ff2dab",
+            "name": "unclosed-backticks-44000",
+            "characters": 44000,
+            "timesMs": [
+              0.40424999999959255,
+              0.07429199999978664,
+              0.05608299999994415,
+              0.05516699999998309,
+              0.057915999999750056
+            ],
+            "medianMs": 0.057915999999750056
+          },
+          {
+            "version": "old",
+            "sourceSha256": "d44d7b3c4c6ff66d8a495840de06a32f83e10f675b7990de96af01fb96ff2dab",
+            "name": "nested-quotes-20000",
+            "characters": 20007,
+            "timesMs": [
+              0.7527079999999842,
+              0.1560829999998532,
+              0.1325000000001637,
+              0.13137499999993452,
+              0.13933399999996254
+            ],
+            "medianMs": 0.13933399999996254
+          },
+          {
+            "version": "current",
+            "sourceSha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+            "name": "blank-10000",
+            "characters": 10000,
+            "timesMs": [
+              1.4173329999998714,
+              0.699083999999857,
+              0.5566670000002887,
+              0.5498749999997017,
+              0.6035420000002887
+            ],
+            "medianMs": 0.6035420000002887
+          },
+          {
+            "version": "current",
+            "sourceSha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+            "name": "unclosed-wiki-12000",
+            "characters": 12000,
+            "timesMs": [
+              0.7353330000000824,
+              0.0439169999999649,
+              0.02366600000004837,
+              0.022083999999722437,
+              0.025125000000116415
+            ],
+            "medianMs": 0.025125000000116415
+          },
+          {
+            "version": "current",
+            "sourceSha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+            "name": "unclosed-backticks-44000",
+            "characters": 44000,
+            "timesMs": [
+              0.4508339999997588,
+              0.06241700000009587,
+              0.04479200000014316,
+              0.04349999999976717,
+              0.044499999999970896
+            ],
+            "medianMs": 0.04479200000014316
+          },
+          {
+            "version": "current",
+            "sourceSha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+            "name": "nested-quotes-20000",
+            "characters": 20007,
+            "timesMs": [
+              1.981499999999869,
+              0.7065419999998994,
+              1.1889579999997295,
+              0.08149999999977808,
+              0.08170800000016243
+            ],
+            "medianMs": 0.7065419999998994
+          }
+        ],
+        "glossary": {
+          "scope": "Controlled synchronous source-level Node probe; one sample per workload, no network or native UI, timings are not stable benchmarks. Counts include cleanGlossaryText calls in conflict lookup; library normalization calls its local binding and is not counted.",
+          "records": [
+            {
+              "label": "1000 unique matched terms",
+              "count": 1000,
+              "textLength": 9999,
+              "values": [
+                {
+                  "name": "before",
+                  "durationMs": 532.400542,
+                  "cleanTextCalls": 999001,
+                  "resultHash": "50e6e818c49e355334b78a76e947e8797f7bcb18fcaac3ce1269b1356d3eb0c8",
+                  "terms": 1000,
+                  "conflicts": 0
+                },
+                {
+                  "name": "after",
+                  "durationMs": 27.530542000000196,
+                  "cleanTextCalls": 0,
+                  "resultHash": "50e6e818c49e355334b78a76e947e8797f7bcb18fcaac3ce1269b1356d3eb0c8",
+                  "terms": 1000,
+                  "conflicts": 0
+                }
+              ],
+              "equal": true
+            },
+            {
+              "label": "5000 maximum unique matched terms",
+              "count": 5000,
+              "textLength": 49999,
+              "values": [
+                {
+                  "name": "before",
+                  "durationMs": 10624.783916999999,
+                  "cleanTextCalls": 24995001,
+                  "resultHash": "8812c421905dcc6f305c2bdf13164c42af69880dd5f662853389cb48cfd760cb",
+                  "terms": 5000,
+                  "conflicts": 0
+                },
+                {
+                  "name": "after",
+                  "durationMs": 360.48720799999865,
+                  "cleanTextCalls": 0,
+                  "resultHash": "8812c421905dcc6f305c2bdf13164c42af69880dd5f662853389cb48cfd760cb",
+                  "terms": 5000,
+                  "conflicts": 0
+                }
+              ],
+              "equal": true
+            }
+          ]
+        },
+        "credentials": {
+          "before": {
+            "providerCount": 64,
+            "keyQueries": 2,
+            "keyRowsRead": 128,
+            "allServices": {
+              "idRead": 16640,
+              "endpointRead": 512,
+              "proxyRead": 512
+            },
+            "firstService": {
+              "idRead": 2,
+              "endpointRead": 2,
+              "proxyRead": 2
+            },
+            "repeatedReferences": 64,
+            "repeatedValueRead": 64,
+            "outputsEqual": true,
+            "evidence": "actual source functions, deterministic operation counters; no network or latency claims"
+          },
+          "after": {
+            "providerCount": 64,
+            "keyQueries": 2,
+            "keyRowsRead": 2,
+            "allServices": {
+              "idRead": 128,
+              "endpointRead": 128,
+              "proxyRead": 128
+            },
+            "firstService": {
+              "idRead": 2,
+              "endpointRead": 2,
+              "proxyRead": 2
+            },
+            "repeatedReferences": 64,
+            "repeatedValueRead": 1,
+            "outputsEqual": true,
+            "evidence": "actual source functions, deterministic operation counters; no network or latency claims"
+          },
+          "scope": "actual-source deterministic property-read counters, outputs equal; no wall-clock, whole-page, provider latency, native browser or live-account claim"
+        },
+        "platform": {
+          "method": "actual TypeScript bodies transpiled unchanged; counted controlled adapter.info getter calls and header index reads; no wall-clock or inference throughput claim",
+          "gpu": [
+            {
+              "variant": "baseline",
+              "iterations": 1000,
+              "infoReads": 4000,
+              "adapterRequests": 1000,
+              "outputsEqual": true,
+              "sourceSha256": "2d458039717a138b4e5b405f41e9bb2bb206de5837a97f7a819b92bcfafeaa30"
+            },
+            {
+              "variant": "final",
+              "iterations": 1000,
+              "infoReads": 1000,
+              "adapterRequests": 1000,
+              "outputsEqual": true,
+              "sourceSha256": "68a535a9373c4337b34b0186ebd663dd353f08ed5055ed29731c54fc27e8dbfd"
+            }
+          ],
+          "header": [
+            {
+              "variant": "baseline",
+              "length": 8,
+              "valid": true,
+              "byteReads": 4
+            },
+            {
+              "variant": "baseline",
+              "length": 8388608,
+              "valid": true,
+              "byteReads": 4
+            },
+            {
+              "variant": "final",
+              "length": 8,
+              "valid": true,
+              "byteReads": 8
+            },
+            {
+              "variant": "final",
+              "length": 8388608,
+              "valid": true,
+              "byteReads": 8
+            }
+          ],
+          "bufferOwnership": "8 MiB real ArrayBuffer identity and Response view bounds verified in final 90-case harness"
+        },
+        "languageDirectory": {
+          "deterministicCounts": {
+            "labelAndDescriptionTranslations": {
+              "old": 5,
+              "final": 3
+            },
+            "twentyMissingQueriesHundredProfiles": {
+              "oldIdReads": 2000,
+              "finalIdReads": 100
+            },
+            "singleFirstMatch": {
+              "oldIdReads": 1,
+              "finalIdReads": 1
+            },
+            "twoRepeatedFirstMatches": {
+              "oldIdReads": 2,
+              "finalIdReads": 1
+            }
+          },
+          "complexity": {
+            "old": "O(options * profiles) worst-case repeated ID search + two label translations",
+            "final": "O(options + scanned profile prefix), max O(options + profiles); local Map only if both lengths exceed1; no pre-scan, first duplicate wins, no shared cache"
+          },
+          "limits": "Synthetic operation counters execute actual function with actual translator. No timing/CPU/browser speed percentage claim."
+        }
+      },
+      "browser": {
+        "productionJavascriptSha256": "48e202361a7d53945c569694201970330431a79f79cb5567a970379c535cde3d",
+        "sourceHashes": {
+          "integrations/obsidian/main.ts": "b780a572308e12a3b04a9107d86df11935d68f5a3e96e6033546140e77a62f87",
+          "integrations/obsidian/pdf.ts": "67aaa882f01b5c1dc57d31214d20b1806b7fad38defa90d83ac005e1b577dac4",
+          "integrations/obsidian/vite.config.ts": "c345fef9973d7a1e0b61caa2e840e078454fc3720989cd1388c91d7f770f6c71",
+          "src/app/popup/index.ts": "c129c687178c5b5dae20cc0d334b94bed8e4fbc92e117034511785101de6c665",
+          "src/app/popup/mount.ts": "49bc2605766f224ff0885e9e39518540be05a5dcc20f2a346dff14214ed1a536",
+          "src/core/config/apiKeys.ts": "5be417243a2e3b92d2b973cd967cd678beff1fbecac61a1d52d5aab62ff72dc2",
+          "src/core/config/credentialBinding.ts": "5f3019708866a29d69d71f1aaf24e62c5d9fb52da2b33754bdde913a69c3802f",
+          "src/core/config/credentials.ts": "5a66deda428c72d5d9a37abeabf941b55f6db1ab78b438f10eb7d51d85ddc0c5",
+          "src/core/config/customBody.ts": "24f0dbedc6c32a755fd7cb116f0e094d49fe98073d932013709d182a9a1b2c5a",
+          "src/core/config/customHeaders.ts": "34cef7b5376250b3b6fe3ce82ff9519fe6428821e9872c53e03e7efda2006813",
+          "src/core/config/customOpenAI.ts": "944ad426286e9655d8010bd16d41ad6a760309513d0070456b35a4bc20f90097",
+          "src/core/glossary/builtins.ts": "ee49f9c33616f554b95f3853478e6a37c6e59bfa19307e1113fe580630997a8e",
+          "src/core/glossary/index.ts": "1db9eadf0e5cd6d7751494bd44da70fd7e5817c6d99824ebc07c17d4d2e16a50",
+          "src/core/glossary/match.ts": "b18d709adeb61cf65cd764b30db69297fe3156e84cf47be7166bc7589f1c9eef",
+          "src/core/glossary/protection.ts": "7129857240453fd072bb05b93544b456a0f67d3362bcb22fd542d646e90b6340",
+          "src/core/glossary/transfer.ts": "26020eb1667ae30d3b10418fdd1a77529a34dd54126a9d58ee1a60f625c5d571",
+          "src/features/document-translation/core/document.ts": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+          "src/features/document-translation/core/preview.ts": "2b4a962624e64130245433a2aac2b600c25d0aa3ff8b08464851ea479c568c7d",
+          "src/platform/browser/capabilities.ts": "10fad76f00ab3ec68035c71f5624406aca4fb3b861e1762bf96853c6b89b49b2",
+          "src/platform/browser/ids.ts": "08289494cd6f9f9af3d2fbe99264b00d8d7ee35148320a3e770b25b63efa5460",
+          "src/platform/browser/localTranslationSupport.ts": "e821dc2f0ce7d6da57298027e23f77337b698dd547eac19f37081d3ab87b9c95",
+          "src/shared/function/sha256.ts": "b6c83a561dddaac262a2537886b0d8fe8f78b6b97218e6b576f9a6128e9b6442",
+          "src/shared/onnx/wasmBinary.ts": "1a3dc49b5465ca2988225971e81b9c83ef329ed742c9dd6accb5797b444e5a9c",
+          "src/shared/onnx/webgpu.ts": "68a535a9373c4337b34b0186ebd663dd353f08ed5055ed29731c54fc27e8dbfd",
+          "src/ui/components/UiLanguageOnboarding.vue": "3a6d7543c88897aa85a7498fa6c0ad96540a7b812b138503096f1279ff791cb8",
+          "src/ui/components/UiLanguageSelector.vue": "1511b0e8446adb661060a154077a26071cf9450975b08550b7446508c425b4a5",
+          "src/ui/i18n.ts": "a64e6c74497d6eb00a10f42b280304a683760ba9ae822fcb158e74181314b68b",
+          "integrations/obsidian/markdown.ts": "443a4475f13f6fea3e5be17669b19e36857d033254e40b96302e9c81653184d9",
+          "src/features/settings/ui/SettingsSections.vue": "72c03ae243ff140c22c5a852908d835d076c156be45cc97e206bc13c4993c7e7",
+          "src/services/translation/glossaryProtection.ts": "74c5550e899b160e85c738bdffbf98105a91c57929c9dd580784b8441dbcd54e",
+          "src/features/settings/ui/services/FreeTranslationSettings.vue": "fb740d08d9d44cd2e84fc5a317b1ff89bed0f85dc979c1956d91905f31dec979"
+        },
+        "onboarding": {
+          "passed": true,
+          "samples": 4,
+          "summary": {
+            "onboarding": {
+              "first": {
+                "readyMs": 92.09999990463257,
+                "frameMs": 117.2999997138977,
+                "scriptBytes": 870220,
+                "coldWorkerStopped": false
+              },
+              "medianReadyMs": 96.59999990463257,
+              "medianFrameMs": 99.5
+            },
+            "main": {
+              "first": {
+                "readyMs": 136.2999997138977,
+                "frameMs": 140.59999990463257,
+                "scriptBytes": 1074983,
+                "coldWorkerStopped": false
+              },
+              "medianReadyMs": 119.09999990463257,
+              "medianFrameMs": 125.09999990463257
+            }
+          },
+          "confirmToMainMs": 1355.0999999046326,
+          "persistenceCases": [
+            {
+              "language": "en-US",
+              "setupCompleted": true,
+              "backendReadVerified": true,
+              "reopened": true
+            }
+          ],
+          "quickClose": false,
+          "crossPageSync": false,
+          "latestWriteWins": false,
+          "focusSamples": 4,
+          "focusViolations": 0,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacementMode": "background-visible-no-focus",
+          "browserFrontmostAtPlacement": false,
+          "finalBrowserFrontmost": false,
+          "dimensions": [
+            {
+              "phase": "onboarding",
+              "dimensions": {
+                "viewportWidth": 320,
+                "rootWidth": 320,
+                "rootScrollWidth": 320,
+                "bodyWidth": 320,
+                "bodyScrollWidth": 320
+              },
+              "oversizedChildren": []
+            },
+            {
+              "phase": "onboarding",
+              "dimensions": {
+                "viewportWidth": 320,
+                "rootWidth": 320,
+                "rootScrollWidth": 320,
+                "bodyWidth": 320,
+                "bodyScrollWidth": 320
+              },
+              "oversizedChildren": []
+            },
+            {
+              "phase": "main",
+              "dimensions": {
+                "viewportWidth": 380,
+                "rootWidth": 380,
+                "rootScrollWidth": 380,
+                "bodyWidth": 380,
+                "bodyScrollWidth": 380
+              },
+              "oversizedChildren": []
+            },
+            {
+              "phase": "main",
+              "dimensions": {
+                "viewportWidth": 380,
+                "rootWidth": 380,
+                "rootScrollWidth": 380,
+                "bodyWidth": 380,
+                "bodyScrollWidth": 380
+              },
+              "oversizedChildren": []
+            }
+          ],
+          "intrinsicWidthContract": {
+            "welcomeZh": 320,
+            "mainEn": 380
+          }
+        },
+        "document": {
+          "passed": true,
+          "cases": [
+            "unsupported import has persistent actionable error",
+            "lazy batch ZIP download contains completed document",
+            "3 formats parse, translate through provider, edit via UI and export original format"
+          ],
+          "exampleLoads": {
+            "sample.md": {
+              "translated": true,
+              "edited": true,
+              "exported": true,
+              "bytes": 386
+            },
+            "sample.txt": {
+              "translated": true,
+              "edited": true,
+              "exported": true,
+              "bytes": 222
+            },
+            "sample.html": {
+              "translated": true,
+              "edited": true,
+              "exported": true,
+              "bytes": 369
+            }
+          },
+          "markdownCodePreview": true,
+          "markdownCodeExport": true,
+          "htmlPreviewStandardsMode": true,
+          "focusSamples": 2,
+          "focusViolations": 0,
+          "launchMode": "macos-background-cdp",
+          "focusPolicy": "launchservices-no-foreground",
+          "windowPlacementMode": "background-visible-no-focus",
+          "browserFrontmostAtPlacement": false,
+          "finalBrowserFrontmost": false
+        },
+        "screenshotsInspected": [
+          "confirmed-main.png",
+          "main.png",
+          "onboarding.png",
+          "reopened-main-en.png",
+          "01-import-desktop.png",
+          "02-import-mobile.png",
+          "reader-sample-html.png",
+          "reader-sample-md.png",
+          "reader-sample-txt.png"
+        ],
+        "screenCount": 9,
+        "errors": 0,
+        "browserClosed": true,
+        "profilesRemoved": true,
+        "fixtureClosed": true,
+        "processCleanup": {
+          "matchedTaskBrowserProcesses": 0,
+          "ownedBrowserProfilesRemoved": true,
+          "taskServersClosed": true,
+          "scope": "Exact task profile prefixes and executable browser commands; no unrelated processes touched"
+        },
+        "boundary": "Actual production extension HTML pages with focus-safe temporary Edge; real language storage/reopen and deterministic loopback translation for three local formats/edit/export/ZIP. No live provider, native Obsidian/toolbar, actual GPU, Firefox or userscript runtime claim; timings are host-local few samples.",
+        "priorAttemptsPreserved": {
+          "onboardingLaunch": "Sandbox launch failed before samples; profile removed; unrestricted approved launch succeeds",
+          "onboardingWrongViewport": "Real save/reopen already passed; main-en viewport320 conflicts with existing380 intrinsic width; ruled out, source unchanged",
+          "documentPreflight": "Missing required helper argument rejected before browser/profile/fixture launch; explicit parameter supplied"
+        }
+      },
+      "architecture": {
+        "files": 3,
+        "cases": 833,
+        "passed": 831,
+        "existingFailures": 2,
+        "unownedExecutableModules": 12,
+        "unownedDocumentationTools": 3
+      },
+      "externalMain": {
+        "cachedMain": "b1a6029cb71ad43fe9c9974d28e54bcbae32c076",
+        "primaryHead": "b1a6029cb71ad43fe9c9974d28e54bcbae32c076",
+        "primaryDirty": false,
+        "primaryStatus": "",
+        "integratedMain": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "cachedDeltaFiles": 329,
+        "primaryDeltaFiles": 329,
+        "freshRemoteFetch": false,
+        "rebaseStarted": false,
+        "mergeStarted": false
+      },
+      "followups": [
+        {
+          "files": [
+            "src/core/config/transfer.ts",
+            "src/services/config/store.ts"
+          ],
+          "issue": "Paired token/secret explicit rebind intent mismatch; import reproduced, store static only",
+          "status": "parent scope coordination pending"
+        },
+        {
+          "files": [
+            "src/services/translation/broker.ts"
+          ],
+          "issue": "Identity still includes unused proxy for hardcoded cloud routes",
+          "status": "caller identity semantics review pending"
+        },
+        {
+          "files": [
+            "src/services/translation/templates.ts"
+          ],
+          "issue": "commonMsgTemplate repeated custom JSON.parse two calls",
+          "status": "reproduced, optimize consumer next batch"
+        },
+        {
+          "files": [
+            "src/core/config/model.ts"
+          ],
+          "issue": "legacy unsupported __proto__ token dropped; protectProviderModels may normalize repeatedly",
+          "status": "unknown service data loss proved, model complexity only static"
+        },
+        {
+          "files": [
+            "src/features/document-translation/core/document.ts",
+            "src/features/document-translation/core/preview.ts"
+          ],
+          "issue": "Plain four-column indented Markdown code reaches provider; standard syntax coverage decision and safe paragraph/list continuation required",
+          "status": "candidate for bounded parser support, not full CommonMark promise"
+        }
+      ],
+      "finalDelivery": {
+        "status": "pending-full-audit",
+        "requestedByUser": true,
+        "steps": [
+          "Complete all source/function/chain review and related fixes/performance/tests",
+          "Rebase onto then-latest verified main and reconcile changed/new source review",
+          "Review the whole resulting code and functional chains, resolve all related findings and verify",
+          "Merge the verified reviewed head using the repository delivery workflow"
+        ],
+        "performed": false
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "obsidian": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 507,
+          "staticDefinitions": 7088,
+          "staticDefinitionDelta": 252
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Original goal active; remaining508production files/full chains plus candidates and final main reconciliation, safe rebase, whole code review, fix/verify and authorized merge",
+        "Numerical private source coverage is scoped; SFC behavior/real-store cases are not fictional mapped100",
+        "Baseline comparisons restore only allocated old modules with current dependencies; B old-parser/new-preview5interface errors excluded from defect claims",
+        "Already issued native vault/storage/PDF calls may settle; guards do not provide atomic external rollback",
+        "No reference-project code/design, dependency/version/locales/generated-resource or userscript language pin changes"
+      ]
     }
   ]
 }

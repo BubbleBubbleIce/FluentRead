@@ -177,7 +177,7 @@ function refreshWeights(): Promise<void> {
   weightRequest = operation
   operation.promise = (async () => {
     try {
-      const response = await waitForSettingsTask(browser.runtime.sendMessage({type: FREE_TRANSLATION_WEIGHTS_MESSAGE_TYPE}) as Promise<FreeTranslationWeightsResponse | undefined>, operation.controller.signal, 10_000, '免费权重读取超时')
+      const response = await waitForSettingsTask(browser.runtime.sendMessage({type: FREE_TRANSLATION_WEIGHTS_MESSAGE_TYPE}) as Promise<FreeTranslationWeightsResponse | undefined>, operation.controller.signal, 10_000, 'Settings task timed out')
       if (current() && generation === weightRequestGeneration && canReadWeights.value) {
         weightSnapshot.value = response?.success === true && isCurrentSnapshot(response.snapshot) ? response.snapshot : null
       }

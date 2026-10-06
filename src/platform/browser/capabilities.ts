@@ -36,7 +36,7 @@ export type BrowserFeatureCapability =
     | 'selectionTtsPageFallback';
 
 function normalizeBrowser(browser: string): string {
-    return browser.trim().toLocaleLowerCase() || 'unknown';
+    return browser.trim().toLowerCase() || 'unknown';
 }
 
 /**

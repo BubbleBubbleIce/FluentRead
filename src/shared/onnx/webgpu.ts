@@ -11,6 +11,7 @@ export interface WebGpuProbeResult {
 }
 
 interface AdapterInfo {
+    isFallbackAdapter?: boolean;
     vendor?: string;
     architecture?: string;
     device?: string;
@@ -18,7 +19,6 @@ interface AdapterInfo {
 }
 
 interface ProbeNavigator {
-    userAgent?: string;
     gpu?: {requestAdapter(options: {powerPreference: 'high-performance'}): Promise<{
         isFallbackAdapter?: boolean;
         info?: AdapterInfo;
@@ -28,21 +28,21 @@ interface ProbeNavigator {
 /** 探测不分配显存；驱动无响应超过两秒时，本次处理直接使用 CPU。 */
 export async function probeWebGpu(): Promise<WebGpuProbeResult> {
     const unavailable = {available: false, info: ''};
-    const runtimeNavigator = globalThis.navigator as ProbeNavigator | undefined;
-    if (!runtimeNavigator?.gpu?.requestAdapter
-        || /Headless(?:Chrome|Edge)/i.test(runtimeNavigator.userAgent || '')) return unavailable;
-
     let result = unavailable;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
+        const runtimeNavigator = globalThis.navigator as ProbeNavigator | undefined;
+        if (typeof runtimeNavigator?.gpu?.requestAdapter !== 'function') return unavailable;
         const adapter = await Promise.race([
             runtimeNavigator.gpu.requestAdapter({powerPreference: 'high-performance'}),
             new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), 2_000); }),
         ]);
         if (adapter) {
-            const info = [adapter.info?.vendor, adapter.info?.architecture, adapter.info?.device, adapter.info?.description]
+            const adapterInfo = adapter.info;
+            const info = [adapterInfo?.vendor, adapterInfo?.architecture, adapterInfo?.device, adapterInfo?.description]
                 .filter(Boolean).join(' / ');
-            const software = adapter.isFallbackAdapter === true || /swiftshader|software|llvmpipe|fallback/i.test(info);
+            const software = adapter.isFallbackAdapter === true || adapterInfo?.isFallbackAdapter === true
+                || /swiftshader|software|llvmpipe|fallback/i.test(info);
             result = {available: !software, info: software ? '' : info};
         }
     } catch {

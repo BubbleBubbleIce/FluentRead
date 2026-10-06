@@ -35,7 +35,7 @@ function wakePopupWorker(): void {
       void Promise.resolve(globals.browser.runtime.sendMessage(message)).then(prepareRoute).catch(() => {});
     } else if (globals.chrome?.runtime) {
       const runtime = globals.chrome.runtime;
-      runtime.sendMessage(message, response => { if (!runtime.lastError) prepareRoute(response); });
+      runtime.sendMessage(message, (response: unknown) => { if (!runtime.lastError) prepareRoute(response); });
     }
   } catch {
     // 正常配置读取负责失败与回退；预唤醒失败不能阻断挂载。

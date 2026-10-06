@@ -1,7 +1,7 @@
 /**
  * @file src/core/glossary/protection.ts
  * 文件职责：把原文命中的术语保护为独立占位符，并在翻译结果中原位填回指定译法。
- * 主要内容：共享词边界与大小写规则，长词优先、重复出现独立编号，避开内部文本槽标记；严格检查丢失、重复和未知占位符。
+ * 主要内容：共享词边界与大小写规则，规范写法只用于定位并映射回原文，保留未命中字符与空译法的原始写法；长词优先、重复出现独立编号，避开内部槽标记，严格检查丢失、重复和未知占位符。
  * 模块边界：纯文本转换，不接触宿主 DOM、存储或翻译服务；译法按字面填入，不再次参与替换。
  */
 import {findGlossaryMatches} from './match';
@@ -16,12 +16,51 @@ export class GlossaryPlaceholderError extends Error {
     }
 }
 
+/** Unicode NFC 除组合附加符外，仅现代 Hangul L/V/T 可跨字母合成。 */
+function composesHangul(cluster: string, character: string): boolean {
+    const next = character.charCodeAt(0);
+    if (next < 0x1161 || next > 0x11c2) return false;
+    const normalized = cluster.normalize('NFC');
+    const last = normalized.charCodeAt(normalized.length - 1);
+    return (last >= 0x1100 && last <= 0x1112 && next >= 0x1161 && next <= 0x1175)
+        || (last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 === 0 && next >= 0x11a8 && next <= 0x11c2);
+}
+
+/** 只为非 NFC 原文建立边界；不可拆开的组合内部没有映射，不能截断并改写半个原字符。 */
+function normalizeMatchText(original: string): {text: string; offsets?: (number | undefined)[]} {
+    const text = original.normalize('NFC');
+    if (text === original) return {text};
+    const offsets: (number | undefined)[] = [];
+    let cluster = '';
+    let start = 0;
+    let cursor = 0;
+    let normalizedCursor = 0;
+    const flush = () => {
+        const normalized = cluster.normalize('NFC');
+        offsets[normalizedCursor] = start;
+        if (normalized === cluster) {
+            for (let index = 1; index < cluster.length; index += 1) offsets[normalizedCursor + index] = start + index;
+        }
+        normalizedCursor += normalized.length;
+        offsets[normalizedCursor] = cursor;
+        start = cursor;
+        cluster = '';
+    };
+    for (const character of original) {
+        if (cluster && !/^\p{M}$/u.test(character) && !composesHangul(cluster, character)) flush();
+        cluster += character;
+        cursor += character.length;
+    }
+    flush();
+    return {text, offsets};
+}
+
 export function protectGlossaryText(
     original: string,
     entries: readonly {source: string; target: string; caseSensitive: boolean}[],
     namespace = '0',
 ) {
-    const text = original.normalize('NFC');
+    const text = original;
     let prefix = `__FRTERM_${sha256Hex(namespace + '\0' + text).slice(0, 12)}_`;
     while (text.includes(prefix)) prefix += 'x';
     const values = new Map<string, string>();
@@ -30,15 +69,19 @@ export function protectGlossaryText(
     const pieces = text.split(/(___FLUENTREAD_[a-z0-9_-]+?_\d+_(?:BEGIN|END)___)/giu);
     const protectedText = pieces.map((piece, index) => {
         if (index % 2) return piece;
-        const occupied = findGlossaryMatches(piece, entries);
+        const normalized = normalizeMatchText(piece);
+        const occupied = findGlossaryMatches(normalized.text, entries);
         let cursor = 0;
         let output = '';
         for (const range of occupied) {
+            const start = normalized.offsets ? normalized.offsets[range.start] : range.start;
+            const end = normalized.offsets ? normalized.offsets[range.end] : range.end;
+            if (start === undefined || end === undefined) continue;
             const token = `${prefix}${values.size}__`;
-            values.set(token, range.entry.target || piece.slice(range.start, range.end));
+            values.set(token, range.entry.target || piece.slice(start, end));
             tokenPieces.set(token, index);
-            output += piece.slice(cursor, range.start) + token;
-            cursor = range.end;
+            output += piece.slice(cursor, start) + token;
+            cursor = end;
         }
         return output + piece.slice(cursor);
     }).join('');

@@ -17,7 +17,7 @@ export interface CompressedWasmLoadOptions {
     maxAttempts?: number;
 }
 
-const WASM_MAGIC = [0x00, 0x61, 0x73, 0x6d];
+const WASM_HEADER = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
 const DEFAULT_MAX_ATTEMPTS = 2;
 const MAX_ALLOWED_ATTEMPTS = 3;
 const initializedBackends = new WeakSet<object>();
@@ -29,8 +29,8 @@ function boundedAttempts(value: number | undefined): number {
 }
 
 function isWasmBinary(value: Uint8Array): boolean {
-    return value.byteLength >= WASM_MAGIC.length
-        && WASM_MAGIC.every((byte, index) => value[index] === byte);
+    return value.byteLength >= WASM_HEADER.length
+        && WASM_HEADER.every((byte, index) => value[index] === byte);
 }
 
 function loadError(url: string, cause: unknown): Error {
@@ -52,7 +52,7 @@ async function decompressResponse(response: Response, url: string): Promise<Uint
         error.retryable = response.status >= 500;
         throw error;
     }
-    if (url.endsWith('.wasm')) {
+    if (url.split(/[?#]/, 1)[0]!.endsWith('.wasm')) {
         const bytes = new Uint8Array(await response.arrayBuffer());
         if (!isWasmBinary(bytes)) throw nonRetryableError(`ONNX_WASM_BINARY_INVALID:${url}`);
         return bytes;
@@ -70,7 +70,7 @@ async function decompressResponse(response: Response, url: string): Promise<Uint
     return bytes;
 }
 
-/** 读取并解压扩展内置 WASM，最多重试两次，避免永久保留失败的响应或二进制。 */
+/** 读取扩展内置原始或 gzip WASM；默认尝试两次、最多三次，损坏资源不重试。 */
 export async function loadCompressedWasmBinary(
     url: string,
     options: CompressedWasmLoadOptions = {},
@@ -112,18 +112,19 @@ export async function withCompressedWasmBinary<T>(
     backendQueues.set(backend, queued);
     await previous;
 
-    let wasmBinary: Uint8Array | undefined;
     try {
         if (initializedBackends.has(backend)) return await initialize();
-        wasmBinary = await loadCompressedWasmBinary(url, options);
-        backend.wasmBinary = wasmBinary;
+        backend.wasmBinary = await loadCompressedWasmBinary(url, options);
         const result = await initialize();
         initializedBackends.add(backend);
         return result;
     } finally {
-        backend.wasmBinary = undefined;
-        wasmBinary = undefined;
-        release();
-        if (backendQueues.get(backend) === queued) backendQueues.delete(backend);
+        try {
+            backend.wasmBinary = undefined;
+        } finally {
+            // 清理属性失败也必须释放队列，否则后续初始化会永久等待。
+            release();
+            if (backendQueues.get(backend) === queued) backendQueues.delete(backend);
+        }
     }
 }

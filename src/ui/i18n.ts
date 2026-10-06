@@ -4,7 +4,7 @@
  * 文件职责：把 core i18n 的纯翻译能力接入 Vue，并在每个扩展 UI runtime 中
  * 订阅共享配置、即时切换语言和安全迁移尚未 key 化的旧文案。
  * 主要内容：提供 createUiI18nPlugin、useUiI18n 和 v-ui-i18n 指令；语言切换时按需加载资源包，
- * 资源到达后通过 bundleRevision 刷新渲染与旧文案扫描；源语言界面跳过无效全树扫描，切回源语言时仍恢复旧文案。指令只扫描
+ * 选择以调用身份串行提交字段补丁，旧资源、旧失败和已销毁 runtime 不得回写新选择；资源到达后通过 bundleRevision 刷新渲染与旧文案扫描；源语言界面跳过无效全树扫描，切回源语言时仍恢复旧文案。指令只扫描
  * 显式标记的扩展 UI 根节点，跳过代码、文本编辑器和用户内容，避免把网页正文
  * 或翻译结果误当成扩展文案。
  * 模块边界：这里负责 Vue 响应式和配置 patch，不定义语言文案；文案资源与纯
@@ -27,6 +27,7 @@ import {
     config,
     configReady,
     requestConfigPatch,
+    getConfigRevision,
     subscribeConfig,
 } from '@/src/services/config/store';
 import {
@@ -46,7 +47,8 @@ export interface UiI18nContext {
     bundleRevision: Readonly<Ref<number>>;
     t: (key: string, params?: TranslationParams) => string;
     translateLegacy: (value: string) => string;
-    setLanguage: (value: unknown) => Promise<void>;
+    /** 当前选择保存成功返回 true；被新选择、外部配置或销毁取代返回 false，当前保存失败仍抛错。 */
+    setLanguage: (value: unknown) => Promise<boolean>;
     dispose: () => void;
 }
 
@@ -63,19 +65,29 @@ interface ServiceProfileSummary {
     models: string[];
 }
 
-/** 在 UI 边界本地化服务目录，同时保留原始名称作为搜索兼容项。 */
+/** 在 UI 边界复用本次标签译文；profile 按需索引且保留重复 ID 首项，原始名称仍用于搜索。 */
 export function localizeServiceOptions<T extends LocalizableServiceOption>(
     options: readonly T[],
     profiles: readonly ServiceProfileSummary[],
     translateLegacy: (value: string) => string,
 ): Array<T & {searchTerms: string[]}> {
+    // 单项查询沿用 find 的提前停止；批量查询只扫描未见过的前缀，不预扫整个目录。
+    const profileIndex = options.length > 1 && profiles.length > 1
+        ? new Map<string, ServiceProfileSummary>() : undefined;
+    let profileCursor = 0;
     return options.map((option) => {
-        const profile = profiles.find((item) => item.id === option.value);
+        let profile = profileIndex ? profileIndex.get(option.value) : profiles.find((item) => item.id === option.value);
+        while (profileIndex && !profile && profileCursor < profiles.length) {
+            const next = profiles[profileCursor++], id = next.id;
+            if (!profileIndex.has(id)) profileIndex.set(id, next);
+            if (id === option.value) profile = profileIndex.get(id);
+        }
+        const label = translateLegacy(option.label);
         return {
             ...option,
-            label: translateLegacy(option.label),
+            label,
             description: option.description ? translateLegacy(option.description) : option.description,
-            searchTerms: [...(option.searchTerms || []), option.label, translateLegacy(option.label), ...(profile ? [profile.endpoint, ...profile.models] : [])],
+            searchTerms: [...(option.searchTerms || []), option.label, label, ...(profile ? [profile.endpoint, ...profile.models] : [])],
         };
     });
 }
@@ -86,24 +98,56 @@ export function createUiI18nContext(): UiI18nContext {
     const languageState = ref<UiLanguage>(normalizeUiLanguage(config.uiLanguage || DEFAULT_UI_LANGUAGE));
     const bundleRevisionState = ref(0);
     let disposed = false;
+    let renderRevision = 0;
+    type LanguageChange = {
+        language: UiLanguage;
+        previousLanguage: UiLanguage;
+        stage: 'loading' | 'queued' | 'persisting';
+        invalidated: boolean;
+        baseRevision?: number;
+    };
+    let currentChange: LanguageChange | undefined;
+    let languageWriteQueue = Promise.resolve();
+    const ownedWrites = new Set<LanguageChange>();
 
     const applyLanguage = (value: unknown): void => {
+        if (disposed) return;
         const nextLanguage = normalizeUiLanguage(value);
+        const revision = ++renderRevision;
         languageState.value = nextLanguage;
         // 普通配置变化频繁触发订阅；资源已注册时不做任何额外刷新。未注册时先按中文回退渲染，
         // 资源到达后只刷新仍在使用该语言的界面。
         if (hasUiLanguageBundle(nextLanguage)) return;
         void ensureUiLanguageBundle(nextLanguage).then((loaded) => {
-            if (loaded && !disposed && languageState.value === nextLanguage) bundleRevisionState.value += 1;
-        });
+            if (loaded && !disposed && revision === renderRevision) bundleRevisionState.value += 1;
+        }).catch(() => undefined);
     };
 
     applyLanguage(languageState.value);
-    const unsubscribe = subscribeConfig((nextConfig) => {
-        if (!disposed) applyLanguage(nextConfig.uiLanguage);
-    });
+    const applyConfigLanguage = (value: unknown): void => {
+        if (disposed) return;
+        const nextLanguage = normalizeUiLanguage(value);
+        // store 在 requestConfigPatch 内同步发布乐观值，拒绝前可能发布权威回滚。
+        // 同 revision 的原语言是自己的回滚；外部同值的新 revision 不能复活旧请求。
+        const owner = [...ownedWrites].find(change => {
+            if (nextLanguage === change.language) {
+                change.baseRevision ??= getConfigRevision();
+                return true;
+            }
+            return nextLanguage === change.previousLanguage && change.baseRevision !== undefined
+                && getConfigRevision() === change.baseRevision;
+        });
+        if (!owner && nextLanguage !== languageState.value && currentChange) currentChange.invalidated = true;
+        if (owner && currentChange && owner !== currentChange && !currentChange.invalidated
+            && currentChange.stage !== 'loading') {
+            currentChange.previousLanguage = nextLanguage;
+            return;
+        }
+        applyLanguage(nextLanguage);
+    };
+    const unsubscribe = subscribeConfig(nextConfig => applyConfigLanguage(nextConfig.uiLanguage));
     void configReady.then(() => {
-        if (!disposed) applyLanguage(config.uiLanguage);
+        applyConfigLanguage(config.uiLanguage);
     }).catch(() => undefined);
 
     const language = readonly(languageState);
@@ -117,20 +161,51 @@ export function createUiI18nContext(): UiI18nContext {
         return translateLegacyText(value, language.value);
     };
 
-    async function setLanguage(value: unknown): Promise<void> {
-        const nextLanguage = normalizeUiLanguage(value);
-        const previousLanguage = languageState.value;
-        // 先取得目标语言资源，避免切换瞬间整页闪回中文。
-        await ensureUiLanguageBundle(nextLanguage);
-        applyLanguage(nextLanguage);
+    async function setLanguage(value: unknown): Promise<boolean> {
+        if (disposed) return false;
+        const change: LanguageChange = {
+            language: normalizeUiLanguage(value),
+            previousLanguage: currentChange && !currentChange.invalidated && currentChange.stage === 'queued'
+                ? currentChange.previousLanguage : languageState.value,
+            stage: 'loading',
+            invalidated: false,
+        };
+        currentChange = change;
+        const current = () => !disposed && currentChange === change && !change.invalidated;
         try {
-            await requestConfigPatch(
-                {uiLanguage: nextLanguage, uiLanguageSetupCompleted: true},
-                browser.runtime.sendMessage.bind(browser.runtime),
-            );
+            // 先取得资源，再预览最新选择；等待前驱存储期间也不能显示旧提交的回声。
+            await Promise.all([ensureUiLanguageBundle(change.language), configReady]);
+            if (!current()) return false;
+            change.stage = 'queued';
+            applyLanguage(change.language);
+            const predecessor = languageWriteQueue;
+            const write = predecessor.then(async () => {
+                if (!current()) return false;
+                change.stage = 'persisting';
+                ownedWrites.add(change);
+                try {
+                    await requestConfigPatch(
+                        {uiLanguage: change.language, uiLanguageSetupCompleted: true},
+                        browser.runtime.sendMessage.bind(browser.runtime),
+                    );
+                    return current();
+                } catch (error) {
+                    if (!current() || (change.baseRevision !== undefined
+                        && getConfigRevision() !== change.baseRevision)) return false;
+                    // 真实 store 通常已回读权威值；只在仍显示本次乐观值时恢复自己的前驱。
+                    if (languageState.value === change.language) applyLanguage(change.previousLanguage);
+                    throw error;
+                } finally {
+                    ownedWrites.delete(change);
+                }
+            });
+            languageWriteQueue = write.then(() => undefined, () => undefined);
+            return await write;
         } catch (error) {
-            languageState.value = previousLanguage;
+            if (!current()) return false;
             throw error;
+        } finally {
+            if (currentChange === change) currentChange = undefined;
         }
     }
 
@@ -143,6 +218,7 @@ export function createUiI18nContext(): UiI18nContext {
         dispose() {
             if (disposed) return;
             disposed = true;
+            currentChange = undefined;
             unsubscribe();
         },
     };
@@ -165,6 +241,7 @@ interface UiI18nDirectiveState {
     refreshQueued: boolean;
     refreshTimer?: ReturnType<typeof setTimeout>;
     refreshing: boolean;
+    disposed: boolean;
     refreshAgain: boolean;
     text: WeakMap<Text, TrackedText>;
     attributes: WeakMap<HTMLElement, Map<string, TrackedAttribute>>;
@@ -214,6 +291,7 @@ function observeUiRoot(root: HTMLElement, observer: MutationObserver): void {
 }
 
 function scheduleUiRefresh(root: HTMLElement, state: UiI18nDirectiveState): void {
+    if (state.disposed) return;
     if (state.refreshing) {
         state.refreshAgain = true;
         return;
@@ -223,15 +301,15 @@ function scheduleUiRefresh(root: HTMLElement, state: UiI18nDirectiveState): void
     state.refreshTimer = setTimeout(() => {
         state.refreshTimer = undefined;
         state.refreshQueued = false;
-        if (!root.isConnected) return;
+        if (state.disposed || !root.isConnected) return;
         state.refreshing = true;
         state.observer.disconnect();
         try {
             scanUiRoot(root, state.context, state);
         } finally {
             state.refreshing = false;
-            if (root.isConnected) observeUiRoot(root, state.observer);
-            if (state.refreshAgain) {
+            if (!state.disposed && root.isConnected) observeUiRoot(root, state.observer);
+            if (!state.disposed && state.refreshAgain) {
                 state.refreshAgain = false;
                 scheduleUiRefresh(root, state);
             }
@@ -299,6 +377,7 @@ function createUiI18nDirective(context: UiI18nContext): Directive<HTMLElement> {
             state.refresh = () => scheduleUiRefresh(root, state);
             state.refreshQueued = false;
             state.refreshing = false;
+            state.disposed = false;
             state.refreshAgain = false;
             state.text = new WeakMap();
             state.attributes = new WeakMap();
@@ -316,8 +395,9 @@ function createUiI18nDirective(context: UiI18nContext): Directive<HTMLElement> {
         beforeUnmount(root) {
             const state = states.get(root);
             if (!state) return;
+            state.disposed = true;
             state.stopLanguageWatch();
-            if (state.refreshTimer) clearTimeout(state.refreshTimer);
+            if (state.refreshTimer !== undefined) clearTimeout(state.refreshTimer);
             state.observer.disconnect();
             states.delete(root);
         },
@@ -334,6 +414,7 @@ function observeUiDocument(root: HTMLElement, context: UiI18nContext): () => voi
     });
     state.refreshQueued = false;
     state.refreshing = false;
+    state.disposed = false;
     state.refreshAgain = false;
     state.text = new WeakMap();
     state.attributes = new WeakMap();
@@ -342,8 +423,9 @@ function observeUiDocument(root: HTMLElement, context: UiI18nContext): () => voi
     observeUiRoot(root, state.observer);
     refresh();
     return () => {
+        state.disposed = true;
         state.stopLanguageWatch();
-        if (state.refreshTimer) clearTimeout(state.refreshTimer);
+        if (state.refreshTimer !== undefined) clearTimeout(state.refreshTimer);
         state.observer.disconnect();
     };
 }

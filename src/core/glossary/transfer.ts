@@ -1,7 +1,7 @@
 /**
  * @file src/core/glossary/transfer.ts
  * 文件职责：把 CSV、TSV 和 JSON 术语文件转换为可确认的导入预览，并输出可在表格软件中安全打开且精确回导的文件。
- * 主要内容：解析引号、多行、BOM 和中英文列名，按目标语言 tgt_lng 分组，并在表格导出中保留源目标语言；对格式错误、范围错误和容量超限给出阻止性错误，防止静默丢词。
+ * 主要内容：解析引号、多行、BOM 和中英文列名，严格解码显式 UTF-8/UTF-16 文件，按目标语言 tgt_lng 分组，并在表格导出中保留源目标语言；对格式、启用状态、范围错误和容量超限给出阻止性错误，防止静默丢词。
  * 模块边界：本文件只转换字符串和领域对象，不打开文件、不修改配置、不触发下载；导入确认与持久化由设置界面承担。
  */
 import {cleanGlossaryText, glossaryRecord, GLOSSARY_LIMITS, normalizeGlossaryDomain,
@@ -17,20 +17,21 @@ export interface GlossaryImportPreview {
 }
 
 /**
- * 按表格软件实际写出的字节顺序解码术语文件；严格 UTF-8 失败时再尝试
- * UTF-16 BOM 和 GB18030，避免 File.text() 把系统代码页静默替换成 U+FFFD。
+ * 有 BOM 时严格解码 UTF-8/UTF-16，编码损坏交给导入界面报告读取失败；
+ * 其余文件先严格解码 UTF-8，再尝试 GB18030 和旧运行时的文本兜底。
  */
 export function decodeGlossaryText(buffer: ArrayBufferLike): string {
     const bytes = new Uint8Array(buffer);
     if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
-        return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+        return new TextDecoder('utf-16le', {fatal: true}).decode(bytes.subarray(2));
     }
     if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
-        return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+        return new TextDecoder('utf-16be', {fatal: true}).decode(bytes.subarray(2));
     }
     try {
         return new TextDecoder('utf-8', {fatal: true}).decode(bytes);
-    } catch {
+    } catch (error) {
+        if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) throw error;
         try {
             return new TextDecoder('gb18030').decode(bytes);
         } catch {
@@ -157,6 +158,9 @@ function validateLibraries(raw: unknown[], preview: GlossaryImportPreview, count
             preview.errors.push(`第 ${libraryIndex + 1} 个术语库缺少条目数组。`); return;
         }
         if (countEntries) preview.totalEntries += library.entries.length;
+        if (library.enabled !== undefined && typeof library.enabled !== 'boolean') {
+            preview.errors.push(`第 ${libraryIndex + 1} 个术语库的启用状态需要布尔值。`);
+        }
         if (library.entries.length > GLOSSARY_LIMITS.entriesPerLibrary) {
             preview.errors.push(`第 ${libraryIndex + 1} 个术语库超过 ${GLOSSARY_LIMITS.entriesPerLibrary} 条，请拆分词表。`);
         }
@@ -172,7 +176,7 @@ function validateLibraries(raw: unknown[], preview: GlossaryImportPreview, count
         }
         for (const field of ['sourceLanguage', 'targetLanguage']) {
             const language = library[field];
-            if (language != null && language !== '' && language !== 'auto' && !normalizeGlossaryLanguage(language)) {
+            if (language != null && language !== '' && cleanGlossaryText(language).toLowerCase() !== 'auto' && !normalizeGlossaryLanguage(language)) {
                 preview.errors.push(`第 ${libraryIndex + 1} 个术语库的语言代码无效。`);
             }
         }

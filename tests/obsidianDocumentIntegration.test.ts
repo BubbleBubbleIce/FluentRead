@@ -146,6 +146,20 @@ describe('Obsidian Markdown document flow', () => {
         expect(content).toContain('Read [[Reference]] safely.\n> 中文 Read [[Reference]] 中文 safely.');
         expect(content).toContain('const code = 1;');
     });
+
+    it('sends only prose from nested fenced containers and retains inline punctuation in the actual HTTP batch', async () => {
+        const source = '> - ```js\n>   const code = "keep local";\n>   ```\nUse [[source]] - retain the dash.';
+        const document = parseDocument('nested.md', source);
+        const request = vi.fn(async () => ({
+            status: 200, headers: {},
+            text: JSON.stringify([{translations: [{text: '使用'}]}, {translations: [{text: '- 保留破折号'}]}]),
+        })) as unknown as ObsidianRequestUrl;
+        const translations = await createObsidianTranslator(request)(prepareMarkdownSegments(document.segments), {fileName: 'nested.md'});
+        expect(JSON.parse(vi.mocked(request).mock.calls[0][0].body as string)).toEqual(['Use', '- retain the dash.']);
+        const output = renderDocument(document, translations, 'bilingual');
+        expect(output).toContain('const code = "keep local";');
+        expect(output).toContain('Use [[source]] - retain the dash.\n> 使用 [[source]] - 保留破折号');
+    });
 });
 
 describe('shared Microsoft transport', () => {

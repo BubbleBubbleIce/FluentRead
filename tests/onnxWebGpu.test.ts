@@ -25,11 +25,32 @@ describe('local audio hardware WebGPU probe', () => {
         await expect(probeWebGpu()).resolves.toEqual({available: false, info: ''});
     });
 
-    it('does not use headless software GPU paths', async () => {
-        const requestAdapter = vi.fn();
-        vi.stubGlobal('navigator', {userAgent: 'HeadlessChrome', gpu: {requestAdapter}});
-        expect((await probeWebGpu()).available).toBe(false);
-        expect(requestAdapter).not.toHaveBeenCalled();
+    it.each(['HeadlessChrome', 'HeadlessEdge'])('rejects actual software adapters in %s', async userAgent => {
+        for (const adapter of [
+            {isFallbackAdapter: true},
+            {info: {isFallbackAdapter: true}},
+            {info: {description: 'SwiftShader'}},
+        ]) {
+            const requestAdapter = vi.fn().mockResolvedValue(adapter);
+            vi.stubGlobal('navigator', {userAgent, gpu: {requestAdapter}});
+            await expect(probeWebGpu()).resolves.toEqual({available: false, info: ''});
+            expect(requestAdapter).toHaveBeenCalledOnce();
+            expect(requestAdapter).toHaveBeenCalledWith({powerPreference: 'high-performance'});
+        }
+    });
+
+    it.each(['HeadlessChrome', 'HeadlessEdge'])('accepts actual hardware adapters in %s without allocating a device', async userAgent => {
+        const requestDevice = vi.fn();
+        const requestAdapter = vi.fn().mockResolvedValue({
+            isFallbackAdapter: false,
+            info: {isFallbackAdapter: false, vendor: 'apple', architecture: 'metal'},
+            requestDevice,
+        });
+        vi.stubGlobal('navigator', {userAgent, gpu: {requestAdapter}});
+        await expect(probeWebGpu()).resolves.toEqual({available: true, info: 'apple / metal'});
+        expect(requestAdapter).toHaveBeenCalledOnce();
+        expect(requestAdapter).toHaveBeenCalledWith({powerPreference: 'high-performance'});
+        expect(requestDevice).not.toHaveBeenCalled();
     });
 
     it('does not require optional adapter information', async () => {

@@ -8,6 +8,8 @@ From the FluentRead repository root, run `pnpm install --frozen-lockfile` and `p
 
 Choose source and target languages in the plugin settings. The default is automatic detection to Simplified Chinese. Open a `.md`, `.markdown`, or `.pdf` file and run **Translate current Markdown note or PDF**, or right-click the file and choose **Translate with FluentRead**. Use **Cancel document translation** to stop a running job. Another run creates a numbered sibling note; it does not replace an earlier translation.
 
+Each job uses the languages selected when it starts. If the source note changes during translation, FluentRead asks you to try again. Fenced code inside quotes and lists stays unchanged.
+
 ## Scope and privacy
 
 - Markdown syntax, YAML frontmatter, code fences, Obsidian wiki links and embeds remain in the generated note. The note content is translated by FluentRead's existing document segmenter.
@@ -20,6 +22,8 @@ The plugin is GPL-3.0 like FluentRead. Its bundled PDF.js component is Apache-2.
 ## 中文说明
 
 在 Obsidian 中打开 Markdown 笔记或带文字层的 PDF，执行命令面板中的 **Translate current Markdown note or PDF**，或在文件右键菜单选择 **Translate with FluentRead**。插件会在原文件旁创建双语 Markdown 笔记并分栏打开，不覆盖原文件；再次翻译会生成带编号的新笔记。语言可在插件设置中调整，默认自动识别源语言、翻译为简体中文。
+
+每次任务使用开始时的语言设置，可通过 **Cancel document translation** 取消。翻译期间修改原笔记会提示重试；引用和列表中的围栏代码保持原文。
 
 在 FluentRead 仓库根目录执行 `pnpm install --frozen-lockfile` 和 `pnpm build:obsidian`，将 `integrations/obsidian/dist/` 中的 `main.js`、`manifest.json` 复制到笔记库的 `.obsidian/plugins/fluentread-translation/`，再启用社区插件。建议先在测试库安装。
 

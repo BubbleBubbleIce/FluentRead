@@ -2,7 +2,7 @@
  * @file src/core/config/credentials.ts
  *
  * 文件职责：定义配置中的敏感凭据边界，并提供从完整配置提取、解析、比较和清除凭据的纯函数。
- * 主要内容：列出 token、云服务厂商第二段密钥 secret、自定义请求头、ak/sk、应用密钥等敏感字段，声明 session/local 专用存储键与 schema 版本，构造 PublicConfig、ConfigCredentials，并校验未知存储值是否为可接受的凭据记录。 可核对的公开符号包括 SESSION_CREDENTIALS_STORAGE_KEY、LOCAL_CREDENTIALS_STORAGE_KEY、CREDENTIALS_SCHEMA_VERSION、CONFIG_CREDENTIAL_FIELDS、ConfigCredentialField、PublicConfig、ConfigCredentials、extractConfigCredentials。
+ * 主要内容：列出敏感字段和专用存储契约，只提取自有凭据字段；使用迭代复制清洗深层对象、循环及重复引用，并按内容比较凭据，避免对象键顺序导致重复保存。
  * 模块边界：本文件属于 core 领域层，只定义规则、类型与纯转换；不直接读写浏览器存储、不发起网络请求、不挂载 Vue/WXT 入口，持久化、协议调用和界面编排分别由 services、providers 与 features 承担。
  */
 
@@ -56,27 +56,39 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function cloneValue(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(cloneValue);
-    if (!isRecord(value)) return value;
-
-    const cloned: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) cloned[key] = cloneValue(item);
+function cloneValue(value: unknown, stripSensitive = false): unknown {
+    if (value === null || typeof value !== 'object') return value;
+    const createCopy = (input: object): object => Array.isArray(input) ? new Array(input.length) : {};
+    const cloned = createCopy(value);
+    const copies = new WeakMap<object, object>([[value, cloned]]);
+    const pending = [{source: value, target: cloned}];
+    while (pending.length > 0) {
+        const {source, target} = pending.pop()!;
+        for (const key of Object.keys(source)) {
+            // 数组的自定义属性不属于原先 Array.map 复制的配置值。
+            if (Array.isArray(source) && (!/^(?:0|[1-9]\d*)$/u.test(key) || Number(key) >= source.length)) continue;
+            if (!Array.isArray(source) && stripSensitive
+                && (CONFIG_CREDENTIAL_FIELDS.includes(key as ConfigCredentialField) || isSensitiveConfigKey(key))) continue;
+            const item = (source as Record<string, unknown>)[key];
+            let copy = item;
+            if (item !== null && typeof item === 'object') {
+                let objectCopy = copies.get(item);
+                if (objectCopy === undefined) {
+                    objectCopy = createCopy(item);
+                    copies.set(item, objectCopy);
+                    pending.push({source: item, target: objectCopy});
+                }
+                copy = objectCopy;
+            }
+            // 使用数据属性写入，不能让 __proto__ 触发原型 setter。
+            Object.defineProperty(target, key, {value: copy, enumerable: true, configurable: true, writable: true});
+        }
+    }
     return cloned;
 }
 
-function cloneWithoutSensitiveKeys(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(cloneWithoutSensitiveKeys);
-    if (!isRecord(value)) return value;
-
-    const sanitized: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) {
-        if (CONFIG_CREDENTIAL_FIELDS.includes(key as ConfigCredentialField) || isSensitiveConfigKey(key)) {
-            continue;
-        }
-        sanitized[key] = cloneWithoutSensitiveKeys(item);
-    }
-    return sanitized;
+function ownCredentialValue(source: Record<string, unknown>, field: ConfigCredentialField): unknown {
+    return Object.prototype.hasOwnProperty.call(source, field) ? source[field] : undefined;
 }
 
 function stringValue(value: unknown): string {
@@ -98,30 +110,29 @@ export function extractConfigCredentials(value: unknown): ConfigCredentials {
     const source = isRecord(value) ? value : {};
     return {
         schemaVersion: CREDENTIALS_SCHEMA_VERSION,
-        token: stringMapping(source.token),
-        apiKeys: normalizeApiKeys(source.apiKeys),
-        secret: stringMapping(source.secret),
-        customHeaders: stringMapping(source.customHeaders),
-        ak: stringValue(source.ak),
-        sk: stringValue(source.sk),
-        appid: stringValue(source.appid),
-        key: stringValue(source.key),
-        youdaoAppKey: stringValue(source.youdaoAppKey),
-        youdaoAppSecret: stringValue(source.youdaoAppSecret),
-        tencentSecretId: stringValue(source.tencentSecretId),
-        tencentSecretKey: stringValue(source.tencentSecretKey),
-        extra: extraMapping(source.extra),
+        token: stringMapping(ownCredentialValue(source, 'token')),
+        apiKeys: normalizeApiKeys(ownCredentialValue(source, 'apiKeys')),
+        secret: stringMapping(ownCredentialValue(source, 'secret')),
+        customHeaders: stringMapping(ownCredentialValue(source, 'customHeaders')),
+        ak: stringValue(ownCredentialValue(source, 'ak')),
+        sk: stringValue(ownCredentialValue(source, 'sk')),
+        appid: stringValue(ownCredentialValue(source, 'appid')),
+        key: stringValue(ownCredentialValue(source, 'key')),
+        youdaoAppKey: stringValue(ownCredentialValue(source, 'youdaoAppKey')),
+        youdaoAppSecret: stringValue(ownCredentialValue(source, 'youdaoAppSecret')),
+        tencentSecretId: stringValue(ownCredentialValue(source, 'tencentSecretId')),
+        tencentSecretKey: stringValue(ownCredentialValue(source, 'tencentSecretKey')),
+        extra: extraMapping(ownCredentialValue(source, 'extra')),
     };
 }
 
 export function parseStoredCredentials(value: unknown): ConfigCredentials | null {
-    if (!isRecord(value)) return null;
-    if (!CONFIG_CREDENTIAL_FIELDS.some((field) => field in value)) return null;
+    if (!hasCredentialFields(value)) return null;
     return extractConfigCredentials(value);
 }
 
 export function hasCredentialFields(value: unknown): boolean {
-    return isRecord(value) && CONFIG_CREDENTIAL_FIELDS.some((field) => field in value);
+    return isRecord(value) && CONFIG_CREDENTIAL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(value, field));
 }
 
 export function hasCredentialData(value: ConfigCredentials): boolean {
@@ -135,12 +146,45 @@ export function hasCredentialData(value: ConfigCredentials): boolean {
         || Object.keys(value.extra).length > 0;
 }
 
+/** 与本地 JSON 保存的值语义一致，忽略对象中的不可序列化字段和键顺序。 */
+function jsonCredentialValue(value: unknown): unknown {
+    if (typeof value === 'number' && !Number.isFinite(value)) return null;
+    if (typeof value === 'function' || typeof value === 'symbol') return undefined;
+    return value;
+}
+
 export function credentialsEqual(left: ConfigCredentials, right: ConfigCredentials): boolean {
-    return JSON.stringify(left) === JSON.stringify(right);
+    const pending: Array<[unknown, unknown]> = [[left, right]];
+    const compared = new WeakMap<object, WeakSet<object>>();
+    while (pending.length > 0) {
+        const [rawA, rawB] = pending.pop()!;
+        const a = jsonCredentialValue(rawA), b = jsonCredentialValue(rawB);
+        if (a === b) continue;
+        if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+        if (Array.isArray(a) !== Array.isArray(b)) return false;
+        if (Array.isArray(a) && a.length !== (b as unknown[]).length) return false;
+        let pairs = compared.get(a);
+        if (pairs?.has(b)) continue;
+        if (!pairs) {pairs = new WeakSet<object>(); compared.set(a, pairs);}
+        pairs.add(b);
+        if (Array.isArray(a)) {
+            for (let i = 0; i < a.length; i += 1) {
+                pending.push([jsonCredentialValue(a[i]) ?? null, jsonCredentialValue((b as unknown[])[i]) ?? null]);
+            }
+            continue;
+        }
+        const keys = Object.keys(a).filter((key) => jsonCredentialValue((a as Record<string, unknown>)[key]) !== undefined);
+        if (keys.length !== Object.keys(b).filter((key) => jsonCredentialValue((b as Record<string, unknown>)[key]) !== undefined).length) return false;
+        for (const key of keys) {
+            if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+            pending.push([(a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]]);
+        }
+    }
+    return true;
 }
 
 export function sanitizeConfigCredentials(value: unknown): Record<string, unknown> {
-    return isRecord(value) ? cloneWithoutSensitiveKeys(value) as Record<string, unknown> : {};
+    return isRecord(value) ? cloneValue(value, true) as Record<string, unknown> : {};
 }
 
 export function mergeConfigCredentials(value: unknown, credentials: ConfigCredentials): Record<string, unknown> {

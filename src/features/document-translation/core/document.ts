@@ -1,7 +1,7 @@
 /**
  * @file src/features/document-translation/core/document.ts
  * 文件职责：定义文档翻译的纯领域模型，并负责把多种文本格式解析为可翻译片段，再按双语或纯译文模式无损还原原格式结构。
- * 主要内容：相同译文保留原文且不重复展示；覆盖文本格式识别、片段切分、Markdown 元数据及链接保护、字幕标签保留、JSON 路径替换、空译文回退、MIME 信息和下载文件命名；文本导出支持有界编码，下载摘录无需处理全文。
+ * 主要内容：覆盖文本格式识别、片段切分、Markdown 容器代码与行内位置保护、字幕标签保留、有界深度的非递归 JSON 遍历、空译文回退、MIME 信息和下载文件命名；文本导出支持有界编码，下载摘录无需处理全文；相同译文保留原文且不重复展示。
  * 模块边界：该文件不读取 File、不解析 PDF/EPUB/DOCX 二进制，也不发起翻译请求；文件 I/O 与压缩包处理归 services/binary，批处理归 services/translation，展示归 preview/presentation。
  */
 import {hasDistinctTranslation} from '@/src/core/translation/result';
@@ -51,6 +51,8 @@ export interface DocumentSegment {
     pathLabel?: string;
     /** 页面或文章预览使用的原生文档角色。 */
     role?: 'title' | 'heading' | 'paragraph' | 'list-item' | 'header' | 'footer' | 'note';
+    /** Markdown 片段是否从原始行首开始；false 表示链接/代码后的行内文本，不能剥离列表等前缀。 */
+    markdownLineStart?: boolean;
 }
 
 export interface PdfDocumentBlock {
@@ -127,6 +129,17 @@ export interface JsonSegmentEntry {
     suffix: string;
 }
 
+export interface MarkdownCodeBlock {
+    /** 零基源行范围，左闭右开，包含开启及存在的闭合围栏行。 */
+    startLine: number;
+    endLine: number;
+    /** 开启围栏后未经解释的信息字符串。 */
+    info: string;
+    closed: boolean;
+    /** 仅供展示：剥除开启容器和围栏缩进，保留代码自身的符号及额外缩进。 */
+    contentLines: readonly string[];
+}
+
 export interface ParsedDocument {
     fileName: string;
     format: DocumentFormat;
@@ -135,6 +148,8 @@ export interface ParsedDocument {
     segments: readonly DocumentSegment[];
     jsonValue?: unknown;
     jsonEntries?: readonly JsonSegmentEntry[];
+    /** Markdown 围栏由解析器统一判定，预览无需复制容器状态机。 */
+    markdownCodeBlocks?: readonly MarkdownCodeBlock[];
     binary?: BinaryDocumentData;
 }
 
@@ -153,7 +168,7 @@ const FORMAT_LABELS: Record<DocumentFormat, string> = {
 };
 
 const PROTECTED_HTML_TAGS = new Set(['head', 'script', 'style', 'pre', 'code', 'textarea']);
-const MARKDOWN_PROTECTED_PATTERN = /(`{1,3}[^`\n]+`{1,3}|!?\[\[[^\]\r\n]+\]\]|!?\[[^\]]*\]\([^)\r\n]+\)|<https?:\/\/[^>]+>|https?:\/\/[^\s)]+|\$[^$\r\n]+\$|%%[^%\r\n]+%%|(?:^|\s)#[\p{L}\p{N}_/-]+)/gu;
+const MARKDOWN_PROTECTED_PATTERN = /(`{1,3}[^`\n]+`{1,3}|<https?:\/\/[^>]+>|https?:\/\/[^\s)]+|\$[^$\r\n]+\$|%%[^%\r\n]+%%|(?:^|\s)#[\p{L}\p{N}_/-]+)/gu;
 const TIMED_SUBTITLE_PATTERN = /^\s*(?:\d{1,3}:)?\d{2}:\d{2}[,.]\d{3}\s*-->\s*(?:\d{1,3}:)?\d{2}:\d{2}[,.]\d{3}(?:\s+.*)?$/u;
 const LRC_TIME_PATTERN = /^(\s*(?:\[[^\]\r\n]+\])+)/u;
 
@@ -196,9 +211,10 @@ export function getDocumentMimeType(format: DocumentFormat): string {
 }
 
 function trimSource(value: string): {prefix: string; source: string; suffix: string} | null {
-    const match = value.match(/^(\s*)([\s\S]*?\S)(\s*)$/u);
-    if (!match) return null;
-    return {prefix: match[1], source: match[2], suffix: match[3]};
+    const source = value.trim();
+    if (!source) return null;
+    const start = value.length - value.trimStart().length;
+    return {prefix: value.slice(0, start), source, suffix: value.slice(start + source.length)};
 }
 
 type SegmentOptions = Pick<SegmentPart, 'bilingualPrefix' | 'bilingualGroup'>
@@ -243,23 +259,96 @@ function addSegment(
     });
 }
 
-function addProtectedText(
+/** 链接的闭合位置只扫描一次，避免重复未闭合 `[` 的正则回溯；URL 括号按配对保护。 */
+function markdownLinkRanges(value: string): Array<{start: number; end: number}> {
+    const ranges: Array<{start: number; end: number}> = [];
+    let bracketClose = value.indexOf(']');
+    if (bracketClose < 0 || !value.includes('[')) return ranges;
+    const roundCloses = new Map<number, number>();
+    const stack: number[] = [];
+    for (let index = 0; index < value.length; index += 1) {
+        if (value[index] === '\\') {index += 1; continue;}
+        if (value[index] === '(') stack.push(index);
+        else if (value[index] === ')' && stack.length) roundCloses.set(stack.pop()!, index);
+    }
+    for (let index = 0; index < value.length; index += 1) {
+        const open = value[index] === '!' && value[index + 1] === '[' ? index + 1 : index;
+        if (value[open] !== '[') continue;
+        while (bracketClose >= 0 && bracketClose <= open) bracketClose = value.indexOf(']', bracketClose + 1);
+        if (bracketClose < 0) break;
+        let end = 0;
+        if (value[open + 1] === '[' && bracketClose > open + 2 && value[bracketClose + 1] === ']') {
+            end = bracketClose + 2;
+        } else if (value[bracketClose + 1] === '(') {
+            const close = roundCloses.get(bracketClose + 1);
+            if (close !== undefined) end = close + 1;
+        }
+        if (end) {
+            ranges.push({start: index, end});
+            index = end - 1;
+        }
+    }
+    return ranges;
+}
+
+function addMarkdownProtectedText(
     parts: DocumentPart[],
     segments: DocumentSegment[],
     value: string,
-    pattern: RegExp,
-    options: SegmentOptions = {},
+    bilingualGroup: number,
 ): void {
+    const pattern = MARKDOWN_PROTECTED_PATTERN;
     pattern.lastIndex = 0;
     let cursor = 0;
+    const atPosition = (offset: number): SegmentOptions => ({bilingualGroup, markdownLineStart: offset === 0});
+    const links = markdownLinkRanges(value);
+    let linkIndex = 0;
     let match = pattern.exec(value);
-    while (match) {
-        addSegment(parts, segments, value.slice(cursor, match.index), options);
-        addLiteral(parts, match[0], options.bilingualGroup);
-        cursor = match.index + match[0].length;
-        match = pattern.exec(value);
+    while (match || linkIndex < links.length) {
+        const link = links[linkIndex];
+        const useLink = link && (!match || link.start <= match.index);
+        const start = useLink ? link.start : match!.index;
+        const end = useLink ? link.end : match!.index + match![0].length;
+        if (useLink) linkIndex += 1;
+        else match = pattern.exec(value);
+        // 链接中的 URL 或代码中的链接由更早开始的外层语法整体保护。
+        if (start < cursor) continue;
+        addSegment(parts, segments, value.slice(cursor, start), atPosition(cursor));
+        addLiteral(parts, value.slice(start, end), bilingualGroup);
+        cursor = end;
     }
-    addSegment(parts, segments, value.slice(cursor), options);
+    addSegment(parts, segments, value.slice(cursor), atPosition(cursor));
+}
+
+/** 只识别容器前缀，不改源行。indent 不计引用符号及其可选空格，列表续行可据此匹配。 */
+export function inspectMarkdownLine(line: string): {content: string; quoteDepth: number; indent: number; listIndent: number} {
+    let cursor = 0;
+    let quoteDepth = 0;
+    let indent = 0;
+    let listIndent = 0;
+    let checkedThematicBreak = false;
+    while (cursor < line.length) {
+        while (line[cursor] === ' ' || line[cursor] === '\t') {
+            indent += line[cursor] === '\t' ? 4 - indent % 4 : 1;
+            cursor += 1;
+        }
+        if (line[cursor] === '>') {
+            quoteDepth += 1;
+            cursor += 1;
+            if (line[cursor] === ' ' || line[cursor] === '\t') cursor += 1;
+            continue;
+        }
+        if (!checkedThematicBreak) {
+            checkedThematicBreak = true;
+            if (/^(?:[-*_][ \t]*){3,}$/u.test(line.slice(cursor))) break;
+        }
+        const marker = line.slice(cursor).match(/^(?:[-*+]|\d{1,9}[.)])[ \t]+/u)?.[0];
+        if (!marker) break;
+        for (const character of marker) indent += character === '\t' ? 4 - indent % 4 : 1;
+        cursor += marker.length;
+        listIndent = indent;
+    }
+    return {content: line.slice(cursor), quoteDepth, indent, listIndent};
 }
 
 function splitWithEndings(value: string): Array<{start: number; end: number; textEnd: number; text: string}> {
@@ -283,13 +372,39 @@ function splitWithEndings(value: string): Array<{start: number; end: number; tex
     return lines;
 }
 
-function parseTextDocument(content: string, format: 'txt' | 'markdown'): Pick<ParsedDocument, 'parts' | 'segments'> {
+function stripMarkdownCodeContainer(line: string, quoteDepth: number, indent: number): string {
+    let cursor = 0;
+    let quotes = 0;
+    let columns = 0;
+    while (cursor < line.length && (quotes < quoteDepth || columns < indent)) {
+        if (line[cursor] === ' ' || line[cursor] === '\t') {
+            const width = line[cursor] === '\t' ? 4 - columns % 4 : 1;
+            if (quotes >= quoteDepth && columns + width > indent) {
+                // 部分 tab 被围栏缩进消耗，剩余列仍属于代码自身的缩进。
+                return ' '.repeat(columns + width - indent) + line.slice(cursor + 1);
+            }
+            columns += width;
+            cursor += 1;
+        } else if (line[cursor] === '>' && quotes < quoteDepth) {
+            quotes += 1;
+            cursor += 1;
+            if (line[cursor] === ' ' || line[cursor] === '\t') cursor += 1;
+        } else break;
+    }
+    return line.slice(cursor);
+}
+
+function parseTextDocument(content: string, format: 'txt' | 'markdown'): Pick<ParsedDocument, 'parts' | 'segments' | 'markdownCodeBlocks'> {
     const parts: DocumentPart[] = [];
     const segments: DocumentSegment[] = [];
     const lines = splitWithEndings(content);
-    let fence: {marker: string; length: number} | null = null;
-    let inMath = false;
-    let inFrontmatter = format === 'markdown' && /^---\s*$/u.test(lines[0]?.text ?? '');
+    type CodeBlock = MarkdownCodeBlock & {contentLines: string[]};
+    const markdownCodeBlocks: CodeBlock[] = [];
+    type Container = {quoteDepth: number; listIndent: number};
+    let fence: (Container & {marker: string; length: number; indent: number; block: CodeBlock}) | null = null;
+    let math: Container | null = null;
+    let list: Container | null = null;
+    let inFrontmatter = format === 'markdown' && /^\uFEFF?---\s*$/u.test(lines[0]?.text ?? '');
 
     lines.forEach((line, lineIndex) => {
         if (inFrontmatter) {
@@ -297,32 +412,65 @@ function parseTextDocument(content: string, format: 'txt' | 'markdown'): Pick<Pa
             if (lineIndex > 0 && /^(?:---|\.\.\.)\s*$/u.test(line.text)) inFrontmatter = false;
             return;
         }
-        const fenceLine = line.text.match(/^\s{0,3}(`{3,}|~{3,})(.*)$/u);
-        const marker = fenceLine?.[1];
-        const isFenceLine = !!marker && (!fence || (
-            marker[0] === fence.marker && marker.length >= fence.length && !fenceLine?.[2].trim()
-        ));
-        const isMathLine = /^\s*\$\$\s*$/u.test(line.text);
-        const horizontalRule = /^\s*(?:[-*_]\s*){3,}$/u.test(line.text);
-        const calloutHeader = /^\s*>\s*\[![^\]]+\]/u.test(line.text);
-        if (format === 'markdown' && (isFenceLine || fence || isMathLine || inMath || horizontalRule || calloutHeader)) {
-            addLiteral(parts, content.slice(line.start, line.end));
-            if (isFenceLine) fence = fence ? null : {marker: marker![0], length: marker!.length};
-            if (isMathLine && !fence) inMath = !inMath;
-            return;
-        }
-
         if (format === 'markdown') {
-            addProtectedText(parts, segments, line.text, MARKDOWN_PROTECTED_PATTERN, {
-                bilingualGroup: lineIndex,
-            });
+            const info = inspectMarkdownLine(line.text);
+            const leaves = (container: Container) => info.quoteDepth < container.quoteDepth || (
+                !!info.content && (info.indent < container.listIndent || (
+                    container.listIndent > 0 && info.listIndent > 0 && info.listIndent <= container.listIndent
+                ))
+            );
+            if (fence && leaves(fence)) {
+                fence.block.endLine = lineIndex;
+                fence = null;
+            }
+            if (math && leaves(math)) math = null;
+            if (fence || math) {
+                const container = fence ?? math!;
+                const atContainer = info.quoteDepth === container.quoteDepth && info.listIndent === 0;
+                if (fence && atContainer && info.indent <= fence.listIndent + 3) {
+                    const close = info.content.match(/^(`{3,}|~{3,})\s*$/u)?.[1];
+                    if (close && close[0] === fence.marker && close.length >= fence.length) {
+                        fence.block.closed = true;
+                        fence.block.endLine = lineIndex + 1;
+                        fence = null;
+                    } else {
+                        fence.block.contentLines.push(stripMarkdownCodeContainer(line.text, fence.quoteDepth, fence.indent));
+                    }
+                } else if (fence) {
+                    fence.block.contentLines.push(stripMarkdownCodeContainer(line.text, fence.quoteDepth, fence.indent));
+                } else if (math && atContainer && /^\$\$\s*$/u.test(info.content)) math = null;
+                addLiteral(parts, content.slice(line.start, line.end));
+                return;
+            }
+            if (list && info.content && (info.quoteDepth !== list.quoteDepth || info.indent < list.listIndent)) list = null;
+            if (info.listIndent) list = {quoteDepth: info.quoteDepth, listIndent: info.listIndent};
+            const container = {quoteDepth: info.quoteDepth, listIndent: list?.listIndent ?? 0};
+            const marker = info.indent <= container.listIndent + 3
+                ? info.content.match(/^(`{3,}|~{3,})(.*)$/u)?.[1] : undefined;
+            const isMathLine = /^\$\$\s*$/u.test(info.content);
+            const horizontalRule = /^(?:[-*_]\s*){3,}$/u.test(info.content);
+            const calloutHeader = info.quoteDepth > 0 && /^\[![^\]]+\]/u.test(info.content);
+            if (marker || isMathLine || horizontalRule || calloutHeader) {
+                if (marker) {
+                    const block: CodeBlock = {
+                        startLine: lineIndex, endLine: lines.length, info: info.content.slice(marker.length),
+                        closed: false, contentLines: [],
+                    };
+                    markdownCodeBlocks.push(block);
+                    fence = {...container, marker: marker[0], length: marker.length, indent: info.indent, block};
+                }
+                else if (isMathLine) math = container;
+                addLiteral(parts, content.slice(line.start, line.end));
+                return;
+            }
+            addMarkdownProtectedText(parts, segments, line.text, lineIndex);
         } else {
             addSegment(parts, segments, line.text);
         }
         addLiteral(parts, content.slice(line.textEnd, line.end));
     });
 
-    return {parts, segments};
+    return {parts, segments, ...(format === 'markdown' ? {markdownCodeBlocks} : {})};
 }
 
 const HTML_ENTITY_FALLBACKS: Record<string, string> = {
@@ -453,6 +601,12 @@ function parseTimedSubtitleDocument(content: string, format: 'srt' | 'vtt'): Pic
 
     while (cursorLine < lines.length) {
         const timestampLine = lines[cursorLine];
+        if (format === 'vtt' && /^NOTE(?:[ \t].*)?$/u.test(timestampLine.text)) {
+            const start = timestampLine.start;
+            while (cursorLine < lines.length && lines[cursorLine].text.trim()) cursorLine += 1;
+            addLiteral(parts, content.slice(start, lines[cursorLine - 1].end));
+            continue;
+        }
         if (!timestampLine || !TIMED_SUBTITLE_PATTERN.test(timestampLine.text)) {
             addLiteral(parts, content.slice(timestampLine.start, timestampLine.end));
             cursorLine += 1;
@@ -559,12 +713,31 @@ function parseLrcDocument(content: string): Pick<ParsedDocument, 'parts' | 'segm
     return {parts, segments};
 }
 
+const MAX_JSON_DEPTH = 1_000;
+
 function cloneJsonValue(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(cloneJsonValue);
-    if (value && typeof value === 'object') {
-        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, cloneJsonValue(item)]));
+    if (!value || typeof value !== 'object') return value;
+    const output: Record<string, unknown> | unknown[] = Array.isArray(value) ? new Array(value.length) : {};
+    const copies = new WeakMap<object, Record<string, unknown> | unknown[]>([[value, output]]);
+    const stack = [{source: value, target: output, depth: 0}];
+    while (stack.length) {
+        const {source, target, depth} = stack.pop()!;
+        if (depth > MAX_JSON_DEPTH) throw new Error('JSON 文件嵌套过深，请拆分后重试');
+        for (const [key, item] of Object.entries(source)) {
+            let copy = item;
+            if (item && typeof item === 'object') {
+                copy = copies.get(item);
+                if (!copy) {
+                    copy = Array.isArray(item) ? new Array(item.length) : {};
+                    copies.set(item, copy);
+                    stack.push({source: item, target: copy, depth: depth + 1});
+                }
+            }
+            // JSON 的 __proto__ 是普通键；不能通过赋值触发对象原型 setter。
+            Object.defineProperty(target, key, {value: copy, enumerable: true, writable: true, configurable: true});
+        }
     }
-    return value;
+    return output;
 }
 
 function parseJsonDocument(content: string): Pick<ParsedDocument, 'segments' | 'jsonValue' | 'jsonEntries'> {
@@ -580,25 +753,27 @@ function parseJsonDocument(content: string): Pick<ParsedDocument, 'segments' | '
     const segments: DocumentSegment[] = [];
     const jsonEntries: JsonSegmentEntry[] = [];
     // 只把字符串叶节点送去翻译，并记录路径与首尾空白；渲染时在深拷贝上回填，原对象始终不变。
-    const walk = (value: unknown, path: Array<string | number>) => {
+    const stack: Array<{value: unknown; path: Array<string | number>}> = [{value: jsonValue, path: []}];
+    while (stack.length) {
+        const {value, path} = stack.pop()!;
+        if (path.length > MAX_JSON_DEPTH) throw new Error('JSON 文件嵌套过深，请拆分后重试');
         if (typeof value === 'string') {
             const trimmed = trimSource(value);
-            if (!trimmed) return;
+            if (!trimmed) continue;
             const segmentIndex = segments.length;
             const pathLabel = formatJsonPath(path);
             segments.push({id: segmentIndex, source: trimmed.source, pathLabel});
             jsonEntries.push({path: [...path], segmentIndex, prefix: trimmed.prefix, suffix: trimmed.suffix});
-            return;
-        }
-        if (Array.isArray(value)) {
-            value.forEach((item, index) => walk(item, [...path, index]));
-            return;
+            continue;
         }
         if (value && typeof value === 'object') {
-            Object.entries(value).forEach(([key, item]) => walk(item, [...path, key]));
+            const entries = Object.entries(value);
+            for (let index = entries.length - 1; index >= 0; index -= 1) {
+                const [key, item] = entries[index];
+                stack.push({value: item, path: [...path, Array.isArray(value) ? Number(key) : key]});
+            }
         }
-    };
-    walk(jsonValue, []);
+    }
     return {segments, jsonValue, jsonEntries};
 }
 
@@ -717,25 +892,32 @@ function renderParts(document: ParsedDocument, translations: readonly string[], 
             // 行内链接或代码会被切成多个 part；双语模式按源行重组，避免把一行引用拆成多段。
             const group = part.bilingualGroup;
             const groupParts: DocumentPart[] = [];
+            let hasSegment = false;
             while (index < document.parts.length && document.parts[index].bilingualGroup === group) {
+                if (document.parts[index].kind === 'segment') hasSegment = true;
                 groupParts.push(document.parts[index]);
                 index += 1;
             }
             index -= 1;
-            const source = groupParts.map((entry) => entry.kind === 'literal'
-                ? entry.value
-                : `${entry.prefix}${originalPartSource(entry)}${entry.suffix}`).join('');
-            if (!groupParts.some((entry) => entry.kind === 'segment')) {
-                append(source);
-                continue;
+            // 有界摘录先逐片写原文，达到上限后不再构造整行或读取无用译文。
+            for (const entry of groupParts) {
+                append(entry.kind === 'literal' ? entry.value : `${entry.prefix}${originalPartSource(entry)}${entry.suffix}`);
+                if (length >= maxLength) break;
             }
-            const translated = groupParts.map((entry) => {
-                if (entry.kind === 'literal') return entry.value;
-                return `${entry.prefix}${resolveDocumentTranslation(entry.source, translations[entry.segmentIndex])}${entry.suffix}`;
-            }).join('').replace(/\r\n?|\n/gu, '\n> ');
-            const changed = groupParts.some(entry => entry.kind === 'segment' &&
-                hasDistinctTranslation(entry.source, translations[entry.segmentIndex]));
-            append(changed ? `${source}\n> ${translated}` : source);
+            if (length >= maxLength) break;
+            if (!hasSegment || !groupParts.some(entry => entry.kind === 'segment' &&
+                hasDistinctTranslation(entry.source, translations[entry.segmentIndex]))) continue;
+            append('\n> ');
+            let trailingCR = false;
+            for (const entry of groupParts) {
+                if (length >= maxLength) break;
+                const text = entry.kind === 'literal' ? entry.value
+                    : `${entry.prefix}${resolveDocumentTranslation(entry.source, translations[entry.segmentIndex])}${entry.suffix}`;
+                if (!text) continue;
+                const value = trailingCR && text.startsWith('\n') ? text.slice(1) : text;
+                trailingCR = text.endsWith('\r');
+                append(value.slice(0, maxLength - length).replace(/\r\n?|\n/gu, '\n> '));
+            }
             continue;
         }
         if (part.kind === 'literal') {
@@ -788,6 +970,8 @@ export function renderDocument(
     mode: DocumentRenderMode = 'bilingual',
     maxLength = Infinity,
 ): string {
+    maxLength = Number.isNaN(maxLength) ? 0 : Math.max(0, Math.trunc(maxLength));
+    if (maxLength === 0) return '';
     if (document.format !== 'json') return renderParts(document, translations, mode, maxLength);
 
     let output = cloneJsonValue(document.jsonValue);
@@ -807,6 +991,6 @@ export function renderDocument(
 export function createDocumentDownloadName(fileName: string, mode: DocumentRenderMode): string {
     const suffix = mode === 'bilingual' ? '.bilingual' : '.translated';
     // 正则始终匹配完整字符串；用非空断言表达该不变量，避免把不可达分支伪装成容错。
-    const match = fileName.match(/^(.*?)(\.[^.]+)?$/u)!;
+    const match = fileName.match(/^([\s\S]*?)(\.[^.]+)?$/u)!;
     return `${match[1] || fileName}${suffix}${match[2] || ''}`;
 }

@@ -345,7 +345,13 @@
       "tests/settingsActionContext.test.ts",
       "tests/tabTranslationQueryOwnership.test.ts",
       "tests/quickProfileDraft.test.ts",
-      "tests/popupPageActionsOwnership.test.ts"
+      "tests/popupPageActionsOwnership.test.ts",
+      "tests/credentialAuditBoundaries.test.ts",
+      "tests/documentMarkdownContainers.test.ts",
+      "tests/documentPreviewOwnership.test.ts",
+      "tests/glossaryAuditBoundaries.test.ts",
+      "tests/platformAuditBoundaries.test.ts",
+      "tests/uiI18nOwnership.test.ts"
     ],
     "functional": [
       "tests/translationCenterComponent.test.ts",
@@ -481,7 +487,13 @@
       "tests/popupServicesLifecycle.test.ts",
       "tests/quickProfileSettingsLifecycle.test.ts",
       "tests/popupAppLifecycle.test.ts",
-      "tests/popupChildOwnership.test.ts"
+      "tests/popupChildOwnership.test.ts",
+      "tests/obsidianPdfLifecycle.test.ts",
+      "tests/obsidianPluginLifecycle.test.ts",
+      "tests/popupBootstrap.test.ts",
+      "tests/uiLanguageOnboardingLifecycle.test.ts",
+      "tests/uiLanguageSelectorLifecycle.test.ts",
+      "tests/settingsUiLanguageOwnership.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

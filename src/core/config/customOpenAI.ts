@@ -2,7 +2,7 @@
  * @file src/core/config/customOpenAI.ts
  *
  * 文件职责：定义用户自建 OpenAI-compatible 翻译服务的轻量配置契约和纯转换函数，供配置迁移、动态服务目录与设置界面共同复用。
- * 主要内容：规范化任意数量的稳定 ID、名称、端点和模型列表，提供动态服务选项、标签、模型查询、高熵 ID 生成及不可变删除 helpers。
+ * 主要内容：校验完整稳定 ID，规范化任意数量的名称、端点和模型列表，提供动态服务选项、标签、模型查询、高熵 ID 生成及不可变删除 helpers；身份不得通过截断变成另一服务。
  * 模块边界：本文件属于 core 领域层，只处理不含凭据的公开 profile 数据；API Key 继续由 Config.token[serviceId] 和专用凭据存储持有，本文件只使用运行时随机源生成身份，不读写存储、不访问扩展 API，也不发起网络请求。
  */
 
@@ -38,6 +38,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function boundedString(value: unknown, maximumLength: number): string {
     return typeof value === 'string' ? value.trim().slice(0, maximumLength).trim() : '';
+}
+
+function ownProviderValue(provider: Record<string, unknown>, field: string): unknown {
+    return Object.prototype.hasOwnProperty.call(provider, field) ? provider[field] : undefined;
 }
 
 export function normalizeCustomOpenAIModels(
@@ -77,17 +81,18 @@ export function normalizeCustomOpenAIProviders(value: unknown): CustomOpenAIProv
     const seenIds = new Set<string>();
     for (const item of value) {
         if (!isRecord(item)) continue;
-        const id = boundedString(item.id, CUSTOM_OPENAI_PROVIDER_ID_PREFIX.length + 64);
+        const rawId = ownProviderValue(item, 'id');
+        const id = typeof rawId === 'string' ? rawId.trim() : '';
         if (!isCustomOpenAIProviderId(id) || seenIds.has(id)) continue;
         seenIds.add(id);
         const fallbackIndex = providers.length + 1;
-        const name = boundedString(item.name, MAX_CUSTOM_OPENAI_PROVIDER_NAME_LENGTH)
+        const name = boundedString(ownProviderValue(item, 'name'), MAX_CUSTOM_OPENAI_PROVIDER_NAME_LENGTH)
             || (id === LEGACY_CUSTOM_OPENAI_PROVIDER_ID ? '自定义接口' : `自定义接口 ${fallbackIndex}`);
         providers.push({
             id,
             name,
-            endpoint: boundedString(item.endpoint, MAX_CUSTOM_OPENAI_PROVIDER_ENDPOINT_LENGTH),
-            models: normalizeCustomOpenAIModels(item.models),
+            endpoint: boundedString(ownProviderValue(item, 'endpoint'), MAX_CUSTOM_OPENAI_PROVIDER_ENDPOINT_LENGTH),
+            models: normalizeCustomOpenAIModels(ownProviderValue(item, 'models')),
         });
     }
     return providers;
@@ -162,7 +167,8 @@ export function createNextCustomOpenAIProviderId(
 ): string {
     const used = new Set((providers || []).map((provider) => provider.id));
     for (let attempt = 0; attempt < CUSTOM_OPENAI_PROVIDER_ID_ATTEMPTS; attempt += 1) {
-        const suffix = boundedString(createSuffix(), 64);
+        const rawSuffix = createSuffix();
+        const suffix = typeof rawSuffix === 'string' ? rawSuffix.trim() : '';
         const candidate = `${CUSTOM_OPENAI_PROVIDER_ID_PREFIX}${suffix}`;
         if (isCustomOpenAIProviderId(candidate) && !used.has(candidate)) return candidate;
     }

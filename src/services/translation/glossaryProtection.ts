@@ -1,7 +1,7 @@
 /**
  * @file src/services/translation/glossaryProtection.ts
  * 文件职责：在统一翻译调用边界保护术语，使机器翻译、AI 与批量请求共用相同的本地回填规则。
- * 主要内容：按冻结范围重新选取条目，保持消息和内部槽协议，生成只含占位符的供应商术语约束，校验批量结果形状。
+ * 主要内容：按冻结范围重新选取条目，保持消息和内部槽协议，生成只含占位符的供应商术语约束，校验批量结果形状；纯术语判断统一比较 NFC 写法，实际回填保留原文 Unicode。
  * 模块边界：不自行调用网络或修改配置；缓存、取消、超时与最终结果验证仍由 broker 管理。
  */
 import {GlossaryPlaceholderError, protectGlossaryText, resolveGlossaryEntries} from '@/src/core/glossary';
@@ -42,12 +42,12 @@ export function prepareGlossaryRequest(message: TranslationRequestMessage, curre
     };
 }
 
-/** 整段都是用户指定译法时，允许其保持原文或外语，不能误判为服务回显。 */
+/** 整段都是用户指定译法时，允许其保持原文或外语；规范化仅用于比较，不改写实际回填。 */
 export function isGlossaryOnlyResult(current: TranslationProviderConfigSnapshot, origin: string, result: string): boolean {
     const entries = getGlossaryProtectionEntries(current, origin);
     if (!entries.length) return false;
     const packet = protectGlossaryText(origin, entries);
     let remainder = packet.text;
     for (const token of packet.tokens) remainder = remainder.replace(token, '');
-    return !/[\p{L}\p{N}]/u.test(remainder) && packet.restore(packet.text) === result.normalize('NFC');
+    return !/[\p{L}\p{N}]/u.test(remainder) && packet.restore(packet.text).normalize('NFC') === result.normalize('NFC');
 }

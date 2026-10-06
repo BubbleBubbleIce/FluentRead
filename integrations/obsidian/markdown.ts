@@ -8,7 +8,7 @@ const STRUCTURAL_PREFIX = /^(?:\s*(?:>\s*|#{1,6}\s+|(?:[-*+]|\d+[.)])\s+(?:\[[ x
 
 export function prepareMarkdownSegments(segments: readonly DocumentSegment[]): DocumentSegment[] {
     return segments.map((segment) => {
-        const source = segment.source.replace(STRUCTURAL_PREFIX, '').trim();
+        const source = (segment.markdownLineStart === false ? segment.source : segment.source.replace(STRUCTURAL_PREFIX, '')).trim();
         return {...segment, source: source || segment.source};
     });
 }

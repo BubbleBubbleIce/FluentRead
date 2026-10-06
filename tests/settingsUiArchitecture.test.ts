@@ -606,7 +606,20 @@ describe('options UI composition architecture', () => {
     expect(videoModelSettings).toContain('!browserCapabilities.extensionDom')
     expect(videoModelSettings).toContain('当前浏览器不支持本地 AI 字幕，无法下载或运行本地模型')
     expect(popup).not.toContain("activeDrawer === 'video'")
-    expect(popup).toContain("openOptions(drawerSettingsSection[activeDrawer])")
+    // 只检查产品路由和受控事件入口；所有权与迟到事件由实际 Popup 行为测试验证。
+    const drawerSections = popup.match(/\bconst drawerSettingsSection\b[^=]*=\s*\{([^}]+)\}/u)?.[1]
+    expect(drawerSections).toBeDefined()
+    expect(Object.fromEntries([...drawerSections!.matchAll(/(\w+):\s*'([^']+)'/gu)]
+      .map(([, drawer, section]) => [drawer, section]))).toEqual({
+      services: 'settings-services', aiContext: 'settings-general', hover: 'settings-translation',
+      selection: 'settings-selection', appearance: 'settings-interface', image: 'settings-image-translation',
+    })
+    const popupTemplate = popup.match(/^<template>([\s\S]*?)^<\/template>/mu)?.[1]
+    expect(popupTemplate).toBeDefined()
+    const drawerSettings = parseHTML(`<html><body>${popupTemplate}</body></html>`).document.querySelector('button.drawer-settings-link')
+    expect(drawerSettings).not.toBeNull()
+    expect(drawerSettings!.getAttribute(':onClick')).toBe('drawerActions.options')
+    expect(drawerSettings!.getAttribute('@click')).toBeNull()
     expect(videoRuntime).toContain("import {browserCapabilities} from '@/src/platform/browser/capabilities'")
     const playerMenu = source('src/features/video-subtitle/content/playerMenu.ts')
     expect(videoRuntime).toContain('available: isXVideoPage() && browserCapabilities.extensionDom')
@@ -637,7 +650,11 @@ describe('options UI composition architecture', () => {
     expect(videoAppearanceSettings).toContain('config.videoSubtitleAppearance.fontScale')
     expect(settingsSections).toContain('@/src/ui/components/CustomHotkeyInput.vue')
     expect(popup).toContain('@/src/ui/components/ServiceIcon.vue')
-    expect(popup).toContain('@/src/platform/browser/ids')
+    const pageActions = source('src/app/popup/pageActions.ts')
+    expect(popup).toMatch(/import\s*\{[^}]*\bcreatePopupPageActions\b[^}]*\}\s*from\s*['"]\.\/pageActions['"]/u)
+    expect(popup).toMatch(/\bcreatePopupPageActions\s*\(/u)
+    expect(pageActions).toMatch(/import\s*\{[^}]*\bisBrowserTabId\b[^}]*\}\s*from\s*['"]@\/src\/platform\/browser\/ids['"]/u)
+    expect(pageActions).toMatch(/\bisBrowserTabId\s*\(/u)
     expect(popup).toContain('requestConfigPatch')
     expect(popup).toContain('config.interfaceVisibility.popupQuickFeatures')
     expect(popup).toContain('config.value.interfaceVisibility.popupSiteRule')

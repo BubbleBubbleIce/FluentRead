@@ -1,11 +1,12 @@
 <!--
  * @file src/ui/components/UiLanguageOnboarding.vue
  * 文件职责：承载 FluentRead Popup 首次打开时的欢迎与界面语言选择引导。
- * 主要内容：直接使用轻量中英文资源展示欢迎画面和完整语言名称，问候语在方形画板内错落散布；首启内容直接铺满弹窗，不再在弹窗里套一层带边框的卡片；欢迎、语言选择与成功三步内容都收在同一高度内，切换步骤时弹窗尺寸不变；确认保存后通知上层准备主菜单，成功动效结束后交回控制权。
+ * 主要内容：直接使用轻量中英文资源展示稳定尺寸的欢迎画面和完整语言名称；冻结每次提交的语言，限定旧事件、焦点和成功计时器的活跃归属，确认保存后通知上层准备主菜单，成功动效结束后交回控制权；保留首启铺满弹窗的方形问候画板与三步同高布局。
  * 模块边界：组件只负责首次引导的呈现与确认，不读取配置、不决定浏览器 locale 映射；配置保存由 src/ui/i18n.ts 负责，语言规则由 src/core/i18n 提供。
 -->
 <template>
   <section
+    ref="onboardingRoot"
     class="language-onboarding"
     data-testid="ui-language-onboarding"
     data-i18n-ignore
@@ -15,7 +16,7 @@
   >
     <div class="language-onboarding-backdrop" aria-hidden="true" />
     <div class="language-onboarding-card">
-      <Transition name="onboarding-content" mode="out-in">
+      <Transition name="onboarding-content" mode="out-in" :onAfterEnter="onboardingActions.focus">
         <div v-if="celebrating" key="success" class="onboarding-success">
           <div class="onboarding-success-mark" aria-hidden="true"><span>✓</span></div>
           <h1 id="language-onboarding-title">
@@ -50,7 +51,8 @@
             class="onboarding-confirm onboarding-next"
             data-testid="onboarding-language-next"
             type="button"
-            @click="goToLanguage"
+            :disabled="!interactionContext.active.value"
+            :onClick="onboardingActions.next"
           >
             <span class="onboarding-button-copy">
               <strong>{{ messageZh('language.onboardingWelcomeNext') }}</strong>
@@ -63,7 +65,7 @@
         </div>
 
         <div v-else key="setup" class="onboarding-form" data-testid="onboarding-language-step">
-          <button class="onboarding-back" type="button" @click="goToWelcome">
+          <button class="onboarding-back" type="button" :disabled="!interactionContext.active.value" :onClick="onboardingActions.back">
             <svg class="onboarding-back-arrow" aria-hidden="true" viewBox="0 0 16 12" focusable="false">
               <path d="M15 6H1M7 1L1 6l6 5" />
             </svg>
@@ -84,7 +86,7 @@
               :aria-label="bilingualMessage('language.onboardingLabel')"
             >
               <button
-                v-for="option in UI_LANGUAGE_OPTIONS"
+                v-for="option in languageOptions"
                 :key="option.value"
                 ref="languageOptionButtons"
                 class="onboarding-language-option"
@@ -93,7 +95,8 @@
                 role="radio"
                 :aria-checked="selectedLanguage === option.value"
                 :data-language="option.value"
-                @click="selectedLanguage = option.value"
+                :disabled="!interactionContext.active.value"
+                :onClick="option.choose"
               >
                 <span class="onboarding-language-name">
                   <span
@@ -117,8 +120,8 @@
           <button
             class="onboarding-confirm"
             type="button"
-            :disabled="confirming"
-            @click="confirm"
+            :disabled="!interactionContext.active.value"
+            :onClick="onboardingActions.confirm"
           >
             <span class="onboarding-button-copy">
               <strong>{{ confirming ? messageZh('common.loading') : messageZh('language.onboardingConfirm') }}</strong>
@@ -134,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import {nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onBeforeUnmount, ref, watch} from 'vue';
 import {
   getUiLanguageBilingualLabel,
   UI_LANGUAGE_OPTIONS,
@@ -142,6 +145,7 @@ import {
 } from '@/src/core/i18n';
 import {useUiI18n} from '@/src/ui/i18n';
 import {onboardingChineseMessages, onboardingEnglishMessages, type OnboardingMessageKey} from '@/src/core/i18n/messages/onboarding';
+import {useSettingsActionContext} from '@/src/features/settings/model/useSettingsActionContext';
 
 const props = defineProps<{
   initialLanguage: UiLanguage;
@@ -168,20 +172,51 @@ const WELCOME_GREETING_WORDS = [
 type OnboardingStep = 'welcome' | 'language';
 const selectedLanguage = ref<UiLanguage>(props.initialLanguage);
 const step = ref<OnboardingStep>('welcome');
+const onboardingRoot = ref<HTMLElement | null>(null);
 const welcomeNextButton = ref<HTMLButtonElement | null>(null);
 const languageOptionButtons = ref<HTMLButtonElement[]>([]);
 const confirming = ref(false);
 const celebrating = ref(false);
 const errorMessage = ref('');
+const pageExited = ref(false);
+const context = useSettingsActionContext(() => !pageExited.value, () => [props.initialLanguage]);
+const interactionContext = useSettingsActionContext(() => context.active.value && !confirming.value && !celebrating.value,
+  () => [context.revision.value, step.value, selectedLanguage.value]);
 let transitionTimer: ReturnType<typeof setTimeout> | undefined;
+let pendingInitialLanguage: UiLanguage | undefined;
+let focusSequence = 0;
 
 watch(() => props.initialLanguage, value => {
-  if (!confirming.value) selectedLanguage.value = value;
-});
+  if (confirming.value) pendingInitialLanguage = value;
+  else selectedLanguage.value = value;
+}, {flush: 'sync'});
 
-watch(selectedLanguage, value => {
-  document.documentElement.lang = value;
+watch(() => [selectedLanguage.value, context.active.value] as const, ([value, active]) => {
+  if (active) document.documentElement.lang = value;
 }, {immediate: true});
+watch(context.revision, () => {
+  clearTransitionTimer();
+  celebrating.value = false;
+  errorMessage.value = '';
+  focusSequence += 1;
+}, {flush: 'sync'});
+const languageOptions = computed(() => {
+  const current = interactionContext.capture();
+  return UI_LANGUAGE_OPTIONS.map(option => ({...option, choose: () => {
+    if (!current() || step.value !== 'language') return;
+    selectedLanguage.value = option.value;
+    errorMessage.value = '';
+  }}));
+});
+const onboardingActions = computed(() => {
+  const current = interactionContext.capture();
+  return {
+    next: () => {if (current()) goToLanguage();},
+    back: () => {if (current()) goToWelcome();},
+    confirm: () => {if (current()) return confirm();},
+    focus: () => {if (current()) focusCurrentStep();},
+  };
+});
 
 function messageZh(key: OnboardingMessageKey): string {
   return onboardingChineseMessages[key];
@@ -196,51 +231,73 @@ function bilingualMessage(key: OnboardingMessageKey): string {
 }
 
 function focusCurrentStep(): void {
+  if (!interactionContext.active.value) return;
+  const current = interactionContext.capture(), before = document.activeElement, sequence = ++focusSequence;
+  if (before !== document.body && !onboardingRoot.value?.contains(before)) return;
   void nextTick(() => {
-    if (step.value === 'welcome') welcomeNextButton.value?.focus();
-    else languageOptionButtons.value[0]?.focus();
+    if (!current() || sequence !== focusSequence
+      || (document.activeElement !== before && document.activeElement !== document.body)) return;
+    const target = step.value === 'welcome' ? welcomeNextButton.value
+      : languageOptionButtons.value.find(button => button.dataset.language === selectedLanguage.value);
+    if (target?.isConnected && target !== document.activeElement) target.focus({preventScroll: true});
   });
 }
 
 function goToLanguage(): void {
-  if (confirming.value || celebrating.value) return;
+  if (!interactionContext.active.value || step.value !== 'welcome') return;
   step.value = 'language';
   focusCurrentStep();
 }
 
 function goToWelcome(): void {
-  if (confirming.value || celebrating.value) return;
+  if (!interactionContext.active.value || step.value !== 'language') return;
   step.value = 'welcome';
   focusCurrentStep();
 }
 
 async function confirm(): Promise<void> {
-  if (confirming.value) return;
+  if (!interactionContext.active.value || step.value !== 'language') return;
+  const current = context.capture(), submittedLanguage = selectedLanguage.value;
   confirming.value = true;
   errorMessage.value = '';
   try {
-    await setLanguage(selectedLanguage.value);
-    emit('saved', selectedLanguage.value);
+    const applied = await setLanguage(submittedLanguage);
+    if (applied === false || !current()) return;
+    emit('saved', submittedLanguage);
+    // saved 可同步使父组件关闭或替换本引导，不能在那之后再创建计时器。
+    if (!current()) return;
     celebrating.value = true;
     transitionTimer = setTimeout(() => {
-      emit('confirmed', selectedLanguage.value);
+      transitionTimer = undefined;
+      if (current() && celebrating.value) emit('confirmed', submittedLanguage);
     }, 1200);
   } catch {
-    document.documentElement.lang = language.value;
-    errorMessage.value = bilingualMessage('language.saveFailed');
+    if (current()) {
+      document.documentElement.lang = language.value;
+      errorMessage.value = bilingualMessage('language.saveFailed');
+    }
   } finally {
+    // 已发出的持久化允许完成；失活后重开也继续锁定，直到这次保存真正结束。
     confirming.value = false;
+    if (pendingInitialLanguage !== undefined) {
+      selectedLanguage.value = pendingInitialLanguage;
+      pendingInitialLanguage = undefined;
+    }
   }
 }
 
+function clearTransitionTimer(): void {
+  if (transitionTimer !== undefined) clearTimeout(transitionTimer);
+  transitionTimer = undefined;
+}
+function handlePageHide(): void {pageExited.value = true;}
+window.addEventListener('pagehide', handlePageHide);
 onBeforeUnmount(() => {
-  if (transitionTimer) clearTimeout(transitionTimer);
+  clearTransitionTimer();
+  window.removeEventListener('pagehide', handlePageHide);
 });
 
-watch(step, focusCurrentStep);
-onMounted(() => {
-  focusCurrentStep();
-});
+watch(context.active, active => {if (active) focusCurrentStep();}, {immediate: true, flush: 'post'});
 </script>
 
 <style scoped>
