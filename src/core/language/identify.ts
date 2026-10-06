@@ -181,7 +181,11 @@ function identifyCjk(copy: string, words: readonly ScriptWord[], versionedNames:
     }
     if (counts.Hangul > 0) {
         // 韩文汉字使用传统字形且多为短名词；简体字、汉字多于谚文或出现中文句子式的长汉字串时不能证明是韩文。
-        const longestHanRun = Math.max(0, ...words.filter(word => word.script === 'Han').map(word => word.letters));
+        // 字段数来自任意网页文本，不能展开为函数参数；超多短汉字段会超过运行时参数上限。
+        let longestHanRun = 0;
+        for (const word of words) {
+            if (word.script === 'Han') longestHanRun = Math.max(longestHanRun, word.letters);
+        }
         return hasSimplifiedChineseEvidence(han) || counts.Han > counts.Hangul || longestHanRun >= KOREAN_MAX_HANJA_RUN
             ? MIXED
             : identified(['ko'], 'korean');

@@ -187,6 +187,8 @@ export interface TranslationConfigSnapshot {
     }>>;
     /** 多 API Key 失败后默认冷却恢复时间；服务端 Retry-After 优先。 */
     apiKeyRecoveryMs?: number;
+    /** 请求开始时复制并冻结；缺省启用，多 Key 服务可显式关闭。 */
+    apiKeyRotationEnabled?: Readonly<Record<string, boolean>>;
 }
 
 export interface TranslationProviderConfigFields {

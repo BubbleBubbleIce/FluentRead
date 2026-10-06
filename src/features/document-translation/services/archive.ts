@@ -16,6 +16,7 @@ export function generateDocumentArchive(
     options: Omit<JSZip.JSZipGeneratorOptions<'uint8array'>, 'type'> = {},
     controls: DocumentArchiveControls = {},
 ): Promise<Uint8Array> {
+    if (controls.signal?.aborted) return Promise.reject(controls.signal.reason);
     return new Promise((resolve, reject) => {
         const stream = zip.generateInternalStream({ ...options, type: 'uint8array' });
         let chunks: Uint8Array[] = [];

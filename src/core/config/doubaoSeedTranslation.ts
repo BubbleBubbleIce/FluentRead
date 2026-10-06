@@ -2,7 +2,7 @@
  * @file src/core/config/doubaoSeedTranslation.ts
  *
  * 文件职责：描述火山方舟 Doubao-Seed-Translation 翻译专用模型的识别规则与语言码映射，供目录、能力判定和 provider 共用同一份事实。
- * 主要内容：声明官方模型编号与前缀匹配函数，维护 FluentRead 语言码到方舟翻译语言码的白名单，并提供源语言（可自动检测）与目标语言（必须受支持）的解析函数。 可核对的公开符号包括 DOUBAO_SEED_TRANSLATION_MODEL_ID、isDoubaoSeedTranslationModel、DOUBAO_SEED_TRANSLATION_LANGUAGES、resolveDoubaoSeedTranslationLanguage。
+ * 主要内容：声明官方模型编号与前缀匹配函数，维护 FluentRead 语言码到方舟翻译语言码的白名单，并提供源语言（可自动检测）与目标语言（必须受支持）的解析函数；白名单只读取自身语言条目，继承属性不得作为协议语言码。 可核对的公开符号包括 DOUBAO_SEED_TRANSLATION_MODEL_ID、isDoubaoSeedTranslationModel、DOUBAO_SEED_TRANSLATION_LANGUAGES、resolveDoubaoSeedTranslationLanguage。
  * 模块边界：本文件属于 core 领域层，只定义规则、类型与纯转换；不直接读写浏览器存储、不发起网络请求、不挂载 Vue/WXT 入口，持久化、协议调用和界面编排分别由 services、providers 与 features 承担。
  */
 
@@ -62,5 +62,7 @@ export const DOUBAO_SEED_TRANSLATION_LANGUAGES: Readonly<Record<string, string>>
 export function resolveDoubaoSeedTranslationLanguage(value?: string): string | undefined {
     const trimmed = (value || '').trim();
     if (!trimmed || trimmed === 'auto') return undefined;
-    return DOUBAO_SEED_TRANSLATION_LANGUAGES[normalizeChineseLanguageCode(trimmed)];
+    const language = normalizeChineseLanguageCode(trimmed);
+    return Object.hasOwn(DOUBAO_SEED_TRANSLATION_LANGUAGES, language)
+        ? DOUBAO_SEED_TRANSLATION_LANGUAGES[language] : undefined;
 }

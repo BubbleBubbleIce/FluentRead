@@ -1,11 +1,12 @@
 /**
  * @file src/features/document-translation/ui/pdfPreview.ts
  * 文件职责：在浏览器 Canvas 环境中为 PDF 文档生成页面预览，并把译文按原页面文本块位置绘制成可嵌入导出 PDF 的 PNG 光栅页。
- * 主要内容：相同译文保留原文且不重复展示；按需加载 PDF.js，限制页面像素与边长、复用单页 Canvas 绘制译文，并在成功、失败或取消时释放画布；生成预览及注入式 PDF 导出光栅页。
+ * 主要内容：空或相同译文仅保留原文；按需加载 PDF.js，限制页面像素与边长并复用单页 Canvas；取消、卸载或显式释放时销毁加载任务，迟到加载不得复活缓存；预览与导出 PNG 编码可取消，并在成功、失败或取消时释放画布。
  * 模块边界：这里负责视觉光栅化而不决定片段翻译或文件结构；PDF 文本块来自 binary 服务，领域类型来自 core，Canvas/PDF.js 仅应在文档 UI 环境调用，不能进入通用纯算法层。
  */
 import {hasDistinctTranslation} from '@/src/core/translation/result';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
+import type {PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 import type {
     ParsedDocument,
@@ -24,7 +25,6 @@ export interface PdfPagePreview {
 }
 
 function median(values: number[]): number {
-    if (values.length === 0) return 1;
     const sorted = [...values].sort((left, right) => left - right);
     const middle = Math.floor(sorted.length / 2);
     return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
@@ -33,7 +33,7 @@ function median(values: number[]): number {
 function wrapCanvasText(context: CanvasRenderingContext2D, value: string, maxWidth: number): string[] {
     const lines: string[] = [];
     value.replace(/\r\n?/gu, '\n').split('\n').forEach((paragraph) => {
-        if (!paragraph) {
+        if (!paragraph.trim()) {
             lines.push('');
             return;
         }
@@ -42,7 +42,7 @@ function wrapCanvasText(context: CanvasRenderingContext2D, value: string, maxWid
             if (current.trim()) lines.push(current.trimEnd());
             current = '';
         };
-        const words = paragraph.match(/\S+/gu) || [];
+        const words = paragraph.match(/\S+/gu)!;
         words.forEach((word) => {
             const candidate = current ? `${current} ${word}` : word;
             if (context.measureText(candidate).width <= maxWidth) {
@@ -62,30 +62,68 @@ function wrapCanvasText(context: CanvasRenderingContext2D, value: string, maxWid
         });
         flush();
     });
-    return lines.length > 0 ? lines : [''];
+    return lines;
 }
 
-function canvasToPng(canvas: HTMLCanvasElement): Promise<Uint8Array> {
+function canvasToPng(canvas: HTMLCanvasElement, signal?: AbortSignal): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-            if (!blob) {
-                reject(new Error('浏览器无法生成 PDF 译文页面'));
-                return;
-            }
-            void blob.arrayBuffer().then((buffer) => resolve(new Uint8Array(buffer)), reject);
-        }, 'image/png');
+        let finished = false;
+        const finish = (error: unknown, bytes?: Uint8Array) => {
+            if (finished) return;
+            finished = true;
+            signal?.removeEventListener('abort', abort);
+            if (bytes) resolve(bytes);
+            else reject(error);
+        };
+        const abort = () => finish(signal!.reason);
+        signal?.addEventListener('abort', abort, {once: true});
+        if (signal?.aborted) {abort(); return;}
+        try {
+            canvas.toBlob((blob) => {
+                if (finished) return;
+                if (!blob) {
+                    finish(new Error('浏览器无法生成 PDF 译文页面'));
+                    return;
+                }
+                try {
+                    void blob.arrayBuffer().then((buffer) => finish(undefined, new Uint8Array(buffer)), error => finish(error));
+                } catch (error) {finish(error);}
+            }, 'image/png');
+        } catch (error) {finish(error);}
     });
 }
 
-const browserPdfCache = new WeakMap<Uint8Array, Promise<any>>();
+interface BrowserPdfResource {
+    promise: Promise<PDFDocumentProxy>;
+    task?: ReturnType<typeof import('pdfjs-dist/legacy/build/pdf.mjs')['getDocument']>;
+    controller: AbortController;
+    users: number;
+    unload: () => void;
+}
+const browserPdfCache = new WeakMap<Uint8Array, BrowserPdfResource>();
 
-function browserPdfDocument(bytes: Uint8Array): Promise<any> {
+/** 文件移除时由组合根调用；pagehide 也会释放。缓存删除发生在销毁前，迟到加载无法重新占有它。 */
+export function releasePdfDocument(bytes: Uint8Array, reason?: unknown): void {
+    const resource = browserPdfCache.get(bytes);
+    if (!resource) return;
+    browserPdfCache.delete(bytes);
+    window.removeEventListener?.('pagehide', resource.unload);
+    resource.controller.abort(reason);
+    void resource.task?.destroy?.().catch(() => undefined);
+}
+
+function browserPdfDocument(bytes: Uint8Array): BrowserPdfResource {
     const cached = browserPdfCache.get(bytes);
     if (cached) return cached;
     const pdfAssetRoot = `${window.location.origin}/pdfjs`;
+    const resource: BrowserPdfResource = {
+        promise: undefined!, controller: new AbortController(), users: 0,
+        unload: () => releasePdfDocument(bytes),
+    };
     const promise = import('pdfjs-dist/legacy/build/pdf.mjs').then(({getDocument, GlobalWorkerOptions}) => {
+        resource.controller.signal.throwIfAborted();
         GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-        return getDocument({
+        resource.task = getDocument({
             data: new Uint8Array(bytes),
             disableFontFace: false,
             isEvalSupported: false,
@@ -93,14 +131,31 @@ function browserPdfDocument(bytes: Uint8Array): Promise<any> {
             cMapPacked: true,
             cMapUrl: `${pdfAssetRoot}/cmaps/`,
             standardFontDataUrl: `${pdfAssetRoot}/standard_fonts/`,
-        }).promise;
+        });
+        return resource.task.promise;
     }).catch((error) => {
         // 加载失败不能固化为永久失败，下次预览允许重试。
-        if (browserPdfCache.get(bytes) === promise) browserPdfCache.delete(bytes);
+        if (browserPdfCache.get(bytes) === resource) releasePdfDocument(bytes, error);
         throw error;
     });
-    browserPdfCache.set(bytes, promise);
-    return promise;
+    resource.promise = promise;
+    browserPdfCache.set(bytes, resource);
+    window.addEventListener?.('pagehide', resource.unload, {once: true});
+    return resource;
+}
+
+function awaitPdfTask<T>(promise: Promise<T>, signal: AbortSignal, releaseLateValue?: (value: T) => void): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const abort = () => reject(signal.reason);
+        signal.addEventListener('abort', abort, {once: true});
+        if (signal.aborted) abort();
+        promise.then(value => {
+            try {
+                if (signal.aborted) releaseLateValue?.(value);
+                resolve(value);
+            } catch (error) {reject(error);}
+        }, reject).finally(() => signal.removeEventListener('abort', abort));
+    });
 }
 
 async function renderPdfSourceCanvas(bytes: Uint8Array, pageNumber: number, width: number, signal?: AbortSignal): Promise<HTMLCanvasElement> {
@@ -108,12 +163,21 @@ async function renderPdfSourceCanvas(bytes: Uint8Array, pageNumber: number, widt
         throw new Error('当前环境无法渲染 PDF 页面，请在浏览器扩展中打开');
     }
     signal?.throwIfAborted();
-    const pdf = await browserPdfDocument(bytes);
-    signal?.throwIfAborted();
-    const page = await pdf.getPage(pageNumber);
-    const canvas = globalThis.document.createElement('canvas');
+    const resource = browserPdfDocument(bytes);
+    resource.users += 1;
+    const controller = new AbortController();
+    const cancelLoad = () => controller.abort(signal!.reason);
+    const unload = () => controller.abort(resource.controller.signal.reason);
+    signal?.addEventListener('abort', cancelLoad, {once: true});
+    resource.controller.signal.addEventListener('abort', unload, {once: true});
+    let page: PDFPageProxy | undefined;
+    let canvas: HTMLCanvasElement | undefined;
+    let failed = false;
     try {
-        signal?.throwIfAborted();
+        const pdf = await awaitPdfTask(resource.promise, controller.signal);
+        page = await awaitPdfTask(pdf.getPage(pageNumber), controller.signal, latePage => latePage.cleanup());
+        controller.signal.throwIfAborted();
+        canvas = globalThis.document.createElement('canvas');
         const base = page.getViewport({scale: 1});
         // 常规 A4 保持原有清晰度；海报/超长页不能按最低 1.45 倍无限分配像素。
         const scale = Math.min(
@@ -128,21 +192,34 @@ async function renderPdfSourceCanvas(bytes: Uint8Array, pageNumber: number, widt
         if (!context) throw new Error('浏览器 Canvas 初始化失败');
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
-        const task = page.render({canvas, canvasContext: context, viewport});
+        const task = page.render({canvasContext: context, viewport});
         const cancel = () => task.cancel();
-        signal?.addEventListener('abort', cancel, {once: true});
+        controller.signal.addEventListener('abort', cancel, {once: true});
+        if (controller.signal.aborted) cancel();
         try {
             await task.promise;
-            signal?.throwIfAborted();
+            controller.signal.throwIfAborted();
         } finally {
-            signal?.removeEventListener('abort', cancel);
+            controller.signal.removeEventListener('abort', cancel);
         }
         return canvas;
     } catch (error) {
-        canvas.width = canvas.height = 0;
+        failed = true;
+        if (canvas) canvas.width = canvas.height = 0;
         throw error;
     } finally {
-        page.cleanup();
+        try {
+            page?.cleanup();
+        } catch (error) {
+            if (canvas) canvas.width = canvas.height = 0;
+            releasePdfDocument(bytes, error);
+            if (!failed) throw error;
+        } finally {
+            signal?.removeEventListener('abort', cancelLoad);
+            resource.controller.signal.removeEventListener('abort', unload);
+            resource.users -= 1;
+            if (controller.signal.aborted && resource.users === 0 && browserPdfCache.get(bytes) === resource) releasePdfDocument(bytes);
+        }
     }
 }
 
@@ -305,13 +382,14 @@ export async function createPdfPagePreview(
     document: ParsedDocument,
     pageNumber: number,
     translations?: readonly string[],
+    signal?: AbortSignal,
 ): Promise<PdfPagePreview> {
     if (document.binary?.kind !== 'pdf') throw new Error('PDF 文档状态无效，请重新打开文件');
     const page = document.binary.pages.find((entry) => entry.pageNumber === pageNumber);
     if (!page) throw new Error(`PDF 第 ${pageNumber} 页不存在`);
-    const sourceCanvas = await renderPdfSourceCanvas(document.binary.bytes, pageNumber, page.width);
+    const sourceCanvas = await renderPdfSourceCanvas(document.binary.bytes, pageNumber, page.width, signal);
     try {
-        const original = await canvasToPng(sourceCanvas);
+        const original = await canvasToPng(sourceCanvas, signal);
         const visibleTranslations = translations?.map((translation, segmentIndex) =>
             hasDistinctTranslation(document.segments[segmentIndex]?.source ?? '', translation) ? translation : '');
         if (!visibleTranslations || !page.segmentIndexes.some(index => visibleTranslations[index])) return {original};
@@ -320,7 +398,7 @@ export async function createPdfPagePreview(
             sourceBytes: document.binary.bytes,
             translations: visibleTranslations,
         });
-        return {original, translated: await canvasToPng(translatedCanvas)};
+        return {original, translated: await canvasToPng(translatedCanvas, signal)};
     } finally {
         sourceCanvas.width = sourceCanvas.height = 0;
     }
@@ -333,7 +411,7 @@ export async function rasterizePdfTranslationPage(input: PdfRasterPageInput): Pr
     const sourceCanvas = await renderPdfSourceCanvas(input.sourceBytes, input.pageNumber, input.width, input.signal);
     try {
         input.signal?.throwIfAborted();
-        const png = await canvasToPng(paintPdfTranslation(sourceCanvas, input));
+        const png = await canvasToPng(paintPdfTranslation(sourceCanvas, input), input.signal);
         input.signal?.throwIfAborted();
         return png;
     } finally {

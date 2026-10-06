@@ -1,7 +1,7 @@
 /**
  * @file src/features/document-translation/core/document.ts
  * 文件职责：定义文档翻译的纯领域模型，并负责把多种文本格式解析为可翻译片段，再按双语或纯译文模式无损还原原格式结构。
- * 主要内容：覆盖文本格式识别、片段切分、Markdown 容器代码与行内位置保护、字幕标签保留、有界深度的非递归 JSON 遍历、空译文回退、MIME 信息和下载文件命名；文本导出支持有界编码，下载摘录无需处理全文；相同译文保留原文且不重复展示。
+ * 主要内容：覆盖文本格式识别、片段切分、Markdown 容器围栏及受控缩进代码与行内位置保护、字幕标签保留、有界深度的非递归 JSON 遍历、空译文回退、MIME 信息和下载文件命名；文本导出支持有界编码，下载摘录无需处理全文；相同译文保留原文且不重复展示。
  * 模块边界：该文件不读取 File、不解析 PDF/EPUB/DOCX 二进制，也不发起翻译请求；文件 I/O 与压缩包处理归 services/binary，批处理归 services/translation，展示归 preview/presentation。
  */
 import {hasDistinctTranslation} from '@/src/core/translation/result';
@@ -130,7 +130,7 @@ export interface JsonSegmentEntry {
 }
 
 export interface MarkdownCodeBlock {
-    /** 零基源行范围，左闭右开，包含开启及存在的闭合围栏行。 */
+    /** 零基源行范围，左闭右开；围栏块包含围栏，缩进块只包含代码及内部空行。 */
     startLine: number;
     endLine: number;
     /** 开启围栏后未经解释的信息字符串。 */
@@ -148,7 +148,7 @@ export interface ParsedDocument {
     segments: readonly DocumentSegment[];
     jsonValue?: unknown;
     jsonEntries?: readonly JsonSegmentEntry[];
-    /** Markdown 围栏由解析器统一判定，预览无需复制容器状态机。 */
+    /** Markdown 围栏与受控缩进代码由解析器统一判定，预览无需复制容器状态机。 */
     markdownCodeBlocks?: readonly MarkdownCodeBlock[];
     binary?: BinaryDocumentData;
 }
@@ -320,20 +320,28 @@ function addMarkdownProtectedText(
     addSegment(parts, segments, value.slice(cursor), atPosition(cursor));
 }
 
-/** 只识别容器前缀，不改源行。indent 不计引用符号及其可选空格，列表续行可据此匹配。 */
-export function inspectMarkdownLine(line: string): {content: string; quoteDepth: number; indent: number; listIndent: number} {
+/** 只识别容器前缀，不改源行；解析代码时，达到容器内四列便停止解释代码自身的引用/列表符号。 */
+export function inspectMarkdownLine(
+    line: string,
+    codeContainer?: {quoteDepth: number; listIndent: number},
+): {content: string; quoteDepth: number; indent: number; listIndent: number; codeBaseIndent: number} {
     let cursor = 0;
     let quoteDepth = 0;
     let indent = 0;
     let listIndent = 0;
+    let quoteIndent = 0;
     let checkedThematicBreak = false;
     while (cursor < line.length) {
         while (line[cursor] === ' ' || line[cursor] === '\t') {
             indent += line[cursor] === '\t' ? 4 - indent % 4 : 1;
             cursor += 1;
         }
+        const codeBaseIndent = Math.max(quoteIndent, listIndent,
+            codeContainer?.quoteDepth === quoteDepth ? codeContainer.listIndent : 0);
+        if (codeContainer && indent >= codeBaseIndent + 4) break;
         if (line[cursor] === '>') {
             quoteDepth += 1;
+            quoteIndent = indent;
             cursor += 1;
             if (line[cursor] === ' ' || line[cursor] === '\t') cursor += 1;
             continue;
@@ -348,7 +356,9 @@ export function inspectMarkdownLine(line: string): {content: string; quoteDepth:
         cursor += marker.length;
         listIndent = indent;
     }
-    return {content: line.slice(cursor), quoteDepth, indent, listIndent};
+    return {content: line.slice(cursor), quoteDepth, indent, listIndent,
+        codeBaseIndent: Math.max(quoteIndent, listIndent,
+            codeContainer?.quoteDepth === quoteDepth ? codeContainer.listIndent : 0)};
 }
 
 function splitWithEndings(value: string): Array<{start: number; end: number; textEnd: number; text: string}> {
@@ -404,6 +414,8 @@ function parseTextDocument(content: string, format: 'txt' | 'markdown'): Pick<Pa
     let fence: (Container & {marker: string; length: number; indent: number; block: CodeBlock}) | null = null;
     let math: Container | null = null;
     let list: Container | null = null;
+    let indented: (Container & {indent: number; block: CodeBlock}) | null = null;
+    let paragraph: Container | null = null;
     let inFrontmatter = format === 'markdown' && /^\uFEFF?---\s*$/u.test(lines[0]?.text ?? '');
 
     lines.forEach((line, lineIndex) => {
@@ -413,7 +425,33 @@ function parseTextDocument(content: string, format: 'txt' | 'markdown'): Pick<Pa
             return;
         }
         if (format === 'markdown') {
-            const info = inspectMarkdownLine(line.text);
+            const info = inspectMarkdownLine(line.text, indented ?? list ?? {quoteDepth: 0, listIndent: 0});
+            // 容器内至少四列的块级缩进不能打断普通段落或列表正文续行。
+            // 复用同一容器剥离和代码块元数据，导出仍由 literal 保持原字节与换行。
+            if (indented) {
+                if (info.quoteDepth === indented.quoteDepth && (!info.content || info.indent >= indented.indent)) {
+                    if (info.content) {
+                        for (let blank = indented.block.endLine; blank < lineIndex; blank += 1) indented.block.contentLines.push('');
+                        indented.block.contentLines.push(stripMarkdownCodeContainer(line.text, indented.quoteDepth, indented.indent));
+                        indented.block.endLine = lineIndex + 1;
+                    }
+                    addLiteral(parts, content.slice(line.start, line.end));
+                    return;
+                }
+                indented = null;
+            }
+            if (!info.content || paragraph && (info.quoteDepth !== paragraph.quoteDepth || info.indent < paragraph.listIndent)) paragraph = null;
+            if (!fence && !math && info.content && info.indent >= info.codeBaseIndent + 4 && !paragraph) {
+                const indent = info.codeBaseIndent + 4;
+                const block: CodeBlock = {
+                    startLine: lineIndex, endLine: lineIndex + 1, info: '', closed: true,
+                    contentLines: [stripMarkdownCodeContainer(line.text, info.quoteDepth, indent)],
+                };
+                markdownCodeBlocks.push(block);
+                indented = {quoteDepth: info.quoteDepth, listIndent: list?.quoteDepth === info.quoteDepth ? list.listIndent : 0, indent, block};
+                addLiteral(parts, content.slice(line.start, line.end));
+                return;
+            }
             const leaves = (container: Container) => info.quoteDepth < container.quoteDepth || (
                 !!info.content && (info.indent < container.listIndent || (
                     container.listIndent > 0 && info.listIndent > 0 && info.listIndent <= container.listIndent
@@ -451,6 +489,7 @@ function parseTextDocument(content: string, format: 'txt' | 'markdown'): Pick<Pa
             const horizontalRule = /^(?:[-*_]\s*){3,}$/u.test(info.content);
             const calloutHeader = info.quoteDepth > 0 && /^\[![^\]]+\]/u.test(info.content);
             if (marker || isMathLine || horizontalRule || calloutHeader) {
+                paragraph = null;
                 if (marker) {
                     const block: CodeBlock = {
                         startLine: lineIndex, endLine: lines.length, info: info.content.slice(marker.length),
@@ -463,7 +502,12 @@ function parseTextDocument(content: string, format: 'txt' | 'markdown'): Pick<Pa
                 addLiteral(parts, content.slice(line.start, line.end));
                 return;
             }
+            if (!info.content) {
+                addLiteral(parts, content.slice(line.start, line.end));
+                return;
+            }
             addMarkdownProtectedText(parts, segments, line.text, lineIndex);
+            if (info.content) paragraph = /^#{1,6}\s/u.test(info.content) ? null : container;
         } else {
             addSegment(parts, segments, line.text);
         }

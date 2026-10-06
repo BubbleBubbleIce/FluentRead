@@ -1,7 +1,7 @@
 <!--
  * @file src/ui/components/GlossaryLibrarySelect.vue
  * 文件职责：为快捷方案、文档和字幕提供一致的术语库选择控件。
- * 主要内容：在跟随全局、不使用和指定词库之间切换，展示可用词库及总开关状态；允许页面替换模式控件与外置说明，共享同一套受控选库行为。
+ * 主要内容：在跟随全局、不使用和指定词库之间切换，展示可用词库及总开关状态；允许页面替换模式控件与外置说明，按当前 props 拒绝停用、过期与重复事件，共享同一套受控选库行为。
  * 模块边界：不读写配置、不执行翻译或联网；词库范围和服务支持由领域解析器及翻译服务负责。
  -->
 <template>
@@ -59,11 +59,16 @@ const emit = defineEmits<{'update:modelValue': [value: string[] | null]}>();
 const {t} = useUiI18n();
 const mode = computed(() => props.modelValue == null ? 'inherit' : props.modelValue.length ? 'selected' : 'none');
 function changeMode(value: string): void {
+  if (props.disabled || value === mode.value || !['inherit', 'none', 'selected'].includes(value)) return;
+  if (value === 'selected' && !props.libraries.length) return;
   emit('update:modelValue', value === 'inherit' ? null : value === 'selected' && props.libraries.length
     ? [props.libraries[0].id] : []);
 }
 function toggleLibrary(id: string, checked: boolean): void {
+  // 事件可能在父级停用、切换模式或移除词库之后才送达，必须重新校验当前 props。
+  if (props.disabled || mode.value !== 'selected' || !props.libraries.some(library => library.id === id)) return;
   const ids = new Set(props.modelValue);
+  if (ids.has(id) === checked) return;
   if (checked) ids.add(id);
   else ids.delete(id);
   emit('update:modelValue', [...ids]);

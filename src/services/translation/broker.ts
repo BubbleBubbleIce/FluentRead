@@ -2,7 +2,7 @@
  * @file src/services/translation/broker.ts
  *
  * 文件职责：编排翻译请求的配置快照、语言解析、缓存、请求去重、超时与 provider 调用，是后台翻译用例的中心服务。
- * 主要内容：createTranslationBroker 同时支持单条、批量和页面摘要，验证 provider 返回数量、类型及明显的原文回显或错语种，在剩余预算内重试并排除旧异常缓存；对完整多段协议逐槽修复上下文回显，以包含 Chrome auto 检测样本的完整身份构建缓存键，并按匿名额度身份、等待策略、清理代次与剩余 deadline 隔离 pending 请求；入口在等待前复制消息，批次摘要与分项缓存键只构建一次并复用，重复身份只读写一次；每次公开请求累计缓存复用、上游调用次数、耗时与免费链线路尝试，结束后向注入的统计端口交付只含规模数值、服务与线路标识的事件。 可核对的公开符号包括 createTranslationBroker、聚合导出。
+ * 主要内容：createTranslationBroker 同时支持单条、批量和页面摘要，验证 provider 返回数量、类型及明显的原文回显或错语种，在剩余预算内重试并排除旧异常缓存；对完整多段协议逐槽修复上下文回显，以包含 Chrome auto 检测样本的完整身份构建缓存键，并按实际消费的云地域和凭据摘要、匿名额度身份、等待策略、清理代次与剩余 deadline 隔离 pending 请求；入口在等待前复制消息，批次摘要与分项缓存键只构建一次并复用，重复身份只读写一次；每次公开请求累计缓存复用、上游调用次数、耗时与免费链线路尝试，结束后向注入的统计端口交付只含规模数值、服务与线路标识的事件。 可核对的公开符号包括 createTranslationBroker、聚合导出。
  * 模块边界：本文件位于翻译 application service 层，负责用例编排和端口契约；不挂载页面 UI，且不应把某家供应商的网络细节扩散到 feature，具体 HTTP 协议由 providers/platform 实现。
  */
 
@@ -46,7 +46,9 @@ import {
     isLikelyPageContextLeak,
 } from '@/src/core/translation/prompts';
 import {isCustomOpenAIProviderId, LEGACY_CUSTOM_OPENAI_PROVIDER_ID} from '@/src/core/config/customOpenAI';
-import {customModelString, services} from '@/src/core/config/catalog';
+import {customModelString, resolveCloudRegion, services} from '@/src/core/config/catalog';
+import {getAliyunTranslationEndpoint} from '@/src/core/config/constants';
+import {getServiceApiKeys} from '@/src/core/config/apiKeys';
 import {currentConfiguredModel, getCurrentModel} from './templates';
 import {isModelThinkingEnabled} from '@/src/core/config/modelThinking';
 import {supportsVisionTransport} from '@/src/core/config/vision';
@@ -196,8 +198,9 @@ export function resolveTranslationRequestModel(
     const body = current.customBody?.[service];
     if (!(isAI(service) && service !== services.gemini) || typeof body !== 'string' || !body.trim()) return selected;
     try {
-        const parsed = JSON.parse(body) as {model?: unknown};
-        return typeof parsed?.model === 'string' && parsed.model.trim() ? parsed.model.trim() : selected;
+        const parsed = JSON.parse(body) as {model?: unknown; Model?: unknown};
+        const requestedModel = service === services.huanYuanTranslation ? parsed?.Model : parsed?.model;
+        return typeof requestedModel === 'string' && requestedModel.trim() ? requestedModel.trim() : selected;
     } catch {
         return selected;
     }
@@ -294,6 +297,11 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         // custom、New API、MiniMax 与 MiMo 都经 AI SDK 端点解析；这里只保留仍走旧适配器的地址来源，
         // 避免同一服务出现第二套默认区域或地址补全规则。
         if (service === 'deepL') return getDeepLEndpoint(current.deeplApiPlan, current.proxy[service]);
+        // 云服务按固定端点或地域访问，未消费的旧代理值不能分裂缓存与在途身份。
+        if (service === services.aliyunTranslation) return getAliyunTranslationEndpoint(current.serviceRegion?.[service]);
+        if (service === services.baiduTranslation || service === services.googleCloudTranslation
+            || service === services.azureTranslator || service === services.volcTranslation
+            || service === services.youdao) return '';
         if (current.proxy[service]) return current.proxy[service];
         if (service === 'deeplx') return current.deeplx;
         return '';
@@ -508,6 +516,29 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
             ...(usesMyMemory ? {email: (current.myMemoryEmail ?? '').trim()} : {}),
         };
         return `:anonymous:${sha256Hex(JSON.stringify(identity))}`;
+    }
+
+    /** 成功译文可跨凭据复用；新凭据/地域请求不能继承旧鉴权失败，摘要只用于内存 pending。 */
+    function pendingCloudConfigSuffix(execution: TranslationRequestExecution): string {
+        const {service, config: current} = execution;
+        let credentials: unknown;
+        if (service === services.youdao) {
+            credentials = [current.youdaoAppKey, current.youdaoAppSecret];
+        } else if (service === services.tencent || service === services.huanYuanTranslation) {
+            credentials = [current.tencentSecretId?.trim(), current.tencentSecretKey?.trim()];
+        } else if (service === services.baiduTranslation || service === services.googleCloudTranslation
+            || service === services.azureTranslator || service === services.aliyunTranslation
+            || service === services.volcTranslation || service === services.xiaoniu) {
+            const keys = getServiceApiKeys(current, service);
+            const usesSecret = service === services.baiduTranslation || service === services.aliyunTranslation
+                || service === services.volcTranslation;
+            const rotationEnabled = current.apiKeyRotationEnabled?.[service] !== false;
+            credentials = [keys, ...(usesSecret ? [current.secret?.[service]?.trim()] : []),
+                ...(keys.length > 1 ? [rotationEnabled] : [])];
+        } else return '';
+        return `:cloud:${sha256Hex(JSON.stringify({credentials,
+            region: resolveCloudRegion(service, current.serviceRegion?.[service]),
+        }))}`;
     }
 
     function requestAbortError(): Error {
@@ -1206,7 +1237,7 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         );
         const imageInput = getTranslationImageInput(message);
         const imageSuffix = imageInput ? `:image:${sha256Hex(imageInput)}` : '';
-        const pendingKey = `${buildPendingRequestKey(key, pendingBudgetMs, requestGeneration)}:cache:${useCache ? 'on' : 'off'}${imageSuffix}${pendingOwnershipSuffix(execution)}${pendingAnonymousConfigSuffix(execution)}`;
+        const pendingKey = `${buildPendingRequestKey(key, pendingBudgetMs, requestGeneration)}:cache:${useCache ? 'on' : 'off'}${imageSuffix}${pendingOwnershipSuffix(execution)}${pendingAnonymousConfigSuffix(execution)}${pendingCloudConfigSuffix(execution)}`;
         const existing = pendingTranslations.get(pendingKey);
         // 共享的是 provider 工作；每个等待者仍需保留自己的取消和截止边界。
         if (existing) {
@@ -1311,7 +1342,7 @@ export function createTranslationBroker(deps: TranslationBrokerDependencies): Tr
         );
         // 完整批次身份只计算一次；AI 分项用定长摘要保留邻段和槽位语义，避免逐项携带整个批次。
         const batchFingerprint = cacheMode === 'ai-multi-segment' ? sha256Hex(batchKey) : '';
-        const pendingKey = `${buildPendingRequestKey(batchKey, pendingBudgetMs, requestGeneration)}:cache:${useCache ? 'on' : 'off'}${pendingOwnershipSuffix(execution)}${pendingAnonymousConfigSuffix(execution)}`;
+        const pendingKey = `${buildPendingRequestKey(batchKey, pendingBudgetMs, requestGeneration)}:cache:${useCache ? 'on' : 'off'}${pendingOwnershipSuffix(execution)}${pendingAnonymousConfigSuffix(execution)}${pendingCloudConfigSuffix(execution)}`;
         const existing = pendingBatches.get(pendingKey);
         if (existing) {
             execution.trace.shared = true;

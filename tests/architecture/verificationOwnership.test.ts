@@ -133,7 +133,20 @@ function verificationOwners(path: string, strictCoverage: Set<string>): Verifica
 }
 
 function isTypeOnlyModule(path: string): boolean {
-    return path.endsWith('/types.ts') || path.endsWith('.d.ts');
+    if (path.endsWith('.d.ts')) return true;
+    if (!path.endsWith('/types.ts')) return false;
+    // 文件名不能替代运行时判定；types.ts 中的常量、枚举和副作用也必须有验证归属。
+    const source = readFileSync(projectPath(path), 'utf8');
+    const emitted = ts.transpileModule(source, {
+        compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ESNext},
+    }).outputText;
+    const runtime = ts.createSourceFile(path + '.js', emitted, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    return runtime.statements.every((statement) => ts.isEmptyStatement(statement)
+        || (ts.isExportDeclaration(statement)
+            && !statement.moduleSpecifier
+            && !!statement.exportClause
+            && ts.isNamedExports(statement.exportClause)
+            && statement.exportClause.elements.length === 0));
 }
 
 function isPureBarrel(path: string): boolean {
@@ -276,12 +289,8 @@ const BUILD_ONLY_SRC_ALLOWLIST = new Set([
     'src/providers/translation/doubao-seed-translation.ts',
     'src/providers/translation/gemini.ts',
     'src/providers/translation/google.ts',
-    'src/providers/translation/hunyuan-translation.ts',
     'src/providers/translation/microsoft.ts',
-    'src/providers/translation/tencent.ts',
     'src/providers/translation/tongyi.ts',
-    'src/providers/translation/xiaoniu.ts',
-    'src/providers/translation/youdao.ts',
     'src/providers/translation/zhipu.ts',
     // 本地翻译绑定浏览器 Cache Storage、Offscreen 和独立 Worker；模型目录、协议取消、缓存和构建由专项测试覆盖。
     'src/core/config/localTranslation.ts',

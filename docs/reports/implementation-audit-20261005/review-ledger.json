@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 830,
-    "functions": 15253,
+    "functions": 15317,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -83,13 +83,13 @@
       },
       "src/app": {
         "files": 103,
-        "functions": 1313,
-        "lines": 11793
+        "functions": 1321,
+        "lines": 11848
       },
       "src/core/config": {
         "files": 52,
-        "functions": 705,
-        "lines": 9166
+        "functions": 717,
+        "lines": 9308
       },
       "src/core/context-menu": {
         "files": 2,
@@ -119,7 +119,7 @@
       "src/core/language": {
         "files": 11,
         "functions": 91,
-        "lines": 1386
+        "lines": 1473
       },
       "src/core/site-adaptation": {
         "files": 6,
@@ -143,8 +143,8 @@
       },
       "src/features/document-translation": {
         "files": 8,
-        "functions": 219,
-        "lines": 2805
+        "functions": 251,
+        "lines": 3135
       },
       "src/features/floating-ball": {
         "files": 5,
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 84,
-        "functions": 1679,
-        "lines": 19543
+        "functions": 1688,
+        "lines": 19501
       },
       "src/features/share-card": {
         "files": 7,
@@ -268,13 +268,13 @@
       },
       "src/providers": {
         "files": 40,
-        "functions": 314,
-        "lines": 5626
+        "functions": 315,
+        "lines": 5629
       },
       "src/services": {
         "files": 54,
         "functions": 966,
-        "lines": 11756
+        "lines": 11839
       },
       "src/shared": {
         "files": 8,
@@ -283,8 +283,8 @@
       },
       "src/ui": {
         "files": 16,
-        "functions": 189,
-        "lines": 4067
+        "functions": 191,
+        "lines": 4088
       },
       "userscript/SettingsPanel.vue": {
         "files": 1,
@@ -669,6 +669,36 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/document-translation/DocumentApp.vue",
+      "sha256": "3a6267b164411ff1679fdc8b3b12a292286fd120cc7aab427a312946d34649e8",
+      "functionBodies": 148,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/document-translation/DocumentSegmentEditor.vue",
+      "sha256": "476440cae9da06e0a76edaa8decc405eb38d3b230c94f8f0892c5e0215e2e71d",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/document-translation/index.ts",
+      "sha256": "c9d7cc4ae3c5644f5a1d5a51ed298aaa28a1a095dd493f8f10e8c1df0faa07df",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/document-translation/page.ts",
+      "sha256": "18ed7296e13b3e3a45e8f6a685420d05334f53287d891f3c7f71d498184282a4",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/document-translation/runtime.ts",
+      "sha256": "6f380d73febdd758c5322719f9c1242603fc339fa4ee6d32669395c7f593718e",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/offscreen/imageTranslation.ts",
       "sha256": "2cebd43963cf42c5f87dc5c918625c4f7a66afdce237a95390631897966e822d",
       "functionBodies": 0,
@@ -778,14 +808,32 @@
     },
     {
       "file": "src/core/config/apiKeyCheckIdentity.ts",
-      "sha256": "6d2ed08d6b926ce0524c00d216fe4aaae505e061bf27e7e8a93907700da6dec8",
-      "functionBodies": 4,
+      "sha256": "dbff74736fd047aff773d821313a70fbfe57c0b4862b52652f286650a1ce728b",
+      "functionBodies": 6,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/core/config/apiKeys.ts",
       "sha256": "5be417243a2e3b92d2b973cd967cd678beff1fbecac61a1d52d5aab62ff72dc2",
       "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/azure.ts",
+      "sha256": "33f233f95f15e44f9f0d46d0f22c7a5a4cd1c55dc6941fa426c90f8dcdafcd7d",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/catalog.ts",
+      "sha256": "465f2b9585fa6c080642caf68c5a07d44899c7fd1f0e95ea538bb25d70819f54",
+      "functionBodies": 32,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/constants.ts",
+      "sha256": "b2bb1c57d57a13de7cbf74bbc4218658fdfa5d258242efcfa06e1e46f105e513",
+      "functionBodies": 2,
       "status": "source-read-and-traced"
     },
     {
@@ -819,9 +867,39 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/deepl.ts",
+      "sha256": "261cbd896901299b6bb15647c1b8017dd8455e9fcbecb0222639b907440afabc",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/deeplx.ts",
+      "sha256": "cdd27ab201e2b48efad5489d4a96e84298cf1929880851422a00b43e40151117",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/diff.ts",
+      "sha256": "90dd4457eeb4e2e3157bdb5bc54d383387c739c27adbc3c5708c4e02e41e370e",
+      "functionBodies": 146,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/doubaoSeedTranslation.ts",
+      "sha256": "08f82cac4fd8682659928e806e83f1fa2d89bd540505913db094422dc68dffc5",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/featureServices.ts",
       "sha256": "f9fef874f99d89aba67874e09b0e201d6900482fbec2ccbc90a55241addd358c",
       "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/freeTranslation.ts",
+      "sha256": "b4c858b66e1afb479b835748e35d31c25626dc110b56141a0b89aaa456c39015",
+      "functionBodies": 12,
       "status": "source-read-and-traced"
     },
     {
@@ -855,6 +933,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/model.ts",
+      "sha256": "10e4439c896e628c75cb914040fb69aa4a8d456eb8cda0efd6438ffbad354796",
+      "functionBodies": 94,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/modelThinking.ts",
+      "sha256": "2d97f508a6d22301b3b67d409c62cd6af3fb4b117a37aca03891b73b7486b8be",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/paragraphCopy.ts",
       "sha256": "a00b1d7d4e7abbf6cfc450d9d0ed7cfb81480cc04d5b85acdcdebae33c09470c",
       "functionBodies": 8,
@@ -864,6 +954,12 @@
       "file": "src/core/config/quickTranslation.ts",
       "sha256": "85f2ba91d66eb1c7095739af304cce8cd3ccdc6c602f447b1072b8e689c28a6a",
       "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/transfer.ts",
+      "sha256": "96594b942329d39dfc3e8f58f652da4f5e4fb4d88be40c56aa02a4bfa6eeda8c",
+      "functionBodies": 22,
       "status": "source-read-and-traced"
     },
     {
@@ -936,6 +1032,72 @@
       "file": "src/core/i18n/numberFormat.ts",
       "sha256": "e6cd76d50a85a71375c59d102dfc0945f6d62846bf702275e42170a84b318270",
       "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/catalog.ts",
+      "sha256": "b3335b1a2eecc165f73ed4e547004d57615a2e0e455624c3df5f789cca6ff73d",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/chinese.ts",
+      "sha256": "099a61ac29fdb41dfc136eee4a6ffddb8df1d925c260914b1035b0ef67783565",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/chineseVariants.ts",
+      "sha256": "a78b88e2bfb128aafdc4305dfca9f8f4114a04cc5eb62797b10b3d30b8e7087f",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/codes.ts",
+      "sha256": "80d223e1bbe5ce822f28c4964f1c78394777b0d978dad407a6c05e47fa0f6ade",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/detect.ts",
+      "sha256": "c45dceeded8003478817683be28d830ed3cc39b507107e74d8327a67405d336b",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/identify.ts",
+      "sha256": "62d74599e8a9122e193aa874863cb2ff2daa7b702ea778fc9d9e78b0ab2029be",
+      "functionBodies": 26,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/lexicon.ts",
+      "sha256": "942752edac231b06452294b7498dbfa2e19975ea90c5353ad534a2aa73b5a319",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/partOfSpeech.ts",
+      "sha256": "d58b8901bff9342d1a3dfe37b880edde2993d34661ef1c84e482e7bee4b670f6",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/scripts.ts",
+      "sha256": "559a1c78b32c63c4af32236d6c0b031e325e8c5cb55b5157b80d2128b81cccc1",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/statistical.ts",
+      "sha256": "6c8f262961d2e7c3d2272ed83c3888b3726eb9cbd28f7c9debb169faec93c0f4",
+      "functionBodies": 20,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/language/technicalTokens.ts",
+      "sha256": "8a445ab9bcff723850a8053cfaa61e744ab14c5fe866408fddd66823b068c85a",
+      "functionBodies": 15,
       "status": "source-read-and-traced"
     },
     {
@@ -1066,7 +1228,7 @@
     },
     {
       "file": "src/features/document-translation/core/document.ts",
-      "sha256": "efdeb5cad7b91caadcde8654a6d8397969b238a62871db4c865d37683e8af7a1",
+      "sha256": "049eba02d7e5c7f042e1bcd0438760aa15b0169cdb852f52f7a598a64f19ff1b",
       "functionBodies": 45,
       "status": "source-read-and-traced"
     },
@@ -1074,6 +1236,30 @@
       "file": "src/features/document-translation/core/preview.ts",
       "sha256": "2b4a962624e64130245433a2aac2b600c25d0aa3ff8b08464851ea479c568c7d",
       "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/document-translation/public.ts",
+      "sha256": "80118140da795530602261cca7dc28bc80dec18bf8b41318eccc069bbd9f83cf",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/document-translation/services/archive.ts",
+      "sha256": "41cfa785534582f53f344aa2a4be109c97fdc9f4bd6dc66090c3ff9b622b3c75",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/document-translation/services/binary.ts",
+      "sha256": "16ccabf4cd99fab29ecc6fbb2fe3569b1bb043b2136aba469dbac3f2c916a950",
+      "functionBodies": 106,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/document-translation/ui/pdfPreview.ts",
+      "sha256": "2e1c3f244b8c1cb6cf7b4f9e0edc7ba0805647ddf52afc669f5b9e08cbb2a10d",
+      "functionBodies": 48,
       "status": "source-read-and-traced"
     },
     {
@@ -1773,9 +1959,45 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/components/FieldHelp.vue",
+      "sha256": "09d8bbb69dd631bc1394b88bd07937d7a0c5bdb6c458af9b41abc9dbbd343fed",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/InterfaceSkinPreview.vue",
+      "sha256": "9fb45e7d1f6fd637e0f0c407b4c7e60884a344ed0034e16b52f3008ea1c0cfae",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/PopupLayoutPreview.vue",
+      "sha256": "f4dc54ba04b84943614e3daea87f6aa00b06b81a04f2447bcfc007464700b428",
+      "functionBodies": 31,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/PopupLayoutPreviewItem.vue",
+      "sha256": "2e0135456966edc37eedd046d9dc0e60761fa6f79a73e6982433791b25fb1ef8",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/components/SegmentedControl.vue",
-      "sha256": "0e821017a194a05426b1b902c6ef584d57f746bdf45b49b604e7e59492436c7c",
-      "functionBodies": 4,
+      "sha256": "a3247a372aeaeecbf03172484442f37efb57b2f53a710b1e317f71a84808cc2f",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/SettingsGroup.vue",
+      "sha256": "4d77a37fc07ee00fdfc63563ce074097ea0bdf7b62ca35b25d2f1b9dcfb45b4b",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/SettingsItem.vue",
+      "sha256": "afc576db8b900a88d62c0339de2ef152a6eb976273f9a6c63b1be9f0c37b2600",
+      "functionBodies": 1,
       "status": "source-read-and-traced"
     },
     {
@@ -1788,6 +2010,24 @@
       "file": "src/features/settings/ui/components/SettingsSectionNavigation.vue",
       "sha256": "b595238b605d924d8e3ee08c1b799fc4b88a1f9aa739a72f2335eed9bd931fa9",
       "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/TranslationColorField.vue",
+      "sha256": "ecf0bd4c5df13b501970d62186a1e10ca26118e4b9582f2834d05834c8191079",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/TranslationStylePreview.vue",
+      "sha256": "2d4c0f427e2aec725eca651a75e7c4e4478746db29879908dcb8db6a61eb131e",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/components/WritingStylePreview.vue",
+      "sha256": "b97a76e223d7f7ae186132e2a454a4f17f11537e433e6db5461e93498721a772",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -2121,9 +2361,87 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/providers/translation/aliyun-translation.ts",
+      "sha256": "a074ab53b2930fdd8a9f57c3b0bca600ee273d01109f3829ccbfd11c56a1879c",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/azure-translator.ts",
+      "sha256": "0b80804059cd8231315ed75c3d08ba76a273fca3ca29ee1ddecd367fb3bed5df",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/baidu-translation.ts",
+      "sha256": "ef24cd8469b36010bcfb04b5df8d90f631006d704e79d7d2b246d7b5a5d35675",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/cloud/languages.ts",
+      "sha256": "32f37baff2b6844c9448b81ee90b5c8c462b65a991cb3c5c7c0ada8516d69a4d",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/cloud/signature.ts",
+      "sha256": "706053507f38a77070ce3eafbdd097e090d8f080cfa6b805fb976419e2bdbcce",
+      "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/google-cloud-translation.ts",
+      "sha256": "49982b0b186dc1939788d1497ceec3973de07075f2efb69c95092d06bed82eed",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/providers/translation/google.ts",
       "sha256": "0799d95d33bcc14f7d424124148958cc9af98c5c1c10ce45b8c063fdc088b4de",
       "functionBodies": 59,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/hunyuan-translation.ts",
+      "sha256": "74d149b3c268f3cdfe5fd8d793600434368a4d2d1f8bb83582e01fdd6eb68baf",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/tencent.ts",
+      "sha256": "e6683527a5d06d024354a612298225777f895556273abd24907fd731190703eb",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/volc-translation.ts",
+      "sha256": "f70a1fb1db7cdb5f254d7bb925f53a67e277e01b091da05fa396571480eb9d10",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/xiaoniu.ts",
+      "sha256": "a3e02c8f0ddc894f6ecee4a2c8cf8eb869b8681fc5d86da29e15ae26a2dc3402",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/youdao.ts",
+      "sha256": "e2b926b9025bb6cbf7494a916f2215d9b18a74ef5d97093ce91f58a6291bd85e",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/schema.ts",
+      "sha256": "5155391ff06cc00c1044bbffb63cc86fd2ba0dc520a29b0d0cfcb62637d199fc",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/store.ts",
+      "sha256": "9b28991c4fdf424d3bc5bf529ced769bcd28ebb29042d994a4748b6f85ea225e",
+      "functionBodies": 105,
       "status": "source-read-and-traced"
     },
     {
@@ -2164,7 +2482,7 @@
     },
     {
       "file": "src/services/translation/apiKeyRotation.ts",
-      "sha256": "60973a3109e14cdaa33375ac4ae4a863353266390270cd471ae938f4e5479b3d",
+      "sha256": "ab78d488a9cf2e2596210250cafa1d5bb24c92a98c153287fb8d4b90cf5ddfc8",
       "functionBodies": 9,
       "status": "source-read-and-traced"
     },
@@ -2176,8 +2494,8 @@
     },
     {
       "file": "src/services/translation/broker.ts",
-      "sha256": "c1ca7a84a3509ffa5248a6ff25b9639f0a6d67c6eca89a6855c3bbee61878434",
-      "functionBodies": 135,
+      "sha256": "e3e7fb12352c6510d95bbd9219ee3a045bded159fff4cdc9ab2d14817394c28e",
+      "functionBodies": 136,
       "status": "source-read-and-traced"
     },
     {
@@ -2290,7 +2608,7 @@
     },
     {
       "file": "src/services/translation/requestSnapshot.ts",
-      "sha256": "a2e96e72af6b0109cc85e9aa35f2cc39fbd8a9307a0f2e068825bbe1c3c195c1",
+      "sha256": "fe47bb506a20857672fb967abc01b68a5dbd745834aa9236e883418056987d8d",
       "functionBodies": 43,
       "status": "source-read-and-traced"
     },
@@ -2302,8 +2620,14 @@
     },
     {
       "file": "src/services/translation/templates.ts",
-      "sha256": "21600be7c1bef5e0d7388ace9886a06cd910f929762e7a38f01fed247dff90f2",
+      "sha256": "d1b76ba5f2d1bb0647cfd2d10098d481c8435864b6f0f34104341f3b5926c14e",
       "functionBodies": 21,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/translation/types.ts",
+      "sha256": "d1476f6bf74fd58abb043128badffe53ca95fd53446538a9e7b853cc56226b2b",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -2367,6 +2691,42 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/ui/components/FeatureEnableCard.vue",
+      "sha256": "691874471d56773b091966d258449b03abb72960eb0564e3f072dbbfd276f2f2",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/GlossaryLibrarySelect.vue",
+      "sha256": "a76e0afdddbcd402d40a96fcd60f601451c8c41ffc3a49752133f1d2767abb23",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/InterfaceBackdrop.vue",
+      "sha256": "a0339e3d93ad0c7caff4c43dabf8df69f635b835f1bf75cba41d4af84116569c",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/ServiceIcon.vue",
+      "sha256": "24643b845d0e5b4d36c3ffc60c6fa64a15eeeac8efa3446361e38ed42b09bd2e",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/TranslationLoadingPreview.vue",
+      "sha256": "b3e2eb0503b17041394fdc6763f55dab305af7b61fbb98f1332861caaa83dc64",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/UiIcon.vue",
+      "sha256": "40c559236cd406274f917c3c6f2fd6f196e37109ecee1fabb91fdb1d5804fb62",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/ui/components/UiLanguageOnboarding.vue",
       "sha256": "3a6d7543c88897aa85a7498fa6c0ad96540a7b812b138503096f1279ff791cb8",
       "functionBodies": 31,
@@ -2376,6 +2736,12 @@
       "file": "src/ui/components/UiLanguageSelector.vue",
       "sha256": "1511b0e8446adb661060a154077a26071cf9450975b08550b7446508c425b4a5",
       "functionBodies": 17,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/ui/components/UiSelect.vue",
+      "sha256": "0a6758e8be0a9aac6846d5bf5b1c24c44ee652f489824fd50cfc756351ef2b4c",
+      "functionBodies": 8,
       "status": "source-read-and-traced"
     },
     {
@@ -2459,11 +2825,6 @@
     "src/app/content/translationAppearance.ts",
     "src/app/content/xVideoBridge.ts",
     "src/app/content/youtubeTimedTextBridge.ts",
-    "src/app/document-translation/DocumentApp.vue",
-    "src/app/document-translation/DocumentSegmentEditor.vue",
-    "src/app/document-translation/index.ts",
-    "src/app/document-translation/page.ts",
-    "src/app/document-translation/runtime.ts",
     "src/app/offscreen/localTranslationWorker.ts",
     "src/app/offscreen/localTtsWorker.ts",
     "src/app/offscreen/translation.ts",
@@ -2471,21 +2832,11 @@
     "src/app/offscreen/videoTranscriptionWorker.ts",
     "src/app/options/index.ts",
     "src/core/config/areaTranslation.ts",
-    "src/core/config/azure.ts",
-    "src/core/config/catalog.ts",
     "src/core/config/cloudSync.ts",
-    "src/core/config/constants.ts",
-    "src/core/config/deepl.ts",
-    "src/core/config/deeplx.ts",
-    "src/core/config/diff.ts",
-    "src/core/config/doubaoSeedTranslation.ts",
     "src/core/config/driveSync.ts",
-    "src/core/config/freeTranslation.ts",
     "src/core/config/harness.ts",
     "src/core/config/localTranslation.ts",
     "src/core/config/localTts.ts",
-    "src/core/config/model.ts",
-    "src/core/config/modelThinking.ts",
     "src/core/config/pageTranslation.ts",
     "src/core/config/requestHeaders.ts",
     "src/core/config/requestLimits.ts",
@@ -2496,7 +2847,6 @@
     "src/core/config/sensitiveKeys.ts",
     "src/core/config/sentenceHighlight.ts",
     "src/core/config/shareCard.ts",
-    "src/core/config/transfer.ts",
     "src/core/config/translationAppearance.ts",
     "src/core/config/translationCache.ts",
     "src/core/config/translationLoadingStyle.ts",
@@ -2532,17 +2882,6 @@
     "src/core/i18n/messages/translationStats.ts",
     "src/core/i18n/messages/zh-CN.ts",
     "src/core/i18n/types.ts",
-    "src/core/language/catalog.ts",
-    "src/core/language/chinese.ts",
-    "src/core/language/chineseVariants.ts",
-    "src/core/language/codes.ts",
-    "src/core/language/detect.ts",
-    "src/core/language/identify.ts",
-    "src/core/language/lexicon.ts",
-    "src/core/language/partOfSpeech.ts",
-    "src/core/language/scripts.ts",
-    "src/core/language/statistical.ts",
-    "src/core/language/technicalTokens.ts",
     "src/core/site-adaptation/catalog.ts",
     "src/core/site-adaptation/compiler.ts",
     "src/core/site-adaptation/literalLabel.ts",
@@ -2567,11 +2906,7 @@
     "src/features/area-translation/services/client.ts",
     "src/features/area-translation/services/textTranslation.ts",
     "src/features/area-translation/ui/AreaTranslator.vue",
-    "src/features/document-translation/public.ts",
-    "src/features/document-translation/services/archive.ts",
-    "src/features/document-translation/services/binary.ts",
     "src/features/document-translation/services/translation.ts",
-    "src/features/document-translation/ui/pdfPreview.ts",
     "src/features/floating-ball/position.ts",
     "src/features/floating-ball/public.ts",
     "src/features/floating-ball/types.ts",
@@ -2689,15 +3024,6 @@
     "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
     "src/features/settings/ui/WebDavBackup.vue",
     "src/features/settings/ui/WritingSettings.vue",
-    "src/features/settings/ui/components/FieldHelp.vue",
-    "src/features/settings/ui/components/InterfaceSkinPreview.vue",
-    "src/features/settings/ui/components/PopupLayoutPreview.vue",
-    "src/features/settings/ui/components/PopupLayoutPreviewItem.vue",
-    "src/features/settings/ui/components/SettingsGroup.vue",
-    "src/features/settings/ui/components/SettingsItem.vue",
-    "src/features/settings/ui/components/TranslationColorField.vue",
-    "src/features/settings/ui/components/TranslationStylePreview.vue",
-    "src/features/settings/ui/components/WritingStylePreview.vue",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
     "src/features/share-card/content/runtime.ts",
     "src/features/share-card/core.ts",
@@ -2801,16 +3127,11 @@
     "src/providers/translation/ai-sdk/endpoints.ts",
     "src/providers/translation/ai-sdk/errors.ts",
     "src/providers/translation/ai-sdk/openai-compatible.ts",
-    "src/providers/translation/aliyun-translation.ts",
     "src/providers/translation/auth.ts",
     "src/providers/translation/azure-openai.ts",
-    "src/providers/translation/azure-translator.ts",
-    "src/providers/translation/baidu-translation.ts",
     "src/providers/translation/chrome-translator.ts",
     "src/providers/translation/chromeTranslatorRequest.ts",
     "src/providers/translation/claude.ts",
-    "src/providers/translation/cloud/languages.ts",
-    "src/providers/translation/cloud/signature.ts",
     "src/providers/translation/connectionTest.ts",
     "src/providers/translation/deepl.ts",
     "src/providers/translation/deeplx.ts",
@@ -2822,20 +3143,14 @@
     "src/providers/translation/free-translation.ts",
     "src/providers/translation/free-web.ts",
     "src/providers/translation/gemini.ts",
-    "src/providers/translation/google-cloud-translation.ts",
-    "src/providers/translation/hunyuan-translation.ts",
     "src/providers/translation/local-translation.ts",
     "src/providers/translation/microsoft.ts",
     "src/providers/translation/microsoftTransport.ts",
     "src/providers/translation/mymemory.ts",
     "src/providers/translation/registry.ts",
     "src/providers/translation/responses-api.ts",
-    "src/providers/translation/tencent.ts",
     "src/providers/translation/tongyi.ts",
     "src/providers/translation/usage.ts",
-    "src/providers/translation/volc-translation.ts",
-    "src/providers/translation/xiaoniu.ts",
-    "src/providers/translation/youdao.ts",
     "src/providers/translation/zhipu.ts",
     "src/services/config/autoBackup.ts",
     "src/services/config/autoBackupStore.ts",
@@ -2846,8 +3161,6 @@
     "src/services/config/history.ts",
     "src/services/config/index.ts",
     "src/services/config/remoteConfigSync.ts",
-    "src/services/config/schema.ts",
-    "src/services/config/store.ts",
     "src/services/config/webDavBackup.ts",
     "src/services/config/webDavBackupClient.ts",
     "src/services/harness/conversation.ts",
@@ -2858,15 +3171,7 @@
     "src/services/harness/sessionTypes.ts",
     "src/services/harness/sessions.ts",
     "src/services/harness/usage.ts",
-    "src/services/translation/types.ts",
     "src/services/writing/runtime.ts",
-    "src/ui/components/FeatureEnableCard.vue",
-    "src/ui/components/GlossaryLibrarySelect.vue",
-    "src/ui/components/InterfaceBackdrop.vue",
-    "src/ui/components/ServiceIcon.vue",
-    "src/ui/components/TranslationLoadingPreview.vue",
-    "src/ui/components/UiIcon.vue",
-    "src/ui/components/UiSelect.vue",
     "src/ui/translationLoadingIndicator.ts",
     "src/ui/view-model/aiContext.ts",
     "src/ui/view-model/serviceLibrary.ts",
@@ -2908,7 +3213,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue508pending production files/functions and confirmed next-scope config pair/template/document candidates. Latest cached-main delta329files remains unreconciled. After entire scope: fresh latest main, safe rewritten-history rebase, whole chain/code review/fixes, verify, authorized merge.",
+    "Continue447pending production files/functions/chains, latest main changed/new sources and confirmed candidates. Final fresh latest-main safe rebase, whole code review/fixes/verification and authorized merge remain pending.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2942,12 +3247,13 @@
     "Forty-first:4new reviewed files110bodies;272reviewed5041bodies555pending. New32component+11unit executed/22static;14affectedfiles312pass. Immutable2SFC comparison32cases30failed2passed, zero unhandled; failure count not independent defects. Strict5files67cases3modules four100; no exemptions/threshold changes. Native14unique flows3 inspected narrow/light/dark screenshots/errors0, owned profile/browser cleanup0processes; composition synthetic only. Wrong tab-label fixture failed first and was corrected, no product regression inferred. Existing13executable/3docs ownership debt; whole audit and latest-main delivery remain pending.",
     "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending.",
     "Forty-fifth:11new complete files256bodies;295reviewed5571bodies535pending. Parallel agentsA/B reviewed and closed. Root25baseline23fail2pass; child26baseline21fail5pass; picker new real-helper regression fails before/pass after native Enter.21related files378pass;strict94cases4modules four100;production15flows4screens/errors0/clean. Shared Markdown quoted fences/inline dash and Obsidian renamed job reproduced, shared onboarding candidates await reproduction; no native Obsidian/live-provider proof. Cached main295files reconciliation and final whole delivery pending.",
-    "Forty-sixth:27new complete files/372bodies;322reviewed/5943bodies/508pending.6agents closed after parent review.25private mapped modules four100;SFC numerical coverage not claimed. Actual startup/foreign-language save/reopen and3format preview/edit/export/ZIP,9screenshots/errors0/clean; no live-provider/native-Obsidian/GPU proof. Remaining12executable and3doc-tool ownership debt; cachedmain329files reconciliation and final whole delivery pending."
+    "Forty-sixth:27new complete files/372bodies;322reviewed/5943bodies/508pending.6agents closed after parent review.25private mapped modules four100;SFC numerical coverage not claimed. Actual startup/foreign-language save/reopen and3format preview/edit/export/ZIP,9screenshots/errors0/clean; no live-provider/native-Obsidian/GPU proof. Remaining12executable and3doc-tool ownership debt; cachedmain329files reconciliation and final whole delivery pending.",
+    "Forty-seventh:61new complete files;383reviewed/6937bodies/447pending.8chronologicalroles,max6concurrent,allclosed. PDF mapped whitespace gate remains99.37; SFC mapped populations distinct from AST.12executable/3doc-tool ownership debt, cached-main reconciliation and final delivery still pending."
   ],
   "progress": {
-    "sourceReadFiles": 322,
-    "sourceReadFunctionBodies": 5943,
-    "pendingFiles": 508,
+    "sourceReadFiles": 383,
+    "sourceReadFunctionBodies": 6937,
+    "pendingFiles": 447,
     "goalComplete": false
   },
   "observations": [
@@ -3717,6 +4023,12 @@
       "status": "fixed-reviewed-and-verified-forty-sixth",
       "issue": "Language components own current visibility, values and lifecycle; confirmation freezes submitted language, prevents duplicate writes/celebrations and releases timer/focus/listeners. Retained SettingsSections wires selector active state. Shared i18n serializes owned saves, coalesces obsolete selections, separates same-revision rollback from external updates, preserves current errors, releases queued DOM refreshes and ignores obsolete bundle completions. Actual store/repository/IndexedDB failure integration and native foreign-language save/reopen verified. Shared document parser preserves quote/list fenced code and inline positions, emits reusable code metadata, skips VTT NOTE blocks, bounds JSON nesting and uses iterative walkers/copying. Linear Markdown scanning and bounded excerpts avoid pathological backtracking/unused translation reads. Preview consumes shared metadata, removes placeholder collisions/repeated rendering and injects real reader head plus HTML5 doctype. Native iframe verifies standards mode; source/model/exports preserved. Obsidian entry owns TFile identity jobs, frozen language/source state, actual read size checks, cancellation and late callbacks; setting tabs and queued writes own the load session, copied saves remain ordered. PDF task/page/worker lifetime is cleaned with destroy deduplication. Controlled actual plugin/PDF imports verified; no native Obsidian vault or instantaneous native cancellation guarantee. Glossary conflict lookups indexed locally, rejected overlapping candidates resume safely; Unicode canonical comparisons retain original ranges/spelling and pure-glossary broker acceptance. Transfers require valid enabled shape/BOM handling. Hardware capability decisions follow actual adapter fields and reject software fallbacks; WASM validates header/owned backend queue and avoids copying large bytes. Credentials reject inherited secret fields, preserve own prototype-like keys, use iterative clone/compare, keep legal HTTP header whitespace and exact custom provider identity. Selected Key queries and destination comparisons share work. Fixed-cloud destinations ignore unused proxy, Aliyun follows actual region endpoint, proxy-consuming providers keep rebind protection. Existing static architecture assertion migrated minimally with native-behavior tests retained.",
       "validation": "1711distinct affected cases;25mapped modules four100;9native screenshots inspected, actual language save/reopen and three-format reader/edit/download/ZIP;508source files and final delivery remain pending."
+    },
+    {
+      "file": "src/services/config/store.ts",
+      "status": "fixed-reviewed-and-verified-forty-seventh",
+      "issue": "配置保存和历史写入的同值请求等待实际持久化结果；revision 在写入与迁移前拒绝溢出。分别保留 token/secret 的显式导入意图和普通 draft 目的地解绑，导入广播合并不误覆盖其他服务。现代 apiKeys 为规范化主数据，原始旧 token 清空在保存边界兼容；既有测试完整断言保留并显式清空现代列表。 配置深层克隆与比较使用迭代算法，共享引用只展开一次；差异预览限制展示深度，只格式化可见四项。任意自有键不会改写对象原型，继承目录属性不会变成服务、模型、语言或区域。自定义模型保护与 Thinking 目录索引减少重复全表扫描。 文档 UI 拥有加载/预览取消和 PDF 文件资源，卸载及换文件清理迟到回调、下载 URL、设置写入和确认动作；PDF 任务、页面、Canvas 和编码取消可释放并重试。Markdown 原生四空格代码在正文、引用、列表中保持 literal 保护。PDF 排版优化保留块选择评分、平局顺序与全部原始文本，最坏输入和差分证据单独记录。 语言标签拒绝非法完整尾部；超多汉字分段不使用参数 spread。七类技术标记按候选边界执行 sticky 匹配，避免长无效前缀加有效后缀的重复扫描；大输入超时归因与兼容差分保留，未宣称所有输入线性。 共享 Vue 控件只保留最新焦点帧，停用、卸载和缓存去激活释放；迟到帧重新校验值、选项与焦点归属。Shadow UI 菜单留在原根内，disabled/stale 事件不修改当前设置，移除无消费者样式与重复渲染判断。 固定云端路由忽略未消费 proxy，鉴权/pool/region 隔离在途请求；成功缓存继续允许跨凭据命中。快照复制并冻结轮换映射，检查和健康状态按实际签名凭据判断，Hunyuan 自定义 Model 对齐请求和统计；Youdao 保留 HTTP429/Retry-After 和取消异常。自定义 body 只解析一次。",
+      "validation": "4197distinct affected cases; source/client mapped coverage and native four-format boundaries recorded separately;447source files and final delivery remain pending."
     }
   ],
   "finalDelivery": {

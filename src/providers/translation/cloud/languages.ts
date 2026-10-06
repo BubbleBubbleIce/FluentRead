@@ -61,7 +61,7 @@ export type CloudSourceLanguage<V extends CloudLanguageVendor> =
 
 function mapCode(map: CloudLanguageMap, code: string): string {
     const normalized = normalizeChineseLanguageCode(code);
-    return map.codes[normalized] || normalized;
+    return Object.hasOwn(map.codes, normalized) ? map.codes[normalized] : normalized;
 }
 
 /**

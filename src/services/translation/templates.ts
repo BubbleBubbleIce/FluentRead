@@ -2,7 +2,7 @@
  * @file src/services/translation/templates.ts
  *
  * 文件职责：构造不同大模型协议所需的请求消息和 payload，是翻译语义与 provider transport 之间的模板层。
- * 主要内容：生成 common、DeepSeek chat/responses、Gemini、Claude 和通义的文本或图像请求体，保持受信图片、识图提示词和冻结模型不被自定义 body 替换，解析当前模型并转出页面摘要 prompt 构建器。 可核对的公开符号包括 commonMsgTemplate、getCurrentModel、deepseekResponsesMsgTemplate、deepseekMsgTemplate、geminiMsgTemplate、claudeMsgTemplate、tongyiMsgTemplate。
+ * 主要内容：生成 common、DeepSeek chat/responses、Gemini、Claude 和通义的文本或图像请求体，保持受信图片、识图提示词和冻结模型不被自定义 body 替换，每次只解析一次高级请求体，解析当前模型并转出页面摘要 prompt 构建器。 可核对的公开符号包括 commonMsgTemplate、getCurrentModel、deepseekResponsesMsgTemplate、deepseekMsgTemplate、geminiMsgTemplate、claudeMsgTemplate、tongyiMsgTemplate。
  * 模块边界：本文件位于翻译 application service 层，负责用例编排和端口契约；不挂载页面 UI，且不应把某家供应商的网络细节扩散到 feature，具体 HTTP 协议由 providers/platform 实现。
  */
 
@@ -171,7 +171,9 @@ function finalizeThinkingPayload(
 ): Record<string, unknown> {
     const customBody = currentCustomBody(current, service);
     const customFields = parseCustomBody(customBody);
-    const customized = mergeCustomBody(payload, customBody);
+    // 同一请求的高级 JSON 只解析一次；顶层字段仍按 mergeCustomBody 的浅合并顺序优先。
+    if (customFields === undefined) console.warn('[FluentRead] 自定义请求体必须是合法的 JSON 对象，已忽略');
+    const customized = customFields === undefined ? payload : {...payload, ...customFields};
     // 高级请求体显式替换模型时，其能力可能与设置页选中的模型完全不同。
     // 此时不猜自动字段；用户在同一请求体中提供的 thinking/reasoning 仍会保留。
     if (Object.prototype.hasOwnProperty.call(payload, 'model')

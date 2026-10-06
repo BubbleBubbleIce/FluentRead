@@ -1,7 +1,7 @@
 <!--
  @file src/app/document-translation/DocumentApp.vue
  文件职责：实现独立文档翻译页面的完整 Vue 应用，承载文件导入、格式化预览、分段翻译、人工校订和双语文件导出的用户流程。
- 主要内容：相同译文保留原文且不重复展示；组织文档阅读与翻译任务，增量统计完成段落，维护校订和未下载保护；PDF 逐页导出与 ePub/DOCX/ZIP 打包显示进度，支持取消、重试和离开时中止，保留异步提交所有权。
+ 主要内容：相同译文保留原文且不重复展示；组织文档阅读与翻译、增量统计和人工校订；导入与 PDF 预览绑定独立取消所有权，切换、删除、重置及卸载释放 PDF 任务、计时器和 URL；PDF/ePub/DOCX/ZIP 导出显示进度、支持取消重试，迟到结果不得回写。
  模块边界：组件负责页面交互与响应式状态，不自行解析二进制格式、不实现片段翻译队列、配置存储协议或导出编码；解析渲染来自 document-translation feature，配置协调来自 services/config，运行时适配由本目录 runtime 注入。
 -->
 <!-- 文档页面归 app 层所有；WXT 入口只负责启动。 -->
@@ -353,7 +353,7 @@
       <div class="document-settings-footer"><button class="sidebar-change-file" type="button" :aria-label="documentQueue.length > 1 ? t('document.batch.clear') : translateLegacy('打开新文件')" :disabled="queueBusy" @click="changeDocument">{{ documentQueue.length > 1 ? t('document.batch.clear') : translateLegacy('更换文件') }}</button><button class="settings-link" type="button" @click="openSettings">服务连接设置 ↗</button></div>
       <div class="dialog-actions"><button class="ghost-button" type="button" autofocus @click="documentSettingsDialog?.close()">返回文档</button><button class="translate-document-button" type="button" :disabled="!config.on || !hydrated || queueBusy || Boolean(credentialWarning) || !parsedDocument" @click="translateFromSettings">{{ translationActionLabel }}</button></div>
     </dialog>
-    <dialog ref="confirmDialog" class="document-dialog" aria-labelledby="confirm-document-heading" @close="pendingAction = null">
+    <dialog ref="confirmDialog" class="document-dialog" aria-labelledby="confirm-document-heading" @close="clearConfirmation">
       <h2 id="confirm-document-heading">{{ pendingAction === 'remove' ? t('document.batch.removeTitle') : pendingAction === 'reset' ? (documentQueue.length > 1 ? t('document.batch.clearTitle') : '打开另一份文档？') : '重新翻译这份文档？' }}</h2>
       <p>{{ pendingAction === 'remove' ? t('document.batch.removeWarning') : pendingAction === 'reset' ? (documentQueue.length > 1 ? t('document.batch.clearWarning') : '当前翻译和校订结果只保留在本页，离开后无法恢复。建议先下载需要的结果。') : '重新翻译会替换现有译文和人工校订。你也可以返回并先下载当前结果。' }}</p>
       <div class="dialog-actions"><button class="ghost-button" type="button" autofocus @click="confirmDialog?.close()">返回文档</button><button class="translate-document-button" type="button" @click="confirmAction">{{ pendingAction === 'remove' ? t('document.batch.remove') : pendingAction === 'reset' ? (documentQueue.length > 1 ? t('document.batch.clear') : '打开新文件') : '重新翻译' }}</button></div>
@@ -404,6 +404,7 @@ import {
   createDocumentFileLoadGuard,
   createDocumentPreviewHtml,
   createPdfPagePreview,
+  releasePdfDocument,
   filterAvailableTranslationServices,
   formatDocumentReaderText,
   getDocumentAcceptAttribute,
@@ -529,6 +530,10 @@ let configSaveRequest = 0;
 let unsubscribeConfig: (() => void) | undefined;
 let pdfPreviewTimer: ReturnType<typeof setTimeout> | undefined;
 let pdfPreviewRequest = 0;
+let pdfPreviewController: AbortController | null = null;
+let fileLoadController: AbortController | null = null;
+let disposed = false;
+const downloadUrls = new Map<string, ReturnType<typeof setTimeout>>();
 
 interface DocumentQueueItem {
   id: number;
@@ -560,11 +565,11 @@ function saveActiveDocument(): void {
 }
 
 function selectDocument(item: DocumentQueueItem): void {
-  if (!item.document) return;
+  if (!item.document || item.id === activeDocumentId.value) return;
   saveActiveDocument();
+  cancelPdfPreview();
+  releaseDocumentPreview(parsedDocument.value);
   clearPdfPreviewUrls();
-  pdfPreviewRequest += 1;
-  if (pdfPreviewTimer) clearTimeout(pdfPreviewTimer);
   activeDocumentId.value = item.id;
   parsedDocument.value = item.document;
   translatedSegments.value = [...item.translations];
@@ -629,6 +634,7 @@ function removeDocument(item: DocumentQueueItem, confirmed = false): void {
     confirmDialog.value?.showModal();
     return;
   }
+  releaseDocumentPreview(item.document);
   documentQueue.value = documentQueue.value.filter(entry => entry.id !== item.id);
   if (item.id === activeDocumentId.value) {
     const next = documentQueue.value.find(entry => entry.document);
@@ -639,7 +645,7 @@ function removeDocument(item: DocumentQueueItem, confirmed = false): void {
       translatedSegments.value = [];
       settledTranslations.value = [];
       editRevision.value = downloadedRevision.value = 0;
-      pdfPreviewRequest += 1;
+      cancelPdfPreview();
       clearPdfPreviewUrls();
     }
   }
@@ -663,8 +669,8 @@ async function downloadBatch(): Promise<void> {
     for (const [index, item] of items.entries()) {
       const download = await createDocumentDownload(item.document!, item.translations, mode, {
         signal: controller.signal,
-        onPdfProgress: progress => { batchNotice.value = `${item.name} · ${pdfExportProgress(progress)}`; },
-        onArchiveProgress: percent => { batchNotice.value = `${item.name} · ${archiveExportProgress(percent)}`; },
+        onPdfProgress: progress => { if (!controller.signal.aborted && downloadController === controller) batchNotice.value = `${item.name} · ${pdfExportProgress(progress)}`; },
+        onArchiveProgress: percent => { if (!controller.signal.aborted && downloadController === controller) batchNotice.value = `${item.name} · ${archiveExportProgress(percent)}`; },
       });
       controller.signal.throwIfAborted();
       if (generation !== batchGeneration) return;
@@ -675,17 +681,12 @@ async function downloadBatch(): Promise<void> {
     batchNotice.value = t('document.export.saving');
     const bytes = await generateDocumentArchive(zip, {streamFiles: true}, {
       signal: controller.signal,
-      onProgress: percent => { batchNotice.value = archiveExportProgress(percent); },
+      onProgress: percent => { if (!controller.signal.aborted && downloadController === controller) batchNotice.value = archiveExportProgress(percent); },
     });
     const blob = new Blob([bytes], {type: 'application/zip'});
     controller.signal.throwIfAborted();
     if (generation !== batchGeneration) return;
-    const url = URL.createObjectURL(blob);
-    const anchor = window.document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'FluentRead-documents.zip';
-    anchor.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    saveDownloadBlob(blob, 'FluentRead-documents.zip');
     for (const item of items) item.downloaded = item.revision;
     const active = items.find(item => item.id === activeDocumentId.value);
     if (active) downloadedRevision.value = active.revision;
@@ -893,14 +894,56 @@ function clearPdfPreviewUrls(): void {
   pdfPreviewPageStates.value = [];
 }
 
+function cancelPdfPreview(): void {
+  pdfPreviewRequest += 1;
+  pdfPreviewController?.abort();
+  pdfPreviewController = null;
+  if (pdfPreviewTimer) clearTimeout(pdfPreviewTimer);
+  pdfPreviewTimer = undefined;
+  pdfPreviewLoading.value = false;
+}
+
+function releaseDocumentPreview(document: ParsedDocument | null): void {
+  if (document?.binary?.kind === 'pdf') releasePdfDocument(document.binary.bytes);
+}
+
+function clearDownloadUrls(): void {
+  downloadUrls.forEach((timer, url) => {
+    clearTimeout(timer);
+    URL.revokeObjectURL(url);
+  });
+  downloadUrls.clear();
+}
+
+function saveDownloadBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  try {
+    const anchor = window.document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    const timer = setTimeout(() => {
+      URL.revokeObjectURL(url);
+      downloadUrls.delete(url);
+    }, 1000);
+    downloadUrls.set(url, timer);
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
+
 async function refreshPdfPreviews(): Promise<void> {
+  cancelPdfPreview();
   const document = parsedDocument.value;
-  if (document?.binary?.kind !== 'pdf') {
+  if (disposed || document?.binary?.kind !== 'pdf') {
     clearPdfPreviewUrls();
     return;
   }
   // 每轮预览刷新取得独立代次；旧渲染在创建或写入 Object URL 前都必须放弃提交权。
-  const request = ++pdfPreviewRequest;
+  const request = pdfPreviewRequest;
+  const controller = new AbortController();
+  pdfPreviewController = controller;
   pdfPreviewLoading.value = true;
 
   const previousPages = new Map(pdfPreviewPageStates.value.map((page) => [page.pageNumber, page]));
@@ -927,6 +970,7 @@ async function refreshPdfPreviews(): Promise<void> {
         document,
         page.pageNumber,
         hasTranslation.value ? translatedSegments.value : undefined,
+        controller.signal,
       );
       if (request !== pdfPreviewRequest) return;
       const state = pdfPreviewPageStates.value.find((entry) => entry.pageNumber === page.pageNumber);
@@ -936,15 +980,17 @@ async function refreshPdfPreviews(): Promise<void> {
       state.loading = false;
     }
   } catch (error) {
-    if (request === pdfPreviewRequest) showError(error instanceof Error ? error.message : String(error));
+    if (request === pdfPreviewRequest && !controller.signal.aborted) showError(error instanceof Error ? error.message : String(error));
   } finally {
     if (request === pdfPreviewRequest) pdfPreviewLoading.value = false;
+    if (pdfPreviewController === controller) pdfPreviewController = null;
   }
 }
 
 function schedulePdfPreview(): void {
+  if (disposed) return;
   if (pdfPreviewTimer) clearTimeout(pdfPreviewTimer);
-  pdfPreviewTimer = setTimeout(() => { void refreshPdfPreviews(); }, 350);
+  pdfPreviewTimer = setTimeout(() => { pdfPreviewTimer = undefined; void refreshPdfPreviews(); }, 350);
 }
 
 function readerText(value: string): string {
@@ -961,19 +1007,22 @@ function applyTheme(): void {
 
 async function hydrateConfig(): Promise<void> {
   await configReady;
-  Object.assign(config, runtimeConfig);
-  lastSerialized = JSON.stringify(config);
+  if (disposed) return;
+  lastSerialized = JSON.stringify(runtimeConfig);
+  // 页面编辑不能借共享对象引用提前修改运行时配置；保存仍通过字段级协调器。
+  Object.assign(config, JSON.parse(lastSerialized));
   hydrated.value = true;
 }
 void hydrateConfig();
 
 unsubscribeConfig = subscribeConfig((nextConfig) => {
+  if (disposed) return;
   const serialized = JSON.stringify(nextConfig);
   if (serialized === lastSerialized) return;
   lastSerialized = serialized;
   applyingExternalConfig = true;
   try {
-    Object.assign(config, nextConfig);
+    Object.assign(config, JSON.parse(serialized));
     if (!config.on && (translating.value || batchRunning.value)) pauseTranslation();
   } finally {
     applyingExternalConfig = false;
@@ -983,7 +1032,7 @@ unsubscribeConfig = subscribeConfig((nextConfig) => {
 // post flush 会把一次模型选择对 documentModel/documentCustomModel 的同步修改
 // 合并成一个字段 patch，避免先保存 sentinel 或 scalar 的半成品。
 watch(config, (value) => {
-  if (!hydrated.value || applyingExternalConfig) return;
+  if (disposed || !hydrated.value || applyingExternalConfig) return;
   const serialized = JSON.stringify(value);
   if (serialized === lastSerialized) return;
   const previous = JSON.parse(lastSerialized) as Config;
@@ -1044,8 +1093,10 @@ function showError(message: string): void {
 }
 
 async function loadFiles(files: File[]): Promise<void> {
-  if (queueBusy.value || !files.length) return;
+  if (disposed || queueBusy.value || !files.length) return;
   const loadRequest = documentFileLoads.begin();
+  const controller = new AbortController();
+  fileLoadController = controller;
   openingFile.value = true;
   batchNotice.value = '';
   errorMessage.value = '';
@@ -1056,7 +1107,7 @@ async function loadFiles(files: File[]): Promise<void> {
       try {
         if (!getDocumentFormat(file.name)) throw new Error('暂不支持该文件格式，请选择 PDF、ePub、HTML、JSON、TXT、DOCX、Markdown 或字幕文件。');
         if (file.size > DOCUMENT_MAX_BYTES) throw new Error(`文件大小超过 ${maxFileSizeLabel}，请先拆分文件后再翻译。`);
-        const parsed = await parseDocumentFile(file);
+        const parsed = await parseDocumentFile(file, {signal: controller.signal});
         if (!loadRequest.isCurrent()) return;
         if (!parsed.segments.length) throw new Error('文件中没有找到可翻译的文本片段。');
         item.document = markRaw(parsed);
@@ -1070,6 +1121,7 @@ async function loadFiles(files: File[]): Promise<void> {
     }
   } finally {
     if (loadRequest.isCurrent()) openingFile.value = false;
+    if (fileLoadController === controller) fileLoadController = null;
   }
 }
 
@@ -1085,6 +1137,14 @@ function handleDrop(event: DragEvent): void {
 }
 
 function resetDocument(): void {
+  cancelPdfPreview();
+  releaseDocumentPreview(parsedDocument.value);
+  documentQueue.value.forEach(item => releaseDocumentPreview(item.document));
+  clearDownloadUrls();
+  fileLoadController?.abort();
+  fileLoadController = null;
+  clearConfirmation();
+  configSaveRequest += 1;
   downloadController?.abort();
   downloadController = null;
   cancelingDownload.value = false;
@@ -1117,8 +1177,6 @@ function resetDocument(): void {
   epubChapterIndex.value = 0;
   docxPartIndex.value = 0;
   pdfPreviewLoading.value = false;
-  pdfPreviewRequest += 1;
-  if (pdfPreviewTimer) clearTimeout(pdfPreviewTimer);
   clearPdfPreviewUrls();
 }
 
@@ -1154,12 +1212,18 @@ function requestTranslation(): void {
 
 function confirmAction(): void {
   const action = pendingAction.value;
+  const removal = pendingRemoval;
+  clearConfirmation();
   confirmDialog.value?.close();
-  if (action === 'remove' && pendingRemoval) {
-    removeDocument(pendingRemoval, true);
-    pendingRemoval = null;
+  if (action === 'remove' && removal) {
+    removeDocument(removal, true);
   } else if (action === 'reset') resetDocument();
   else if (action === 'restart') void startTranslation(true);
+}
+
+function clearConfirmation(): void {
+  pendingAction.value = null;
+  pendingRemoval = null;
 }
 
 function pauseTranslation(): void {
@@ -1270,17 +1334,12 @@ async function downloadDocument(): Promise<void> {
   try {
     const download = await createDocumentDownload(document, [...translatedSegments.value], outputMode.value, {
       signal: controller.signal,
-      onPdfProgress: progress => { downloadProgress.value = pdfExportProgress(progress); },
-      onArchiveProgress: percent => { downloadProgress.value = archiveExportProgress(percent); },
+      onPdfProgress: progress => { if (!controller.signal.aborted && downloadController === controller) downloadProgress.value = pdfExportProgress(progress); },
+      onArchiveProgress: percent => { if (!controller.signal.aborted && downloadController === controller) downloadProgress.value = archiveExportProgress(percent); },
     });
     controller.signal.throwIfAborted();
     if (document !== parsedDocument.value || requestId !== translationRequestId) return;
-    const url = URL.createObjectURL(new Blob([download.data], {type: download.mimeType}));
-    const anchor = window.document.createElement('a');
-    anchor.href = url;
-    anchor.download = download.fileName;
-    anchor.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    saveDownloadBlob(new Blob([download.data], {type: download.mimeType}), download.fileName);
     downloadedRevision.value = revision;
     downloadNotice.value = '已生成下载文件，请在浏览器下载列表中查看。';
     downloadProgress.value = '';
@@ -1320,15 +1379,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  downloadController?.abort();
-  downloadController = null;
-  batchGeneration += 1;
+  disposed = true;
   unsubscribeConfig?.();
-  documentFileLoads.invalidate();
-  translationRequestId += 1;
-  abortController?.abort();
-  if (pdfPreviewTimer) clearTimeout(pdfPreviewTimer);
-  clearPdfPreviewUrls();
+  unsubscribeConfig = undefined;
+  resetDocument();
   colorSchemeMedia.removeEventListener?.('change', applyTheme);
   window.removeEventListener('pagehide', resetDocument);
   window.removeEventListener('beforeunload', guardBeforeUnload);

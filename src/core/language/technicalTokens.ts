@@ -2,7 +2,7 @@
  * @file src/core/language/technicalTokens.ts
  *
  * 文件职责：统一识别文本中的技术标识符和名称类 Latin 词，只生成供语言识别使用的副本，避免把模型名、版本号、哈希、URL、路径和文件名当成外语正文。
- * 主要内容：按从结构最强到最弱的顺序遮蔽 URL、邮箱、@提及、行内代码、带编号的仓库引用、参数赋值、带单位数值、路径、文件名、UUID、提交哈希、版本号、带版本的产品或模型名称（可带一个首字母大写后缀及规模/变体词）、代码标识符和字母数字混合编号；把连续三个以上全大写词还原为普通词以免外语句子伪装成缩写；为非 Latin 正文中的 Latin 词给出缩写、内部大写名称、格式名、常见技术词、单字母或普通正文的角色与权重。可核对的公开符号包括 createLanguageDetectionCopy、classifyEmbeddedLatinWord、isAcronymWord、isMixedCaseName、LanguageDetectionCopy、EmbeddedLatinWordRole。
+ * 主要内容：按从结构最强到最弱的顺序遮蔽 URL、邮箱、@提及、行内代码、带编号的仓库引用、参数赋值、带单位数值、路径、文件名、UUID、提交哈希、版本号、带版本的产品或模型名称（可带一个首字母大写后缀及规模/变体词）、代码标识符和字母数字混合编号；URL、邮箱、域名、引用、赋值、路径和文件名按最大合法候选检查一次，名称保留超长前缀对整体匹配的拒绝语义，避免重复回溯或改变计权；把连续三个以上全大写词还原为普通词以免外语句子伪装成缩写；为非 Latin 正文中的 Latin 词给出缩写、内部大写名称、格式名、常见技术词、单字母或普通正文的角色与权重。可核对的公开符号包括 createLanguageDetectionCopy、classifyEmbeddedLatinWord、isAcronymWord、isMixedCaseName、LanguageDetectionCopy、EmbeddedLatinWordRole。
  * 模块边界：本文件属于 core 纯算法，只读字符串并返回新的识别副本，绝不修改原文、链接、代码或宿主 DOM；不判断文本属于哪种语言，也不访问配置、浏览器或检测库。
  */
 
@@ -35,18 +35,31 @@ const FILE_EXTENSIONS = [
 
 const TOP_LEVEL_DOMAINS = 'com|org|net|edu|gov|io|ai|dev|app|co|me|cn|jp|kr|de|fr|uk|ru|tw|hk|info|xyz|tech|so|gg|tv|ly|sh';
 
-const URL_PATTERN = new RegExp(`${BEFORE}(?:[a-z][a-z\\d+.-]*:\\/\\/|www\\.)[^\\s<>"'\`，。、；：！？（）【】《》「」]+`, 'giu');
-const EMAIL_PATTERN = /[A-Za-z\d._%+-]+@[A-Za-z\d-]+(?:\.[A-Za-z\d-]+)+/gu;
-const DOMAIN_PATTERN = new RegExp(`${BEFORE}(?:[a-z\\d](?:[a-z\\d-]*[a-z\\d])?\\.)+(?:${TOP_LEVEL_DOMAINS})(?:\\/[^\\s<>"'\`，。、；：！？（）]*)?${AFTER}`, 'giu');
+const URL_PATTERN = new RegExp(`${BEFORE}(?:[a-z][a-z\\d+.-]*:\\/\\/|www\\.)[^\\s<>"'\`，。、；：！？（）【】《》「」]+`, 'iyu');
+const URL_CANDIDATE_PATTERN = new RegExp(`${BEFORE}[a-z][a-z\\d+.-]*`, 'giu');
+// www. 是 URL 的另一种入口，可位于失败的协议候选内部；只在该候选内寻找，不能重扫后续全文。
+const URL_NESTED_CANDIDATE_PATTERN = new RegExp(`${BEFORE}www\\.`, 'iu');
+const EMAIL_PATTERN = /[A-Za-z\d._%+-]+@[A-Za-z\d-]+(?:\.[A-Za-z\d-]+)+/yu;
+const EMAIL_CANDIDATE_PATTERN = /[A-Za-z\d._%+-]+/gu;
+const DOMAIN_PATTERN = new RegExp(`${BEFORE}(?:[a-z\\d](?:[a-z\\d-]*[a-z\\d])?\\.)+(?:${TOP_LEVEL_DOMAINS})(?:\\/[^\\s<>"'\`，。、；：！？（）]*)?${AFTER}`, 'iyu');
+const DOMAIN_CANDIDATE_PATTERN = new RegExp(`${BEFORE}[a-z\\d](?:[a-z\\d-]*[a-z\\d])?(?:\\.[a-z\\d](?:[a-z\\d-]*[a-z\\d])?)*`, 'giu');
+// 必要语法预检只排除绝不可能匹配的文本，不改变完整正则的边界与遮蔽顺序。
+const DOMAIN_SUFFIX_PATTERN = new RegExp(`\\.(?:${TOP_LEVEL_DOMAINS})${AFTER}`, 'iu');
+const FILE_SUFFIX_PATTERN = new RegExp(`\\.(?:${FILE_EXTENSIONS})${AFTER}`, 'iu');
+const EMAIL_DOMAIN_PATTERN = /@[A-Za-z\d-]+(?:\.[A-Za-z\d-]+)+/u;
 const MENTION_PATTERN = new RegExp(`${BEFORE}@[A-Za-z\\d_](?:[A-Za-z\\d_.-]*[A-Za-z\\d_])?`, 'gu');
 const INLINE_CODE_PATTERN = /`[^`\n]{1,200}`/gu;
 // owner/repository#123 是引用，单独的 and/or 仍是正文；赋值和单位必须有明确结构，不能遮蔽普通词。
-const REPOSITORY_REFERENCE_PATTERN = new RegExp(`${BEFORE}[\\w.-]+\\/[\\w.-]+#\\d+${AFTER}`, 'gu');
-const PARAMETER_ASSIGNMENT_PATTERN = new RegExp(`${BEFORE}[A-Za-z_][\\w.-]*[ \\t]*=[ \\t]*(?:-?\\d+(?:\\.\\d+)?|true|false|null)${AFTER}`, 'gu');
+const REPOSITORY_REFERENCE_PATTERN = new RegExp(`${BEFORE}[\\w.-]+\\/[\\w.-]+#\\d+${AFTER}`, 'yu');
+const REPOSITORY_CANDIDATE_PATTERN = new RegExp(`${BEFORE}[\\w.-]+`, 'gu');
+const PARAMETER_ASSIGNMENT_PATTERN = new RegExp(`${BEFORE}[A-Za-z_][\\w.-]*[ \\t]*=[ \\t]*(?:-?\\d+(?:\\.\\d+)?|true|false|null)${AFTER}`, 'yu');
+const ASSIGNMENT_CANDIDATE_PATTERN = new RegExp(`${BEFORE}[A-Za-z_][\\w.-]*`, 'gu');
 const MEASUREMENT_PATTERN = new RegExp(`${BEFORE}\\d+(?:\\.\\d+)?[ \\t]*(?:px|rem|em|vw|vh|vmin|vmax|ms|s|Hz|kHz|MHz|GHz|KB|MB|GB|TB|KiB|MiB|GiB|TiB)${AFTER}`, 'gu');
-const PATH_PATTERN = new RegExp(`${BEFORE}(?:[A-Za-z]:)?(?:~|\\.{1,2})?[\\/\\\\]?[\\w.@+-]+(?:[\\/\\\\][\\w.@+-]+)+[\\/\\\\]?${AFTER}`, 'gu');
+const PATH_PATTERN = new RegExp(`${BEFORE}(?:[A-Za-z]:)?(?:~|\\.{1,2})?[\\/\\\\]?[\\w.@+-]+(?:[\\/\\\\][\\w.@+-]+)+[\\/\\\\]?${AFTER}`, 'yu');
+const PATH_CANDIDATE_PATTERN = new RegExp(`${BEFORE}(?:[A-Za-z]:)?(?:~|\\.{1,2})?[\\/\\\\]?[\\w.@+-]+(?:[\\/\\\\][\\w.@+-]+)*[\\/\\\\]?`, 'gu');
 const FILE_EXTENSION_SUFFIX_PATTERN = new RegExp(`\\.(?:${FILE_EXTENSIONS})[\\\\/]?$`, 'iu');
-const FILE_NAME_PATTERN = new RegExp(`${BEFORE}\\.?[\\w-]+(?:\\.[\\w-]+)*\\.(?:${FILE_EXTENSIONS})${AFTER}`, 'giu');
+const FILE_NAME_PATTERN = new RegExp(`${BEFORE}\\.?[\\w-]+(?:\\.[\\w-]+)*\\.(?:${FILE_EXTENSIONS})${AFTER}`, 'iyu');
+const FILE_CANDIDATE_PATTERN = new RegExp(`${BEFORE}\\.?[\\w-]+(?:\\.[\\w-]+)*`, 'giu');
 const UUID_PATTERN = new RegExp(`${BEFORE}[\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12}${AFTER}`, 'giu');
 // 提交哈希必须同时含数字和字母，避免 decade、abcdefa 等普通或伪造单词被当作标识符。
 const HASH_PATTERN = new RegExp(`${BEFORE}(?=[\\da-f]*\\d)(?=[\\da-f]*[a-f])[\\da-f]{7,64}${AFTER}`, 'giu');
@@ -58,16 +71,17 @@ const PLACEHOLDER_PATTERN = /\{\{?\s*[\w.$-]+\s*\}?\}|\$\{[^}\s]{1,40}\}|<\/?[A-
 const ALPHANUMERIC_PATTERN = new RegExp(`${BEFORE}[A-Za-z\\d]+(?:[-_.][A-Za-z\\d]+)*${AFTER}`, 'gu');
 const UPPERCASE_PHRASE_PATTERN = new RegExp(`${BEFORE}[A-Z]{2,}(?:[ \\t]+[A-Z]{2,}){2,}${AFTER}`, 'gu');
 
+const MAX_VERSIONED_NAME_LENGTH = 48;
 // 名称主体：缩写/内部大写（GPT、OpenAI、iOS）或首字母大写单词（Claude、Qwen）。
-const NAME_HEAD = '(?:[A-Z][A-Za-z]*[A-Z][A-Za-z]*|[a-z]+[A-Z][A-Za-z]*|[A-Z][a-z]{1,15})';
+// 沿用名称总长上限限制每段扫描；否则无版本的超长大写词会在重叠字母组间反复回溯。
+const NAME_HEAD = `(?:[A-Z][A-Za-z]{0,${MAX_VERSIONED_NAME_LENGTH}}[A-Z][A-Za-z]{0,${MAX_VERSIONED_NAME_LENGTH}}|[a-z]{1,${MAX_VERSIONED_NAME_LENGTH}}[A-Z][A-Za-z]{0,${MAX_VERSIONED_NAME_LENGTH}}|[A-Z][a-z]{1,15})`;
 // 名称前可有一个缩写或内部大写的厂商名（OpenAI GPT-6），普通首字母大写词不作前缀，避免吞掉句首正文。
-const NAME_PREFIX = '(?:(?:[A-Z][A-Za-z]*[A-Z][A-Za-z]*|[a-z]+[A-Z][A-Za-z]*) )?';
+const NAME_PREFIX = `(?:(?:[A-Z][A-Za-z]{0,${MAX_VERSIONED_NAME_LENGTH}}[A-Z][A-Za-z]{0,${MAX_VERSIONED_NAME_LENGTH}}|[a-z]{1,${MAX_VERSIONED_NAME_LENGTH}}[A-Z][A-Za-z]{0,${MAX_VERSIONED_NAME_LENGTH}}) )?`;
 const VERSIONED_NAME_PATTERN = new RegExp(`${BEFORE}${NAME_PREFIX}${NAME_HEAD}(?:[-_ ]?v?\\d+(?:\\.\\d+)*[a-z]?)${AFTER}`, 'gu');
 const VARIANT_WORDS = new Set([
     'mini', 'nano', 'micro', 'pro', 'max', 'plus', 'ultra', 'turbo', 'lite', 'flash', 'instruct', 'chat',
     'preview', 'base', 'large', 'small', 'medium', 'xl', 'xxl', 'air', 'ti', 'se', 'beta', 'alpha', 'rc', 'lts',
 ]);
-const MAX_VERSIONED_NAME_LENGTH = 48;
 
 /** 产品/模型名称中的通用变体词，仅由名称语境调用；单独的 Plus/Chat 仍可属于外语正文。 */
 export function isNameVariantWord(word: string): boolean {
@@ -86,6 +100,48 @@ const TECHNICAL_WORDS = new Set([
 ]);
 const MAX_ACRONYM_LENGTH = 10;
 const MAX_MIXED_CASE_NAME_LENGTH = 24;
+
+/** 同一最大合法前缀内，后续起点的必要后缀相同；只在候选起点匹配，失败后跳过整段而不重复回溯。 */
+function maskCandidateTokens(text: string, candidates: RegExp, pattern: RegExp, accept: (token: string) => boolean, nestedCandidate?: RegExp): {text: string; count: number} {
+    let output = '';
+    let lastIndex = 0;
+    let count = 0;
+    candidates.lastIndex = 0;
+    let candidate: RegExpExecArray | null;
+    while ((candidate = candidates.exec(text)) !== null) {
+        pattern.lastIndex = candidate.index;
+        let match = pattern.exec(text);
+        if (!match && nestedCandidate) {
+            const nested = nestedCandidate.exec(candidate[0]);
+            if (nested) {
+                pattern.lastIndex = candidate.index + nested.index;
+                match = pattern.exec(text);
+            }
+        }
+        if (!match) continue;
+        // 接纳回调拒绝时仍消费匹配范围，与原 replace 回调保留 token 后的全局扫描行为相同。
+        candidates.lastIndex = match.index + match[0].length;
+        if (!accept(match[0])) continue;
+        output += `${text.slice(lastIndex, match.index)} `;
+        lastIndex = match.index + match[0].length;
+        // 域名可继续消费路径；也可能只匹配链中的一个后缀，余下部分仍沿用原有全局匹配顺序。
+        candidates.lastIndex = lastIndex;
+        count += 1;
+    }
+    return {text: output + text.slice(lastIndex), count};
+}
+
+/** 有界名称正则不能漏掉原本会被整体拒绝的超长厂商前缀，避免把内层名称改计为一个名称。 */
+function hasOversizedNamePrefix(text: string, start: number, length: number): boolean {
+    if (text[start - 1] !== ' ') return false;
+    const end = start - 1;
+    let cursor = end;
+    while (cursor > 0 && /[A-Za-z]/u.test(text[cursor - 1]!)) cursor -= 1;
+    if (end - cursor + 1 + length <= MAX_VERSIONED_NAME_LENGTH) return false;
+    if (cursor > 0 && LATIN_WORD_CHARACTER_PATTERN.test(text[cursor - 1]!)) return false;
+    // 原前缀语法是 ASCII 字母组成且首字母之后至少一次大写；普通首字母大写词不算前缀。
+    return /[A-Z]/u.test(text.slice(cursor + 1, end));
+}
 
 /** 在带版本名称之后吸收规模（70B）、通用变体词（mini/Pro）和至多一个首字母大写后缀（Sol、Sonnet）。 */
 function extendVersionedName(text: string, start: number, end: number): number {
@@ -115,6 +171,7 @@ function maskVersionedNames(text: string): {text: string; count: number} {
     for (const match of text.matchAll(VERSIONED_NAME_PATTERN)) {
         const start = match.index;
         if (start < lastIndex) continue;
+        if (hasOversizedNamePrefix(text, start, match[0].length)) continue;
         const end = extendVersionedName(text, start, start + match[0].length);
         if (end - start > MAX_VERSIONED_NAME_LENGTH) continue;
         output += `${text.slice(lastIndex, start)} `;
@@ -130,39 +187,46 @@ function maskVersionedNames(text: string): {text: string; count: number} {
  */
 export function createLanguageDetectionCopy(value: string): LanguageDetectionCopy {
     let identifiers = 0;
-    const mask = (text: string, pattern: RegExp, accept: (token: string) => boolean = () => true): string =>
-        text.replace(pattern, (token) => {
+    const mask = (text: string, pattern: RegExp, accept: (token: string) => boolean = () => true, candidates?: RegExp, nestedCandidate?: RegExp): string => {
+        if (candidates) {
+            const masked = maskCandidateTokens(text, candidates, pattern, accept, nestedCandidate);
+            identifiers += masked.count;
+            return masked.text;
+        }
+        return text.replace(pattern, (token) => {
             if (!accept(token)) return token;
             identifiers += 1;
             return ' ';
         });
+    };
 
     let text = value.normalize('NFC');
-    text = mask(text, URL_PATTERN);
-    text = mask(text, EMAIL_PATTERN);
-    text = mask(text, DOMAIN_PATTERN);
-    text = mask(text, MENTION_PATTERN);
-    text = mask(text, INLINE_CODE_PATTERN);
-    text = mask(text, PLACEHOLDER_PATTERN);
-    text = mask(text, REPOSITORY_REFERENCE_PATTERN);
-    text = mask(text, PARAMETER_ASSIGNMENT_PATTERN);
-    text = mask(text, MEASUREMENT_PATTERN);
+    // 避免在长普通词/点号串上从每个位置尝试带可变长前缀的正则；先检查必需的结构。
+    if (text.includes('://') || /www\./iu.test(text)) text = mask(text, URL_PATTERN, undefined, URL_CANDIDATE_PATTERN, URL_NESTED_CANDIDATE_PATTERN);
+    if (EMAIL_DOMAIN_PATTERN.test(text)) text = mask(text, EMAIL_PATTERN, undefined, EMAIL_CANDIDATE_PATTERN);
+    if (DOMAIN_SUFFIX_PATTERN.test(text)) text = mask(text, DOMAIN_PATTERN, undefined, DOMAIN_CANDIDATE_PATTERN);
+    if (text.includes('@')) text = mask(text, MENTION_PATTERN);
+    if (text.includes('`')) text = mask(text, INLINE_CODE_PATTERN);
+    if (/[{<]/u.test(text)) text = mask(text, PLACEHOLDER_PATTERN);
+    if (text.includes('#')) text = mask(text, REPOSITORY_REFERENCE_PATTERN, undefined, REPOSITORY_CANDIDATE_PATTERN);
+    if (text.includes('=')) text = mask(text, PARAMETER_ASSIGNMENT_PATTERN, undefined, ASSIGNMENT_CANDIDATE_PATTERN);
+    if (/\d/u.test(text)) text = mask(text, MEASUREMENT_PATTERN);
     // 单个分隔符的 ASS/SSA、and/or 仍按词处理；至少两级、以根/相对路径开头或末段带扩展名才是路径。
-    text = mask(text, PATH_PATTERN, (token) => /[\\/].*[\\/]/u.test(token)
+    if (/[\\/][\w.@+-]/u.test(text)) text = mask(text, PATH_PATTERN, (token) => /[\\/].*[\\/]/u.test(token)
         || /^(?:[A-Za-z]:|~|\.{1,2})?[\\/]/u.test(token)
         || /\d/u.test(token)
-        || FILE_EXTENSION_SUFFIX_PATTERN.test(token));
-    text = mask(text, FILE_NAME_PATTERN);
-    text = mask(text, UUID_PATTERN);
-    text = mask(text, HASH_PATTERN);
+        || FILE_EXTENSION_SUFFIX_PATTERN.test(token), PATH_CANDIDATE_PATTERN);
+    if (FILE_SUFFIX_PATTERN.test(text)) text = mask(text, FILE_NAME_PATTERN, undefined, FILE_CANDIDATE_PATTERN);
+    if (text.includes('-')) text = mask(text, UUID_PATTERN);
+    if (/\d/u.test(text)) text = mask(text, HASH_PATTERN);
     // 带版本名称必须先于裸版本号处理，否则 Claude 3.5 Sonnet 会被拆成孤立的名称和后缀。
-    const versioned = maskVersionedNames(text);
+    const versioned = /\d/u.test(text) ? maskVersionedNames(text) : {text, count: 0};
     text = versioned.text;
-    text = mask(text, VERSION_PATTERN);
-    text = mask(text, MEMBER_ACCESS_PATTERN);
-    text = mask(text, SNAKE_CASE_PATTERN);
-    text = mask(text, CLI_FLAG_PATTERN);
-    text = mask(text, ALPHANUMERIC_PATTERN, (token) => /\d/u.test(token) && /[A-Za-z]/u.test(token));
+    if (/\d/u.test(text)) text = mask(text, VERSION_PATTERN);
+    if (/[.(]/u.test(text)) text = mask(text, MEMBER_ACCESS_PATTERN);
+    if (text.includes('_')) text = mask(text, SNAKE_CASE_PATTERN);
+    if (text.includes('-')) text = mask(text, CLI_FLAG_PATTERN);
+    if (/\d/u.test(text)) text = mask(text, ALPHANUMERIC_PATTERN, (token) => /\d/u.test(token) && /[A-Za-z]/u.test(token));
     // 三个及以上连续全大写词是被大写的句子（ERROR PLEASE RETRY），不能逐个当缩写保留。
     text = text.replace(UPPERCASE_PHRASE_PATTERN, (phrase) => phrase.toLowerCase());
     return {text, identifiers, versionedNames: versioned.count};

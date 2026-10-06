@@ -351,7 +351,12 @@
       "tests/documentPreviewOwnership.test.ts",
       "tests/glossaryAuditBoundaries.test.ts",
       "tests/platformAuditBoundaries.test.ts",
-      "tests/uiI18nOwnership.test.ts"
+      "tests/uiI18nOwnership.test.ts",
+      "tests/configModelAuditBoundaries.test.ts",
+      "tests/documentIndentedCode.test.ts",
+      "tests/languageAuditBoundaries.test.ts",
+      "tests/cloudTranslationAuditBoundaries.test.ts",
+      "tests/documentPdfGeometryWorstCase.test.ts"
     ],
     "functional": [
       "tests/translationCenterComponent.test.ts",
@@ -493,7 +498,12 @@
       "tests/popupBootstrap.test.ts",
       "tests/uiLanguageOnboardingLifecycle.test.ts",
       "tests/uiLanguageSelectorLifecycle.test.ts",
-      "tests/settingsUiLanguageOwnership.test.ts"
+      "tests/settingsUiLanguageOwnership.test.ts",
+      "tests/configStoreAuditBoundaries.test.ts",
+      "tests/documentBinaryLifecycle.test.ts",
+      "tests/documentAppLifecycle.test.ts",
+      "tests/sharedUiComponentsLifecycle.test.ts",
+      "tests/documentUserActions.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

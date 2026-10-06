@@ -8,6 +8,7 @@ import {sha256Hex} from '@/src/shared/function/sha256';
 import {getServiceApiKeys, getServiceApiKeyRows, type ApiKeyConfigSource} from '@/src/core/config/apiKeys';
 import {createApiKeyRotation, classifyApiKeyFailure} from '@/src/core/translation/apiKeyPool';
 import {normalizeApiKeyRecoveryMs} from '@/src/core/config/scheduling';
+import {getApiKeyRequestProxy, getApiKeySigningCredentials} from '@/src/core/config/apiKeyCheckIdentity';
 import {serializeTranslationError, TranslationRequestError} from './errors';
 
 type KeyConfig = ApiKeyConfigSource & {
@@ -53,9 +54,11 @@ export function withServiceApiKey<T extends KeyConfig>(source: T, service: strin
 function scopeFor(source: KeyConfig, service: string, model?: string): string {
     const fields = source as Record<string, unknown>;
     const selected: Record<string, unknown> = {service, requestedModel: model};
-    for (const name of ['proxy', 'customBody', 'customHeaders', 'model', 'customModel', 'serviceRegion']) {
+    for (const name of ['customBody', 'customHeaders', 'model', 'customModel', 'serviceRegion']) {
         selected[name] = (fields[name] as Record<string, unknown> | undefined)?.[service];
     }
+    selected.proxy = getApiKeyRequestProxy(service, (fields.proxy as Record<string, unknown> | undefined)?.[service]);
+    selected.signingCredentials = getApiKeySigningCredentials(source, service);
     selected.apiKeyRotationEnabled = (fields.apiKeyRotationEnabled as Record<string, unknown> | undefined)?.[service] === true;
     const routeFields: Record<string, readonly string[]> = {
         custom: ['custom'], deeplx: ['deeplx'], deepL: ['deeplApiPlan'], newapi: ['newApiUrl'],

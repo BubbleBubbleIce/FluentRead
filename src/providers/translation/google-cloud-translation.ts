@@ -53,10 +53,10 @@ async function googleCloudTranslation(message: TranslationProviderRequest<string
     }
 
     const result = await readJsonResponse<GoogleCloudResponse>(response, '谷歌云翻译返回的不是有效 JSON');
-    if (result.error) {
+    if (result?.error) {
         throw createProviderCodeError('谷歌云翻译错误', result.error.code);
     }
-    const translated = result.data?.translations?.[0]?.translatedText;
+    const translated = result?.data?.translations?.[0]?.translatedText;
     if (typeof translated === 'string') return translated;
     throw new Error('谷歌云翻译返回格式异常');
 }

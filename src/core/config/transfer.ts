@@ -2,7 +2,7 @@
  * @file src/core/config/transfer.ts
  *
  * 文件职责：负责配置导入与导出的纯数据转换，生成用户主动复制的完整可迁移配置，并兼容导入不含凭据的旧公开配置文件。
- * 主要内容：验证导入对象所需字段，使用 prepareConfigForExport 保留完整用户设置与专用凭据，并通过 prepareConfigForImport 将合法值合并到当前 Config、按目标地址解绑未显式导入的凭据。 可核对的公开符号包括 isConfigImportValid、prepareConfigForExport、prepareConfigForImport。
+ * 主要内容：验证导入对象的自有基础字段，生成完整迁移配置，按目标地址分别解绑未显式导入的凭据，并以对象身份临时记录原始 JSON 的重绑项，供实际保存消费；意图不进入序列化数据。公开转换为 isConfigImportValid、prepareConfigForExport、prepareConfigForImport。
  * 模块边界：本文件属于 core 领域层，只定义规则、类型与纯转换；不直接读写浏览器存储、不发起网络请求、不挂载 Vue/WXT 入口，持久化、协议调用和界面编排分别由 services、providers 与 features 承担。
  */
 
@@ -32,6 +32,19 @@ export interface ConfigImportOptions {
   credentialMode?: ConfigImportCredentialMode
 }
 
+/** 原始导入 JSON 的显式项，只伴随本次返回对象，不进入配置或存储协议。 */
+export interface ConfigImportCredentialBindings {
+  readonly tokenServices: readonly string[]
+  readonly apiKeyServices: readonly string[]
+  readonly secretServices: readonly string[]
+  readonly fields: readonly ConfigCredentialField[]
+}
+const importedCredentialBindings = new WeakMap<object, ConfigImportCredentialBindings>()
+
+export function getConfigImportCredentialBindings(value: unknown): ConfigImportCredentialBindings | undefined {
+  return isRecord(value) ? importedCredentialBindings.get(value) : undefined
+}
+
 const requiredConfigFields = ['on', 'service', 'display', 'from', 'to'] as const
 
 function isRecord(value: unknown): value is ConfigRecord {
@@ -40,20 +53,21 @@ function isRecord(value: unknown): value is ConfigRecord {
 
 export function isConfigImportValid(value: unknown): value is ConfigRecord {
   if (!isRecord(value)) return false
-  if (!requiredConfigFields.every((field) => field in value)) return false
+  if (!requiredConfigFields.every((field) => Object.hasOwn(value, field))) return false
   if (typeof value.on !== 'boolean') return false
   if (value.display !== 0 && value.display !== 1) return false
   if (typeof value.from !== 'string' || !value.from.trim()) return false
   if (typeof value.to !== 'string' || !value.to.trim()) return false
   if (typeof value.service !== 'string') return false
   if (isCustomOpenAIProviderId(value.service)) {
-    const providers = normalizeCustomOpenAIProviders(value.customOpenAIProviders)
+    const rawProviders = Object.hasOwn(value, 'customOpenAIProviders') ? value.customOpenAIProviders : undefined
+    const providers = normalizeCustomOpenAIProviders(rawProviders)
     const isLegacyImport = value.service === LEGACY_CUSTOM_OPENAI_PROVIDER_ID
-      && !Array.isArray(value.customOpenAIProviders)
+      && !Array.isArray(rawProviders)
     if (!isLegacyImport && !isConfiguredCustomOpenAIProvider(providers, value.service)) return false
   } else if (!servicesType.machine.has(value.service) && !servicesType.AI.has(value.service)) return false
-  return (!('customBody' in value) || isCustomBodyMapping(value.customBody))
-    && (!('customHeaders' in value) || isCustomBodyMapping(value.customHeaders))
+  return (!Object.hasOwn(value, 'customBody') || isCustomBodyMapping(value.customBody))
+    && (!Object.hasOwn(value, 'customHeaders') || isCustomBodyMapping(value.customHeaders))
 }
 
 const scalarCredentialFields = [
@@ -68,23 +82,42 @@ function clearCredentialsForChangedDestinations(
   credentials: ConfigCredentials,
   explicitlyBoundCredentialFields: ReadonlySet<ConfigCredentialField>,
 ): ConfigCredentials {
-  const explicitTokens = isRecord(value.token) ? value.token : {}
+  const explicitTokens = (Object.hasOwn(value, 'token') && isRecord(value.token)) ? value.token : {}
   const explicitlyBoundTokens = new Set(Object.entries(explicitTokens)
     .filter(([, token]) => typeof token === 'string')
     .map(([service]) => service))
-  const explicitlyBoundApiKeys = new Set(Object.entries(isRecord(value.apiKeys) ? value.apiKeys : {})
+  const explicitlyBoundApiKeys = new Set(Object.entries((Object.hasOwn(value, 'apiKeys') && isRecord(value.apiKeys)) ? value.apiKeys : {})
     .filter(([, keys]) => Array.isArray(keys))
     .map(([service]) => service))
-  return dropCredentialsForChangedDestinations(
+  let bound = dropCredentialsForChangedDestinations(
     credentials,
     current,
     imported,
     explicitlyBoundTokens,
     explicitlyBoundCredentialFields,
-    new Set(Object.entries(isRecord(value.customHeaders) ? value.customHeaders : {})
+    new Set(Object.entries((Object.hasOwn(value, 'customHeaders') && isRecord(value.customHeaders)) ? value.customHeaders : {})
       .filter(([, headers]) => typeof headers === 'string').map(([service]) => service)),
     explicitlyBoundApiKeys,
   )
+  // apiKeys 是实际有序密钥源，token 是其首项镜像。显式列表被保留时必须
+  // 同步镜像，否则旧 token 被解绑后的空映射会在归一化时清空新列表。
+  for (const service of explicitlyBoundApiKeys) {
+    const first = bound.apiKeys[service]?.[0]
+    if (first !== undefined) bound = {...bound, token: {...bound.token, [service]: first}}
+  }
+  // token 与 secret 各自只由导入文件的自有项表达重绑意图；显式 ID
+  // 不能替未提供的旧 Secret 授权，显式 Secret 也不能被遗漏的 ID 连带丢弃。
+  const explicitSecrets = Object.hasOwn(value, 'secret') && isRecord(value.secret) ? value.secret : {}
+  const explicitlyBoundSecrets = new Set(Object.entries(explicitSecrets)
+    .filter(([, secret]) => typeof secret === 'string').map(([service]) => service))
+  if (Object.keys(credentials.secret).length === 0) return bound
+  const secretBinding = dropCredentialsForChangedDestinations(
+    {...extractConfigCredentials({}), secret: credentials.secret},
+    current,
+    imported,
+    explicitlyBoundSecrets,
+  )
+  return {...bound, secret: secretBinding.secret}
 }
 
 /**
@@ -105,32 +138,32 @@ function prepareImportedCredentials(
   const explicitlyBoundCredentialFields = new Set<ConfigCredentialField>()
   if (hasCredentialFields(value)) {
     const importedCredentials = extractConfigCredentials(value)
-    const importedApiKeys = isRecord(value.apiKeys)
+    const importedApiKeys = (Object.hasOwn(value, 'apiKeys') && isRecord(value.apiKeys))
       ? {...currentCredentials.apiKeys, ...importedCredentials.apiKeys}
       : {...currentCredentials.apiKeys};
-    if (!isRecord(value.apiKeys) && isRecord(value.token)) {
+    if (!(Object.hasOwn(value, 'apiKeys') && isRecord(value.apiKeys)) && (Object.hasOwn(value, 'token') && isRecord(value.token))) {
       for (const [service, token] of Object.entries(importedCredentials.token)) {
         importedApiKeys[service] = token ? [token] : [];
       }
     }
     merged = {
       ...currentCredentials,
-      customHeaders: isRecord(value.customHeaders)
+      customHeaders: (Object.hasOwn(value, 'customHeaders') && isRecord(value.customHeaders))
         ? {...currentCredentials.customHeaders, ...importedCredentials.customHeaders}
         : currentCredentials.customHeaders,
-      token: isRecord(value.token)
+      token: (Object.hasOwn(value, 'token') && isRecord(value.token))
         ? {...currentCredentials.token, ...importedCredentials.token}
         : currentCredentials.token,
       apiKeys: importedApiKeys,
-      secret: isRecord(value.secret)
+      secret: (Object.hasOwn(value, 'secret') && isRecord(value.secret))
         ? {...currentCredentials.secret, ...importedCredentials.secret}
         : currentCredentials.secret,
-      extra: isRecord(value.extra)
+      extra: (Object.hasOwn(value, 'extra') && isRecord(value.extra))
         ? {...currentCredentials.extra, ...importedCredentials.extra}
         : currentCredentials.extra,
     }
     for (const field of scalarCredentialFields) {
-      if (typeof value[field] !== 'string') continue
+      if (!Object.hasOwn(value, field) || typeof value[field] !== 'string') continue
       // v1 完整备份可能在设置页凭据尚未水合时，把 Config 默认的空标量
       // 当成真实快照导出。该格式无法区分“尚未读取”与“用户主动清空”，
       // 因此兼容恢复时只接受非空标量，避免覆盖目标端仍安全保存的密钥。
@@ -186,9 +219,27 @@ export function prepareConfigForImport(
     options.credentialMode ?? 'merge',
   )
 
-  return normalizeConfig(mergeConfigCredentials({
+  const result = normalizeConfig(mergeConfigCredentials({
     ...sanitizeConfigCredentials(importedConfig),
     count: currentConfig.count,
     videoServiceDefaultMigrated: currentConfig.videoServiceDefaultMigrated,
   }, credentials))
+  const ownServices = (field: 'token' | 'apiKeys' | 'secret') => {
+    if (!Object.hasOwn(value, field) || !isRecord(value[field])) return []
+    return Object.entries(value[field]).filter(([, item]) => field === 'apiKeys'
+      ? Array.isArray(item) && item.every(key => typeof key === 'string')
+      : typeof item === 'string').map(([service]) => service)
+  }
+  const tokenServices = ownServices('token')
+  importedCredentialBindings.set(result, {
+    tokenServices,
+    apiKeyServices: [...new Set([...tokenServices, ...ownServices('apiKeys')])],
+    secretServices: ownServices('secret'),
+    fields: [
+      ...scalarCredentialFields.filter(field => Object.hasOwn(value, field) && typeof value[field] === 'string'
+        && (options.credentialMode !== 'merge-hydration-safe' || Boolean(value[field].trim()))),
+      ...(['customHeaders', 'extra'] as const).filter(field => Object.hasOwn(value, field) && isRecord(value[field])),
+    ],
+  })
+  return result
 }

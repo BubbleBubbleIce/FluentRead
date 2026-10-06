@@ -1,7 +1,7 @@
 <!--
 @file src/features/settings/ui/components/SegmentedControl.vue
 文件职责：为少量互斥设置提供紧凑且可访问的分段选择控件，替代难以快速比较的普通下拉框。
-主要内容：以 radiogroup 语义渲染选项，支持完整多语言标签自然换行、禁用状态、双向绑定以及方向键、Home、End 的循环键盘导航和焦点同步；compact 模式把整体高度收到与输入框一致，供表单行内使用。
+主要内容：以 radiogroup 语义渲染选项，支持完整多语言标签自然换行、禁用状态、双向绑定以及方向键、Home、End 的循环键盘导航和焦点同步；compact 模式把整体高度收到与输入框一致，供表单行内使用；合并键盘焦点帧，仅为仍有效的选值和原焦点归属同步焦点，并在停用、卸载或缓存去激活时清理。
 模块边界：本组件只接收通用标签和值并发出选择事件，不包含任何 FluentRead 配置字段含义，也不负责保存配置或展示页面说明。
 -->
 <template>
@@ -16,7 +16,7 @@
       :tabindex="modelValue === option.value && !disabled && !option.disabled ? 0 : -1"
       :class="{ active: modelValue === option.value }"
       :disabled="disabled || option.disabled"
-      @click="$emit('update:modelValue', option.value)"
+      @click="cancelPendingFocus(); $emit('update:modelValue', option.value)"
       @keydown="handleKeydown($event, index)"
     >
       {{ option.label }}
@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from 'vue'
+import {onBeforeUnmount, onDeactivated, ref, watch} from 'vue'
 
 export type SegmentedOption = {
   label: string
@@ -49,9 +49,23 @@ const emit = defineEmits<{
 }>()
 
 const groupElement = ref<HTMLElement | null>(null)
+let pendingFocus: number | null = null
+
+function cancelPendingFocus() {
+  if (pendingFocus === null) return
+  cancelAnimationFrame(pendingFocus)
+  pendingFocus = null
+}
+
+watch(() => props.disabled, (disabled) => {
+  if (disabled) cancelPendingFocus()
+}, {flush: 'sync'})
+onBeforeUnmount(cancelPendingFocus)
+onDeactivated(cancelPendingFocus)
 
 function handleKeydown(event: KeyboardEvent, currentIndex: number) {
   if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
+  cancelPendingFocus()
   const enabledIndexes = props.options
     .map((option, index) => (!props.disabled && !option.disabled ? index : -1))
     .filter(index => index >= 0)
@@ -66,10 +80,20 @@ function handleKeydown(event: KeyboardEvent, currentIndex: number) {
     const offset = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1
     nextIndex = enabledIndexes[(position + offset + enabledIndexes.length) % enabledIndexes.length]
   }
-  emit('update:modelValue', props.options[nextIndex].value)
-  requestAnimationFrame(() => {
-    groupElement.value?.querySelector<HTMLButtonElement>(`button[data-option-index="${nextIndex}"]`)?.focus()
+  const value = props.options[nextIndex].value
+  const group = groupElement.value!
+  const focusRoot = group.getRootNode() as Document | ShadowRoot
+  const origin = event.currentTarget
+  // 原生键盘监听已挂在固定 group 的按钮上；按值重查，避免父级重排后复用旧 index。
+  pendingFocus = requestAnimationFrame(() => {
+    pendingFocus = null
+    if (!group.isConnected || focusRoot.activeElement !== origin || props.modelValue !== value) return
+    const liveIndex = props.options.findIndex(option => option.value === value && !option.disabled)
+    if (liveIndex < 0) return
+    group.querySelector<HTMLButtonElement>(`button[data-option-index="${liveIndex}"]`)?.focus()
   })
+  // 先登记待清理帧，再发出选择，使同步父级卸载也能取消它。
+  emit('update:modelValue', value)
 }
 </script>
 

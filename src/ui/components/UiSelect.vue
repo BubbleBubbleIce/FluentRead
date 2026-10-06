@@ -1,7 +1,7 @@
 <!--
  * @file src/ui/components/UiSelect.vue
  * 文件职责：提供扩展界面统一的下拉选择外观，避免浏览器原生菜单破坏品牌风格。
- * 主要内容：复用 Element Plus 的选择、筛选、多选、键盘与弹层定位，支持按调用方需要独立关闭搜索装饰，单选长标签在关闭时自然换行，透传属性、事件和插槽并统一菜单主题及窄屏边界。
+ * 主要内容：复用 Element Plus 的选择、筛选、多选、键盘与弹层定位，支持按调用方需要独立关闭搜索装饰，单选长标签在关闭时自然换行，透传属性、事件和插槽；仅为 Shadow Root 菜单监听窄屏变化，缓存停用时关闭菜单并清理监听。
  * 模块边界：不解释选项、不读写配置；选项内容和挂载容器由调用方提供，不用于宿主网页原生控件。
  -->
 <template>
@@ -35,7 +35,7 @@
   </ElSelect>
 </template>
 <script setup lang="ts">
-import {computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, useSlots, type Slots} from 'vue';
+import {computed, getCurrentInstance, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, useSlots, type Slots} from 'vue';
 import {ElSelect} from 'element-plus';
 import {useUiI18n} from '@/src/ui/i18n';
 import 'element-plus/es/components/select/style/css';
@@ -60,18 +60,34 @@ const placement = computed(() => insideShadowRoot.value && narrowViewport.value 
 const updateViewportPlacement = () => {
   narrowViewport.value = typeof window !== 'undefined' && window.innerWidth <= 700;
 };
+let listeningToViewport = false;
+function startViewportListener() {
+  // 只有 Shadow Root 内的小屏菜单需要随窗口变化调整方向。
+  if (!insideShadowRoot.value || listeningToViewport) return;
+  updateViewportPlacement();
+  window.addEventListener('resize', updateViewportPlacement);
+  listeningToViewport = true;
+}
+function stopViewportListener() {
+  if (!listeningToViewport) return;
+  window.removeEventListener('resize', updateViewportPlacement);
+  listeningToViewport = false;
+}
 onMounted(() => {
   const element = componentInstance?.vnode.el;
   if (element instanceof HTMLElement && element.getRootNode() instanceof ShadowRoot) {
     insideShadowRoot.value = true;
     teleported.value = false;
   }
+  startViewportListener();
 });
-onMounted(() => {
-  updateViewportPlacement();
-  window.addEventListener('resize', updateViewportPlacement);
+onActivated(startViewportListener);
+onDeactivated(() => {
+  select.value?.blur();
+  menuOpen.value = false;
+  stopViewportListener();
 });
-onBeforeUnmount(() => window.removeEventListener('resize', updateViewportPlacement));
+onBeforeUnmount(stopViewportListener);
 defineExpose({
   focus: () => select.value?.focus(),
   blur: () => select.value?.blur(),

@@ -12,7 +12,7 @@
 
     <p class="preview-scenario">{{ scenario }}</p>
 
-    <TransitionGroup tag="div" class="preview-body" :name="animated ? 'preview' : ''" data-i18n-ignore>
+    <TransitionGroup tag="div" class="preview-body" :css="animated" :name="animated ? 'preview' : ''" data-i18n-ignore>
       <p v-for="paragraph in paragraphs" :key="paragraph.text">{{ paragraph.text }}</p>
     </TransitionGroup>
 

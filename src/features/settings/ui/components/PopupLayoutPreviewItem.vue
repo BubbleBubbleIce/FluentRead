@@ -81,7 +81,9 @@ function finish(event: DragEvent) {
 }
 
 function clearTarget() {
-  if (props.editable && props.controller) props.controller.dropTarget.value = null
+  const controller = props.controller
+  // 从旧项离开的事件可能晚于新项的 dragover，不清除另一个项的插入提示。
+  if (props.editable && controller && controller.dropTarget.value === props.item.id) controller.dropTarget.value = null
 }
 
 function cancel(event: KeyboardEvent) {

@@ -1,7 +1,7 @@
 /**
  * @file src/core/config/diff.ts
  * 文件职责：把两份配置转换为可供预览的结构化差异，同时确保凭据和嵌套敏感内容只显示脱敏摘要。
- * 主要内容：维护设置字段到页面分组及中文标签的映射，格式化枚举、映射和长文本，递归检查未知对象并生成稳定的分组差异结果。
+ * 主要内容：维护设置字段到页面分组及中文标签的映射，格式化枚举、映射和长文本，用迭代比较检查深层对象并对预览深度作安全摘要，生成稳定的分组差异结果。
  * 模块边界：本文件是无浏览器副作用的纯配置算法，不读取存储、不打开确认框也不执行恢复；设置页面只消费其脱敏后的 ConfigDiffResult。
  */
 import {CONFIG_CREDENTIAL_FIELDS, isSensitiveConfigKey} from './credentials';
@@ -84,6 +84,7 @@ const CREDENTIAL_FIELDS = new Set<string>(CONFIG_CREDENTIAL_FIELDS);
 const SENSITIVE_SUMMARY_PREFIX = '敏感内容已隐藏';
 const MAX_INLINE_ITEMS = 4;
 const MAX_INLINE_TEXT_LENGTH = 120;
+const MAX_PREVIEW_DEPTH = 32;
 
 function isRecord(value: unknown): value is ConfigRecord {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -106,14 +107,15 @@ function sensitiveSummary(value: string): string {
     return `${SENSITIVE_SUMMARY_PREFIX}（${value.length} 字符）`;
 }
 
-function sanitizeSensitiveValue(value: unknown, seen = new WeakSet<object>()): unknown {
+function sanitizeSensitiveValue(value: unknown, seen = new WeakSet<object>(), depth = 0): unknown {
+    if (depth >= MAX_PREVIEW_DEPTH) return '[深层内容已摘要]';
     if (typeof value === 'string') {
         const trimmed = value.trim();
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
             try {
                 const parsed = JSON.parse(trimmed) as unknown;
                 if (isRecord(parsed) || Array.isArray(parsed)) {
-                    return sanitizeSensitiveValue(parsed, seen);
+                    return sanitizeSensitiveValue(parsed, seen, depth + 1);
                 }
             } catch {
                 // 非 JSON 的 prompt 或模板会在下方按普通文本处理。
@@ -124,7 +126,9 @@ function sanitizeSensitiveValue(value: unknown, seen = new WeakSet<object>()): u
     if (Array.isArray(value)) {
         if (seen.has(value)) return '[循环引用]';
         seen.add(value);
-        return value.map((item) => sanitizeSensitiveValue(item, seen));
+        const result = value.map((item) => sanitizeSensitiveValue(item, seen, depth + 1));
+        seen.delete(value);
+        return result;
     }
     if (!isRecord(value)) return value;
     if (seen.has(value)) return '[循环引用]';
@@ -133,29 +137,49 @@ function sanitizeSensitiveValue(value: unknown, seen = new WeakSet<object>()): u
     const result: ConfigRecord = {};
     for (const [key, item] of Object.entries(value)) {
         if (isSensitiveConfigKey(key)) continue;
-        result[key] = sanitizeSensitiveValue(item, seen);
+        Object.defineProperty(result, key, {
+            value: sanitizeSensitiveValue(item, seen, depth + 1),
+            enumerable: true, configurable: true, writable: true,
+        });
     }
-    return result;
-}
-
-function canonicalize(value: unknown, seen = new WeakSet<object>()): unknown {
-    if (!Array.isArray(value) && !isRecord(value)) return value;
-    if (seen.has(value)) return '[循环引用]';
-    seen.add(value);
-    const result = Array.isArray(value)
-        ? value.map((item) => canonicalize(item, seen))
-        : Object.fromEntries(
-        Object.keys(value)
-            .sort((left, right) => left.localeCompare(right))
-            .map((key) => [key, canonicalize(value[key], seen)]),
-        );
     seen.delete(value);
     return result;
 }
 
+function jsonComparableValue(value: unknown): unknown {
+    if (typeof value === 'number' && !Number.isFinite(value)) return null;
+    if (typeof value === 'function' || typeof value === 'symbol') return undefined;
+    return value;
+}
+
 function valuesEqual(left: unknown, right: unknown): boolean {
-    if (Object.is(left, right)) return true;
-    return JSON.stringify(canonicalize(left)) === JSON.stringify(canonicalize(right));
+    const pending: Array<[unknown, unknown]> = [[left, right]];
+    const compared = new WeakMap<object, WeakSet<object>>();
+    while (pending.length > 0) {
+        const [rawA, rawB] = pending.pop()!;
+        const a = jsonComparableValue(rawA), b = jsonComparableValue(rawB);
+        if (a === b) continue;
+        if ((!isRecord(a) && !Array.isArray(a)) || (!isRecord(b) && !Array.isArray(b))) return false;
+        if (Array.isArray(a) !== Array.isArray(b)) return false;
+        let pairs = compared.get(a);
+        if (pairs?.has(b)) continue;
+        if (!pairs) {pairs = new WeakSet(); compared.set(a, pairs);}
+        pairs.add(b);
+        if (Array.isArray(a)) {
+            if (a.length !== (b as unknown[]).length) return false;
+            for (let index = 0; index < a.length; index += 1) {
+                pending.push([jsonComparableValue(a[index]) ?? null, jsonComparableValue((b as unknown[])[index]) ?? null]);
+            }
+        } else {
+            const keys = Object.keys(a).filter(key => jsonComparableValue(a[key]) !== undefined);
+            if (keys.length !== Object.keys(b).filter(key => jsonComparableValue((b as ConfigRecord)[key]) !== undefined).length) return false;
+            for (const key of keys) {
+                if (!Object.hasOwn(b, key)) return false;
+                pending.push([a[key], (b as ConfigRecord)[key]]);
+            }
+        }
+    }
+    return true;
 }
 
 function labelsFor(...optionLists: ReadonlyArray<ReadonlyArray<Option>>): Map<unknown, string> {
@@ -304,10 +328,9 @@ function formatString(value: string): string {
 
 function formatArray(value: unknown[], itemFormatter: ValueFormatter = formatValue): string {
     if (value.length === 0) return '无';
-    const formatted = value.map(itemFormatter);
-    const visible = formatted.slice(0, MAX_INLINE_ITEMS).join('、');
-    return formatted.length > MAX_INLINE_ITEMS
-        ? `${formatted.length} 项：${visible} 等`
+    const visible = value.slice(0, MAX_INLINE_ITEMS).map(itemFormatter).join('、');
+    return value.length > MAX_INLINE_ITEMS
+        ? `${value.length} 项：${visible} 等`
         : visible;
 }
 
@@ -688,9 +711,11 @@ function diffMapping(
     const format = (value: unknown, key: string) => mapping.formatItem ? mapping.formatItem(value, key) : mapping.format(value);
 
     return keys.flatMap((key) => {
-        if (valuesEqual(beforeRecord[key], afterRecord[key])) return [];
-        const safeBefore = sanitizeSensitiveValue(beforeRecord[key]);
-        const safeAfter = sanitizeSensitiveValue(afterRecord[key]);
+        const beforeValue = Object.hasOwn(beforeRecord, key) ? beforeRecord[key] : undefined;
+        const afterValue = Object.hasOwn(afterRecord, key) ? afterRecord[key] : undefined;
+        if (valuesEqual(beforeValue, afterValue)) return [];
+        const safeBefore = sanitizeSensitiveValue(beforeValue);
+        const safeAfter = sanitizeSensitiveValue(afterValue);
         return [{
             key: `${field}.${key}`,
             label: definition.mapping!.itemLabel(key),
@@ -702,7 +727,7 @@ function diffMapping(
 
 function diffField(field: string, before: unknown, after: unknown): {group: ConfigDiffGroupId; changes: ConfigDiffItem[]} | null {
     if (EXCLUDED_FIELDS.has(field) || CREDENTIAL_FIELDS.has(field)) return null;
-    const definition = FIELD_DEFINITIONS[field];
+    const definition = Object.hasOwn(FIELD_DEFINITIONS, field) ? FIELD_DEFINITIONS[field] : undefined;
     if (!definition && isSensitiveConfigKey(field)) return null;
     if (valuesEqual(before, after)) return null;
 
@@ -746,7 +771,10 @@ export function buildConfigDiff(current: unknown, target: unknown): ConfigDiffRe
     });
 
     for (const field of fields) {
-        const result = diffField(field, currentConfig[field], targetConfig[field]);
+        const result = diffField(field,
+            Object.hasOwn(currentConfig, field) ? currentConfig[field] : undefined,
+            Object.hasOwn(targetConfig, field) ? targetConfig[field] : undefined,
+        );
         if (!result) continue;
         changesByGroup.get(result.group)!.push(...result.changes);
     }

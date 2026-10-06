@@ -117,11 +117,11 @@ async function volcTranslation(message: TranslationProviderRequest<string>) {
     }
 
     const result = await readJsonResponse<VolcResponse>(response, '火山引擎翻译返回的不是有效 JSON');
-    const error = result.ResponseMetadata?.Error;
+    const error = result?.ResponseMetadata?.Error;
     if (error) {
         throw createProviderCodeError('火山引擎翻译错误', error.CodeN);
     }
-    const translated = result.TranslationList?.[0]?.Translation;
+    const translated = result?.TranslationList?.[0]?.Translation;
     if (typeof translated === 'string') return translated;
     throw new Error('火山引擎翻译返回格式异常');
 }

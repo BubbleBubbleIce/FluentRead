@@ -2,7 +2,7 @@
  * @file src/core/config/model.ts
  *
  * 文件职责：定义 FluentRead 完整配置模型、默认值及各项设置的合法范围，是配置读取、保存、迁移和 UI 绑定共同依赖的领域契约。
- * 主要内容：支持单图选择本地识别引擎，包含正文/全部节点识别范围，保留各功能独立服务，并将所有功能服务的空值解释为继承网页默认；统一中文简繁标识及历史配置别名，并保存常用服务顺序，保存默认空的 Origin/Referer 域名移除名单，包含 Config 接口、defaultConfig、字幕和翻译模式类型、延迟与字号范围、默认 API 地址及多项功能开关，使新增配置项在一个位置获得类型和初始语义；归一化时把仍停留在历史默认值的翻译提示词升级为当前默认提示词。 可核对的公开符号包括 DeepSeekApiType、DeepSeekThinkingMode、VideoSubtitleDisplayMode、FullPageTranslationMode、DEFAULT_VIDEO_SUBTITLE_FONT_SIZE、DEFAULT_NEW_API_URL、DEFAULT_MOUSE_HOVER_TRANSLATION_DELAY。
+ * 主要内容：支持单图选择本地识别引擎，包含正文/全部节点识别范围，保留各功能独立服务，并将所有功能服务的空值解释为继承网页默认；统一中文简繁标识及历史配置别名，并保存常用服务顺序，保存默认空的 Origin/Referer 域名移除名单，包含 Config 接口、字幕和翻译模式类型、延迟与字号范围、默认 API 地址及多项功能开关，使新增配置项在一个位置获得类型和初始语义；归一化时以迭代克隆保留深层数据和共享引用，安全迁移任意自有凭据键，升级历史默认提示词，只迁移已登记模型编号，并在线性目录遍历中保护自定义服务的当前模型和 Thinking 偏好。 可核对的公开符号包括 DeepSeekApiType、DeepSeekThinkingMode、VideoSubtitleDisplayMode、FullPageTranslationMode、DEFAULT_VIDEO_SUBTITLE_FONT_SIZE、DEFAULT_NEW_API_URL、DEFAULT_MOUSE_HOVER_TRANSLATION_DELAY。
  * 模块边界：本文件属于 core 领域层，只定义规则、类型与纯转换；不直接读写浏览器存储、不发起网络请求、不挂载 Vue/WXT 入口，持久化、协议调用和界面编排分别由 services、providers 与 features 承担。
  */
 
@@ -889,29 +889,26 @@ function getConfiguredApiKey(mapping: unknown, service: string): string {
 }
 
 function protectProviderModels(
-    providers: CustomOpenAIProvider[],
-    serviceId: string,
+    provider: CustomOpenAIProvider,
     modelsToProtect: readonly string[],
-): CustomOpenAIProvider[] {
+): CustomOpenAIProvider {
     const protectedModels = Array.from(new Set(modelsToProtect.map(model => model.trim()).filter(Boolean)));
-    if (protectedModels.length === 0) return providers;
+    if (protectedModels.length === 0) return provider;
     const protectedSet = new Set(protectedModels);
-    return providers.map((provider) => {
-        if (provider.id !== serviceId) return provider;
-        const missingModels = protectedModels.filter(model => !provider.models.includes(model));
-        if (missingModels.length === 0) return provider;
+    const existingModels = new Set(provider.models);
+    const missingModels = protectedModels.filter(model => !existingModels.has(model));
+    if (missingModels.length === 0) return provider;
 
-        const combined = [...provider.models, ...missingModels];
-        let removeCount = Math.max(0, combined.length - MAX_CUSTOM_OPENAI_MODELS_PER_PROVIDER);
-        const removedIndexes = new Set<number>();
-        for (let index = provider.models.length - 1; index >= 0 && removeCount > 0; index -= 1) {
-            if (protectedSet.has(provider.models[index])) continue;
-            removedIndexes.add(index);
-            removeCount -= 1;
-        }
-        const models = combined.filter((_, index) => !removedIndexes.has(index));
-        return {...provider, models};
-    });
+    const combined = [...provider.models, ...missingModels];
+    let removeCount = Math.max(0, combined.length - MAX_CUSTOM_OPENAI_MODELS_PER_PROVIDER);
+    const removedIndexes = new Set<number>();
+    for (let index = provider.models.length - 1; index >= 0 && removeCount > 0; index -= 1) {
+        if (protectedSet.has(provider.models[index])) continue;
+        removedIndexes.add(index);
+        removeCount -= 1;
+    }
+    const models = combined.filter((_, index) => !removedIndexes.has(index));
+    return {...provider, models};
 }
 
 function withoutOrphanCustomProviderEntries<T>(
@@ -964,7 +961,8 @@ function normalizeCustomOpenAIProviderState(normalized: Config, source: Partial<
     normalized.modelRequestLimits = Object.fromEntries(Object.entries(normalized.modelRequestLimits)
         .filter(([service]) => !isCustomOpenAIProviderId(service) || configuredIds.has(service)));
 
-    for (const provider of providers) {
+    // 每项直接保护自己的模型，避免为 P 个服务重复扫描完整目录（P²）。
+    providers = providers.map((provider) => {
         const service = provider.id;
         const savedPageCustomModel = configuredString(normalized.customModel, service);
         const savedDocumentCustomModel = configuredString(normalized.documentCustomModel, service);
@@ -986,13 +984,13 @@ function normalizeCustomOpenAIProviderState(normalized: Config, source: Partial<
         delete normalized.documentCustomModel[service];
         if (!normalized.system_role[service]) normalized.system_role[service] = defaultOption.system_role;
         if (!normalized.user_role[service]) normalized.user_role[service] = defaultOption.user_role;
-        providers = protectProviderModels(providers, service, [
+        return protectProviderModels(provider, [
             pageModel,
             documentModel,
             savedPageCustomModel,
             savedDocumentCustomModel,
         ]);
-    }
+    });
 
     const validRequirementKeys = new Set<string>();
     for (const provider of providers) {
@@ -1041,7 +1039,10 @@ export function normalizeConfig(value: unknown): Config {
     const source = value && typeof value === 'object'
         ? cloneConfigValue(value) as Partial<Config>
         : {};
-    Object.assign(normalized, source);
+    // 导入对象的所有键都是普通数据；避免 __proto__ setter 改写配置实例的原型。
+    for (const key of Object.keys(source)) {
+        Object.defineProperty(normalized, key, Object.getOwnPropertyDescriptor(source, key)!);
+    }
     // 短期版本曾暴露的策略开关在对应功能退役后必须主动丢弃，避免旧配置继续
     // 分叉存储语义，或让已经删除的 X 原生翻译设置进入历史和迁移导出。
     delete (normalized as unknown as Record<string, unknown>).persistCredentials;
@@ -1139,11 +1140,12 @@ export function normalizeConfig(value: unknown): Config {
 
     normalized.apiKeys = withoutRetiredServiceEntries(normalizeApiKeys(source.apiKeys));
     const legacyToken = withoutRetiredServiceEntries(normalizeStringMapping(source.token));
-    if (hasOwn(source as object, 'token') && isRecord(source.token)
-        && Object.keys(legacyToken).length === 0) normalized.apiKeys = {};
+    // apiKeys 是新字段的完整数据源；空的旧 token 镜像不能清空已保存的行。
     for (const [service, token] of Object.entries(legacyToken)) {
         if (!Object.prototype.hasOwnProperty.call(normalized.apiKeys, service)) {
-            normalized.apiKeys[service] = token ? [token] : [];
+            Object.defineProperty(normalized.apiKeys, service, {
+                value: token ? [token] : [], enumerable: true, writable: true, configurable: true,
+            });
         }
     }
     normalized.apiKeyRotationEnabled = isBooleanMapping(source.apiKeyRotationEnabled)
@@ -1153,7 +1155,9 @@ export function normalizeConfig(value: unknown): Config {
     for (const [service, keys] of Object.entries(normalized.apiKeys)) {
         if (keys.filter(Boolean).length > 1
             && !Object.prototype.hasOwnProperty.call(normalized.apiKeyRotationEnabled, service)) {
-            normalized.apiKeyRotationEnabled[service] = true;
+            Object.defineProperty(normalized.apiKeyRotationEnabled, service, {
+                value: true, enumerable: true, writable: true, configurable: true,
+            });
         }
     }
     normalized.token = apiKeysToToken(normalized.apiKeys);
@@ -1489,12 +1493,37 @@ export function normalizeConfig(value: unknown): Config {
 }
 
 function cloneConfigValue(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(cloneConfigValue);
-    if (!isRecord(value)) return value;
-
-    const cloned: Record<string, unknown> = {};
-    for (const key of Object.keys(value)) cloned[key] = cloneConfigValue(value[key]);
-    return cloned;
+    type Container = Record<string, unknown> | unknown[];
+    const clones = new WeakMap<object, Container>();
+    const pending: Array<{source: object; target: Container}> = [];
+    const copy = (item: unknown): unknown => {
+        if (item === null || typeof item !== 'object') return item;
+        const existing = clones.get(item);
+        if (existing) return existing;
+        // 与原规则一致：对象落成普通数据对象，数组保留长度和稀疏位置。
+        const target: Container = Array.isArray(item) ? new Array(item.length) : {};
+        clones.set(item, target);
+        pending.push({source: item, target});
+        return target;
+    };
+    const result = copy(value);
+    // 每个对象只展开一次；深层 JSON 不消耗调用栈，循环和共享引用也能终止。
+    while (pending.length > 0) {
+        const {source, target} = pending.pop()!;
+        if (Array.isArray(source)) {
+            for (let index = 0; index < source.length; index++) {
+                // 保持 Array.map 的 HasProperty 语义，包括非枚举或继承的数组项。
+                if (index in source) Object.defineProperty(target, index, {
+                    value: copy(source[index]), enumerable: true, writable: true, configurable: true,
+                });
+            }
+        } else {
+            for (const key of Object.keys(source)) Object.defineProperty(target, key, {
+                value: copy((source as Record<string, unknown>)[key]), enumerable: true, writable: true, configurable: true,
+            });
+        }
+    }
+    return result;
 }
 
 function migrateModelIdentifiers(configuredModels: IMapping): void {
@@ -1506,9 +1535,9 @@ function migrateModelIdentifiers(configuredModels: IMapping): void {
 }
 
 function migrateModelThinkingIdentifiers(normalized: Config): ModelThinkingMapping {
-    const migrated: ModelThinkingMapping = {};
+    const migrated: Array<[string, Record<string, boolean>]> = [];
     for (const [service, modelStates] of Object.entries(normalized.modelThinking)) {
-        const customModels = new Set(normalized.customModels[service] || []);
+        const customModels = new Set(hasOwn(normalized.customModels, service) ? normalized.customModels[service] : []);
         const currentId = (model: string) => {
             if (customModels.has(model)) return model;
             if (service === services.deepseek
@@ -1521,13 +1550,14 @@ function migrateModelThinkingIdentifiers(normalized: Config): ModelThinkingMappi
             .filter(([model]) => currentId(model) === model);
         const legacyEntries = Object.entries(modelStates)
             .filter(([model]) => currentId(model) !== model);
+        const migratedModels = new Map<string, boolean>();
         for (const [model, enabled] of [...currentEntries, ...legacyEntries]) {
             const currentModel = currentId(model);
-            if (Object.prototype.hasOwnProperty.call(migrated[service] || {}, currentModel)) continue;
-            (migrated[service] ||= {})[currentModel] = enabled;
+            if (!migratedModels.has(currentModel)) migratedModels.set(currentModel, enabled);
         }
+        migrated.push([service, Object.fromEntries(migratedModels)]);
     }
-    return migrated;
+    return Object.fromEntries(migrated);
 }
 
 function resolvedConfiguredModels(normalized: Config, service: string): string[] {
@@ -1537,8 +1567,7 @@ function resolvedConfiguredModels(normalized: Config, service: string): string[]
     ].map((model) => model.trim()).filter(Boolean);
 }
 
-function validThinkingModels(normalized: Config, service: string): Set<string> {
-    const provider = getCustomOpenAIProvider(normalized.customOpenAIProviders, service);
+function validThinkingModels(normalized: Config, service: string, provider?: CustomOpenAIProvider): Set<string> {
     if (provider) return new Set([...provider.models, ...resolvedConfiguredModels(normalized, service)]);
     if (!isPersistableBuiltInModelService(service)) return new Set();
     return new Set([
@@ -1557,9 +1586,11 @@ function normalizeModelThinkingState(normalized: Config, hasSavedSchema: boolean
         }
     }
 
+    // 自定义服务数量不设上限；一次索引后按 ID 查找，避免逐服务 find 的 P² 成本。
+    const providersById = new Map(normalized.customOpenAIProviders.map(provider => [provider.id, provider]));
     const pruned: ModelThinkingMapping = {};
     for (const [service, modelStates] of Object.entries(mapping)) {
-        const validModels = validThinkingModels(normalized, service);
+        const validModels = validThinkingModels(normalized, service, providersById.get(service));
         const validEntries = Object.entries(modelStates).filter(([model]) => validModels.has(model));
         if (validEntries.length > 0) pruned[service] = Object.fromEntries(validEntries);
     }
@@ -1571,7 +1602,8 @@ function normalizeModelThinkingState(normalized: Config, hasSavedSchema: boolean
  * 自定义模型应由调用方跳过此函数，以免改写私有部署别名。
  */
 export function migrateModelIdentifier(service: string, selectedModel: string): string {
-    return modelMigrations[service]?.[selectedModel] || selectedModel;
+    const migrations = hasOwn(modelMigrations, service) ? modelMigrations[service] : undefined;
+    return migrations && hasOwn(migrations, selectedModel) ? migrations[selectedModel] : selectedModel;
 }
 
 function isRecord(value: unknown): value is Record<string, string> {

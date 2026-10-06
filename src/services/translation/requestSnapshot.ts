@@ -389,6 +389,7 @@ export function createTranslationProviderConfigSnapshot(
         user_role: frozenStringMap(source.user_role),
         token: frozenStringMap(source.token),
         apiKeys: frozenApiKeys(source.apiKeys),
+        apiKeyRotationEnabled: frozenBooleanMap(source.apiKeyRotationEnabled),
         secret: frozenStringMap(source.secret),
         serviceRegion: frozenStringMap(source.serviceRegion),
         requireApiKey: frozenBooleanMap(source.requireApiKey),

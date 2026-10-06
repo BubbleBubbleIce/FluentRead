@@ -1767,6 +1767,8 @@ describe('统一配置存储', () => {
         const contentSnapshot = normalizeConfig({
             ...current,
             to: 'ja',
+            // 完整规范化快照以 apiKeys 为凭据主数据，清空时同时清除旧 token 镜像。
+            apiKeys: {},
             token: {},
             extra: {},
             persistCredentials: false,

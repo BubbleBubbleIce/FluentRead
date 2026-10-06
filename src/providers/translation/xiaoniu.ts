@@ -24,7 +24,8 @@ async function xiaoniu(message: TranslationProviderRequest<string>) {
     const {sourceLanguage, targetLanguage} = getTranslationLanguages(message);
     const niutransLanguage = (code: string): string => {
         const normalized = normalizeChineseLanguageCode(code);
-        return ({'zh-Hans': 'zh', 'zh-Hant': 'cht', nb: 'no'} as Record<string, string>)[normalized] ?? normalized;
+        const codes: Record<string, string> = {'zh-Hans': 'zh', 'zh-Hant': 'cht', nb: 'no'};
+        return Object.hasOwn(codes, normalized) ? codes[normalized] : normalized;
     };
     const sourceLang = niutransLanguage(sourceLanguage);
     const targetLang = niutransLanguage(targetLanguage);

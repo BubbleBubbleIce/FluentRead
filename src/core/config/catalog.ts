@@ -3,7 +3,7 @@
  *
  * 文件职责：维护 FluentRead 翻译语言、服务与模型的领域目录，让设置、校验和运行时能够引用同一组稳定的服务标识与模型元数据。
  * 主要内容：明确区分简体中文和繁体中文，统一源语言、目标语言和输入框语言选项，并定义 services、servicesType、服务目录展示分类与排序（含“云服务厂商”分组）、模型候选、云厂商地域白名单、MiniMax 与 MiMo 的计费和地域选项，并提供 resolveConfiguredModel、resolveCloudRegion 等解析函数，把“自定义模型”选择归一为可请求的模型编号。 同时维护默认翻译提示词与历史默认提示词清单，供配置归一化升级未被用户改写的旧默认值。 可核对的公开符号包括 services、cloudVendorServices、referenceAiPlatformServices、servicesType、customModelString、cloudRegionOptions、getDefaultCloudRegion、resolveCloudRegion、minimaxBillingPlans、MiniMaxBillingPlan、minimaxRegions、MiniMaxRegion、mimoBillingPlans、defaultOption、LEGACY_DEFAULT_USER_ROLES。
- * 模块边界：本文件属于 core 领域层，只定义规则、类型与纯转换；不直接读写浏览器存储、不发起网络请求、不挂载 Vue/WXT 入口，持久化、协议调用和界面编排分别由 services、providers 与 features 承担。
+ * 模块边界：本文件属于 core 领域层，只定义规则、类型与纯转换；目录解析只接受表自身登记的键，未知服务、语言或界面语言按公开回退契约处理；不直接读写浏览器存储、不发起网络请求、不挂载 Vue/WXT 入口，持久化、协议调用和界面编排分别由 services、providers 与 features 承担。
  */
 
 import {translationLanguageOptions} from '@/src/core/language/catalog';
@@ -359,13 +359,13 @@ export const cloudRegionOptions: Record<string, ReadonlyArray<{value: string; la
 
 /** 未选择地域时使用的默认值，保证首次配置即可直接发起请求。 */
 export function getDefaultCloudRegion(service: string): string {
-    return cloudRegionOptions[service]?.[0]?.value || '';
+    return Object.hasOwn(cloudRegionOptions, service) ? cloudRegionOptions[service][0].value : '';
 }
 
 /** 只接受白名单内的地域；未知值回落到默认地域。 */
 export function resolveCloudRegion(service: string, region?: string): string {
     const candidate = region?.trim() || '';
-    const allowed = cloudRegionOptions[service];
+    const allowed = Object.hasOwn(cloudRegionOptions, service) ? cloudRegionOptions[service] : undefined;
     if (!allowed) return '';
     return allowed.some((option) => option.value === candidate) ? candidate : getDefaultCloudRegion(service);
 }
@@ -1087,8 +1087,10 @@ const targetLanguageLabelsByUiLanguage: Readonly<Record<string, Readonly<Record<
 };
 
 export function getMultilingualTargetLanguageLabel(value: string, fallback = value, uiLanguage = "zh-CN"): string {
-    const labels = targetLanguageLabelsByUiLanguage[uiLanguage] || multilingualTargetLanguageLabels;
-    return labels[normalizeChineseLanguageCode(value)] || fallback;
+    const labels = Object.hasOwn(targetLanguageLabelsByUiLanguage, uiLanguage)
+        ? targetLanguageLabelsByUiLanguage[uiLanguage] : multilingualTargetLanguageLabels;
+    const language = normalizeChineseLanguageCode(value);
+    return Object.hasOwn(labels, language) ? labels[language] : fallback;
 }
 
 /**

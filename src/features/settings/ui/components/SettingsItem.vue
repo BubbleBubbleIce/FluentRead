@@ -22,14 +22,15 @@
 import FieldHelp from './FieldHelp.vue'
 
 function toggleSimpleSwitch(event: MouseEvent): void {
-  const target = event.target as HTMLElement
+  if (props.disabled || !(event.target instanceof Element)) return
+  const target = event.target
   if (target.closest('button, a, input, select, textarea, .el-switch, [role="button"]') || window.getSelection()?.toString()) return
   const row = event.currentTarget as HTMLElement
   const control = row.querySelector<HTMLElement>(':scope > .settings-item-control > .el-switch:not(.is-disabled)')
   control?.click()
 }
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   label: string
   description?: string
   help?: string

@@ -1,7 +1,7 @@
 <!--
  @file src/app/document-translation/DocumentSegmentEditor.vue
  文件职责：提供覆盖整份文档的译文校订视图，使长文档、章节、字幕与结构化文件都可以查找和修改任意片段。
- 主要内容：相同译文默认折叠为校订入口，用户主动编辑后保留人工校订能力；按原文、译文和路径搜索，筛选未翻译片段，默认直接分页引用原始片段而不扫描译文，以每页 40 段限制 DOM 数量；页码与筛选联动，并通过事件向页面提交人工校订。
+ 主要内容：相同译文默认折叠为校订入口，用户主动编辑后保留人工校订能力；按原文、译文和路径搜索，筛选未翻译片段，默认直接分页引用原始片段而不扫描译文，以每页 40 段限制 DOM 数量；切换文档时清除旧校订焦点与展开状态，页码与筛选联动，通过事件向页面提交人工校订。
  模块边界：只消费文档模型与译文，不调用翻译服务、不保存配置、不直接修改父级数据；任务所有权和导出由 DocumentApp 管理。
 -->
 <template>
@@ -58,5 +58,6 @@ const filteredSegments = computed(() => {
 const pageCount = computed(() => Math.max(1, Math.ceil(filteredSegments.value.length / 40)));
 const visibleSegments = computed(() => filteredSegments.value.slice((page.value - 1) * 40, page.value * 40));
 watch([query, onlyPending, () => props.document], () => { page.value = 1; editingSameId.value = null; });
+watch(() => props.document, () => { editingId.value = null; });
 watch(pageCount, (count) => { page.value = Math.min(page.value, count); });
 </script>

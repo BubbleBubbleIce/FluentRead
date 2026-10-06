@@ -2,7 +2,7 @@
  * @file src/core/language/codes.ts
  *
  * 文件职责：统一解析与比较 FluentRead 使用的语言标签，让配置目标语言、排除语言、检测器结果和旧别名落到同一套规范代码上。
- * 主要内容：按 BCP 47 结构解析主语言、扩展语言、脚本、地区、变体与扩展段，兼容下划线、大小写和旧式 zh-CHS/zh-CHT；把 ISO 639-2/B、ISO 639-3 个体语言码、宏语言成员及已废弃代码映射为两字母或保留的三字母代码；中文按脚本或地区确定简繁，配置中的裸 zh 沿用简体默认值，检测器给出的裸 zh/cmn 保持书写体系未知；非默认脚本（如 sr-Latn）保留在规范代码中。可核对的公开符号包括 parseLanguageTag、normalizeLanguageCode、normalizeDetectedLanguageCode、isLanguageCodeMatch、resolveChineseScriptFromSubtags。
+ * 主要内容：按 BCP 47 结构解析主语言、扩展语言、脚本、地区、变体与扩展段，完整校验扩展/私有段和重复子标签，兼容下划线、大小写和旧式 zh-CHS/zh-CHT；把 ISO 639-2/B、ISO 639-3 个体语言码、宏语言成员及已废弃代码映射为两字母或保留的三字母代码；中文按脚本或地区确定简繁，配置中的裸 zh 沿用简体默认值，检测器给出的裸 zh/cmn 保持书写体系未知；非默认脚本（如 sr-Latn）保留在规范代码中。可核对的公开符号包括 parseLanguageTag、normalizeLanguageCode、normalizeDetectedLanguageCode、isLanguageCodeMatch、resolveChineseScriptFromSubtags。
  * 模块边界：本文件属于 core 纯算法，只处理语言标签字符串，不识别文本语言、不读取配置或浏览器语言，也不负责供应商专属语言码映射；非法、未知与 auto/und 类值一律返回空代码，由调用方按“无法确认”处理。
  */
 
@@ -93,17 +93,34 @@ export function parseLanguageTag(value: unknown): ParsedLanguageTag | undefined 
     const chinese = (LANGUAGE_ALIASES[tag.language] ?? tag.language) === 'zh';
 
     let variantsStarted = false;
+    const variants = new Set<string>();
+    const extensions = new Set<string>();
     for (; index < subtags.length; index += 1) {
         const subtag = subtags[index]!;
         const lower = subtag.toLowerCase();
         if (!subtag) return undefined;
-        // 扩展与私有段不影响阅读语言，直接结束解析。
-        if (/^[a-z\d]$/iu.test(subtag)) break;
+        // 扩展与私有段不影响阅读语言，但必须校验整段，不能把 en-u 或 en-x- 当成可信 en。
+        // RFC 5646 §2.1/§2.2.6：扩展至少一段 2–8 位；x 后至少一段 1–8 位且消费余下全部内容。
+        if (/^[a-z\d]$/iu.test(subtag)) {
+            if (extensions.has(lower)) return undefined;
+            extensions.add(lower);
+            const privateUse = lower === 'x';
+            const start = ++index;
+            while (index < subtags.length && (privateUse || !/^[a-z\d]$/iu.test(subtags[index]!))) {
+                if (!(privateUse ? /^[a-z\d]{1,8}$/iu : /^[a-z\d]{2,8}$/iu).test(subtags[index]!)) return undefined;
+                index += 1;
+            }
+            if (index === start) return undefined;
+            if (index === subtags.length) return tag;
+            index -= 1;
+            variantsStarted = true;
+            continue;
+        }
         if (chinese && (lower === 'chs' || lower === 'cht') && !tag.legacyChineseScript) {
             tag.legacyChineseScript = lower === 'chs' ? 'Hans' : 'Hant';
             continue;
         }
-        if (!variantsStarted && /^[a-z]{4}$/iu.test(subtag) && !tag.script) {
+        if (!variantsStarted && /^[a-z]{4}$/iu.test(subtag) && !tag.script && !tag.region) {
             tag.script = titleCase(subtag);
             continue;
         }
@@ -112,6 +129,8 @@ export function parseLanguageTag(value: unknown): ParsedLanguageTag | undefined 
             continue;
         }
         if (/^(?:[a-z\d]{5,8}|\d[a-z\d]{3})$/iu.test(subtag)) {
+            if (variants.has(lower)) return undefined;
+            variants.add(lower);
             variantsStarted = true;
             continue;
         }

@@ -76,11 +76,11 @@ async function baiduTranslation(message: TranslationProviderRequest<string>) {
 
     const result = await readJsonResponse<BaiduResponse>(response, '百度翻译返回的不是有效 JSON');
     // 52000 表示成功；其余错误码按官方文档为纯数字，可安全回显。
-    if (result.error_code !== undefined && String(result.error_code) !== '52000') {
+    if (result?.error_code !== undefined && String(result.error_code) !== '52000') {
         throw createProviderCodeError('百度翻译错误', result.error_code);
     }
-    const segments = result.trans_result;
-    if (Array.isArray(segments) && segments.length > 0 && segments.every((item) => typeof item.dst === 'string')) {
+    const segments = result?.trans_result;
+    if (Array.isArray(segments) && segments.length > 0 && segments.every((item) => typeof item?.dst === 'string')) {
         // 百度会按换行拆分原文并逐段返回，这里按原顺序拼回，保持段落结构。
         return segments.map((item) => item.dst as string).join('\n');
     }

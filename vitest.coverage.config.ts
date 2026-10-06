@@ -13,7 +13,7 @@ const maxWorkers = Number.isInteger(configuredMaxWorkers) && configuredMaxWorker
  * Step 3: 架构审计保证未纳入的文件都有其他验证归属，不能靠排除隐藏业务逻辑。
  */
 export default defineConfig({
-    plugins: [vue({include: /\/src\/ui\/components\/CustomHotkeyInput\.vue$/})],
+    plugins: [vue({include: /\/src\/(?:features\/image-translation\/ui\/MangaEntry|app\/document-translation\/(?:DocumentApp|DocumentSegmentEditor)|ui\/components\/(?:CustomHotkeyInput|UiSelect|GlossaryLibrarySelect|ServiceIcon|TranslationLoadingPreview|UiIcon|InterfaceBackdrop|FeatureEnableCard)|features\/settings\/ui\/components\/(?:FieldHelp|InterfaceSkinPreview|PopupLayoutPreview|PopupLayoutPreviewItem|SettingsGroup|SettingsItem|TranslationColorField|TranslationStylePreview|WritingStylePreview|SegmentedControl))\.vue$/})],
     resolve: {
         alias: {
             '@': resolve(__dirname, '.'),
@@ -21,7 +21,7 @@ export default defineConfig({
     },
     test: {
         environment: 'node',
-        testTransformMode: {web: ['**/tests/customHotkeyInputLifecycle.test.ts']},
+        testTransformMode: {web: ['**/tests/customHotkeyInputLifecycle.test.ts', '**/tests/sharedUiComponentsLifecycle.test.ts', '**/tests/documentAppLifecycle.test.ts', '**/tests/documentUserActions.test.ts']},
         globalSetup: ['./scripts/testing/vitest-resource-lock.mjs'],
         maxWorkers,
         minWorkers: 1,
@@ -29,6 +29,16 @@ export default defineConfig({
         // 按真实规则内容验证共享词书样式，与普通测试配置一致。
         css: {include: [/vocabulary-reencounter\.css/]},
         include: [
+            'tests/configModelAuditBoundaries.test.ts',
+            'tests/documentIndentedCode.test.ts',
+            'tests/languageAuditBoundaries.test.ts',
+            'tests/cloudTranslationAuditBoundaries.test.ts',
+            'tests/configStoreAuditBoundaries.test.ts',
+            'tests/documentBinaryLifecycle.test.ts',
+            'tests/documentPdfGeometryWorstCase.test.ts',
+            'tests/documentAppLifecycle.test.ts',
+            'tests/documentUserActions.test.ts',
+            'tests/sharedUiComponentsLifecycle.test.ts',
             'tests/pageNotice.test.ts',
             'tests/hotkeyDraft.test.ts',
             'tests/visionProbeStatusLifecycle.test.ts',
@@ -452,6 +462,24 @@ export default defineConfig({
             reportsDirectory: 'coverage/core',
             reporter: ['text', 'json-summary', 'html'],
             include: [
+                'src/app/document-translation/DocumentSegmentEditor.vue',
+                'src/ui/components/UiSelect.vue',
+                'src/ui/components/GlossaryLibrarySelect.vue',
+                'src/ui/components/ServiceIcon.vue',
+                'src/ui/components/TranslationLoadingPreview.vue',
+                'src/ui/components/UiIcon.vue',
+                'src/ui/components/InterfaceBackdrop.vue',
+                'src/ui/components/FeatureEnableCard.vue',
+                'src/features/settings/ui/components/FieldHelp.vue',
+                'src/features/settings/ui/components/InterfaceSkinPreview.vue',
+                'src/features/settings/ui/components/PopupLayoutPreview.vue',
+                'src/features/settings/ui/components/PopupLayoutPreviewItem.vue',
+                'src/features/settings/ui/components/SettingsGroup.vue',
+                'src/features/settings/ui/components/SettingsItem.vue',
+                'src/features/settings/ui/components/TranslationColorField.vue',
+                'src/features/settings/ui/components/TranslationStylePreview.vue',
+                'src/features/settings/ui/components/WritingStylePreview.vue',
+                'src/features/settings/ui/components/SegmentedControl.vue',
                 'src/features/page-notice/content/notice.ts',
                 'src/features/settings/ui/useHotkeyDraft.ts',
                 'src/features/settings/ui/services/useVisionProbeStatus.ts',
@@ -909,6 +937,10 @@ export default defineConfig({
                 'src/providers/translation/aliyun-translation.ts',
                 'src/providers/translation/baidu-translation.ts',
                 'src/providers/translation/volc-translation.ts',
+                'src/providers/translation/youdao.ts',
+                'src/providers/translation/tencent.ts',
+                'src/providers/translation/hunyuan-translation.ts',
+                'src/providers/translation/xiaoniu.ts',
                 'src/providers/translation/responses-api.ts',
                 'src/core/config/doubaoSeedTranslation.ts',
                 'src/services/translation/freeFallback.ts',
@@ -917,6 +949,7 @@ export default defineConfig({
                 'src/services/translation/capabilities.ts',
                 'src/services/translation/persistenceBarrier.ts',
                 'src/services/translation/requestSnapshot.ts',
+                'src/services/translation/types.ts',
                 'src/services/translation/cache.ts',
                 'src/services/translation/cachePolicyBinding.ts',
                 'src/services/translation/availability.ts',

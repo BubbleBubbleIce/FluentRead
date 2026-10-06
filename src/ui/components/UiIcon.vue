@@ -6,7 +6,7 @@
 -->
 <template>
   <svg class="fr-ui-icon" :width="size" :height="size" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-    <path :d="paths[name] || paths.info" />
+    <path :d="Object.hasOwn(paths, name) ? paths[name] : paths.info" />
   </svg>
 </template>
 <script setup lang="ts">

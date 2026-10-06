@@ -23,7 +23,7 @@ async function hmac(algorithm: 'SHA-1' | 'SHA-256', key: string | ArrayBuffer, m
     return crypto.subtle.sign('HMAC', cryptoKey, textEncoder.encode(message) as unknown as BufferSource);
 }
 
-/** 阿里云、火山引擎与腾讯云的派生签名密钥都基于 HMAC-SHA256。 */
+/** 火山引擎与腾讯云的派生签名密钥基于 HMAC-SHA256；阿里云 RPC 使用下方 SHA1 原语。 */
 export function hmacSha256(key: string | ArrayBuffer, message: string): Promise<ArrayBuffer> {
     return hmac('SHA-256', key, message);
 }
@@ -55,8 +55,7 @@ export async function sha256Hex(message: string): Promise<string> {
  */
 export function percentEncode(value: string): string {
     return encodeURIComponent(value)
-        .replace(/[!'()*]/gu, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
-        .replace(/%7E/gu, '~');
+        .replace(/[!'()*]/gu, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
 }
 
 /** 按参数名字典序拼接规范查询串，空值参数保留等号，与各家签名文档一致。 */
