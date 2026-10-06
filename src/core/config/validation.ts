@@ -87,7 +87,12 @@ export function isApiKeyRequired(service: string, config: CredentialConfig): boo
 export function getMissingCredentialMessage(
     service: string,
     config: CredentialConfig,
+    selectedModel?: string,
 ): string | null {
+    // 功能独立模型只覆盖校验身份，不复制整份配置，也不改变用户保存的默认模型。
+    const requirementConfig: CredentialConfig = selectedModel === undefined ? config : {
+        model: {[service]: selectedModel}, customModel: config.customModel, requireApiKey: config.requireApiKey,
+    };
     const serviceLabel = getServiceLabel(service, config);
 
     // 云服务厂商的两段密钥必须一起检查，否则用户只填一半时会先收到一条
@@ -100,7 +105,7 @@ export function getMissingCredentialMessage(
         return null;
     }
 
-    if (servicesType.isUseToken(service) && service !== services.deeplx && isApiKeyRequired(service, config)) {
+    if (servicesType.isUseToken(service) && service !== services.deeplx && isApiKeyRequired(service, requirementConfig)) {
         if (!config.token?.[service]?.trim()) {
             const labels = getCloudCredentialLabels(service);
             return servicesType.isCloudVendor(service)

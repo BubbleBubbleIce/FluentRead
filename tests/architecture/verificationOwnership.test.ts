@@ -189,12 +189,8 @@ const BUILD_ONLY_SRC_ALLOWLIST = new Set([
     'src/app/offscreen/runtime.ts',
     // background composition root 只串联菜单、静态消息 registry 和缓存维护；由 handler 单测、入口契约与双浏览器构建验证。
     'src/app/background/runtime.ts',
-    // 右键菜单绑定 browser tabs/contextMenus 生命周期；纯标题策略与 tab 状态仓库已严格覆盖，真实交互由隔离浏览器回归验证。
-    'src/app/background/contextMenuRuntime.ts',
     // 工具栏翻译状态角标绑定 browser.action 角标 API 与 tabs 生命周期，含 action 缺失的防御分支；渲染映射由 backgroundBadgeRuntime 功能测试与双浏览器构建验证。
     'src/app/background/badgeRuntime.ts',
-    // 共享真值查询绑定 browser.tabs.sendMessage 回源，是从 contextMenuRuntime 下沉的浏览器消息封装；由右键菜单与角标功能测试及双浏览器构建验证。
-    'src/app/background/tabTranslationQuery.ts',
     // 视频字幕菜单文案只绑定已拥有的播放器 DOM；由视频单测与双浏览器构建验证。
     'src/features/video-subtitle/content/ui.ts',
     // 后台消息 composition 只把 provider、feature handler 与 browser API 静态注入；各 handler/路由均已严格覆盖。

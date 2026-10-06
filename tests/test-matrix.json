@@ -342,7 +342,8 @@
       "tests/numberFormat.test.ts",
       "tests/hotkeyDraft.test.ts",
       "tests/settingsTaskWait.test.ts",
-      "tests/settingsActionContext.test.ts"
+      "tests/settingsActionContext.test.ts",
+      "tests/tabTranslationQueryOwnership.test.ts"
     ],
     "functional": [
       "tests/translationCenterComponent.test.ts",
@@ -472,7 +473,9 @@
       "tests/serviceConfigurationLifecycle.test.ts",
       "tests/serviceEditorLifecycle.test.ts",
       "tests/serviceDirectoryLifecycle.test.ts",
-      "tests/promptEditorLifecycle.test.ts"
+      "tests/promptEditorLifecycle.test.ts",
+      "tests/featureMenuSettingsLifecycle.test.ts",
+      "tests/contextMenuRuntimeOwnership.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 827,
-    "functions": 14999,
+    "files": 828,
+    "functions": 15023,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -82,19 +82,19 @@
         "lines": 433
       },
       "src/app": {
-        "files": 101,
-        "functions": 1170,
-        "lines": 11478
+        "files": 102,
+        "functions": 1184,
+        "lines": 11565
       },
       "src/core/config": {
         "files": 52,
         "functions": 703,
-        "lines": 9065
+        "lines": 9070
       },
       "src/core/context-menu": {
         "files": 2,
-        "functions": 22,
-        "lines": 295
+        "functions": 19,
+        "lines": 279
       },
       "src/core/glossary": {
         "files": 6,
@@ -223,8 +223,8 @@
       },
       "src/features/settings": {
         "files": 83,
-        "functions": 1618,
-        "lines": 19515
+        "functions": 1631,
+        "lines": 19534
       },
       "src/features/share-card": {
         "files": 7,
@@ -477,6 +477,24 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/contextMenuPreferences.ts",
+      "sha256": "1e0eba88aed06b43b53cc5a5cf47cf0f20ff9b94cea66f597d478f2fad685596",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/contextMenuRuntime.ts",
+      "sha256": "b7ecd934315d632a98524806fa1f98cb92d501401481c4a2d0f8ef0da2a64ef0",
+      "functionBodies": 20,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/contextMenuUpdates.ts",
+      "sha256": "b26730377bdb7208d734b21ec131bb8a48abe1342ebe7d7ccd2570c0f2fe817b",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/handlers/fullPageTranslationState.ts",
       "sha256": "8dd4e8cd772b6fad08f808ca3bf565349d3ef722443f5e6c028597d49b3bc245",
       "functionBodies": 0,
@@ -501,6 +519,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/imageContextMenu.ts",
+      "sha256": "0f8eb1f10c1c9eb99abeb39717e6b9b5f7f5203b0422ecce75503a5ba69ba4ee",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/maintenanceRuntime.ts",
       "sha256": "1ddb0cdac471ef0b07b7ee9c3fcba96071a26a7dc4bf49eaa85859228686e4f3",
       "functionBodies": 5,
@@ -520,14 +544,14 @@
     },
     {
       "file": "src/app/background/tabTranslationQuery.ts",
-      "sha256": "8db48631af75e7a038415781f3aa576a8719774da7bfeaed89850adfa7c8997f",
-      "functionBodies": 2,
+      "sha256": "37f93cbbc351fbbd3b1c9e4d1d46fd43b24ee92477a85c1bf47ead8b414b55b2",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/app/background/tabTranslationState.ts",
-      "sha256": "22e5dfbac3f37c48cd5f35f6cb24a29368f98a7370dbe529e6ae89a952436edf",
-      "functionBodies": 7,
+      "sha256": "74146d3b4cd7e43145ded150888dfb1e045f0e09dc3502d00eb2b1fc63008716",
+      "functionBodies": 11,
       "status": "source-read-and-traced"
     },
     {
@@ -657,6 +681,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/featureServices.ts",
+      "sha256": "f9fef874f99d89aba67874e09b0e201d6900482fbec2ccbc90a55241addd358c",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/inputTranslation.ts",
       "sha256": "d07e283210feba3dbb390f04d929dd6a4605e2a4f6f406a9f4ac8d40b459cafd",
       "functionBodies": 7,
@@ -700,7 +730,7 @@
     },
     {
       "file": "src/core/config/validation.ts",
-      "sha256": "e937c757899e3aac08ef727fa917dd9e9f8decb3e8a0c38c7535c1c8189c6270",
+      "sha256": "9c386df30573942509281bea6a6c5adf7ce41b7c335d5dffcd7642d833085292",
       "functionBodies": 9,
       "status": "source-read-and-traced"
     },
@@ -714,6 +744,18 @@
       "file": "src/core/config/visionProbe.ts",
       "sha256": "9a9032f1a989463bd7131f47eadda27a7b26530384277dc49c1920217008e157",
       "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/context-menu/domain.ts",
+      "sha256": "04b79d32cb0985d415d753b71232b722d80d5f6872c43fbc3d5d8395557bfee7",
+      "functionBodies": 17,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/context-menu/presentation.ts",
+      "sha256": "e7e0958ee8ec5356d82fca5026b481a1ac68d299942b259d1cf6985a07ed64ba",
+      "functionBodies": 2,
       "status": "source-read-and-traced"
     },
     {
@@ -1485,6 +1527,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/ContextMenuSettings.vue",
+      "sha256": "d0afb9dd36cd0df9615652c45d6da93ff4725a47b3175464eae76ff68ec68819",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/settings/ui/FeatureServiceSettings.vue",
+      "sha256": "b7e398bbd3ddd821dcf51e4c8c4dfd18b29d7c417cdc598bd0b8df57d247effd",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/FloatingBallSettings.vue",
       "sha256": "6d79504282b71030f196afdfc6b5ac333d93f4639eabc14b944f9bc734aff2f9",
       "functionBodies": 6,
@@ -1492,7 +1546,7 @@
     },
     {
       "file": "src/features/settings/ui/InputTranslationSettings.vue",
-      "sha256": "eeac820a0798ecc7152419bade19ea0e88f779b152e5142e97c62914201e8788",
+      "sha256": "8edf1fa4587a9a03ce2ead205cbc2d519f199fc8d5445a3f74864f8dbcd5ace6",
       "functionBodies": 65,
       "status": "source-read-and-traced"
     },
@@ -1522,7 +1576,7 @@
     },
     {
       "file": "src/features/settings/ui/SettingsSections.vue",
-      "sha256": "ef5efc9764574ffba4280b16269fe4f4ef68cf625bf1f6d28911d74fba041c2a",
+      "sha256": "1887792f6dc2c11dd22fff4209a5024d1abb9da1c4cba49bb1e86b7fd0d1a4d1",
       "functionBodies": 166,
       "status": "source-read-and-traced"
     },
@@ -2126,8 +2180,6 @@
     "src/app/background/configStorageBroadcast.ts",
     "src/app/background/configStorageRuntime.ts",
     "src/app/background/contextMenuActions.ts",
-    "src/app/background/contextMenuPreferences.ts",
-    "src/app/background/contextMenuRuntime.ts",
     "src/app/background/googleDriveSyncRuntime.ts",
     "src/app/background/handlers/areaTranslation.ts",
     "src/app/background/handlers/configAutoBackup.ts",
@@ -2148,7 +2200,6 @@
     "src/app/background/handlers/vocabulary.ts",
     "src/app/background/handlers/webDavBackup.ts",
     "src/app/background/harnessRuntime.ts",
-    "src/app/background/imageContextMenu.ts",
     "src/app/background/imageGlossaryContext.ts",
     "src/app/background/localInsightsHandlers.ts",
     "src/app/background/messageRuntime.ts",
@@ -2205,7 +2256,6 @@
     "src/core/config/diff.ts",
     "src/core/config/doubaoSeedTranslation.ts",
     "src/core/config/driveSync.ts",
-    "src/core/config/featureServices.ts",
     "src/core/config/freeTranslation.ts",
     "src/core/config/harness.ts",
     "src/core/config/localTranslation.ts",
@@ -2230,8 +2280,6 @@
     "src/core/config/writing.ts",
     "src/core/config/writingPreview.ts",
     "src/core/config/writingReadiness.ts",
-    "src/core/context-menu/domain.ts",
-    "src/core/context-menu/presentation.ts",
     "src/core/glossary/builtins.ts",
     "src/core/glossary/index.ts",
     "src/core/glossary/match.ts",
@@ -2399,9 +2447,7 @@
     "src/features/settings/ui/AlwaysTranslateSites.vue",
     "src/features/settings/ui/CloudConfigBackup.vue",
     "src/features/settings/ui/ConfigManagement.vue",
-    "src/features/settings/ui/ContextMenuSettings.vue",
     "src/features/settings/ui/ExcludedLanguageSettings.vue",
-    "src/features/settings/ui/FeatureServiceSettings.vue",
     "src/features/settings/ui/GoogleDriveSync.vue",
     "src/features/settings/ui/HarnessPromptSettings.vue",
     "src/features/settings/ui/HarnessSettings.vue",
@@ -2655,7 +2701,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue555pending production files/functions: next trace QuickTranslationProfiles, FeatureServiceSettings and ContextMenuSettings control ownership/default/feature profiles; remaining settings/app/background chains and external-main reconciliation follow. Latest-main rebase, whole-chain review/fixes/verification/merge remain required only after full audit.",
+    "Continue547pending files/functions: QuickTranslationProfiles actual cached controls/capacity/hotkey sessions and PopupServices credential/model assignments next. Other settings/background/application paths and cached-main reconciliation remain pending. Latest-main rebase, full resulting code review/fixes/verification/merge only after whole audit.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2686,12 +2732,13 @@
     "Thirty-eighth:12new complete source reviews199bodies;258files4707bodies568pending. New71executed cases47static definitions;13related files202pass;9strict modules100cases all4dimensions100. Original6source comparison106cases50fail56pass plus1known unhandled late Chrome factory rejection; current integration/strict none. Production17flows/4inspected screenshots actual config/backend cancellation with local synthetic image HTTP:2held requests cancelled and unknown retry. Modal catalog target invalidation uses programmatically queued DOM event, normal clicks otherwise. Unit SFC setup/watch/KeepAlive null-render58cases not template proof. Existing13executable/3docs ownership debt and image runtime gaps persist. All-scope final latest-main rebase/review/fix/verify/merge still pending.",
     "Thirty-ninth:8new files129bodies;266reviewed4836bodies561pending. New44executed cases30static definitions;12affected files149pass. Original7source47executed33fail14pass;5new captured-action API cases excluded, not counted as old defects. Actual cached client template6cases caught setup-only false confidence; controlled element ports not real Element Plus. Production13native flows3inspected screenshots and zero errors; first native same-option reopen failure fixed with context revision key. Other retries fixed input/checkbox selectors and full public snapshot theme fixture wiping synthetic credentials; final theme uses real UI. Two strict modules9cases four100, no weakened threshold/exemption. Existing13executable/3docs ownership debt and whole scope/latest-main delivery pending.",
     "Fortieth:2new reviewed files95bodies;268reviewed4931bodies559pending. New35executed/18static;12affected files186pass. Immutable two-source comparison35cases29failed6passed, one unhandled old malformed-entries render error preserved, not a count of independent bugs. Current zero unhandled errors. Strict unchanged shared context/task wait11cases four100; no threshold/exemption changes. Native11flows3screens inspected/errors0; first attempt hidden ElSwitch input selector corrected to visible switch click, no product error inferred. Earlier test preparation timers/no-tree renderer errors preserved but excluded from baseline claims. Existing13executable/3docs ownership debt; scope and final latest-main delivery pending.",
-    "Forty-first:4new reviewed files110bodies;272reviewed5041bodies555pending. New32component+11unit executed/22static;14affectedfiles312pass. Immutable2SFC comparison32cases30failed2passed, zero unhandled; failure count not independent defects. Strict5files67cases3modules four100; no exemptions/threshold changes. Native14unique flows3 inspected narrow/light/dark screenshots/errors0, owned profile/browser cleanup0processes; composition synthetic only. Wrong tab-label fixture failed first and was corrected, no product regression inferred. Existing13executable/3docs ownership debt; whole audit and latest-main delivery remain pending."
+    "Forty-first:4new reviewed files110bodies;272reviewed5041bodies555pending. New32component+11unit executed/22static;14affectedfiles312pass. Immutable2SFC comparison32cases30failed2passed, zero unhandled; failure count not independent defects. Strict5files67cases3modules four100; no exemptions/threshold changes. Native14unique flows3 inspected narrow/light/dark screenshots/errors0, owned profile/browser cleanup0processes; composition synthetic only. Wrong tab-label fixture failed first and was corrected, no product regression inferred. Existing13executable/3docs ownership debt; whole audit and latest-main delivery remain pending.",
+    "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending."
   ],
   "progress": {
-    "sourceReadFiles": 272,
-    "sourceReadFunctionBodies": 5041,
-    "pendingFiles": 555,
+    "sourceReadFiles": 281,
+    "sourceReadFunctionBodies": 5128,
+    "pendingFiles": 547,
     "goalComplete": false
   },
   "observations": [
@@ -3392,6 +3439,51 @@
       "file": "src/core/config/inputTranslation.ts",
       "status": "source-read-traced-and-verified-forty-first",
       "issue": "Fully read/traced validation and input translation pure rules including credential key boundaries, optional keys, cloud/Youdao/Tencent pairs, custom model/provider labels, interval200-2000/default1000, prompt preservation/execution supplementation and native MT capability. Existing domain tests extended with six malformed tuple schemas and five nonnumeric/nonfinite intervals; no production domain rule changes."
+    },
+    {
+      "file": "src/features/settings/ui/FeatureServiceSettings.vue",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "Functional service rows capture current configuration, selected/effective service and allowed catalog choices. Reject cached hidden/deactivated/unmounted/replaced-config events and unavailable/AI-incompatible values. Keep nine feature assignments, follow-default behavior, independent input/reading/writing model reset and selected unavailable option display. Configure button uses assigned captured service without changing website default."
+    },
+    {
+      "file": "src/features/settings/ui/ContextMenuSettings.vue",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "Context menu switches capture active configuration, menu/function capability identity and rendered entry preference. Strict booleans and known available IDs only; hidden, replaced, disabled, old preference and capability events cannot overwrite current values. Master reopening preserves preferences; image field remains sole image-menu source. Parents forward visibility to both controls."
+    },
+    {
+      "file": "src/core/config/featureServices.ts",
+      "status": "source-read-traced-and-verified-forty-second",
+      "issue": "Functional service rows capture current configuration, selected/effective service and allowed catalog choices. Reject cached hidden/deactivated/unmounted/replaced-config events and unavailable/AI-incompatible values. Keep nine feature assignments, follow-default behavior, independent input/reading/writing model reset and selected unavailable option display. Configure button uses assigned captured service without changing website default."
+    },
+    {
+      "file": "src/core/context-menu/domain.ts",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "Menu snapshot reads supplied image config instead of global config, rebuild signature includes actual menu structure and UI language. Target language, shortcut and legacy display changes no longer rebuild. Remove unused target-language/shortcut computation, two freeze wrappers and obsolete group/fallback fields. Current preview/action labels preserved."
+    },
+    {
+      "file": "src/core/context-menu/presentation.ts",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "Menu snapshot reads supplied image config instead of global config, rebuild signature includes actual menu structure and UI language. Target language, shortcut and legacy display changes no longer rebuild. Remove unused target-language/shortcut computation, two freeze wrappers and obsolete group/fallback fields. Current preview/action labels preserved."
+    },
+    {
+      "file": "src/app/background/contextMenuPreferences.ts",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "Menu snapshot reads supplied image config instead of global config, rebuild signature includes actual menu structure and UI language. Target language, shortcut and legacy display changes no longer rebuild. Remove unused target-language/shortcut computation, two freeze wrappers and obsolete group/fallback fields. Current preview/action labels preserved."
+    },
+    {
+      "file": "src/app/background/contextMenuRuntime.ts",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "All native menu updates and rebuild writes share one serial queue. Updates capture settings/plan and accepted request order, read state once and recheck active tab inside queue; old queries/writes cannot finish after a newer menu mutation. Stop obsolete create rounds. Query/config/native/action failures handled; obsolete clicks cannot borrow new structure. Shared tab store invalidates old queries on newer reads, authoritative messages, navigation and removal; document identity guards click before action and action response after navigation/close. Readers share pending latest query through a WeakMap and release finished entries; old consumers wait latest in-flight truth rather than returning default prematurely. No request-cycle recursion because stale reads only await later registered queries."
+    },
+    {
+      "file": "src/app/background/contextMenuUpdates.ts",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "All native menu updates and rebuild writes share one serial queue. Updates capture settings/plan and accepted request order, read state once and recheck active tab inside queue; old queries/writes cannot finish after a newer menu mutation. Stop obsolete create rounds. Query/config/native/action failures handled; obsolete clicks cannot borrow new structure. Shared tab store invalidates old queries on newer reads, authoritative messages, navigation and removal; document identity guards click before action and action response after navigation/close. Readers share pending latest query through a WeakMap and release finished entries; old consumers wait latest in-flight truth rather than returning default prematurely. No request-cycle recursion because stale reads only await later registered queries."
+    },
+    {
+      "file": "src/app/background/imageContextMenu.ts",
+      "status": "fixed-reviewed-and-verified-forty-second",
+      "issue": "Menu snapshot reads supplied image config instead of global config, rebuild signature includes actual menu structure and UI language. Target language, shortcut and legacy display changes no longer rebuild. Remove unused target-language/shortcut computation, two freeze wrappers and obsolete group/fallback fields. Current preview/action labels preserved."
     }
   ],
   "finalDelivery": {

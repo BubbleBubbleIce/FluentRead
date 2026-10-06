@@ -1,13 +1,13 @@
 <!--
 @file src/features/settings/ui/ContextMenuSettings.vue
 文件职责：提供右键菜单的设置界面，让用户按使用习惯增删菜单入口，并在同一屏看到已启用的菜单项。
-主要内容：顶部总开关独立成行，左侧直接渲染一个虚拟右键菜单，右侧紧凑网格编辑各入口；预览汇总可用且开启的操作，复用原生菜单的动作文案，随开关即时更新，窄屏上下排列。
+主要内容：总开关与入口事件绑定活跃配置、功能能力和当时偏好，拒绝迟到或非法写入；左侧预览可用操作，右侧网格编辑各入口，窄屏上下排列。
 模块边界：本组件只编辑父级响应式配置并展示入口总览，保存与跨页面同步复用父级设置流程，不创建原生菜单、不发送运行时消息；入口目录来自 core/context-menu，实际右键时的场景筛选、创建与点击路由由 app/background 负责。
 -->
 <template>
   <SettingsGroup class="context-menu-settings" :title="t('contextMenuSettings.title')" :description="t('contextMenuSettings.description')">
     <SettingsItem :label="t('contextMenuSettings.master')" :description="t('contextMenuSettings.masterDescription')">
-      <el-switch v-model="config.contextMenuEnabled" class="settings-toggle" :aria-label="t('contextMenuSettings.master')" />
+      <el-switch :model-value="config.contextMenuEnabled" :onUpdate:modelValue="masterChange" :disabled="!active" class="settings-toggle" :aria-label="t('contextMenuSettings.master')" />
     </SettingsItem>
 
     <div class="context-menu-workspace">
@@ -34,14 +34,14 @@
           :data-context-menu-entry="entry.id"
           :label="entry.label"
           :description="entry.description"
-          :disabled="!config.contextMenuEnabled || !entry.available"
+          :disabled="!active || !config.contextMenuEnabled || !entry.available"
         >
           <el-switch
             :model-value="entry.enabled"
             class="settings-toggle"
             :aria-label="entry.label"
-            :disabled="!config.contextMenuEnabled || !entry.available"
-            @update:model-value="entry.update"
+            :disabled="!active || !config.contextMenuEnabled || !entry.available"
+            :onUpdate:modelValue="entry.update"
           />
         </SettingsItem>
       </div>
@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import {useSettingsActionContext} from '../model/useSettingsActionContext';
 import SettingsGroup from './components/SettingsGroup.vue';
 import SettingsItem from './components/SettingsItem.vue';
 import {
@@ -61,7 +62,9 @@ import { browserCapabilities } from '@/src/platform/browser/capabilities';
 import type { Config } from '@/src/core/config/model';
 import { useUiI18n } from '@/src/ui/i18n';
 
-const props = defineProps<{config: Config}>();
+const props = withDefaults(defineProps<{config: Config; active?: boolean}>(), {active: true});
+const {active, capture} = useSettingsActionContext(() => props.active, () => [props.config, props.config.contextMenuEnabled, props.config.selectionTranslatorMode, props.config.disableSelectionTranslator, props.config.selectionAreaEnabled, props.config.disableImageTranslator, browserCapabilities.imageTranslation, browserCapabilities.areaTranslation]);
+const masterChange = computed(() => {const current = capture();return (value: unknown) => {if (current() && typeof value === 'boolean') props.config.contextMenuEnabled = value};});
 const config = computed(() => props.config);
 const { t } = useUiI18n();
 const iconUrl = globalThis.__FLUENTREAD_ICON_DATA__ || '/icon/16.png';
@@ -88,7 +91,8 @@ function readEntryPreference(id: ContextMenuActionId, defaultEnabled: boolean): 
   return config.value.contextMenuEntries?.[id] ?? defaultEnabled;
 }
 
-function writeEntryPreference(id: ContextMenuActionId, value: boolean): void {
+function writeEntryPreference(id: ContextMenuActionId, value: unknown): void {
+  if (!active.value || !config.value.contextMenuEnabled || typeof value !== 'boolean' || !CONTEXT_MENU_ENTRIES.some(entry => entry.id === id) || !isAvailable(id)) return;
   if (id === 'translateImage') {
     config.value.imageTranslationContextMenuEnabled = value;
     return;
@@ -97,16 +101,18 @@ function writeEntryPreference(id: ContextMenuActionId, value: boolean): void {
 }
 
 const entryRows = computed(() => CONTEXT_MENU_ENTRIES.map((entry) => {
+  const current = capture();
   const available = isAvailable(entry.id);
   const copy = ENTRY_COPY[entry.id];
   const description = t(copy.description);
+  const enabled = readEntryPreference(entry.id, entry.defaultEnabled);
   return {
     id: entry.id,
     label: t(copy.label),
     available,
-    enabled: readEntryPreference(entry.id, entry.defaultEnabled),
+    enabled,
     description: available ? description : t('contextMenuSettings.withReason', {description, reason: t(copy.unavailable)}),
-    update: (value: string | number | boolean) => writeEntryPreference(entry.id, value === true),
+    update: (value: unknown) => {if (current() && readEntryPreference(entry.id, entry.defaultEnabled) === enabled) writeEntryPreference(entry.id, value)},
   };
 }));
 

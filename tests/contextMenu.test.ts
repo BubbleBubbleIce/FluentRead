@@ -26,7 +26,7 @@ import {
     type ContextMenuEntryPreferences,
     type ContextMenuItemPresentation,
 } from '@/src/core/context-menu/domain';
-import {getContextMenuTargetLanguage, renderContextMenuTitle} from '@/src/core/context-menu/presentation';
+import {renderContextMenuTitle} from '@/src/core/context-menu/presentation';
 import {imageMenuEnabled} from '@/src/app/background/imageContextMenu';
 import {readContextMenuSettings} from '@/src/app/background/contextMenuPreferences';
 import {runContextMenuAction, toggleSiteExtensionDisabled} from '@/src/app/background/contextMenuActions';
@@ -141,7 +141,7 @@ describe('右键菜单结构', () => {
     it('所有旧入口都启用时仍然不生成子菜单，链接图片不会命中全文入口', () => {
         const plan = buildContextMenuPlan(toggles({translateArea: true, toggleSite: true}));
         expect(plan).toHaveLength(3);
-        expect(plan.every((item) => item.parentId === null && item.role === 'standalone')).toBe(true);
+        expect(plan.every((item) => item.role === 'standalone' && !Object.hasOwn(item, 'parentId') && !Object.hasOwn(item, 'fallbackOnly'))).toBe(true);
         expect(plan.find((item) => item.bucket === 'selection')!.contexts).toEqual(['selection']);
         expect(plan.find((item) => item.bucket === 'page')!.contexts).toEqual(['page']);
         expect(plan.find((item) => item.bucket === 'image')!.contexts).toEqual(['image']);
@@ -236,23 +236,17 @@ describe('右键菜单标题渲染', () => {
         }), ZH_CONTEXT)).toBe('翻译全文');
     });
 
-    it('目标语言只保留主名称，未知或非法取值不渲染语言', () => {
-        expect(getContextMenuTargetLanguage('zh-Hans', 'zh-CN')).toBe('简体中文');
-        expect(getContextMenuTargetLanguage('de', 'zh-CN')).toBe('Deutsch');
-        expect(getContextMenuTargetLanguage('en', 'en-US')).toBe('English');
-        expect(getContextMenuTargetLanguage('xx-unknown', 'zh-CN')).toBe('xx-unknown');
-        expect(getContextMenuTargetLanguage('   ', 'zh-CN')).toBe('');
-        expect(getContextMenuTargetLanguage(42, 'zh-CN')).toBe('');
+    it('旧附加字段任意变化也只输出当前动作标题', () => {
+        expect(renderContextMenuTitle(presentation(), {...ZH_CONTEXT, targetLanguage: 'Deutsch', shortcut: 'Control+P'})).toBe('翻译全文');
     });
 });
 
 describe('右键菜单设置快照', () => {
-    it('汇总入口开关、显示偏好与快捷键显示名', () => {
+    it('汇总入口开关和界面语言，不计算未展示的附加文案', () => {
         const snapshot = readContextMenuSettings();
         expect(snapshot.enabled).toBe(true);
         expect(snapshot.toggles.translateSelection).toBe(true);
-        expect(snapshot.titleContext).toEqual({language: 'zh-CN', targetLanguage: '简体中文', shortcut: expect.any(String)});
-        expect(snapshot.titleContext.shortcut).toMatch(/\+T$/u);
+        expect(snapshot.titleContext).toEqual({language: 'zh-CN', targetLanguage: '', shortcut: ''});
         expect(snapshot.signature).toBe(readContextMenuSettings().signature);
     });
 
@@ -363,7 +357,7 @@ describe('后台右键菜单生命周期', () => {
         return api;
     }
 
-    async function settle(times = 20): Promise<void> {
+    async function settle(times = 100): Promise<void> {
         for (let index = 0; index < times; index += 1) await Promise.resolve();
     }
 

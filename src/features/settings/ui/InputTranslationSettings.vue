@@ -238,15 +238,7 @@ const effectiveTranslationService = computed(() => translationService.value || p
 const credentialWarning = computed(() => {
   const service = effectiveTranslationService.value
   const config = props.config
-  // 凭据验证只需要这些字段；不枚举整份配置与无关模型。
-  const message = getMissingCredentialMessage(service, {
-    token: config.token, secret: config.secret,
-    model: {[service]: translationModel.value || config.model[service]},
-    customModel: config.customModel, requireApiKey: config.requireApiKey,
-    customOpenAIProviders: config.customOpenAIProviders,
-    youdaoAppKey: config.youdaoAppKey, youdaoAppSecret: config.youdaoAppSecret,
-    tencentSecretId: config.tencentSecretId, tencentSecretKey: config.tencentSecretKey,
-  })
+  const message = getMissingCredentialMessage(service, config, translationModel.value || config.model[service])
   return message ? translateLegacy(message) : ''
 })
 

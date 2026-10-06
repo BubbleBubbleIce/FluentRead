@@ -27366,6 +27366,820 @@
         "Local userscript resource pin1c4482cc unchanged/unpublished",
         "No remote fetch/rebase/merge41; final delivery follows the full audit"
       ]
+    },
+    {
+      "batch": "forty-second",
+      "progress": {
+        "sourceReadFiles": 281,
+        "sourceReadFunctionBodies": 5128,
+        "pendingFiles": 547,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/settings/ui/FeatureServiceSettings.vue",
+          "src/features/settings/ui/ContextMenuSettings.vue",
+          "src/core/config/featureServices.ts",
+          "src/core/context-menu/domain.ts",
+          "src/core/context-menu/presentation.ts",
+          "src/app/background/contextMenuPreferences.ts",
+          "src/app/background/contextMenuRuntime.ts",
+          "src/app/background/contextMenuUpdates.ts",
+          "src/app/background/imageContextMenu.ts"
+        ],
+        "newFunctionBodies": 81,
+        "rereadFiles": [
+          "src/core/config/validation.ts",
+          "src/features/settings/ui/InputTranslationSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/app/background/tabTranslationQuery.ts",
+          "src/app/background/tabTranslationState.ts"
+        ],
+        "sourceProof": {
+          "src/features/settings/ui/FeatureServiceSettings.vue": {
+            "sha256": "b7e398bbd3ddd821dcf51e4c8c4dfd18b29d7c417cdc598bd0b8df57d247effd",
+            "fullyRead": true,
+            "functionBodies": 15,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/features/settings/ui/ContextMenuSettings.vue": {
+            "sha256": "d0afb9dd36cd0df9615652c45d6da93ff4725a47b3175464eae76ff68ec68819",
+            "fullyRead": true,
+            "functionBodies": 15,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/core/config/featureServices.ts": {
+            "sha256": "f9fef874f99d89aba67874e09b0e201d6900482fbec2ccbc90a55241addd358c",
+            "fullyRead": true,
+            "functionBodies": 3,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/core/context-menu/domain.ts": {
+            "sha256": "04b79d32cb0985d415d753b71232b722d80d5f6872c43fbc3d5d8395557bfee7",
+            "fullyRead": true,
+            "functionBodies": 17,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/core/context-menu/presentation.ts": {
+            "sha256": "e7e0958ee8ec5356d82fca5026b481a1ac68d299942b259d1cf6985a07ed64ba",
+            "fullyRead": true,
+            "functionBodies": 2,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/app/background/contextMenuPreferences.ts": {
+            "sha256": "1e0eba88aed06b43b53cc5a5cf47cf0f20ff9b94cea66f597d478f2fad685596",
+            "fullyRead": true,
+            "functionBodies": 1,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/app/background/contextMenuRuntime.ts": {
+            "sha256": "b7ecd934315d632a98524806fa1f98cb92d501401481c4a2d0f8ef0da2a64ef0",
+            "fullyRead": true,
+            "functionBodies": 20,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/app/background/contextMenuUpdates.ts": {
+            "sha256": "b26730377bdb7208d734b21ec131bb8a48abe1342ebe7d7ccd2570c0f2fe817b",
+            "fullyRead": true,
+            "functionBodies": 7,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/app/background/imageContextMenu.ts": {
+            "sha256": "0f8eb1f10c1c9eb99abeb39717e6b9b5f7f5203b0422ecce75503a5ba69ba4ee",
+            "fullyRead": true,
+            "functionBodies": 1,
+            "review": "Full source/function and related control/menu chain review"
+          },
+          "src/core/config/validation.ts": {
+            "sha256": "9c386df30573942509281bea6a6c5adf7ce41b7c335d5dffcd7642d833085292",
+            "fullyRead": true,
+            "functionBodies": 9,
+            "review": "Previously reviewed source; changed credential, active forwarding and shared query/document ownership re-read and verified"
+          },
+          "src/features/settings/ui/InputTranslationSettings.vue": {
+            "sha256": "8edf1fa4587a9a03ce2ead205cbc2d519f199fc8d5445a3f74864f8dbcd5ace6",
+            "fullyRead": true,
+            "functionBodies": 65,
+            "review": "Previously reviewed source; changed credential, active forwarding and shared query/document ownership re-read and verified"
+          },
+          "src/features/settings/ui/SettingsSections.vue": {
+            "sha256": "1887792f6dc2c11dd22fff4209a5024d1abb9da1c4cba49bb1e86b7fd0d1a4d1",
+            "fullyRead": true,
+            "functionBodies": 166,
+            "review": "Previously reviewed source; changed credential, active forwarding and shared query/document ownership re-read and verified"
+          },
+          "src/app/background/tabTranslationQuery.ts": {
+            "sha256": "37f93cbbc351fbbd3b1c9e4d1d46fd43b24ee92477a85c1bf47ead8b414b55b2",
+            "fullyRead": true,
+            "functionBodies": 4,
+            "review": "Previously reviewed source; changed credential, active forwarding and shared query/document ownership re-read and verified"
+          },
+          "src/app/background/tabTranslationState.ts": {
+            "sha256": "74146d3b4cd7e43145ded150888dfb1e045f0e09dc3502d00eb2b1fc63008716",
+            "fullyRead": true,
+            "functionBodies": 11,
+            "review": "Previously reviewed source; changed credential, active forwarding and shared query/document ownership re-read and verified"
+          }
+        },
+        "nextNotCounted": [
+          "QuickTranslationProfiles.vue",
+          "PopupServices.vue"
+        ]
+      },
+      "implementation": [
+        "Functional service rows capture current configuration, selected/effective service and allowed catalog choices. Reject cached hidden/deactivated/unmounted/replaced-config events and unavailable/AI-incompatible values. Keep nine feature assignments, follow-default behavior, independent input/reading/writing model reset and selected unavailable option display. Configure button uses assigned captured service without changing website default.",
+        "Context menu switches capture active configuration, menu/function capability identity and rendered entry preference. Strict booleans and known available IDs only; hidden, replaced, disabled, old preference and capability events cannot overwrite current values. Master reopening preserves preferences; image field remains sole image-menu source. Parents forward visibility to both controls.",
+        "Credential validator accepts optional selected-model identity without spreading configuration or model map. Input settings reuse it; legacy and v2 Key settings, dynamic provider label and custom-model resolution preserved. Actual nine-row SFC fixture with1000config and500model getters reads17000/8500 before and0/0 after; no whole-page latency claim.",
+        "Menu snapshot reads supplied image config instead of global config, rebuild signature includes actual menu structure and UI language. Target language, shortcut and legacy display changes no longer rebuild. Remove unused target-language/shortcut computation, two freeze wrappers and obsolete group/fallback fields. Current preview/action labels preserved.",
+        "All native menu updates and rebuild writes share one serial queue. Updates capture settings/plan and accepted request order, read state once and recheck active tab inside queue; old queries/writes cannot finish after a newer menu mutation. Stop obsolete create rounds. Query/config/native/action failures handled; obsolete clicks cannot borrow new structure.",
+        "Shared tab store invalidates old queries on newer reads, authoritative messages, navigation and removal; document identity guards click before action and action response after navigation/close. Readers share pending latest query through a WeakMap and release finished entries; old consumers wait latest in-flight truth rather than returning default prematurely. No request-cycle recursion because stale reads only await later registered queries.",
+        "Extract contextMenuUpdates from installation/runtime to keep existing142body-line ceiling; both extracted behavior and lifecycle remain strict100. Remove previous build-only exemptions for runtime/query and register all three as mandatory coverage; no coverage threshold/exemption/size ceiling weakened."
+      ],
+      "newTests": {
+        "executedCases": 60,
+        "componentCases": 22,
+        "backgroundCases": 27,
+        "sharedQueryCases": 9,
+        "otherUnitCases": 2,
+        "staticDefinitions": 44,
+        "newFiles": [
+          "tests/featureMenuSettingsLifecycle.test.ts",
+          "tests/contextMenuRuntimeOwnership.test.ts",
+          "tests/tabTranslationQueryOwnership.test.ts"
+        ],
+        "extendedFiles": [
+          "tests/configValidation.test.ts",
+          "tests/tabTranslationState.test.ts"
+        ],
+        "originalComparison": {
+          "baselineHead": "550871a598108d90a9934a82143dbb4d7467a60f",
+          "sourceFiles": 9,
+          "executed": 58,
+          "failed": 46,
+          "passed": 12,
+          "unhandledErrors": 2,
+          "boundary": "Same final actual cached SFC template/Linkedom and controlled background API harness. Old error-path rejections are reproduced; current final suite has zero unhandled. Failed scenarios are not independent bug counts."
+        }
+      },
+      "strictCoverage": {
+        "testFiles": 10,
+        "cases": 171,
+        "modules": {
+          "src/app/background/contextMenuPreferences.ts": {
+            "lines": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 1,
+              "covered": 1,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 6,
+              "covered": 6,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/app/background/contextMenuRuntime.ts": {
+            "lines": {
+              "total": 105,
+              "covered": 105,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 7,
+              "covered": 7,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 105,
+              "covered": 105,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 73,
+              "covered": 73,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/app/background/contextMenuUpdates.ts": {
+            "lines": {
+              "total": 34,
+              "covered": 34,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 34,
+              "covered": 34,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 37,
+              "covered": 37,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/app/background/imageContextMenu.ts": {
+            "lines": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 1,
+              "covered": 1,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 4,
+              "covered": 4,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/app/background/tabTranslationQuery.ts": {
+            "lines": {
+              "total": 36,
+              "covered": 36,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 1,
+              "covered": 1,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 36,
+              "covered": 36,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 24,
+              "covered": 24,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/app/background/tabTranslationState.ts": {
+            "lines": {
+              "total": 61,
+              "covered": 61,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 10,
+              "covered": 10,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 61,
+              "covered": 61,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 27,
+              "covered": 27,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/featureServices.ts": {
+            "lines": {
+              "total": 36,
+              "covered": 36,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 36,
+              "covered": 36,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 21,
+              "covered": 21,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/config/validation.ts": {
+            "lines": {
+              "total": 79,
+              "covered": 79,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 8,
+              "covered": 8,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 79,
+              "covered": 79,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 69,
+              "covered": 69,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/context-menu/domain.ts": {
+            "lines": {
+              "total": 108,
+              "covered": 108,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 11,
+              "covered": 11,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 108,
+              "covered": 108,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 43,
+              "covered": 43,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/core/context-menu/presentation.ts": {
+            "lines": {
+              "total": 24,
+              "covered": 24,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 2,
+              "covered": 2,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 24,
+              "covered": 24,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 5,
+              "covered": 5,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/settings/model/useSettingsActionContext.ts": {
+            "lines": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "thresholdsWeakened": false,
+        "buildOnlyExemptionsRemoved": [
+          "src/app/background/contextMenuRuntime.ts",
+          "src/app/background/tabTranslationQuery.ts"
+        ],
+        "runtimeBodyLines": 142,
+        "runtimeCeiling": 142
+      },
+      "integration": {
+        "files": 17,
+        "cases": 343,
+        "passed": 343,
+        "unhandledErrors": 0
+      },
+      "performance": {
+        "actualNineRowCredentialGetterFixture": {
+          "configFields": 1000,
+          "otherModels": 500,
+          "before": {
+            "unrelatedConfigReads": 17000,
+            "otherModelReads": 8500
+          },
+          "after": {
+            "unrelatedConfigReads": 0,
+            "otherModelReads": 0
+          }
+        },
+        "stateQueriesPerMenuUpdate": 1,
+        "rebuildOnIrrelevantDisplayLanguageHotkeyChange": 0,
+        "boundary": "Controlled work counts and behavior only; no page latency or provider speed claim."
+      },
+      "browser": {
+        "passed": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "finalBrowserFrontmost": false,
+        "cases": [
+          "nine functional assignments render model-specific credential hints without requiring provider requests",
+          "independent input selection clears old model, follows default and latest choice wins while global default stays fixed",
+          "AI assignment selects compatible provider and clears its independent model",
+          "connection button routes to assigned service and preserves website default",
+          "five settings entries retain image preference source and default preview contains three actions",
+          "page, area and site switches immediately update preview and persist separate saved preferences",
+          "image menu switch writes only the image-owned field and restores preview",
+          "master off disables entries and clears preview; reopening preserves user preferences",
+          "context menu controls and preview fit 390px layout",
+          "functional assignments and menu preview remain readable in narrow dark theme",
+          "reload retains independent input/reading providers and all final menu preferences"
+        ],
+        "consoleErrors": [],
+        "screenshotsInspected": [
+          "context-menu-light-390.png",
+          "feature-services-dark-390.png",
+          "context-menu-dark-390.png"
+        ],
+        "browserClosed": true,
+        "profileRemoved": true,
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-feature-menu-audit-production-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        },
+        "productionJavascriptSha256": "6839a48779dff2ac3815842e89e53bcf77c0cecd5e287a313ef6ed8406ff249b",
+        "persistenceCases": [
+          "reload retains independent input/reading providers and all final menu preferences"
+        ],
+        "quickClose": false,
+        "crossPageSync": false,
+        "latestWriteWins": true,
+        "evidenceBoundary": "Production Chrome extension actual Vue/Element Plus functional service assignment and context-menu settings. Preview, native select/switch, connection routing, persistence and narrow light/dark layout. Background races use controlled API regression tests; OS context-menu interaction and live providers are not asserted."
+      },
+      "architecture": {
+        "selectedFiles": [
+          "tests/architecture/moduleBoundaries.test.ts",
+          "tests/architecture/sourceFileHeaders.test.ts",
+          "tests/architecture/verificationOwnership.test.ts"
+        ],
+        "files": 3,
+        "cases": 831,
+        "passed": 829,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3
+      },
+      "externalMain": {
+        "primaryHead": "510683f2d60985bb4494d6a9cf9ada2bb3b83acf",
+        "primaryClean": true,
+        "cachedOrigin": "4b34f3d9ac3326ba0b4bc7ee35190078a006b376",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/en/guide/webpage-translation.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/guide/webpage-translation.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/reports/settings-ui-polish-20261006/README.md",
+          "docs/reports/settings-ui-polish-20261006/cloud-compatibility-report.json",
+          "docs/reports/settings-ui-polish-20261006/cloud-delete-loading.png",
+          "docs/reports/settings-ui-polish-20261006/delete-loading-report.json",
+          "docs/reports/settings-ui-polish-20261006/key-policy-menu.png",
+          "docs/reports/settings-ui-polish-20261006/layout-report.json",
+          "docs/reports/settings-ui-polish-20261006/learning-level.png",
+          "docs/reports/settings-ui-polish-20261006/reading-desktop.png",
+          "docs/reports/settings-ui-polish-20261006/request-limits.png",
+          "docs/reports/settings-ui-polish-20261006/resources-current.png",
+          "docs/reports/settings-ui-polish-20261006/resources-management.png",
+          "docs/reports/settings-ui-polish-20261006/resources-tesseract.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-dark-390.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-light-1440.png",
+          "docs/reports/settings-ui-polish-20261006/site-preference-menu.png",
+          "docs/reports/settings-ui-polish-20261006/speech-unified.png",
+          "docs/reports/settings-ui-polish-20261006/tooltip-selectable.png",
+          "docs/reports/settings-ui-polish-20261006/vision-single-result.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-drive-version-compat-ui-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-settings-layout-polish-test.cjs",
+          "scripts/testing/run-settings-reading-menu-ui-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/cloudSync.ts",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/localTts.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/image-translation/ui/image-ocr-settings.css",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/LocalTranslationModelSettings.vue",
+          "src/features/settings/ui/LocalTtsSettings.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/FieldHelp.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/services/ModelVisionSettings.vue",
+          "src/features/settings/ui/services/RequestLimitSettings.vue",
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/settings/ui/settings-sections.css",
+          "src/features/settings/ui/site-rule-workspace.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/google-drive/api.ts",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/platform/webdav/api.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/backgroundGoogleDriveSync.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/googleDriveApi.test.ts",
+          "tests/i18n.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/webDavApi.test.ts",
+          "tests/webDavBackup.test.ts",
+          "tests/webDavHttpIntegration.test.ts",
+          "tests/webDavProperties.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.e66b7ea53ace2cc3.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.af00cb4d384a4548.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/ja-JP.1691d1c911d69419.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.3efdea50649f4cd2.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.8d66f666ac96d59f.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts"
+        ],
+        "pendingFileCount": 224
+      },
+      "finalDelivery": {
+        "status": "pending-full-audit",
+        "requestedByUser": true,
+        "steps": [
+          "Complete all source/function/chain review and related fixes/performance/tests",
+          "Rebase onto then-latest verified main and reconcile changed/new source review",
+          "Review the whole resulting code and functional chains, resolve all related findings and verify",
+          "Merge the verified reviewed head using the repository delivery workflow"
+        ],
+        "performed": false
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 489,
+          "staticDefinitions": 6718
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Whole goal remains active;547production files pending",
+        "Strict/integration/native counts overlap; do not sum as unique cases",
+        "Native Edge settings only; OS context-menu, Firefox/userscript interaction and live providers not established",
+        "Quick-close/cross-page synchronization not tested in this UI scope",
+        "No reference repository or dependency changes; local unpublished userscript language resource pin retained",
+        "No remote fetch/rebase/merge42; whole audit required before final latest-main delivery"
+      ],
+      "intermediateCorrections": [
+        "Sequential select scenario now waits legitimate rerender and explicitly enables image feature in menu fixture; same final baseline harness retained",
+        "Native fixture corrected correlated-field save waiting, scoped select panel, explicit selection feature, visible switch hit area and final focus-check interface; five attempts preserved and repeated cases counted once",
+        "Config-ready port mock originally captured old resolved Promise; corrected shared thenable and current error paths verified zero unhandled",
+        "Removed freeze wrappers required explicit generic typing for nested title literals; type error repaired",
+        "First query ownership patch could return default while latest shared read pending; one-case intermediate regression reproduced and fixed",
+        "Architecture newly exposed growth/exemption mismatches repaired by extracting updater and making coverage mandatory; no ceilings raised",
+        "Final capability fixture required explicit Config parameter typing; repaired narrow literal inference without runtime behavior change and refreshed same final harness comparison/integration/types."
+      ]
     }
   ]
 }

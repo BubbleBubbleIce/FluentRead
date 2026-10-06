@@ -69,7 +69,7 @@
       <p>{{ selectedTextServiceUnavailableMessage }}请在上方选择可用服务。</p>
     </div>
     <section id="feature-services" class="service-assignments-section" data-settings-anchor="services" :data-settings-anchor-label="t('featureServices.assignments')" :aria-label="t('featureServices.assignments')">
-      <FeatureServiceSettings :config="config" :service-options="availableServiceOptions" @configure-service="openInputServiceSettings" />
+      <FeatureServiceSettings :active="viewActive && props.activeSection === 'settings-general'" :config="config" :service-options="availableServiceOptions" @configure-service="openInputServiceSettings" />
     </section>
   </section>
   <section v-if="hasVisitedSection('settings-sites')" v-show="props.activeSection === 'settings-sites'" id="settings-sites" class="settings-section site-settings-section">
@@ -422,7 +422,7 @@
         :title="t('contextMenuSettings.title')"
         :description="t('options.userscriptUnavailableDescription')"
       />
-      <ContextMenuSettings v-else :config="config" />
+      <ContextMenuSettings v-else :active="viewActive && props.activeSection === 'settings-translation' && (!props.activePanel || props.activePanel === 'context-menu')" :config="config" />
     </SettingsPanel>
 </section>
 

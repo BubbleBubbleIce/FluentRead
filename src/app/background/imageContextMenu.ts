@@ -7,5 +7,5 @@
 import {browserCapabilities} from '@/src/platform/browser/capabilities';
 import {config} from '@/src/services/config/store';
 
-export const imageMenuEnabled = (): boolean => browserCapabilities.imageTranslation && config.on !== false
-    && !config.disableImageTranslator && config.imageTranslationContextMenuEnabled !== false;
+export const imageMenuEnabled = (source: Pick<typeof config, 'on' | 'disableImageTranslator' | 'imageTranslationContextMenuEnabled'> = config): boolean => browserCapabilities.imageTranslation && source.on !== false
+    && !source.disableImageTranslator && source.imageTranslationContextMenuEnabled !== false;

@@ -93,12 +93,9 @@ export interface ContextMenuPlanItem {
     readonly menuItemId: string;
     readonly bucket: ContextMenuBucket;
     readonly role: ContextMenuItemRole;
-    readonly action: ContextMenuActionId | null;
-    readonly parentId: string | null;
-    /** 顶层项需要 contexts；子项由父项的场景决定，不再单独声明。 */
-    readonly contexts: readonly string[] | null;
-    /** 仅为“网站已关闭”兜底而创建的项，正常状态下保持隐藏。 */
-    readonly fallbackOnly: boolean;
+    readonly action: ContextMenuActionId;
+    /** 每个场景直接注册一级入口，不生成子菜单。 */
+    readonly contexts: readonly string[];
 }
 
 export interface ContextMenuTitleDescriptor {
@@ -152,19 +149,15 @@ function entriesInBucket(bucket: ContextMenuBucket): readonly ContextMenuEntryDe
     return CONTEXT_MENU_ENTRIES.filter((entry) => entry.buckets.includes(bucket));
 }
 
-function planItem(item: ContextMenuPlanItem): ContextMenuPlanItem {
-    return Object.freeze(item);
-}
-
 function buildBucketPlan(bucket: ContextMenuBucket, toggles: ContextMenuEntryToggles): ContextMenuPlanItem[] {
     // 原生菜单同时命中多个条目时，Chrome 会自动折叠为带扩展名的子菜单。
     // 按目录优先选择与当前对象最相关的操作；保留已保存的其他偏好作为后备。
     const entry = entriesInBucket(bucket).find((entry) => toggles[entry.id]);
     if (!entry) return [];
-    return [planItem({
+    return [Object.freeze({
         menuItemId: contextMenuItemId(bucket, entry.id),
-        bucket, role: 'standalone', action: entry.id, parentId: null,
-        contexts: CONTEXT_MENU_BUCKET_CONTEXTS[bucket], fallbackOnly: false,
+        bucket, role: 'standalone', action: entry.id,
+        contexts: CONTEXT_MENU_BUCKET_CONTEXTS[bucket],
     })];
 }
 
@@ -181,9 +174,7 @@ function definitionOf(action: ContextMenuActionId): ContextMenuEntryDefinition {
     return CONTEXT_MENU_ENTRIES.find((entry) => entry.id === action)!;
 }
 
-function presentation(item: ContextMenuItemPresentation): ContextMenuItemPresentation {
-    return Object.freeze(item);
-}
+type ActionPresentation = ContextMenuItemPresentation & {readonly action: ContextMenuActionId};
 
 function resolveTranslateState(action: ContextMenuActionId, state: ContextMenuPageState): ContextMenuTitleState {
     if (action === 'toggleSite') return 'disableSite';
@@ -194,12 +185,12 @@ function resolveStandalone(
     item: ContextMenuPlanItem,
     state: ContextMenuPageState,
     options: ContextMenuDisplayOptions,
-): ContextMenuItemPresentation {
-    const action = item.action!;
+): ActionPresentation {
+    const action = item.action;
     if (state.isSiteDisabled) {
         // 网站被关闭时不留死入口：能承载网站开关的场景改写为恢复，其余场景直接隐藏。
         const canRecover = bucketHasSiteToggle(item.bucket);
-        return presentation({
+        return Object.freeze<ActionPresentation>({
             menuItemId: item.menuItemId,
             visible: canRecover,
             title: {role: 'standalone', state: 'enableSite', withTargetLanguage: false, withShortcut: false},
@@ -208,7 +199,7 @@ function resolveStandalone(
     }
     const definition = definitionOf(action);
     const titleState = resolveTranslateState(action, state);
-    return presentation({
+    return Object.freeze<ActionPresentation>({
         menuItemId: item.menuItemId,
         visible: true,
         title: {
@@ -227,6 +218,6 @@ export function resolveContextMenuPresentation(
     plan: readonly ContextMenuPlanItem[],
     state: ContextMenuPageState,
     options: ContextMenuDisplayOptions,
-): readonly ContextMenuItemPresentation[] {
+): readonly ActionPresentation[] {
     return plan.map((item) => resolveStandalone(item, state, options));
 }

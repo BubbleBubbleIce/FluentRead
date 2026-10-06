@@ -49,6 +49,19 @@ describe('翻译服务凭据校验', () => {
         expect(getMissingCredentialMessage(services.deepseek, config)).toContain('API Key');
     });
 
+    it('独立功能模型只覆盖本次校验身份，保留默认模型、动态服务名与自定义模型解析', () => {
+        const service = 'custom:team';
+        const config = {model: {[service]: 'main'}, customModel: {[service]: 'private'}, token: {},
+            customOpenAIProviders: [{id: service, name: '团队网关', endpoint: 'https://gateway.example/v1', models: ['private']}],
+            requireApiKey: {[createApiKeyRequirementKey(service, 'private')]: false, [createApiKeyRequirementKey(service, '')]: false}};
+        expect(getMissingCredentialMessage(service, config, customModelString)).toBeNull();
+        expect(getMissingCredentialMessage(service, config, '')).toBeNull();
+        expect(getMissingCredentialMessage(service, config, 'other')).toContain('团队网关 需要 API Key');
+        expect(getMissingCredentialMessage(service, config)).toContain('API Key');
+        expect(config.model[service]).toBe('main');
+        expect(config.customModel[service]).toBe('private');
+    });
+
     it('保留 DeepLX 可选令牌的行为', () => {
         expect(getMissingCredentialMessage(services.deeplx, { token: {} })).toBeNull();
     });

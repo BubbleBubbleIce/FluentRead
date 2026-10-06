@@ -6,6 +6,11 @@ import {
 import {isBrowserTabId} from '@/src/platform/browser/ids';
 
 describe('后台标签页翻译状态', () => {
+    it('文档身份跨状态写入与重复捕获保持，导航或关闭后失效', () => {
+        const store = new TabTranslationStateStore(), first = store.captureDocument(1), duplicate = store.captureDocument(1);
+        store.setTranslated(1,true);expect(first()).toBe(true);expect(duplicate()).toBe(true);store.reset(1);expect(first()).toBe(false);
+        const next = store.captureDocument(1);store.delete(1);expect(next()).toBe(false);expect(store.captureDocument(1)()).toBe(true);
+    });
     it('preserves explicit result status and clears it for restore or legacy updates', () => {
         const store = new TabTranslationStateStore();
         expect(store.setTranslated(1, true, 'error').toolbarStatus).toBe('error');

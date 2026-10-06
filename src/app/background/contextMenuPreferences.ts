@@ -1,7 +1,7 @@
 /**
  * @file src/app/background/contextMenuPreferences.ts
  * 文件职责：把共享配置和浏览器能力读成右键菜单需要的一份快照，决定哪些入口可用、菜单标题带什么信息。
- * 主要内容：合并总开关、各入口偏好与功能可用性，解析界面语言、目标语言名和全文翻译快捷键显示名，并给出用于判断是否需要重建菜单的签名。
+ * 主要内容：从同一配置来源合并总开关、各入口偏好、功能可用性和界面语言，签名只包含实际影响结构或动作标题的字段；保留旧附加信息字段的读取兼容。
  * 模块边界：本文件只读配置，不创建菜单、不发送消息、不渲染标题；结构推导属于 core/context-menu，菜单生命周期属于 contextMenuRuntime。
  */
 import {
@@ -9,14 +9,10 @@ import {
     type ContextMenuDisplayOptions,
     type ContextMenuEntryToggles,
 } from '@/src/core/context-menu/domain';
-import {parseHotkey, resolveConfiguredHotkey} from '@/src/core/hotkey';
 import {browserCapabilities} from '@/src/platform/browser/capabilities';
 import {config} from '@/src/services/config/store';
 import {imageMenuEnabled} from './imageContextMenu';
-import {
-    getContextMenuTargetLanguage,
-    type ContextMenuTitleContext,
-} from '@/src/core/context-menu/presentation';
+import {type ContextMenuTitleContext} from '@/src/core/context-menu/presentation';
 import {normalizeUiLanguage} from '@/src/core/i18n';
 
 export interface ContextMenuSettingsSnapshot {
@@ -31,20 +27,13 @@ export interface ContextMenuSettingsSnapshot {
 
 type ContextMenuConfigSource = typeof config;
 
-function resolveShortcutDisplayName(source: ContextMenuConfigSource): string {
-    const configured = resolveConfiguredHotkey(source.floatingBallHotkey, source.customFloatingBallHotkey);
-    if (!configured || configured === 'none') return '';
-    const parsed = parseHotkey(configured);
-    return parsed.isValid ? parsed.displayName : '';
-}
-
 /** 读取当前配置下右键菜单应有的样子；调用方只比较 signature，不需要逐字段比对。 */
 export function readContextMenuSettings(source: ContextMenuConfigSource = config): ContextMenuSettingsSnapshot {
     const pluginOn = source.on !== false;
     const language = normalizeUiLanguage(source.uiLanguage);
     const toggles = resolveContextMenuEntryToggles(source.contextMenuEntries, {
         selectionTranslation: pluginOn && source.selectionTranslatorMode !== 'disabled' && source.disableSelectionTranslator !== true,
-        imageTranslation: imageMenuEnabled(),
+        imageTranslation: imageMenuEnabled(source),
         areaTranslation: pluginOn && browserCapabilities.areaTranslation && source.selectionAreaEnabled === true,
     });
     const display: ContextMenuDisplayOptions = {
@@ -53,8 +42,8 @@ export function readContextMenuSettings(source: ContextMenuConfigSource = config
     };
     const titleContext: ContextMenuTitleContext = {
         language,
-        targetLanguage: display.showTargetLanguage ? getContextMenuTargetLanguage(source.to, language) : '',
-        shortcut: display.showShortcut ? resolveShortcutDisplayName(source) : '',
+        targetLanguage: '',
+        shortcut: '',
     };
     const enabled = pluginOn && source.contextMenuEnabled !== false;
     return {
@@ -62,6 +51,6 @@ export function readContextMenuSettings(source: ContextMenuConfigSource = config
         toggles,
         display,
         titleContext,
-        signature: JSON.stringify([enabled, toggles, display, titleContext]),
+        signature: JSON.stringify([enabled, toggles, language]),
     };
 }
