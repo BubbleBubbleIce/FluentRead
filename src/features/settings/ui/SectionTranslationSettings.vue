@@ -24,7 +24,7 @@
         </div>
       </div>
     </SettingsItem>
-    <QuickTranslationProfiles :config="props.config" action="section" :profiles="props.config.quickTranslationProfiles"
+    <QuickTranslationProfiles :active="props.active" :config="props.config" action="section" :profiles="props.config.quickTranslationProfiles"
       @update:profiles="props.config.quickTranslationProfiles = $event" />
   </SettingsGroup>
   <CustomHotkeyInput

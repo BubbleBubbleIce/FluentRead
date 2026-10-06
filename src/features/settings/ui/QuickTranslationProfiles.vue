@@ -1,7 +1,7 @@
 <!--
  * @file src/features/settings/ui/QuickTranslationProfiles.vue
  * 文件职责：提供悬浮、全文与局部容器翻译的多方案设置界面，让每个额外快捷键独立选择翻译服务、模型、目标语言和展示策略。
- * 主要内容：按动作筛选并编辑快捷翻译方案，复用快捷键录制与服务图标组件，聚合内置和自定义模型，并在新增、启停、删除及跨方案热键去重后发出完整配置快照。
+ * 主要内容：按动作筛选并编辑快捷翻译方案，复用快捷键录制与服务图标组件，聚合内置和自定义模型，并在新增、启停、删除及跨方案热键去重后发出最新配置快照；按活跃配置、方案生命周期、字段版本与录制会话限定旧事件，确认复验容量与全部旧入口冲突。
  * 模块边界：组件只编辑父级传入的 QuickTranslationProfile 列表，不直接保存 Config、不注册网页快捷键或执行翻译；配置归一化与运行时路由仍由 core 和对应 feature 负责。
  -->
 <template>
@@ -23,10 +23,10 @@
         <button
           type="button"
           class="add-button"
-          :disabled="isAtCapacity"
+          :disabled="!active || isAtCapacity"
           :title="isAtCapacity ? t('quickTranslation.capacityLimit', {count: MAX_QUICK_TRANSLATION_PROFILES}) : ''"
           :data-testid="`quick-profile-add-${action}`"
-          @click="addProfile($event)"
+          :onClick="addAction"
         >
           <span aria-hidden="true">＋</span>
           {{ translateLegacy('添加') }}
@@ -36,47 +36,47 @@
 
     <div v-if="visibleProfiles.length" class="profile-list">
       <article
-        v-for="profile in visibleProfiles"
-        :key="profile.id"
+        v-for="row in rows"
+        :key="row.profile.id"
         class="profile-card"
-        :class="{ 'is-disabled': !profile.enabled || !profile.hotkey, 'is-expanded': isExpanded(profile.id), 'is-unavailable': !isProfileAvailable(profile) }"
-        :data-profile-id="profile.id"
+        :class="{ 'is-disabled': !row.profile.enabled || !row.profile.hotkey, 'is-expanded': isExpanded(row.profile.id), 'is-unavailable': !isProfileAvailable(row.profile) }"
+        :data-profile-id="row.profile.id"
       >
         <div class="profile-summary-row">
           <button
             type="button"
             class="profile-summary"
-            :aria-expanded="isExpanded(profile.id)"
-            :aria-controls="editorId(profile.id)"
-            @click="toggleExpanded(profile.id)"
+            :aria-expanded="isExpanded(row.profile.id)"
+            :aria-controls="editorId(row.profile.id)"
+            :onClick="row.toggle"
           >
-            <kbd :class="{ empty: !profile.hotkey }">{{ hotkeyLabel(profile.hotkey) }}</kbd>
+            <kbd :class="{ empty: !row.profile.hotkey }">{{ hotkeyLabel(row.profile.hotkey) }}</kbd>
             <ServiceIcon
-              :service="effectiveService(profile)"
-              :label="serviceLabel(effectiveService(profile))"
+              :service="effectiveService(row.profile)"
+              :label="serviceLabel(effectiveService(row.profile))"
               size="small"
             />
             <span class="service-summary">
-              <strong>{{ profileSummaryTitle(profile) }}</strong>
-              <small :class="{ warning: !isProfileAvailable(profile) }">
-                {{ profileSummaryDetail(profile) }}
+              <strong>{{ profileSummaryTitle(row.profile) }}</strong>
+              <small :class="{ warning: !isProfileAvailable(row.profile) }">
+                {{ profileSummaryDetail(row.profile) }}
               </small>
             </span>
             <span class="summary-chevron" aria-hidden="true">⌄</span>
           </button>
 
           <el-switch
-            :model-value="profile.enabled && Boolean(profile.hotkey)"
-            :disabled="!profile.hotkey"
+            :model-value="row.profile.enabled && Boolean(row.profile.hotkey)"
+            :disabled="!active || !row.profile.hotkey"
             class="profile-switch"
-            :aria-label="profileSwitchLabel(profile)"
-            @update:model-value="setEnabled(profile.id, $event)"
+            :aria-label="profileSwitchLabel(row.profile)"
+            :onUpdate:modelValue="row.enabled"
           />
         </div>
 
         <div
-          v-if="isExpanded(profile.id)"
-          :id="editorId(profile.id)"
+          v-if="isExpanded(row.profile.id)"
+          :id="editorId(row.profile.id)"
           class="profile-editor"
         >
           <label class="editor-field">
@@ -84,33 +84,33 @@
             <button
               type="button"
               class="hotkey-button"
-              :class="{ empty: !profile.hotkey }"
-              :data-testid="`quick-profile-hotkey-${profile.id}`"
-              @click="openHotkeyEditor(profile.id, $event)"
+              :class="{ empty: !row.profile.hotkey }"
+              :data-testid="`quick-profile-hotkey-${row.profile.id}`"
+              :onClick="row.open"
             >
-              <kbd>{{ hotkeyLabel(profile.hotkey) }}</kbd>
-              <small>{{ profile.hotkey ? t('quickTranslation.clickEdit') : t('quickTranslation.clickRecord') }}</small>
+              <kbd>{{ hotkeyLabel(row.profile.hotkey) }}</kbd>
+              <small>{{ row.profile.hotkey ? t('quickTranslation.clickEdit') : t('quickTranslation.clickRecord') }}</small>
             </button>
-            <small v-if="hotkeyConflictWarning(profile.hotkey)" class="field-hint field-warning">
-              {{ t('quickTranslation.systemConflict', {warning: hotkeyConflictWarning(profile.hotkey)}) }}
+            <small v-if="hotkeyConflictWarning(row.profile.hotkey)" class="field-hint field-warning">
+              {{ t('quickTranslation.systemConflict', {warning: hotkeyConflictWarning(row.profile.hotkey)}) }}
             </small>
           </label>
 
           <label class="editor-field">
             <span>{{ translateLegacy('服务') }}</span>
             <el-select
-              :model-value="profile.service"
+              :model-value="row.profile.service"
               :placeholder="t('quickTranslation.followDefault', {value: serviceLabel(config.service)})"
-              :aria-label="t('quickTranslation.translationServiceAria', {hotkey: hotkeyLabel(profile.hotkey)})"
-              :data-testid="`quick-profile-service-${profile.id}`"
-              @update:model-value="setService(profile.id, $event)"
+              :aria-label="t('quickTranslation.translationServiceAria', {hotkey: hotkeyLabel(row.profile.hotkey)})"
+              :data-testid="`quick-profile-service-${row.profile.id}`"
+              :disabled="!active" :onUpdate:modelValue="row.service"
               filterable
             >
               <el-option :label="t('quickTranslation.followDefault', {value: serviceLabel(config.service)})" value="" />
               <el-option
-                v-if="profile.service && !isProfileAvailable(profile)"
-                :label="t('quickTranslation.serviceUnavailable', {service: serviceLabel(profile.service)})"
-                :value="profile.service"
+                v-if="row.profile.service && !isProfileAvailable(row.profile)"
+                :label="t('quickTranslation.serviceUnavailable', {service: serviceLabel(row.profile.service)})"
+                :value="row.profile.service"
                 disabled
               />
               <el-option
@@ -122,40 +122,40 @@
             </el-select>
           </label>
 
-          <label v-if="usesModel(profile)" class="editor-field">
+          <label v-if="usesModel(row.profile)" class="editor-field">
             <span>{{ translateLegacy('模型') }}</span>
             <el-select
-              :model-value="profile.model"
-              :placeholder="modelDefaultOptionLabel(profile)"
-              :aria-label="t('quickTranslation.translationModelAria', {hotkey: hotkeyLabel(profile.hotkey)})"
-              :data-testid="`quick-profile-model-${profile.id}`"
-              @update:model-value="setModel(profile.id, $event)"
+              :model-value="row.profile.model"
+              :placeholder="modelDefaultOptionLabel(row.profile)"
+              :aria-label="t('quickTranslation.translationModelAria', {hotkey: hotkeyLabel(row.profile.hotkey)})"
+              :data-testid="`quick-profile-model-${row.profile.id}`"
+              :disabled="!active" :onUpdate:modelValue="row.model"
               filterable
             >
-              <el-option :label="modelDefaultOptionLabel(profile)" value="" />
+              <el-option :label="modelDefaultOptionLabel(row.profile)" value="" />
               <el-option
-                v-for="model in modelOptions(profile)"
+                v-for="model in row.modelChoices"
                 :key="model"
                 :label="model"
                 :value="model"
               />
             </el-select>
-            <small v-if="!profile.service" class="field-hint">{{ t('quickTranslation.pinServiceHint') }}</small>
+            <small v-if="!row.profile.service" class="field-hint">{{ t('quickTranslation.pinServiceHint') }}</small>
           </label>
 
           <label class="editor-field">
             <span>{{ translateLegacy('目标语言') }}</span>
             <el-select
-              :model-value="profile.targetLanguage"
+              :model-value="row.profile.targetLanguage"
               :placeholder="t('quickTranslation.followDefault', {value: languageLabel(config.to)})"
-              :aria-label="t('quickTranslation.targetLanguageAria', {hotkey: hotkeyLabel(profile.hotkey)})"
-              :data-testid="`quick-profile-target-${profile.id}`"
-              @update:model-value="setTargetLanguage(profile.id, $event)"
+              :aria-label="t('quickTranslation.targetLanguageAria', {hotkey: hotkeyLabel(row.profile.hotkey)})"
+              :data-testid="`quick-profile-target-${row.profile.id}`"
+              :disabled="!active" :onUpdate:modelValue="row.target"
               filterable
             >
               <el-option :label="t('quickTranslation.followDefault', {value: languageLabel(config.to)})" value="" />
               <el-option
-                v-for="option in languageOptions(profile)"
+                v-for="option in row.languageChoices"
                 :key="option.value"
                 :label="option.label"
                 :value="option.value"
@@ -165,35 +165,35 @@
 
           <GlossaryLibrarySelect
             v-if="config.glossaryLibraries.length || config.glossaryEnabled"
-            :model-value="profile.glossaryIds"
+            :model-value="row.profile.glossaryIds"
             :libraries="config.glossaryLibraries"
             :enabled="config.glossaryEnabled"
-              :unsupported="!supportsTranslationGlossary(effectiveService(profile), profile.model || configuredDefaultModel(effectiveService(profile)))"
-            @update:model-value="updateProfile(profile.id, {glossaryIds: $event})"
+              :unsupported="!supportsTranslationGlossary(effectiveService(row.profile), row.profile.model || configuredDefaultModel(effectiveService(row.profile)))"
+            :disabled="!active" :onUpdate:modelValue="row.glossary"
           />
 
           <label class="editor-field">
             <span>{{ translateLegacy('显示方式') }}</span>
             <el-select
-              :model-value="displaySelectValue(profile)"
-              :disabled="isGoogleProfile(profile)"
-              :aria-label="t('quickTranslation.displayModeAria', {hotkey: hotkeyLabel(profile.hotkey)})"
-              :data-testid="`quick-profile-display-${profile.id}`"
-              @update:model-value="setDisplayMode(profile.id, $event)"
+              :model-value="displaySelectValue(row.profile)"
+              :disabled="!active || isGoogleProfile(row.profile)"
+              :aria-label="t('quickTranslation.displayModeAria', {hotkey: hotkeyLabel(row.profile.hotkey)})"
+              :data-testid="`quick-profile-display-${row.profile.id}`"
+              :onUpdate:modelValue="row.display"
             >
               <el-option :label="t('quickTranslation.followDefault', {value: defaultDisplayModeLabel})" value="inherit" />
               <el-option :label="translateLegacy('双语对照')" value="bilingual" />
-              <el-option :label="translateLegacy('仅译文')" value="translation-only" :disabled="isGoogleProfile(profile)" />
+              <el-option :label="translateLegacy('仅译文')" value="translation-only" :disabled="!active || isGoogleProfile(row.profile)" />
             </el-select>
           </label>
 
           <label v-if="action === 'full-page'" class="editor-field">
             <span>{{ t('quickTranslation.field.range') }}</span>
             <el-select
-              :model-value="profile.fullPageMode"
-              :aria-label="t('quickTranslation.fullPageRangeAria', {hotkey: hotkeyLabel(profile.hotkey)})"
-              :data-testid="`quick-profile-range-${profile.id}`"
-              @update:model-value="setFullPageMode(profile.id, $event)"
+              :model-value="row.profile.fullPageMode"
+              :aria-label="t('quickTranslation.fullPageRangeAria', {hotkey: hotkeyLabel(row.profile.hotkey)})"
+              :data-testid="`quick-profile-range-${row.profile.id}`"
+              :disabled="!active" :onUpdate:modelValue="row.range"
             >
               <el-option :label="t('quickTranslation.followDefault', {value: defaultFullPageModeLabel})" value="inherit" />
               <el-option :label="translateLegacy('按阅读进度')" value="viewport" />
@@ -205,8 +205,8 @@
             <button
               type="button"
               class="delete-button"
-              :aria-label="t('quickTranslation.deleteAria', {profile: profileAccessibleName(profile)})"
-              @click="removeProfile(profile.id, $event)"
+              :aria-label="t('quickTranslation.deleteAria', {profile: profileAccessibleName(row.profile)})"
+              :disabled="!active" :onClick="row.remove"
             >
               {{ t('quickTranslation.delete') }}
             </button>
@@ -216,17 +216,20 @@
     </div>
 
     <CustomHotkeyInput
-      v-model="hotkeyEditorOpen"
-      :current-value="hotkeyEditorValue"
-      :validate="validateProfileHotkey"
-      @confirm="confirmHotkey"
-      @cancel="closeHotkeyEditor"
+      v-if="recorder"
+      :key="recorder.sequence"
+      :model-value="true"
+      :current-value="recorder.hotkey"
+      :validate="recorderActions.validate"
+      :onUpdate:modelValue="recorderActions.update"
+      :onConfirm="recorderActions.confirm"
+      :onCancel="recorderActions.cancel"
     />
   </section>
 </template>
 
 <script setup lang="ts">
-import {computed, defineAsyncComponent, nextTick, ref, watch} from 'vue'
+import {computed, defineAsyncComponent, nextTick, ref, shallowRef, watch} from 'vue'
 import {ElMessage} from 'element-plus'
 import {
   customModelString,
@@ -242,6 +245,10 @@ import {
   withCustomOpenAIServiceOptions,
 } from '@/src/core/config/customOpenAI'
 import type {Config} from '@/src/core/config/model'
+import {resolveParagraphCopyHotkey} from '@/src/core/config/paragraphCopy'
+import {normalizeGlossaryIds} from '@/src/core/glossary'
+import {useSettingsActionContext} from '../model/useSettingsActionContext'
+import {useQuickProfileDraft} from '../model/useQuickProfileDraft'
 import {resolveAreaTranslationHotkey} from '@/src/core/config/areaTranslation'
 import {resolveSectionTranslationHotkey} from '@/src/core/config/sectionTranslation'
 import {
@@ -251,7 +258,6 @@ import {
   inputBoxTranslationTriggerHotkey,
   MAX_QUICK_TRANSLATION_PROFILES,
   type QuickTranslationDisplayMode,
-  type QuickTranslationFullPageMode,
   type QuickTranslationProfile,
 } from '@/src/core/config/quickTranslation'
 import {canonicalizeHotkey, parseHotkey, resolveConfiguredHotkey, validateHotkeyConflicts} from '@/src/core/hotkey'
@@ -261,8 +267,6 @@ import ServiceIcon from '@/src/ui/components/ServiceIcon.vue'
 import {useUiI18n} from '@/src/ui/i18n'
 
 const CustomHotkeyInput = defineAsyncComponent(() => import('@/src/ui/components/CustomHotkeyInput.vue'))
-
-type SelectValue = string | number | boolean | undefined
 
 interface ServiceOption {
   value: string
@@ -274,11 +278,12 @@ interface LanguageOption {
   label: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   config: Config
   action: QuickTranslationAction
   profiles: QuickTranslationProfile[]
-}>()
+  active?: boolean
+}>(), {active: true})
 
 const emit = defineEmits<{
   'update:profiles': [profiles: QuickTranslationProfile[]]
@@ -286,246 +291,192 @@ const emit = defineEmits<{
 
 const {language, t, translateLegacy} = useUiI18n()
 
-const expandedIds = ref(new Set<string>())
-const sectionRoot = ref<HTMLElement | null>(null)
-const hotkeyEditorOpen = ref(false)
-const hotkeyEditorProfileId = ref('')
-const hotkeyEditorTrigger = ref<HTMLElement | null>(null)
-const creatingProfile = ref(false)
-
+const profileDraft = useQuickProfileDraft(() => props.profiles, () => [props.config, props.action])
+const {active, capture, revision} = useSettingsActionContext(() => props.active, () => [props.config, props.action])
+const defaultServiceRevision = ref(0)
+watch(() => props.config.service, () => {defaultServiceRevision.value += 1}, {flush: 'sync'})
+const expandedIds = ref(new Set<string>()), editorEpochs = ref(new Map<string, number>())
+const sectionRoot = shallowRef<HTMLElement | null>(null)
+type Recorder = {sequence: number; id: string; hotkey: string; token?: symbol; hotkeyToken?: symbol; current: () => boolean; trigger: HTMLElement | null}
+const recorder = shallowRef<Recorder | null>(null)
+const recorderRevision = ref(0)
 const heading = computed(() => t(`quickTranslation.heading.${quickTranslationActionKey(props.action)}`))
-const visibleProfiles = computed(() => props.profiles.filter((profile) => profile.action === props.action))
+const visibleProfiles = computed(() => profileDraft.profiles.value.filter(profile => profile.action === props.action))
+const profileIndex = computed(() => new Map(visibleProfiles.value.map(profile => [profile.id, profile])))
 const isAtCapacity = computed(() => visibleProfiles.value.length >= MAX_QUICK_TRANSLATION_PROFILES)
 const showCapacity = computed(() => visibleProfiles.value.length >= MAX_QUICK_TRANSLATION_PROFILES - 1)
-const allServiceOptions = computed<ServiceOption[]>(() => withCustomOpenAIServiceOptions(
-  options.services,
-  props.config.customOpenAIProviders,
-)
-  .filter((option) => !option.disabled)
-  .map((option) => ({value: option.value, label: translateLegacy(option.label)})))
+const allServiceOptions = computed<ServiceOption[]>(() => withCustomOpenAIServiceOptions(options.services, props.config.customOpenAIProviders)
+  .filter(option => !option.disabled).map(option => ({value: option.value, label: translateLegacy(option.label)})))
 const serviceOptions = computed<ServiceOption[]>(() => filterAvailableTranslationServices(allServiceOptions.value))
+const serviceLabels = computed(() => new Map(allServiceOptions.value.map(option => [option.value, option.label])))
 const defaultDisplayModeLabel = computed(() => translateLegacy(props.config.display === 0 ? '仅译文' : '双语对照'))
-const defaultFullPageModeLabel = computed(() => props.config.fullPageTranslationMode === 'all'
-  ? translateLegacy('翻译到页底')
-  : translateLegacy('按阅读进度'))
-const hotkeyEditorValue = computed(() => creatingProfile.value
-  ? ''
-  : props.profiles.find((profile) => profile.id === hotkeyEditorProfileId.value)?.hotkey || '')
-
-watch(
-  () => props.profiles.map((profile) => profile.id),
-  (ids) => {
-    const existing = new Set(ids)
-    expandedIds.value = new Set([...expandedIds.value].filter((id) => existing.has(id)))
-    if (hotkeyEditorProfileId.value && !existing.has(hotkeyEditorProfileId.value)) closeHotkeyEditor()
-  },
-)
-
-function emitProfiles(profiles: QuickTranslationProfile[]): void {
-  emit('update:profiles', profiles)
+const defaultFullPageModeLabel = computed(() => props.config.fullPageTranslationMode === 'all' ? translateLegacy('翻译到页底') : translateLegacy('按阅读进度'))
+const knownLanguageOptions = computed(() => (options.to as LanguageOption[]).map(option => ({...option,
+  label: getMultilingualTargetLanguageLabel(option.value, option.label, language.value),
+})))
+function currentProfile(id: string) {return profileIndex.value.get(id)}
+function emitProfiles(profiles: QuickTranslationProfile[]): void {profileDraft.publish(profiles);emit('update:profiles', profiles)}
+function updateProfile(profile: QuickTranslationProfile, patch: Partial<QuickTranslationProfile>): void {
+  if (currentProfile(profile.id) !== profile) return
+  emitProfiles(profileDraft.profiles.value.map(candidate => candidate.id === profile.id ? {...candidate, ...patch} : candidate))
 }
-
-function updateProfile(id: string, patch: Partial<QuickTranslationProfile>): void {
-  emitProfiles(props.profiles.map((profile) => profile.id === id ? {...profile, ...patch} : profile))
+function editorId(id: string): string {return `quick-translation-profile-${id}`}
+function isExpanded(id: string): boolean {return expandedIds.value.has(id)}
+function toggleExpanded(id: string): void {
+  const next = new Set(expandedIds.value)
+  if (next.has(id)) next.delete(id);else next.add(id)
+  expandedIds.value = next;editorEpochs.value = new Map(editorEpochs.value).set(id, (editorEpochs.value.get(id) || 0) + 1)
 }
-
-function addProfile(event?: MouseEvent): void {
-  if (isAtCapacity.value) {
-    ElMessage.warning(t('quickTranslation.capacityLimit', {count: MAX_QUICK_TRANSLATION_PROFILES}))
-    return
-  }
-  creatingProfile.value = true
-  hotkeyEditorProfileId.value = ''
-  hotkeyEditorTrigger.value = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null
-  hotkeyEditorOpen.value = true
+function eventTrigger(event?: MouseEvent): HTMLElement | null {return event?.currentTarget instanceof HTMLElement ? event.currentTarget : null}
+function focusAfterRender(current: () => boolean, before: Element | null, target: () => HTMLElement | null) {
+  void nextTick(() => {
+    if (!current() || (document.activeElement !== before && document.activeElement !== document.body)) return
+    const element = target();if (element?.isConnected) element.focus({preventScroll: true})
+  })
 }
-
-function removeProfile(id: string, event?: MouseEvent): void {
-  const index = visibleProfiles.value.findIndex((profile) => profile.id === id)
-  const focusTargetId = visibleProfiles.value[index + 1]?.id || visibleProfiles.value[index - 1]?.id || ''
-  emitProfiles(props.profiles.filter((profile) => profile.id !== id))
-  const nextExpanded = new Set(expandedIds.value)
-  nextExpanded.delete(id)
-  expandedIds.value = nextExpanded
-  if (hotkeyEditorProfileId.value === id) closeHotkeyEditor()
-  if (event?.currentTarget instanceof HTMLElement) {
-    void nextTick(() => {
+function ownsRecorder(value: Recorder): boolean {
+  return recorder.value === value && value.current() && (!value.id || (Boolean(currentProfile(value.id))
+    && profileDraft.token(value.id) === value.token && profileDraft.token(value.id, 'hotkey') === value.hotkeyToken))
+}
+function openRecorder(profile: QuickTranslationProfile | undefined, event?: MouseEvent) {
+  if (!active.value || recorder.value) return
+  if (!profile && isAtCapacity.value) {ElMessage.warning(t('quickTranslation.capacityLimit', {count: MAX_QUICK_TRANSLATION_PROFILES}));return}
+  recorder.value = {sequence: ++recorderRevision.value, id: profile?.id || '', hotkey: profile?.hotkey || '',
+    token: profile && profileDraft.token(profile.id), hotkeyToken: profile && profileDraft.token(profile.id, 'hotkey'), current: capture(), trigger: eventTrigger(event)}
+}
+function closeRecorder(value: Recorder, restoreFocus = true) {
+  if (recorder.value !== value) return
+  recorder.value = null;const pending = ++recorderRevision.value, current = capture()
+  if (restoreFocus) focusAfterRender(() => current() && pending === recorderRevision.value, document.activeElement, () => value.trigger)
+}
+watch(() => [revision.value, profileDraft.lineageRevision.value, recorder.value, visibleProfiles.value], () => {
+  const value = recorder.value;if (value && !ownsRecorder(value)) closeRecorder(value, false)
+  const ids = new Set(visibleProfiles.value.map(profile => profile.id))
+  if ([...expandedIds.value].some(id => !ids.has(id))) expandedIds.value = new Set([...expandedIds.value].filter(id => ids.has(id)))
+  for (const id of editorEpochs.value.keys()) if (!ids.has(id)) editorEpochs.value.delete(id)
+}, {flush: 'sync'})
+const addAction = computed(() => {
+  const current = capture(), sequence = recorderRevision.value
+  return (event?: MouseEvent) => {if (current() && sequence === recorderRevision.value) openRecorder(undefined, event)}
+})
+function removeProfile(profile: QuickTranslationProfile, event?: MouseEvent): void {
+  const index = visibleProfiles.value.findIndex(candidate => candidate.id === profile.id)
+  const focusId = visibleProfiles.value[index + 1]?.id || visibleProfiles.value[index - 1]?.id
+  const before = document.activeElement, restore = eventTrigger(event) === before
+  emitProfiles(profileDraft.profiles.value.filter(candidate => candidate.id !== profile.id))
+  if (restore) {const current = capture(), epoch = recorderRevision.value
+    focusAfterRender(() => current() && epoch === recorderRevision.value, before, () => {
       const cards = [...(sectionRoot.value?.querySelectorAll<HTMLElement>('.profile-card') || [])]
-      const targetCard = cards.find((card) => card.dataset.profileId === focusTargetId)
-      const target = targetCard?.querySelector<HTMLElement>('.profile-summary')
-        || sectionRoot.value?.querySelector<HTMLElement>('.add-button')
-      target?.focus({preventScroll: true})
+      return cards.find(card => card.dataset.profileId === focusId)?.querySelector<HTMLElement>('.profile-summary')
+        || sectionRoot.value?.querySelector<HTMLElement>('.add-button') || null
     })
   }
 }
-
-function isExpanded(id: string): boolean {
-  return expandedIds.value.has(id)
-}
-
-function toggleExpanded(id: string): void {
-  const next = new Set(expandedIds.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  expandedIds.value = next
-}
-
-function editorId(id: string): string {
-  return `quick-translation-profile-${id}`
-}
-
-function openHotkeyEditor(id: string, event?: MouseEvent): void {
-  creatingProfile.value = false
-  hotkeyEditorProfileId.value = id
-  hotkeyEditorTrigger.value = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null
-  hotkeyEditorOpen.value = true
-}
-
-function closeHotkeyEditor(): void {
-  const trigger = hotkeyEditorTrigger.value
-  hotkeyEditorOpen.value = false
-  creatingProfile.value = false
-  hotkeyEditorProfileId.value = ''
-  hotkeyEditorTrigger.value = null
-  void nextTick(() => trigger?.isConnected && trigger.focus({preventScroll: true}))
-}
-
-function hotkeyIdentity(hotkey: string): string {
-  return (canonicalizeHotkey(hotkey) || hotkey.trim()).toLocaleLowerCase()
-}
-
-function legacyHotkeyEntries(): Array<{hotkey: string, label: string}> {
+type ProfileField = keyof QuickTranslationProfile
+const rows = computed(() => visibleProfiles.value.map(profile => {
+  const current = capture(), token = profileDraft.token(profile.id), action = profileDraft.token(profile.id, 'action'), epoch = editorEpochs.value.get(profile.id)
+  const owns = () => current() && profileDraft.token(profile.id) === token && profileDraft.token(profile.id, 'action') === action
+    && editorEpochs.value.get(profile.id) === epoch && Boolean(currentProfile(profile.id))
+  const bind = (field: ProfileField, dependencies: ProfileField[], run: (profile: QuickTranslationProfile, value: unknown) => void, editor = true) => {
+    const versions = [field, ...dependencies].map(key => [key, profileDraft.token(profile.id, key)] as const)
+    const service = effectiveService(profile)
+    const defaultVersion = !profile.service && dependencies.includes('service') ? defaultServiceRevision.value : undefined
+    return (value: unknown) => {
+      if (!owns() || (editor && !isExpanded(profile.id)) || !versions.every(([key, version]) => profileDraft.token(profile.id, key) === version)) return
+      const latest = currentProfile(profile.id)!
+      if (defaultVersion !== undefined && defaultVersion !== defaultServiceRevision.value) return
+      if (dependencies.includes('service') && effectiveService(latest) !== service) return
+      run(latest, value)
+    }
+  }
+  return {profile, modelChoices: modelOptions(profile), languageChoices: languageOptions(profile),
+    toggle: () => {if (owns()) toggleExpanded(profile.id)},
+    open: (event?: MouseEvent) => {if (owns() && isExpanded(profile.id)) openRecorder(currentProfile(profile.id), event)},
+    remove: (event?: MouseEvent) => {if (owns() && isExpanded(profile.id)) removeProfile(currentProfile(profile.id)!, event)},
+    enabled: bind('enabled', ['hotkey'], setEnabled, false), service: bind('service', [], setService),
+    model: bind('model', ['service'], setModel), target: bind('targetLanguage', [], setTargetLanguage),
+    glossary: bind('glossaryIds', ['service','model'], setGlossary), display: bind('displayMode', ['service'], setDisplayMode), range: bind('fullPageMode', [], setFullPageMode),
+  }
+}))
+function hotkeyIdentity(hotkey: string): string {return (canonicalizeHotkey(hotkey) || hotkey.trim()).toLocaleLowerCase()}
+function legacyHotkeyEntries(): Array<{hotkey: string; label: string}> {
   const entries = [
     {hotkey: resolveConfiguredHotkey(props.config.hotkey, props.config.customHotkey), label: t('quickTranslation.defaultHover')},
     {hotkey: resolveConfiguredHotkey(props.config.floatingBallHotkey, props.config.customFloatingBallHotkey), label: t('quickTranslation.defaultFullPage')},
   ]
-  if (props.config.selectionAreaEnabled) {
-    entries.push({
-      hotkey: resolveAreaTranslationHotkey(props.config.selectionAreaHotkey, props.config.customSelectionAreaHotkey),
-      label: translateLegacy('圈选翻译'),
-    })
-  }
-  if (props.config.sectionTranslationHotkeyEnabled) {
-    entries.push({
-      hotkey: resolveSectionTranslationHotkey(props.config.sectionTranslationHotkey, props.config.customSectionTranslationHotkey),
-      label: t('sectionTranslation.settings.title'),
-    })
-  }
-  const inputBoxHotkey = inputBoxTranslationTriggerHotkey(props.config.inputBoxTranslationTrigger)
-  if (inputBoxHotkey) entries.push({hotkey: inputBoxHotkey, label: translateLegacy('输入框翻译')})
-  return entries.filter((entry) => Boolean(canonicalizeHotkey(entry.hotkey)))
+  if (props.config.selectionAreaEnabled) entries.push({hotkey: resolveAreaTranslationHotkey(props.config.selectionAreaHotkey, props.config.customSelectionAreaHotkey), label: translateLegacy('圈选翻译')})
+  if (props.config.paragraphCopyEnabled) entries.push({hotkey: resolveParagraphCopyHotkey(props.config.paragraphCopyHotkey, props.config.customParagraphCopyHotkey), label: t('paragraphCopy.settings.title')})
+  if (props.config.sectionTranslationHotkeyEnabled) entries.push({hotkey: resolveSectionTranslationHotkey(props.config.sectionTranslationHotkey, props.config.customSectionTranslationHotkey), label: t('sectionTranslation.settings.title')})
+  const input = inputBoxTranslationTriggerHotkey(props.config.inputBoxTranslationTrigger)
+  if (input) entries.push({hotkey: input, label: translateLegacy('输入框翻译')})
+  return entries.filter(entry => Boolean(canonicalizeHotkey(entry.hotkey)))
 }
-
 function selectionHotkey(): string {
-  if (props.config.selectionTranslatorMode === 'disabled') return ''
-  return resolveConfiguredHotkey(
-    props.config.selectionTranslatorTrigger,
-    props.config.customSelectionTranslatorHotkey,
-  )
+  return props.config.disableSelectionTranslator || props.config.selectionTranslatorMode === 'disabled' ? ''
+    : resolveConfiguredHotkey(props.config.selectionTranslatorTrigger, props.config.customSelectionTranslatorHotkey)
 }
-
-function validateProfileHotkey(hotkey: string): string {
-  const normalizedHotkey = hotkey === 'none' ? '' : canonicalizeHotkey(hotkey)
-  const identity = hotkeyIdentity(normalizedHotkey)
+function validateProfileHotkey(hotkey: string, id: string): string {
+  const identity = hotkeyIdentity(hotkey)
   if (!identity) return ''
-  const id = hotkeyEditorProfileId.value
-  const duplicate = props.profiles.some((profile) => (
-    profile.id !== id && hotkeyIdentity(profile.hotkey) === identity
-  ))
-  if (duplicate) return t('quickTranslation.duplicate')
-  const legacyConflict = legacyHotkeyEntries()
-    .find((entry) => hotkeyIdentity(entry.hotkey) === identity)
-  return legacyConflict
-    ? t('quickTranslation.legacyConflictEdit', {feature: legacyConflict.label})
-    : ''
+  if (profileDraft.profiles.value.some(profile => profile.id !== id && hotkeyIdentity(profile.hotkey) === identity)) return t('quickTranslation.duplicate')
+  const conflict = legacyHotkeyEntries().find(entry => hotkeyIdentity(entry.hotkey) === identity)
+  return conflict ? t('quickTranslation.legacyConflictEdit', {feature: conflict.label}) : ''
 }
-
-function confirmHotkey(hotkey: string): void {
-  const id = hotkeyEditorProfileId.value
-  const isCreating = creatingProfile.value
-  if (!id && !isCreating) return
-  const normalizedHotkey = hotkey === 'none' ? '' : canonicalizeHotkey(hotkey)
-  if (isCreating && !normalizedHotkey) {
-    ElMessage.warning(t('quickTranslation.recordFirst'))
-    return
-  }
-  const validationMessage = validateProfileHotkey(normalizedHotkey)
-  if (validationMessage) {
-    ElMessage.warning(validationMessage)
-    return
-  }
-  const identity = hotkeyIdentity(normalizedHotkey)
-  if (isCreating) {
-    const profile = {
-      ...createQuickTranslationProfile(props.action, props.profiles),
-      hotkey: normalizedHotkey,
-      enabled: true,
-    }
-    emitProfiles([...props.profiles, profile])
-    expandedIds.value = new Set([...expandedIds.value, profile.id])
-  } else {
-    updateProfile(id, {hotkey: normalizedHotkey, enabled: Boolean(normalizedHotkey)})
-  }
-  closeHotkeyEditor()
-  if (identity && hotkeyIdentity(selectionHotkey()) === identity) {
-    ElMessage.info(t('quickTranslation.selectionPrecedence'))
-  }
+function confirmHotkey(value: Recorder, hotkey: unknown) {
+  if (!ownsRecorder(value) || typeof hotkey !== 'string') return
+  const normalized = hotkey === 'none' ? '' : canonicalizeHotkey(hotkey)
+  if ((!normalized && hotkey !== 'none' && hotkey !== '') || (!value.id && !normalized)) {ElMessage.warning(t('quickTranslation.recordFirst'));return}
+  if (!value.id && isAtCapacity.value) {ElMessage.warning(t('quickTranslation.capacityLimit', {count: MAX_QUICK_TRANSLATION_PROFILES}));return}
+  const message = validateProfileHotkey(normalized, value.id)
+  if (message) {ElMessage.warning(message);return}
+  const profile = value.id ? currentProfile(value.id)! : {...createQuickTranslationProfile(props.action, profileDraft.profiles.value), hotkey: normalized, enabled: true}
+  closeRecorder(value)
+  if (value.id) updateProfile(profile, {hotkey: normalized, enabled: Boolean(normalized)})
+  else {emitProfiles([...profileDraft.profiles.value, profile]);expandedIds.value = new Set([...expandedIds.value, profile.id])}
+  if (normalized && hotkeyIdentity(selectionHotkey()) === hotkeyIdentity(normalized)) ElMessage.info(t('quickTranslation.selectionPrecedence'))
 }
-
-function setEnabled(id: string, value: SelectValue): void {
-  const profile = props.profiles.find((candidate) => candidate.id === id)
-  if (value && !profile?.hotkey) {
-    ElMessage.warning(t('quickTranslation.setFirst'))
-    return
+const recorderActions = computed(() => {
+  const value = recorder.value
+  return {validate: (hotkey: string) => value && ownsRecorder(value) ? validateProfileHotkey(hotkey, value.id) : '',
+    confirm: (hotkey: unknown) => {if (value) confirmHotkey(value, hotkey)},
+    cancel: () => {if (value && ownsRecorder(value)) closeRecorder(value)},
+    update: (visible: unknown) => {if (visible === false && value && ownsRecorder(value)) closeRecorder(value)},
   }
-  if (value && profile) {
-    const identity = hotkeyIdentity(profile.hotkey)
-    const legacyConflict = legacyHotkeyEntries()
-      .find((entry) => hotkeyIdentity(entry.hotkey) === identity)
-    if (legacyConflict) {
-      ElMessage.warning(t('quickTranslation.legacyConflictEnable', {feature: legacyConflict.label}))
-      return
-    }
+})
+function setEnabled(profile: QuickTranslationProfile, value: unknown): void {
+  if (typeof value !== 'boolean') return
+  if (value) {const conflict = validateProfileHotkey(profile.hotkey, profile.id)
+    if (!profile.hotkey || conflict) {ElMessage.warning(conflict || t('quickTranslation.setFirst'));return}
   }
-  updateProfile(id, {enabled: Boolean(value)})
+  if (profile.enabled !== value) updateProfile(profile, {enabled: value})
 }
-
-function setService(id: string, value: SelectValue): void {
-  const service = typeof value === 'string' ? value : ''
-  const profile = props.profiles.find((candidate) => candidate.id === id)
-  updateProfile(id, {service, model: ''})
-  if ((service || props.config.service) === services.google && profile?.displayMode !== 'bilingual') {
-    ElMessage.info(t('quickTranslation.googleNotice'))
-  }
+function setService(profile: QuickTranslationProfile, value: unknown): void {
+  if (typeof value !== 'string' || (value && !serviceOptions.value.some(option => option.value === value)) || profile.service === value) return
+  updateProfile(profile, {service: value, model: ''})
+  if ((value || props.config.service) === services.google && profile.displayMode !== 'bilingual') ElMessage.info(t('quickTranslation.googleNotice'))
 }
-
-function setModel(id: string, value: SelectValue): void {
-  const model = typeof value === 'string' ? value : ''
-  const profile = props.profiles.find((candidate) => candidate.id === id)
-  if (model && profile && !profile.service) {
-    updateProfile(id, {service: props.config.service, model})
-    return
-  }
-  updateProfile(id, {model})
+function setModel(profile: QuickTranslationProfile, value: unknown): void {
+  if (typeof value !== 'string' || !usesModel(profile) || !isProfileAvailable(profile) || (value && !modelOptions(profile).includes(value)) || value === profile.model) return
+  updateProfile(profile, {model: value, ...(value && !profile.service ? {service: props.config.service} : {})})
 }
-
-function setTargetLanguage(id: string, value: SelectValue): void {
-  updateProfile(id, {targetLanguage: typeof value === 'string' ? value : ''})
+function setTargetLanguage(profile: QuickTranslationProfile, value: unknown): void {
+  if (typeof value !== 'string' || (value && !languageOptions(profile).some(option => option.value === value)) || profile.targetLanguage === value) return
+  updateProfile(profile, {targetLanguage: value})
 }
-
-function setDisplayMode(id: string, value: SelectValue): void {
-  if (value !== 'inherit' && value !== 'bilingual' && value !== 'translation-only') return
-  const profile = props.profiles.find((candidate) => candidate.id === id)
-  if (value === 'translation-only' && profile && isGoogleProfile(profile)) {
-    ElMessage.warning(t('quickTranslation.googleOnly'))
-    return
-  }
-  updateProfile(id, {displayMode: value as QuickTranslationDisplayMode})
+function setGlossary(profile: QuickTranslationProfile, value: unknown): void {
+  if (value !== null && (!Array.isArray(value) || !value.every(id => typeof id === 'string'))) return
+  if (!props.config.glossaryEnabled && !props.config.glossaryLibraries.length) return
+  const normalized = normalizeGlossaryIds(value, props.config.glossaryLibraries)
+  if (Array.isArray(value) && normalized?.length !== new Set(value).size) return
+  updateProfile(profile, {glossaryIds: normalized})
 }
-
-function setFullPageMode(id: string, value: SelectValue): void {
-  if (value !== 'inherit' && value !== 'viewport' && value !== 'all') return
-  updateProfile(id, {fullPageMode: value as QuickTranslationFullPageMode})
+function setDisplayMode(profile: QuickTranslationProfile, value: unknown): void {
+  if (isGoogleProfile(profile) || (value !== 'inherit' && value !== 'bilingual' && value !== 'translation-only') || value === profile.displayMode) return
+  updateProfile(profile, {displayMode: value})
+}
+function setFullPageMode(profile: QuickTranslationProfile, value: unknown): void {
+  if (props.action !== 'full-page' || (value !== 'inherit' && value !== 'viewport' && value !== 'all') || value === profile.fullPageMode) return
+  updateProfile(profile, {fullPageMode: value})
 }
 
 function effectiveService(profile: QuickTranslationProfile): string {
@@ -537,11 +488,11 @@ function isGoogleProfile(profile: QuickTranslationProfile): boolean {
 }
 
 function isProfileAvailable(profile: QuickTranslationProfile): boolean {
-  return isTranslationServiceAvailable(effectiveService(profile))
+  return serviceOptions.value.some(option => option.value === effectiveService(profile)) && isTranslationServiceAvailable(effectiveService(profile))
 }
 
 function serviceLabel(service: string): string {
-  return allServiceOptions.value.find((option) => option.value === service)?.label || service || t('common.notSet')
+  return serviceLabels.value.get(service) || service || t('common.notSet')
 }
 
 function usesModel(profile: QuickTranslationProfile): boolean {
@@ -595,14 +546,10 @@ function languageLabel(languageCode: string): string {
 }
 
 function languageOptions(profile: QuickTranslationProfile): LanguageOption[] {
-  const known = options.to as LanguageOption[]
-  const values = !profile.targetLanguage || known.some((option) => option.value === profile.targetLanguage)
-    ? known
-    : [...known, {value: profile.targetLanguage, label: profile.targetLanguage}]
-  return values.map((option) => ({
-    ...option,
-    label: getMultilingualTargetLanguageLabel(option.value, option.label, language.value),
-  }))
+  const known = knownLanguageOptions.value
+  return !profile.targetLanguage || known.some(option => option.value === profile.targetLanguage) ? known : [...known,
+    {value: profile.targetLanguage, label: getMultilingualTargetLanguageLabel(profile.targetLanguage, profile.targetLanguage, language.value)},
+  ]
 }
 
 function targetLanguageLabel(profile: QuickTranslationProfile): string {

@@ -28730,6 +28730,507 @@
         "Screenshot review caught writing warning using default AI explanation wording; fixed shared copy using existing localized feature/AI keys and added actual unit/native assertions",
         "Final source review removed redundant closed flag to preserve ordinary default-active KeepAlive reactivation; added actual lifecycle regression"
       ]
+    },
+    {
+      "batch": "forty-fourth",
+      "progress": {
+        "sourceReadFiles": 284,
+        "sourceReadFunctionBodies": 5315,
+        "pendingFiles": 545,
+        "goalComplete": false
+      },
+      "sourceReview": {
+        "newFiles": [
+          "src/features/settings/ui/QuickTranslationProfiles.vue",
+          "src/features/settings/model/useQuickProfileDraft.ts"
+        ],
+        "newFunctionBodies": 132,
+        "previouslyReviewedParentFiles": [
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SectionTranslationSettings.vue"
+        ],
+        "sourceProof": {
+          "src/features/settings/ui/QuickTranslationProfiles.vue": {
+            "sha256": "bfeefc51b726bc8b11b2c5060d85caeea79aa54a3bb30c1e498c2a018b270324",
+            "functionBodies": 116,
+            "fullyRead": true,
+            "previouslyFullyReviewed": false,
+            "changedBoundariesReadAndTraced": false,
+            "review": "Full source including every template/script function and style traced through actual recorder, profile ownership, parent acknowledgments, capacity, conflicts, service/model/language/display/default/focus chains"
+          },
+          "src/features/settings/model/useQuickProfileDraft.ts": {
+            "sha256": "9687b0a6e8e94c3529f70ed58eb3086c9d123a2a726cecb9b27e8134ef0fdb77",
+            "functionBodies": 16,
+            "fullyRead": true,
+            "previouslyFullyReviewed": false,
+            "changedBoundariesReadAndTraced": false,
+            "review": "Full source including every template/script function and style traced through actual recorder, profile ownership, parent acknowledgments, capacity, conflicts, service/model/language/display/default/focus chains"
+          },
+          "src/features/settings/ui/SettingsSections.vue": {
+            "sha256": "ea74dafd9fa4b74f0cc36cf948ba5f14761dc038c2a0174b10c3d70a536c5e7d",
+            "functionBodies": 166,
+            "fullyRead": false,
+            "previouslyFullyReviewed": true,
+            "changedBoundariesReadAndTraced": true,
+            "review": "Existing full review retained; changed active propagation and profile update boundaries reread, function bodies unchanged, actual parent exercised in native production UI"
+          },
+          "src/features/settings/ui/SectionTranslationSettings.vue": {
+            "sha256": "e010d01ddc41f91bc558b86973451d38287f6436440b559de4fa541eced94885",
+            "functionBodies": 12,
+            "fullyRead": false,
+            "previouslyFullyReviewed": true,
+            "changedBoundariesReadAndTraced": true,
+            "review": "Existing full review retained; changed active propagation and profile update boundaries reread, function bodies unchanged, actual parent exercised in native production UI"
+          }
+        },
+        "nextNotCounted": [
+          "src/app/popup/PopupApp.vue"
+        ]
+      },
+      "implementation": [
+        "Latest draft composable keeps own published arrays and field snapshots in WeakMap, ignores unchanged late acknowledgments, adopts external edits/replacements/config/action context and assigns logical/field lifetime tokens. Continuous different-field edits merge the latest draft; old same-field events cannot revive after change-back or replacement/deletion/recreation.",
+        "Cached actual row callbacks capture active configuration/action, logical profile, action/field/dependency tokens and expansion epoch. Model/display/glossary callbacks recheck effective service; inherited default-service revision also invalidates old events after switching away and back. Current service/model/language/glossary membership and strict types/enums are checked; same service preserves independent model, new service clears it, selecting independent model while following default pins service, clearing model keeps pinned service.",
+        "Keyed conditional recorder owns configuration/action and logical/hotkey token, captures confirmation/cancel/close callbacks per session. Confirmation revalidates eight-item per-action capacity and every existing trigger conflict, including previously missing paragraph-copy. Updates merge other current profile fields; obsolete recorder events cannot close or write a new session. Hidden/cached/unmounted/replaced context or external hotkey/profile change invalidates recorder; watch also observes actual visible list so action moves/deletions immediately close recorder and clear expansion ownership.",
+        "Parents propagate actual settings/category/panel activation; independent section profiles remain active even with legacy section hotkey disabled. Pending focus rechecks context, recorder revision, connected trigger and user focus. Google display restriction preserves saved preference; target/glossary/model selection reject invalid values and removed current entries. Current service labels, profile lookup and known translated language catalog are cached; removed old prop-array editor/dialog wrapping and creation flags in favor of one draft and one recorder session.",
+        "Meaningful regression harness executes actual cached client SFC template with Linkedom nodes and controlled display/focus ports; unit suite exercises reactive draft identity/acknowledgments/field snapshots. Existing architecture assertion now checks shared draft/action context and keyed conditional recorder, removing obsolete variable/callback requirements. Strict coverage boundary adds the new executable module without exemptions/threshold changes. User shortcut guide documents independent limits, model pin/clear and complete conflicts."
+      ],
+      "newTests": {
+        "executedCases": 50,
+        "staticDefinitions": 31,
+        "newFiles": [
+          "tests/quickProfileSettingsLifecycle.test.ts",
+          "tests/quickProfileDraft.test.ts"
+        ],
+        "extendedFiles": [
+          "tests/settingsUiArchitecture.test.ts"
+        ],
+        "originalComparison": {
+          "baselineHead": "b386dce578615c0705f9760f32eb810d87415807",
+          "sourceFiles": 1,
+          "executed": 34,
+          "failed": 24,
+          "passed": 10,
+          "harnessSha256": "74c1c86e756d7da1fef2369f38158dad2dbf474f631b968884754ef3fce48b25",
+          "restored": true,
+          "boundary": "Same final cached client template and controlled nodes/display/focus ports; failures count scenarios, not independent bugs."
+        }
+      },
+      "strictCoverage": {
+        "testFiles": 2,
+        "cases": 19,
+        "modules": {
+          "src/features/settings/model/useQuickProfileDraft.ts": {
+            "lines": {
+              "total": 50,
+              "covered": 50,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 9,
+              "covered": 9,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 50,
+              "covered": 50,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 43,
+              "covered": 43,
+              "skipped": 0,
+              "pct": 100
+            }
+          },
+          "src/features/settings/model/useSettingsActionContext.ts": {
+            "lines": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "functions": {
+              "total": 3,
+              "covered": 3,
+              "skipped": 0,
+              "pct": 100
+            },
+            "statements": {
+              "total": 15,
+              "covered": 15,
+              "skipped": 0,
+              "pct": 100
+            },
+            "branches": {
+              "total": 12,
+              "covered": 12,
+              "skipped": 0,
+              "pct": 100
+            }
+          }
+        },
+        "thresholdsWeakened": false,
+        "baselineComparisonAndFinalFixtureChangesDidNotAlterCoveredModules": true
+      },
+      "integration": {
+        "files": 14,
+        "cases": 220,
+        "passed": 220,
+        "unhandledErrors": 0
+      },
+      "performance": {
+        "languageOptionReuseFixture": {
+          "profiles": 8,
+          "callsBeforeAndAfterExpansion": 16,
+          "beforeDistinctOptionArrays": 16,
+          "afterDistinctOptionArrays": 1
+        },
+        "boundary": "Controlled calls into actual component languageOptions around actual eight-editor expansion. Proves directory reuse/allocation reduction; no full-page/provider speed, latency or ratio claim. Initial imported-catalog map hook did not observe actual binding and was rejected."
+      },
+      "browser": {
+        "passed": true,
+        "launchMode": "macos-background-cdp",
+        "focusPolicy": "launchservices-no-foreground",
+        "windowPlacement": {
+          "mode": "background-visible-no-focus",
+          "browserFrontmost": false
+        },
+        "finalBrowserFrontmost": false,
+        "cases": [
+          "native service selection clears model, independent model persists and same service selection retains it",
+          "choosing a model while following default pins the effective service; clearing model retains pinned service and global default",
+          "native target/display controls persist; Google limits current display without overwriting saved translation-only preference",
+          "actual keyboard recorder changes owned hotkey; disable and enable persist without resetting independent fields",
+          "seven actual recorder creations reach eight hover profiles, disable creator and preserve independent section/full-page counts",
+          "deleting a profile removes only owned entry and restores creator capacity",
+          "full-page profile persists independent service and all-page range without changing hover assignment",
+          "independent section profiles remain active while legacy section hotkey is disabled and persist actual recorder/service edits",
+          "actual settings category navigation invalidates hidden recorder and returning does not reopen it",
+          "independent section controls fit 390px light/dark layout with stable animations and no horizontal overflow",
+          "reload retains all three independent actions, edited hotkeys, capacity/delete result, display/target and legacy-disabled section"
+        ],
+        "consoleErrors": [],
+        "screenshotsInspected": [
+          "hover-light-desktop.png",
+          "section-light-390.png",
+          "section-dark-390.png"
+        ],
+        "screenshotsStableAfterFiniteAnimations": true,
+        "browserClosed": true,
+        "profileRemoved": true,
+        "processCleanup": {
+          "taskPrefixes": {
+            "fluentread-quick-audit-production-": 0
+          },
+          "matchedTaskBrowserProcesses": 0,
+          "rawSnapshotPrivate": true
+        },
+        "productionJavascriptSha256": "42cdb95f942dd4e34b1ab3b7a66fa8751605b61afec6cd29c8b4beb07116ab6b",
+        "productionSourceHash": "bfeefc51b726bc8b11b2c5060d85caeea79aa54a3bb30c1e498c2a018b270324",
+        "persistenceCases": [
+          "reload retains all three independent actions, edited hotkeys, capacity/delete result, display/target and legacy-disabled section"
+        ],
+        "quickClose": false,
+        "crossPageSync": false,
+        "evidenceBoundary": "Actual Chrome production extension Options quick profiles: native Vue/Element Plus controls, actual key recorder, independent hover/full-page/section assignments, default pinning, Google saved preference, creator capacity, panel lifetime, reload and narrow theme layout. No translation/provider requests or system keyboard input; deferred controlled races are covered separately.",
+        "priorAttemptsPreserved": {
+          "first": "Default-model description incorrectly matched model name; no completed flow",
+          "second": "Two completed flows, unlocalized Google label not found",
+          "third": "Four completed flows; CDP page viewport metadata null during screenshot assertion"
+        },
+        "repeatCountsAddedAsUniqueCases": false
+      },
+      "architecture": {
+        "selectedFiles": [
+          "tests/architecture/moduleBoundaries.test.ts",
+          "tests/architecture/sourceFileHeaders.test.ts",
+          "tests/architecture/verificationOwnership.test.ts"
+        ],
+        "files": 3,
+        "cases": 832,
+        "passed": 830,
+        "existingFailures": 2,
+        "unownedExecutableModules": 13,
+        "unownedDocumentationTools": 3
+      },
+      "externalMain": {
+        "primaryHead": "510683f2d60985bb4494d6a9cf9ada2bb3b83acf",
+        "primaryClean": true,
+        "cachedOrigin": "4b34f3d9ac3326ba0b4bc7ee35190078a006b376",
+        "integratedSource": "99511e12820ec77372d63e98549c8f5005d8ee09",
+        "newRemoteFetch": false,
+        "pendingFiles": [
+          "docs/config/backup-sync.md",
+          "docs/en/config/backup-sync.md",
+          "docs/en/guide/deepseek-harness.md",
+          "docs/en/guide/image-translation.md",
+          "docs/en/guide/privacy.md",
+          "docs/en/guide/video-subtitles.md",
+          "docs/en/guide/vocabulary-book.md",
+          "docs/en/guide/webdav.md",
+          "docs/en/guide/webpage-translation.md",
+          "docs/guide/deepseek-harness.md",
+          "docs/guide/image-translation.md",
+          "docs/guide/privacy.md",
+          "docs/guide/video-subtitles.md",
+          "docs/guide/vocabulary-book.md",
+          "docs/guide/webdav.md",
+          "docs/guide/webpage-translation.md",
+          "docs/maintainers/README.md",
+          "docs/maintainers/google-drive-sync-guide.md",
+          "docs/reports/learning-library-ui-20261006/README.md",
+          "docs/reports/learning-library-ui-20261006/learning-library-390.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-dark.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-desktop.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-english-narrow.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-management-mobile.png",
+          "docs/reports/learning-library-ui-20261006/learning-library-review.png",
+          "docs/reports/learning-library-ui-20261006/learning-memory-destination.png",
+          "docs/reports/learning-library-ui-20261006/learning-sentence-study.png",
+          "docs/reports/learning-library-ui-20261006/merge-validation.json",
+          "docs/reports/learning-library-ui-20261006/merge-validation.md",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings-390.png",
+          "docs/reports/learning-library-ui-20261006/merged-selection-settings.png",
+          "docs/reports/learning-library-ui-20261006/report.json",
+          "docs/reports/selection-card-stability-20261005/README.md",
+          "docs/reports/selection-card-stability-20261005/learning-empty-guidance.png",
+          "docs/reports/selection-card-stability-20261005/learning-memory-destination.png",
+          "docs/reports/selection-card-stability-20261005/learning-notes-english-narrow.png",
+          "docs/reports/selection-card-stability-20261005/learning-words-destination.png",
+          "docs/reports/selection-card-stability-20261005/report.json",
+          "docs/reports/selection-card-stability-20261005/translation-first.png",
+          "docs/reports/selection-media-settings-20261005/ai-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/ai-default-action.png",
+          "docs/reports/selection-media-settings-20261005/ai-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/equal-height.md",
+          "docs/reports/selection-media-settings-20261005/image-translation.png",
+          "docs/reports/selection-media-settings-20261005/manga-translation.png",
+          "docs/reports/selection-media-settings-20261005/selection-ai-learning.png",
+          "docs/reports/selection-media-settings-20261005/selection-context-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-instructions.png",
+          "docs/reports/selection-media-settings-20261005/selection-memory.png",
+          "docs/reports/selection-media-settings-20261005/selection-mobile.png",
+          "docs/reports/selection-media-settings-20261005/selection-presentation.png",
+          "docs/reports/selection-media-settings-20261005/settings-image-translation-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-selection-english.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-390.png",
+          "docs/reports/selection-media-settings-20261005/settings-video-dark.png",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview-browser-report.json",
+          "docs/reports/selection-media-settings-20261005/subtitle-preview.md",
+          "docs/reports/selection-media-settings-20261005/validation.md",
+          "docs/reports/selection-media-settings-20261005/video-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height-bottom.png",
+          "docs/reports/selection-media-settings-20261005/video-equal-height.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-dark-english.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape-scrolled.png",
+          "docs/reports/selection-media-settings-20261005/video-landscape.png",
+          "docs/reports/selection-media-settings-20261005/video-mobile.png",
+          "docs/reports/selection-media-settings-20261005/video-subtitle-appearance.png",
+          "docs/reports/settings-ui-polish-20261006/README.md",
+          "docs/reports/settings-ui-polish-20261006/cloud-compatibility-report.json",
+          "docs/reports/settings-ui-polish-20261006/cloud-delete-loading.png",
+          "docs/reports/settings-ui-polish-20261006/delete-loading-report.json",
+          "docs/reports/settings-ui-polish-20261006/key-policy-menu.png",
+          "docs/reports/settings-ui-polish-20261006/layout-report.json",
+          "docs/reports/settings-ui-polish-20261006/learning-level.png",
+          "docs/reports/settings-ui-polish-20261006/reading-desktop.png",
+          "docs/reports/settings-ui-polish-20261006/request-limits.png",
+          "docs/reports/settings-ui-polish-20261006/resources-current.png",
+          "docs/reports/settings-ui-polish-20261006/resources-management.png",
+          "docs/reports/settings-ui-polish-20261006/resources-tesseract.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-dark-390.png",
+          "docs/reports/settings-ui-polish-20261006/settings-image-translation-light-1440.png",
+          "docs/reports/settings-ui-polish-20261006/site-preference-menu.png",
+          "docs/reports/settings-ui-polish-20261006/speech-unified.png",
+          "docs/reports/settings-ui-polish-20261006/tooltip-selectable.png",
+          "docs/reports/settings-ui-polish-20261006/vision-single-result.png",
+          "docs/testing.md",
+          "scripts/run-harness-reading-test.cjs",
+          "scripts/run-reading-density-test.cjs",
+          "scripts/run-selection-card-stability-test.cjs",
+          "scripts/run-selection-unified-test.cjs",
+          "scripts/run-video-subtitle-settings-test.cjs",
+          "scripts/testing/run-drive-version-compat-ui-test.cjs",
+          "scripts/testing/run-google-drive-sync-ui-test.cjs",
+          "scripts/testing/run-image-recognition-settings-test.cjs",
+          "scripts/testing/run-manga-entry-ui-test.cjs",
+          "scripts/testing/run-manga-translation-test.cjs",
+          "scripts/testing/run-popup-performance-test.cjs",
+          "scripts/testing/run-section-translation-flow-test.cjs",
+          "scripts/testing/run-settings-layout-polish-test.cjs",
+          "scripts/testing/run-settings-reading-menu-ui-test.cjs",
+          "scripts/testing/run-webdav-backup-ui-test.cjs",
+          "src/app/background/handlers/googleDriveSync.ts",
+          "src/app/background/messageRuntime.ts",
+          "src/app/options/OptionsApp.vue",
+          "src/app/popup/PopupApp.vue",
+          "src/core/config/cloudSync.ts",
+          "src/core/config/model.ts",
+          "src/core/config/selectionPreview.ts",
+          "src/core/i18n/messages/cloud-backup/en-US.json",
+          "src/core/i18n/messages/cloud-backup/es-ES.json",
+          "src/core/i18n/messages/cloud-backup/fr-FR.json",
+          "src/core/i18n/messages/cloud-backup/ja-JP.json",
+          "src/core/i18n/messages/cloud-backup/ko-KR.json",
+          "src/core/i18n/messages/cloud-backup/ru-RU.json",
+          "src/core/i18n/messages/cloud-backup/zh-CN.json",
+          "src/core/i18n/messages/en-US.ts",
+          "src/core/i18n/messages/es-ES.ts",
+          "src/core/i18n/messages/fr-FR.ts",
+          "src/core/i18n/messages/ja-JP.ts",
+          "src/core/i18n/messages/ko-KR.ts",
+          "src/core/i18n/messages/legacy-corrections.ts",
+          "src/core/i18n/messages/localTts.ts",
+          "src/core/i18n/messages/manga.ts",
+          "src/core/i18n/messages/ru-RU.ts",
+          "src/core/i18n/messages/runtime-feedback-patterns.ts",
+          "src/core/i18n/messages/runtime-feedback.ts",
+          "src/core/i18n/messages/zh-CN.ts",
+          "src/features/image-translation/ui/ImageOcrSettings.vue",
+          "src/features/image-translation/ui/ImageTranslationSettingsPreview.vue",
+          "src/features/image-translation/ui/MangaModelSettings.vue",
+          "src/features/image-translation/ui/MangaSettings.vue",
+          "src/features/image-translation/ui/image-ocr-settings.css",
+          "src/features/reading-assistant/memoryHandler.ts",
+          "src/features/reading-assistant/ui/ReadingPanel.vue",
+          "src/features/section-translation/content/picker.ts",
+          "src/features/selection-translation/ui/SelectionTranslator.vue",
+          "src/features/settings/background/openOptionsHandler.ts",
+          "src/features/settings/model/navigation.ts",
+          "src/features/settings/ui/AreaTranslationSettings.vue",
+          "src/features/settings/ui/GoogleDriveSync.vue",
+          "src/features/settings/ui/HarnessPromptSettings.vue",
+          "src/features/settings/ui/HarnessSettings.vue",
+          "src/features/settings/ui/LearningCenter.vue",
+          "src/features/settings/ui/LearningMemoryManager.vue",
+          "src/features/settings/ui/LocalTranslationModelSettings.vue",
+          "src/features/settings/ui/LocalTtsSettings.vue",
+          "src/features/settings/ui/ReadingAssistanceSettings.vue",
+          "src/features/settings/ui/RemoteConfigSync.vue",
+          "src/features/settings/ui/SelectionSettings.vue",
+          "src/features/settings/ui/SentenceHighlightStyleSettings.vue",
+          "src/features/settings/ui/SettingsSections.vue",
+          "src/features/settings/ui/SiteAdaptationSettings.vue",
+          "src/features/settings/ui/SitePreferencesSettings.vue",
+          "src/features/settings/ui/VideoSubtitleAppearanceSettings.vue",
+          "src/features/settings/ui/components/FieldHelp.vue",
+          "src/features/settings/ui/components/SettingsPreviewLayout.vue",
+          "src/features/settings/ui/services/ModelVisionSettings.vue",
+          "src/features/settings/ui/services/RequestLimitSettings.vue",
+          "src/features/settings/ui/services/ServiceConfiguration.vue",
+          "src/features/settings/ui/settings-page.css",
+          "src/features/settings/ui/settings-sections.css",
+          "src/features/settings/ui/site-rule-workspace.css",
+          "src/features/vocabulary/ui/CollectionEntry.vue",
+          "src/features/vocabulary/ui/VocabularyBook.vue",
+          "src/features/vocabulary/ui/VocabularyStudy.vue",
+          "src/platform/google-drive/api.ts",
+          "src/platform/storage/learningMemoryRepository.ts",
+          "src/platform/webdav/api.ts",
+          "src/services/config/remoteConfigSync.ts",
+          "src/services/harness/learningMemory.ts",
+          "src/services/harness/memoryRecall.ts",
+          "src/services/harness/runtime.ts",
+          "src/services/writing/runtime.ts",
+          "tests/backgroundFeatureHandlers.test.ts",
+          "tests/backgroundGoogleDriveSync.test.ts",
+          "tests/configHarness.test.ts",
+          "tests/googleDriveApi.test.ts",
+          "tests/i18n.test.ts",
+          "tests/learningMemoryHandler.test.ts",
+          "tests/learningMemoryRepository.test.ts",
+          "tests/readingPanelLifecycle.test.ts",
+          "tests/sectionTranslationPicker.test.ts",
+          "tests/selectionTranslatorLifecycle.test.ts",
+          "tests/settingsUiArchitecture.test.ts",
+          "tests/vocabularyBookComponent.test.ts",
+          "tests/webDavApi.test.ts",
+          "tests/webDavBackup.test.ts",
+          "tests/webDavHttpIntegration.test.ts",
+          "tests/webDavProperties.test.ts",
+          "tests/writingRuntime.test.ts",
+          "userscript/languages/es-ES.10aaa8bafe4c011e.json",
+          "userscript/languages/es-ES.156396ddd18b3c2b.json",
+          "userscript/languages/es-ES.a7317d37d872ec61.json",
+          "userscript/languages/es-ES.d095f5124323a4e1.json",
+          "userscript/languages/es-ES.e66b7ea53ace2cc3.json",
+          "userscript/languages/es-ES.fc6d77021d6932d8.json",
+          "userscript/languages/fr-FR.33d507bb90e0f03e.json",
+          "userscript/languages/fr-FR.6c4bc169e18a9617.json",
+          "userscript/languages/fr-FR.ab0e04a29ab3c946.json",
+          "userscript/languages/fr-FR.af00cb4d384a4548.json",
+          "userscript/languages/fr-FR.bdc40d2b91c9a85e.json",
+          "userscript/languages/fr-FR.e76f9454dbd82b9b.json",
+          "userscript/languages/ja-JP.1691d1c911d69419.json",
+          "userscript/languages/ja-JP.2e5d66e567fd4922.json",
+          "userscript/languages/ja-JP.3d2efb0305fbfbf6.json",
+          "userscript/languages/ja-JP.4b74b6480e053c4c.json",
+          "userscript/languages/ja-JP.b1052e71c0bf1dd1.json",
+          "userscript/languages/ja-JP.f92cfbe06c7c4b83.json",
+          "userscript/languages/ko-KR.3efdea50649f4cd2.json",
+          "userscript/languages/ko-KR.4edd179feb1f49f2.json",
+          "userscript/languages/ko-KR.914b0f81c54c2c91.json",
+          "userscript/languages/ko-KR.b4ede076d9a6e775.json",
+          "userscript/languages/ko-KR.d4b2d179da25f4de.json",
+          "userscript/languages/ko-KR.dd806f196f2f89c5.json",
+          "userscript/languages/ru-RU.4b0aded02765d3c1.json",
+          "userscript/languages/ru-RU.6d0d4fcdf0feb8ae.json",
+          "userscript/languages/ru-RU.8d66f666ac96d59f.json",
+          "userscript/languages/ru-RU.98b5f7e246fa5144.json",
+          "userscript/languages/ru-RU.cb1243e7a0b4ff1c.json",
+          "userscript/languages/ru-RU.e91bcde0cf33c1be.json",
+          "userscript/vite.config.ts"
+        ],
+        "pendingFileCount": 224
+      },
+      "finalDelivery": {
+        "status": "pending-full-audit",
+        "requestedByUser": true,
+        "steps": [
+          "Complete all source/function/chain review and related fixes/performance/tests",
+          "Rebase onto then-latest verified main and reconcile changed/new source review",
+          "Review the whole resulting code and functional chains, resolve all related findings and verify",
+          "Merge the verified reviewed head using the repository delivery workflow"
+        ],
+        "performed": false
+      },
+      "checks": {
+        "compile": "passed",
+        "chrome": "passed",
+        "firefox": "passed",
+        "userscript": "passed",
+        "userscriptVerifier": "passed",
+        "manifests": "passed",
+        "testAudit": {
+          "passed": true,
+          "files": 492,
+          "staticDefinitions": 6769
+        },
+        "docsBuild": "passed",
+        "docsCheck": "passed",
+        "internalReportValidation": "passed"
+      },
+      "boundaries": [
+        "Whole goal active,545production files pending; final refresh-main/rebase/review/merge waits for full audit",
+        "Related native/strict/integration cases overlap and are not summed as unique coverage",
+        "Chrome production Options only; no Firefox/userscript interaction, live provider, quick-close or cross-page sync proof",
+        "No reference repository edits or copied implementation, dependency/version/localization-resource changes; userscript language pin retained",
+        "Existing two verification ownership failures remain in pending audit scope"
+      ],
+      "intermediateCorrections": [
+        "Recorder controlled async port required settling actual child load",
+        "Unused source type import and unused fixture state type errors fixed",
+        "Actual default service change-back and visible-list observer ordering found in final review and regression covered",
+        "Initial language map hook failed to observe actual imported binding; rejected and replaced with direct actual-function directory identity comparison, old16/new1",
+        "Native fixture fixes preserved separately: exact model option, localized Google label, actual viewport width; anchors scroll visible panels so hidden ownership is validated with actual category navigation"
+      ]
     }
   ]
 }

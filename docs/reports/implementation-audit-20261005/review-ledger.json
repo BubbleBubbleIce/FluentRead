@@ -3,8 +3,8 @@
   "status": "active",
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
-    "files": 828,
-    "functions": 15051,
+    "files": 829,
+    "functions": 15099,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -222,9 +222,9 @@
         "lines": 5248
       },
       "src/features/settings": {
-        "files": 83,
-        "functions": 1631,
-        "lines": 19534
+        "files": 84,
+        "functions": 1679,
+        "lines": 19543
       },
       "src/features/share-card": {
         "files": 7,
@@ -1521,6 +1521,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/model/useQuickProfileDraft.ts",
+      "sha256": "9687b0a6e8e94c3529f70ed58eb3086c9d123a2a726cecb9b27e8134ef0fdb77",
+      "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/model/useSettingsActionContext.ts",
       "sha256": "de1804e4a50f84542aa4ed9ebc574b8ea9f4f286cadfb26aeb73022462e8a2cd",
       "functionBodies": 10,
@@ -1575,14 +1581,20 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/settings/ui/QuickTranslationProfiles.vue",
+      "sha256": "bfeefc51b726bc8b11b2c5060d85caeea79aa54a3bb30c1e498c2a018b270324",
+      "functionBodies": 116,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/settings/ui/SectionTranslationSettings.vue",
-      "sha256": "4c6792bd619bd300542b597728675986df8d5b4a14aad96c53a7816a51840e42",
+      "sha256": "e010d01ddc41f91bc558b86973451d38287f6436440b559de4fa541eced94885",
       "functionBodies": 12,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/features/settings/ui/SettingsSections.vue",
-      "sha256": "1887792f6dc2c11dd22fff4209a5024d1abb9da1c4cba49bb1e86b7fd0d1a4d1",
+      "sha256": "ea74dafd9fa4b74f0cc36cf948ba5f14761dc038c2a0174b10c3d70a536c5e7d",
       "functionBodies": 166,
       "status": "source-read-and-traced"
     },
@@ -2462,7 +2474,6 @@
     "src/features/settings/ui/LocalTtsSettings.vue",
     "src/features/settings/ui/ParagraphHandlingSettings.vue",
     "src/features/settings/ui/PopupLayoutEditor.vue",
-    "src/features/settings/ui/QuickTranslationProfiles.vue",
     "src/features/settings/ui/ReadingAssistanceSettings.vue",
     "src/features/settings/ui/RemoteConfigSync.vue",
     "src/features/settings/ui/SelectionSettings.vue",
@@ -2706,7 +2717,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue546pending production files/functions: QuickTranslationProfiles capacity at commit, latest profiles/drafts, actual cached controls, recorder sessions and independent models/defaults next. PopupApp whole-source review remains pending (only service drawer visibility forwarding traced43). Other application paths and cached-main reconciliation remain pending. After full scope: fresh main, safe rewritten-history rebase, whole resulting code review/fixes, verification and merge.",
+    "Continue545pending production files/functions. PopupApp whole-source review remains pending (only service drawer active forwarding traced43), together with remaining application, feature, provider, shared/UI and generated/resource paths. Cached-main reconciliation224files remains pending. After full scope: fresh main, safe rewritten-history rebase, whole resulting code review/fixes, verification and authorized merge.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -2741,9 +2752,9 @@
     "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending."
   ],
   "progress": {
-    "sourceReadFiles": 282,
-    "sourceReadFunctionBodies": 5183,
-    "pendingFiles": 546,
+    "sourceReadFiles": 284,
+    "sourceReadFunctionBodies": 5315,
+    "pendingFiles": 545,
     "goalComplete": false
   },
   "observations": [
@@ -3495,6 +3506,12 @@
       "status": "fixed-reviewed-and-verified-forty-third",
       "issue": "Popup overview caches ten rows and label map; model-specific validation reuses optional selected-model identity without whole-config/model copying or repeat warning computation. Keeps independent input/reading/writing/document models, unavailable selections, default inheritance and model reset semantics. Overview/open/close and picker choices, query controls, expansion and keyboard handlers capture active config, view revision, session and rendered query/expansion. Hidden/deactivated/unmounted/replaced configuration or older sessions cannot write/close current view. External selected/effective service changes reset picker. Choosing revalidates current provider membership/capabilities, rejects removed custom providers and AI-incompatible machine services. DOM/session references use shallowRef. Pending focus/scroll rechecks active ownership and view, connected root and user focus; back returns to corresponding overview row without moving focus after user leaves. Session reset immediately invalidates old close/choice handlers. Removed extra closed flag discovered in review: view identity suffices and default-active KeepAlive reactivation stays operable. Shared Popup/settings capability warning now names corresponding reading/writing feature and AI-only requirement using existing localized keys. Writing does not describe itself as default AI explanation; explicit incompatible selection is not mislabeled as default. Parent service drawer forwards actual visibility. PopupApp whole-file review remains pending; the one changed ownership boundary does not count its other functions. Removed old selectedLabel, returnFromPicker and focusFirstOption wrappers by folding derived text into cached rows and binding keyboard actions to their view.",
       "validation": "New actual cached client SFC/Linkedom suite28cases20staticdefinitions; same final harness original0f0444b0 Popup source23fail5pass. Seven related files119pass and six strict files79cases/four modules four dimensions100, zero unhandled. Final production Edge10flows4stable screenshots/console0; cleanup verified. Types/Chrome/Firefox/userscript/verifier/manifests/testaudit passed. Architecture829pass2existing failures. Whole goal remains active,546files pending; final main rebase/review/merge not performed."
+    },
+    {
+      "file": "src/features/settings/ui/QuickTranslationProfiles.vue",
+      "status": "fixed-reviewed-and-verified-forty-fourth",
+      "issue": "Latest draft composable keeps own published arrays and field snapshots in WeakMap, ignores unchanged late acknowledgments, adopts external edits/replacements/config/action context and assigns logical/field lifetime tokens. Continuous different-field edits merge the latest draft; old same-field events cannot revive after change-back or replacement/deletion/recreation. Cached actual row callbacks capture active configuration/action, logical profile, action/field/dependency tokens and expansion epoch. Model/display/glossary callbacks recheck effective service; inherited default-service revision also invalidates old events after switching away and back. Current service/model/language/glossary membership and strict types/enums are checked; same service preserves independent model, new service clears it, selecting independent model while following default pins service, clearing model keeps pinned service. Keyed conditional recorder owns configuration/action and logical/hotkey token, captures confirmation/cancel/close callbacks per session. Confirmation revalidates eight-item per-action capacity and every existing trigger conflict, including previously missing paragraph-copy. Updates merge other current profile fields; obsolete recorder events cannot close or write a new session. Hidden/cached/unmounted/replaced context or external hotkey/profile change invalidates recorder; watch also observes actual visible list so action moves/deletions immediately close recorder and clear expansion ownership. Parents propagate actual settings/category/panel activation; independent section profiles remain active even with legacy section hotkey disabled. Pending focus rechecks context, recorder revision, connected trigger and user focus. Google display restriction preserves saved preference; target/glossary/model selection reject invalid values and removed current entries. Current service labels, profile lookup and known translated language catalog are cached; removed old prop-array editor/dialog wrapping and creation flags in favor of one draft and one recorder session. Meaningful regression harness executes actual cached client SFC template with Linkedom nodes and controlled display/focus ports; unit suite exercises reactive draft identity/acknowledgments/field snapshots. Existing architecture assertion now checks shared draft/action context and keyed conditional recorder, removing obsolete variable/callback requirements. Strict coverage boundary adds the new executable module without exemptions/threshold changes. User shortcut guide documents independent limits, model pin/clear and complete conflicts.",
+      "validation": "New actual cached-template34cases plus16draft units; same final harness original b386dce5 Quick source24fail10pass. Fourteen relevant files220pass; two strict files19cases/two modules all dimensions100. Final native production Edge11flows3screenshots inspected/console0/process/profile cleanup. Types/Chrome/Firefox/userscript/verifier/manifests/audit passed; architecture830pass2existing failures. Goal active,545files pending; final rebase/review/merge not yet performed."
     }
   ],
   "finalDelivery": {

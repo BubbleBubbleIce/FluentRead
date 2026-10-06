@@ -299,7 +299,7 @@
         @change="handleMouseHoverTranslationDelayChange"
       />
     </SettingsItem>
-    <QuickTranslationProfiles :config="config" action="hover" :profiles="config.quickTranslationProfiles"
+    <QuickTranslationProfiles :active="viewActive && props.activeSection === 'settings-translation' && (!props.activePanel || props.activePanel === 'hover')" :config="config" action="hover" :profiles="config.quickTranslationProfiles"
       @update:profiles="config.quickTranslationProfiles = $event" />
     </SettingsGroup>
     </SettingsPanel>
@@ -411,7 +411,7 @@
           <SegmentedControl v-model="config.fullPageTranslationMode" :options="fullPageTranslationModeOptions" label="全文翻译范围" />
         </SettingsItem>
 
-        <QuickTranslationProfiles :config="config" action="full-page" :profiles="config.quickTranslationProfiles"
+        <QuickTranslationProfiles :active="viewActive && props.activeSection === 'settings-translation' && (!props.activePanel || props.activePanel === 'page')" :config="config" action="full-page" :profiles="config.quickTranslationProfiles"
           @update:profiles="config.quickTranslationProfiles = $event" />
       </SettingsGroup>
     </SettingsPanel>
