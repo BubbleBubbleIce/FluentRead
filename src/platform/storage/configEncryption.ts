@@ -2,7 +2,7 @@
  * @file src/platform/storage/configEncryption.ts
  *
  * 文件职责：使用 FluentRead 固定对称密钥把配置存储值封装为带完整性校验的 AES-GCM 密文，并在读取时恢复运行态明文。
- * 主要内容：以 SHA-256 派生 256 位 AES 密钥，为每次写入生成独立 96 位 IV，执行 UTF-8/Base64 转换，并严格校验密文版本与算法后再解析 JSON。
+ * 主要内容：以 SHA-256 派生 256 位 AES 密钥，为每次写入生成独立 96 位 IV，拒绝无法序列化的 JSON 根值，分块执行 Base64 编码，并严格校验密文版本与算法后再解析 JSON。
  * 模块边界：本文件只处理配置值的可逆加解密与密文格式，不访问 IndexedDB、浏览器 storage、runtime 消息或配置领域模型；持久化和迁移由 configRepository 负责。
  */
 
@@ -27,7 +27,9 @@ export interface ConfigCryptoRuntime {
 
 function bytesToBase64(bytes: Uint8Array): string {
     let binary = '';
-    for (const byte of bytes) binary += String.fromCharCode(byte);
+    for (let offset = 0; offset < bytes.length; offset += 32_768) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 32_768));
+    }
     return btoa(binary);
 }
 
@@ -71,8 +73,10 @@ export async function encryptConfigValue(
     keyMaterial: string = FLUENTREAD_CONFIG_ENCRYPTION_KEY,
     additionalData = '',
 ): Promise<EncryptedConfigPayload> {
+    const serialized = JSON.stringify(value);
+    if (serialized === undefined) throw new TypeError('配置值不是可序列化 JSON');
     const iv = runtime.crypto.getRandomValues(new Uint8Array(12));
-    const plaintext = runtime.encoder.encode(JSON.stringify(value));
+    const plaintext = runtime.encoder.encode(serialized);
     const key = await deriveEncryptionKey(runtime, keyMaterial);
     const ciphertext = await runtime.crypto.subtle.encrypt(
         {

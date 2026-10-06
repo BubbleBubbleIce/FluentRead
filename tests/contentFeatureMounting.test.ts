@@ -102,13 +102,17 @@ describe('划词翻译挂载生命周期', () => {
         expect(mountedUi.remove).toHaveBeenCalledOnce();
     });
 
-    it('Harness 独立启用时保留共享挂载，并在两个入口都停用后丢弃待挂载 UI', async () => {
+    it('划词总开关关闭时 Harness 不单独挂载，重新启用后关闭会丢弃待挂载 UI', async () => {
         mocks.config.harness = {enabled: true};
         mocks.config.disableSelectionTranslator = true;
         mocks.config.selectionTranslatorMode = 'disabled';
         const runtime = await import('@/src/features/selection-translation/content/runtime');
         const mounted = ui();
         mocks.createVueShadowUi.mockResolvedValueOnce(mounted);
+        expect(runtime.mountSelectionTranslator({} as never)).toBeNull();
+        expect(mocks.createVueShadowUi).not.toHaveBeenCalled();
+        mocks.config.disableSelectionTranslator = false;
+        mocks.config.selectionTranslatorMode = 'bilingual';
         await expect(runtime.mountSelectionTranslator({} as never)).resolves.toEqual({feature: 'mounted'});
         runtime.unmountSelectionTranslator();
         const pending = pendingUi();
@@ -116,15 +120,17 @@ describe('划词翻译挂载生命周期', () => {
         mocks.createVueShadowUi.mockReturnValueOnce(pending.promise);
         const request = runtime.mountSelectionTranslator({} as never);
         mocks.config.harness.enabled = false;
+        mocks.config.disableSelectionTranslator = true;
+        mocks.config.selectionTranslatorMode = 'disabled';
         pending.resolve(late);
         await expect(request).resolves.toBeNull();
         expect(late.remove).toHaveBeenCalledOnce();
     });
 
-    it('Harness 共享实例重挂载后，旧组件 Range 回调不得移动新 modal host', async () => {
+    it('启用划词的 Harness 共享实例重挂载后，旧组件 Range 回调不得移动新 modal host', async () => {
         mocks.config.harness = {enabled: true};
-        mocks.config.disableSelectionTranslator = true;
-        mocks.config.selectionTranslatorMode = 'disabled';
+        mocks.config.disableSelectionTranslator = false;
+        mocks.config.selectionTranslatorMode = 'bilingual';
         const firstHost = {style: {setProperty: vi.fn()}};
         const secondHost = {style: {setProperty: vi.fn()}};
         const firstController = {placeForRange: vi.fn(), dispose: vi.fn()};

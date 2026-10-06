@@ -2,7 +2,7 @@
  * @file src/platform/storage/configStorage.ts
  *
  * 文件职责：为共享配置 store 提供统一持久化端口，在后台连接加密 IndexedDB，在扩展页面与 content 上下文通过受控 runtime 消息代理读取和订阅。
- * 主要内容：声明配置记录键、主记录存在时的 IndexedDB 直接短路、带加密清理标记的后台旧 storage 原子迁移与验证、会话随机密钥材料与旧 Firefox 内存降级、多键原子写入、内存 watch 通知，以及能在并发回读中保留变更意图的非后台只读适配器。
+ * 主要内容：声明配置记录键、主记录存在时的 IndexedDB 直接短路、带加密清理标记的后台旧 storage 原子迁移与验证、会话随机密钥材料与旧 Firefox 内存降级、可选原子条件写与多键提交、隔离异常的 watch 通知，以及能在并发回读中保留变更意图的非后台只读适配器。
  * 模块边界：本文件不理解 Config 字段、不决定凭据授权、不选择真实浏览器运行上下文；configStorageRuntime 负责装配 WXT legacy storage、后台 repository 或远程 runtime，userscript 构建在该边界替换为 GM storage。
  */
 
@@ -47,6 +47,8 @@ export interface ConfigStoragePort {
     readonly writeOwner?: boolean;
     getItem<T>(key: string): Promise<T | null>;
     setItem<T>(key: string, value: T): Promise<void>;
+    /** 可选原子条件写；缺少此能力时自动基线/投影仅驻内存，显式捕获再普通写入。 */
+    setItemIfUnchanged?<T>(key: string, expectedValue: unknown, value: T): Promise<boolean>;
     setItems?(entries: ReadonlyMap<string, unknown>, removeKeys?: readonly string[]): Promise<void>;
     removeItem(key: string): Promise<void>;
     watch<T>(key: string, callback: (nextValue: T | null, previousValue?: T | null) => void): () => void;
@@ -203,7 +205,10 @@ export function createBackgroundConfigStorage(options: BackgroundConfigStorageOp
     let migration: Promise<void> | null = null;
 
     const notify = (key: string, value: unknown, previousValue?: unknown) => {
-        listeners.get(key)?.forEach(listener => listener(value, previousValue));
+        listeners.get(key)?.forEach(listener => {
+            try {listener(value, previousValue);}
+            catch (error) {logger.warn('[FluentRead] 配置存储订阅通知失败', error);}
+        });
     };
 
     const cleanupLegacyKeys = async (keys: readonly string[]): Promise<boolean> => {
@@ -368,6 +373,12 @@ export function createBackgroundConfigStorage(options: BackgroundConfigStorageOp
             await repository.set(key, value);
             notify(key, value, previous);
         },
+        async setItemIfUnchanged<T>(key: string, expectedValue: unknown, value: T): Promise<boolean> {
+            await ensureMigrated();
+            const written = await repository.setIfUnchanged(key, expectedValue, value);
+            if (written) notify(key, value, expectedValue);
+            return written;
+        },
         async setItems(entries: ReadonlyMap<string, unknown>, removeKeys: readonly string[] = []): Promise<void> {
             await ensureMigrated();
             const entryKeys = [...entries.keys()];
@@ -460,7 +471,10 @@ export function createRemoteConfigStorage(runtime: ConfigStorageRuntimePort): Co
         if (stable.owner) {
             values.set(key, value);
             if (pendingNotificationKeys.delete(key)) {
-                listeners.get(key)?.forEach(listener => listener(value, previous));
+                listeners.get(key)?.forEach(listener => {
+                    try {listener(value, previous);}
+                    catch (error) {console.warn('[FluentRead] 配置存储订阅通知失败', error);}
+                });
             }
         }
         return value as T | null;

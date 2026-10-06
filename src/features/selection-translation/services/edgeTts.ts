@@ -112,12 +112,17 @@ async function getEndpointToken(signal?: AbortSignal): Promise<EndpointToken> {
     signal,
   });
   if (!response.ok) throw new Error(`Edge TTS endpoint failed: ${response.status}`);
-  const payload = await readJsonResponse<{ t?: string; r?: string }>(
+  const payload = await readJsonResponse<{ t?: unknown; r?: unknown } | null>(
     response,
     'Edge TTS endpoint returned invalid JSON',
   );
   throwIfAborted(signal);
-  if (!payload.t || !payload.r) throw new Error('Edge TTS endpoint returned an invalid token');
+  // region 只能形成 Microsoft 的单个区域子域；异常 JSON 不得进入缓存，
+  // 更不能把 endpoint token 发送到由斜杠等字符改写的主机。
+  if (!payload || typeof payload.t !== 'string' || !payload.t.trim()
+    || typeof payload.r !== 'string' || !/^[a-z][a-z0-9-]{0,63}$/iu.test(payload.r)) {
+    throw new Error('Edge TTS endpoint returned an invalid token');
+  }
   endpointToken = { token: payload.t, region: payload.r, expiresAt: edgeTtsTokenExpiry(payload.t) };
   return endpointToken;
 }

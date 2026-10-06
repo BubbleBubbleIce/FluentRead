@@ -37,6 +37,8 @@ export function wrapCardText(text: string, maxWidth: number, measure: (text: str
             if (measure(candidate) <= maxWidth) { line = candidate; continue; }
             if (line.trim()) { lines.push(line.trimEnd()); line = ''; }
             if (!token.trim()) continue;
+            // 整词在新行放得下时不重复分词/逐字度量；保留长词字素拆分。
+            if (!line && candidate !== token && measure(token) <= maxWidth) { line = token; continue; }
             for (const grapheme of cardGraphemes(token)) {
                 if (line && measure(line + grapheme) > maxWidth) { lines.push(line); line = ''; }
                 line += grapheme;

@@ -48,7 +48,7 @@ export function edgeTtsVoiceCandidatesForLanguage(
 ): string[] {
     const normalized = normalizeEdgeTtsLanguage(language);
     const base = normalized.split('-')[0];
-    const automatic = VOICE_CANDIDATES_BY_LANGUAGE[normalized]
+    const automatic = (Object.hasOwn(VOICE_CANDIDATES_BY_LANGUAGE, normalized) ? VOICE_CANDIDATES_BY_LANGUAGE[normalized] : undefined)
         || Object.entries(VOICE_CANDIDATES_BY_LANGUAGE)
             .find(([locale]) => locale.startsWith(`${base}-`))?.[1]
         || [];
@@ -82,25 +82,28 @@ export function splitEdgeTtsText(text: string): string[] {
     const chunks: string[] = [];
     let remaining = text.trim();
     while (remaining) {
-        const bytes = new TextEncoder().encode(remaining);
-        if (bytes.byteLength <= edgeTtsLimits.chunkBytes) {
-            chunks.push(remaining);
-            break;
+        if (chunks.length >= edgeTtsLimits.chunks) throw new Error('Edge TTS text is too long');
+        // 只扫描本段预算内的码点，避免反复编码整段余文和逐字符缩短前缀；
+        // 码点长度也保证不会把代理对拆到两个 SSML 请求里。
+        let end = 0;
+        let bytes = 0;
+        for (const point of remaining) {
+            const code = point.codePointAt(0)!;
+            const size = code <= 0x7f ? 1 : code <= 0x7ff ? 2 : code <= 0xffff ? 3 : 4;
+            if (bytes + size > edgeTtsLimits.chunkBytes) break;
+            bytes += size;
+            end += point.length;
         }
-        let end = Math.min(remaining.length, edgeTtsLimits.chunkBytes);
-        while (
-            end > 1
-            && new TextEncoder().encode(remaining.slice(0, end)).byteLength > edgeTtsLimits.chunkBytes
-        ) end -= 1;
-        const boundary = Math.max(
-            remaining.lastIndexOf(' ', end),
-            remaining.lastIndexOf('。', end),
-            remaining.lastIndexOf('.', end),
-        );
-        if (boundary > Math.floor(end * 0.6)) end = boundary + 1;
+        if (end < remaining.length) {
+            const boundary = Math.max(
+                remaining.lastIndexOf(' ', end - 1),
+                remaining.lastIndexOf('。', end - 1),
+                remaining.lastIndexOf('.', end - 1),
+            );
+            if (boundary > Math.floor(end * 0.6)) end = boundary + 1;
+        }
         chunks.push(remaining.slice(0, end).trim());
         remaining = remaining.slice(end).trim();
-        if (chunks.length > edgeTtsLimits.chunks) throw new Error('Edge TTS text is too long');
     }
     return chunks;
 }
@@ -127,7 +130,8 @@ export function edgeTtsTokenExpiry(token: string, now = Date.now()): number {
             .replace(/_/gu, '/')
             .padEnd(Math.ceil(payload.length / 4) * 4, '=');
         const decoded = JSON.parse(atob(padded)) as {exp?: unknown};
-        return typeof decoded.exp === 'number' ? decoded.exp * 1_000 : fallback;
+        const expiresAt = typeof decoded.exp === 'number' ? decoded.exp * 1_000 : NaN;
+        return Number.isFinite(expiresAt) ? expiresAt : fallback;
     } catch {
         return fallback;
     }

@@ -7,6 +7,7 @@
  */
 
 import {config} from '@/src/services/config/store';
+import {abortErrorFromSignal} from '@/src/platform/http/runtime';
 import {getTranslationProviderConfig} from '@/src/services/translation/requestSnapshot';
 import {
     browserCapabilities,
@@ -62,6 +63,7 @@ export function createChromeTranslator(dependencies: ChromeTranslatorDependencie
         }
 
         try {
+            if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
             const current = getTranslationProviderConfig(message, config);
             const requestId = dependencies.createRequestId();
             const response = await dependencies.offscreenClient.send<ChromeTranslationOffscreenResponse>({
@@ -81,6 +83,7 @@ export function createChromeTranslator(dependencies: ChromeTranslatorDependencie
                     requestId,
                 },
             });
+            if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
             if (response?.requestId !== requestId) throw new Error('Offscreen 翻译响应 requestId 不匹配');
             if (!response.success || typeof response.result !== 'string') {
                 if (response.errorCode === 'preparation-required'
@@ -104,7 +107,9 @@ export function createChromeTranslator(dependencies: ChromeTranslatorDependencie
             return response.result;
         } catch (error) {
             const message = error instanceof Error ? error.message : '未知错误';
-            throw new Error(`Chrome Translation API 不可用：${message}`);
+            const wrapped = new Error(`Chrome Translation API 不可用：${message}`);
+            if (error instanceof Error) wrapped.name = error.name;
+            throw wrapped;
         }
     };
 }

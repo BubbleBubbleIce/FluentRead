@@ -36,6 +36,7 @@
       "tests/extensionSizeBudget.test.ts"
     ],
     "unit": [
+      "tests/implementationAudit48H.test.ts",
       "tests/translationCenterSession.test.ts",
       "tests/featureTranslationServices.test.ts",
       "tests/sha256.test.ts",
@@ -356,9 +357,18 @@
       "tests/documentIndentedCode.test.ts",
       "tests/languageAuditBoundaries.test.ts",
       "tests/cloudTranslationAuditBoundaries.test.ts",
-      "tests/documentPdfGeometryWorstCase.test.ts"
+      "tests/documentPdfGeometryWorstCase.test.ts",
+      "tests/implementationAudit48C.test.ts",
+      "tests/implementationAudit48F.test.ts",
+      "tests/implementationAudit48M.test.ts",
+      "tests/implementationAudit48N.test.ts"
     ],
     "functional": [
+      "tests/implementationAudit48L.test.ts",
+      "tests/implementationAudit48K.test.ts",
+      "tests/implementationAudit48J.test.ts",
+      "tests/implementationAudit48I.test.ts",
+      "tests/documentationToolContracts.test.ts",
       "tests/translationCenterComponent.test.ts",
       "tests/resourceSafeRunner.test.ts",
       "tests/settingsCompositionAutosave.test.ts",
@@ -503,7 +513,11 @@
       "tests/documentBinaryLifecycle.test.ts",
       "tests/documentAppLifecycle.test.ts",
       "tests/sharedUiComponentsLifecycle.test.ts",
-      "tests/documentUserActions.test.ts"
+      "tests/documentUserActions.test.ts",
+      "tests/implementationAudit48A.test.ts",
+      "tests/implementationAudit48B.test.ts",
+      "tests/implementationAudit48D.test.ts",
+      "tests/implementationAudit48E.test.ts"
     ],
     "regression": [
       "tests/discordServerIconBoundary.test.ts",

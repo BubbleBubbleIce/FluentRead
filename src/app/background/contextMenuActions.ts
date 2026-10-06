@@ -76,7 +76,7 @@ export async function runContextMenuAction(
     const response = await browser.tabs.sendMessage(tabId, {
         type: 'contextMenuTranslate',
         action: wasTranslated ? 'restore' : 'fullPage',
-    }) as FullPageStateResponse | undefined;
+    }, {frameId: 0}) as FullPageStateResponse | undefined;
     if (response?.status !== 'success') return {handled: false};
     return {
         handled: true,

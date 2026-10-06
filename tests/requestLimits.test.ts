@@ -7,7 +7,6 @@ import {
     normalizeRequestLimitPreference,
     normalizeServiceRequestLimits,
     normalizeTranslationRequestLimits,
-    resolveRequestLimits,
     withoutModelRequestLimit,
     withModelRequestLimit,
     withServiceRequestLimit,
@@ -76,8 +75,7 @@ describe('请求限流配置领域模型', () => {
         expect(Object.getPrototypeOf(serviceLimits)).toBeNull();
     });
 
-    it('继承开关保留草稿，解析时按模型、服务、全局顺序选择', () => {
-        const globalLimits = {maxConcurrentTranslations: 6, translationRequestsPerSecond: 10, translationRequestsPerMinute: 250};
+    it('继承开关保留草稿，查询隔离服务与模型', () => {
         const serviceRequestLimits = withServiceRequestLimit({}, services.openai, {
             enabled: true,
             limits: {maxConcurrentTranslations: 4, translationRequestsPerSecond: 4, translationRequestsPerMinute: 40},
@@ -86,18 +84,6 @@ describe('请求限流配置领域模型', () => {
             enabled: false,
             limits: {maxConcurrentTranslations: 2, translationRequestsPerSecond: 1, translationRequestsPerMinute: 2},
         });
-        expect(resolveRequestLimits({globalLimits, serviceId: services.openai, modelId: 'model-a', serviceRequestLimits, modelRequestLimits}))
-            .toEqual(serviceRequestLimits[services.openai].limits);
-        expect(resolveRequestLimits(globalLimits, services.openai, 'model-a', serviceRequestLimits, withModelRequestLimit(modelRequestLimits, services.openai, 'model-a', {enabled: true, limits: {maxConcurrentTranslations: 2, translationRequestsPerSecond: 1, translationRequestsPerMinute: 2}})))
-            .toEqual({maxConcurrentTranslations: 2, translationRequestsPerSecond: 1, translationRequestsPerMinute: 2});
-        expect(resolveRequestLimits({globalLimits, serviceId: services.microsoft, serviceRequestLimits, modelRequestLimits})).toEqual(globalLimits);
-        expect(resolveRequestLimits({
-            ...globalLimits,
-            serviceRequestLimits,
-            modelRequestLimits,
-        }, services.openai, 'model-a')).toEqual(serviceRequestLimits[services.openai].limits);
-        expect(resolveRequestLimits('invalid-global', undefined, undefined, undefined, undefined)).toEqual(DEFAULT_TRANSLATION_REQUEST_LIMITS);
-        expect(resolveRequestLimits({globalLimits}, undefined, 'model-a', serviceRequestLimits, modelRequestLimits)).toEqual(globalLimits);
         expect(getServiceRequestLimitPreference(serviceRequestLimits, services.openai)).toEqual({enabled: true, limits: serviceRequestLimits[services.openai].limits});
         expect(getServiceRequestLimitPreference(serviceRequestLimits, '')).toBeUndefined();
         expect(getServiceRequestLimitPreference(serviceRequestLimits, 'missing-service')).toBeUndefined();

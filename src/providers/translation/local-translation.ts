@@ -16,7 +16,7 @@ import {ensureUiLanguageBundle} from '@/src/platform/i18n/uiLanguageBundles';
 import {localTranslationOffscreenAdapter} from '@/src/platform/offscreen/localTranslation';
 
 async function localTranslation(message: TranslationProviderRequest<string>): Promise<string> {
-    if (!browserCapabilities.extensionDom) {
+    if (import.meta.env.BROWSER === 'userscript' || !browserCapabilities.extensionDom) {
         throw Object.assign(new Error('当前浏览器不支持本地模型翻译，请切换到其他翻译服务'), {localTranslationErrorKey: 'settings.localTranslation.error.browser'});
     }
 

@@ -14,7 +14,7 @@ import {resolveDoubaoSeedTranslationLanguage} from '@/src/core/config/doubaoSeed
 import {currentConfiguredModel} from '@/src/services/translation/templates';
 import {getTranslationLanguages} from '@/src/services/translation/languages';
 import {createHttpStatusError, readJsonResponse} from '@/src/platform/http/errors';
-import {runtimeFetch} from '@/src/platform/http/runtime';
+import {abortErrorFromSignal, runtimeFetch} from '@/src/platform/http/runtime';
 import {appendOptionalBearer} from './auth';
 import {buildOpenAIApiEndpoint, readResponsesApiText} from './responses-api';
 import {
@@ -99,6 +99,7 @@ async function translateSingle(
         }
 
         const result = await readJsonResponse<any>(response, '火山方舟返回的不是有效 JSON');
+        if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
         const actualModel = typeof result?.model === 'string' && result.model.trim()
             ? result.model
             : configuredModel;
@@ -107,11 +108,11 @@ async function translateSingle(
             ...normalizeResponsesApiUsage(result?.usage, actualModel),
             startedAt,
             durationMs: Math.max(0, Date.now() - startedAt),
-            outcome: text ? 'success' : 'error',
+            outcome: text.trim() ? 'success' : 'error',
             statusCode: response.status,
         });
         attemptReported = true;
-        if (!text) throw new Error('火山方舟返回数据格式异常：缺少 Responses API 输出文本');
+        if (!text.trim()) throw new Error('火山方舟返回数据格式异常：缺少 Responses API 输出文本');
         return text;
     } catch (error) {
         if (!attemptReported) {
@@ -126,6 +127,7 @@ async function doubaoSeedTranslation(
 ): Promise<string | string[]> {
     const current = getTranslationProviderConfig(message, config);
     const service = message.serviceOverride || services.doubao;
+    if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
     const configuredModel = currentConfiguredModel(current, service, message.modelOverride);
     if (!configuredModel) throw new Error('模型尚未配置，请前往设置页面进行检查。');
 

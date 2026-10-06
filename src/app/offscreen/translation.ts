@@ -218,6 +218,7 @@ async function checkModelAvailability(
     signal?: AbortSignal,
 ): Promise<ChromeModelAvailability | undefined> {
     reportModelStatus(reporter, {model, phase: 'checking'}, signal);
+    throwIfAborted(signal);
     if (!operation) {
         reportModelStatus(reporter, {model, phase: 'initializing'}, signal);
         return undefined;
@@ -378,6 +379,7 @@ export async function detectChromeLanguage(
                 reporter,
                 signal,
             );
+            throwIfAborted(signal);
             detector = await acquireAbortableResource(
                 modernDetector.create(createModelOptions(
                     'language-detector',
@@ -393,6 +395,7 @@ export async function detectChromeLanguage(
                 ...(availability ? {availability} : {}),
                 loaded: 1,
             }, signal);
+            throwIfAborted(signal);
             const detected = detectedLanguageFrom(await awaitWithAbort(
                 detector.detect(text, signal ? {signal} : undefined),
                 signal,
@@ -400,6 +403,7 @@ export async function detectChromeLanguage(
             if (detected) return refineDetectedChineseLanguage(detected, text);
         } else if (typeof environment.translation?.createDetector === 'function') {
             detector = await acquireAbortableResource(environment.translation.createDetector(), signal);
+            throwIfAborted(signal);
             const detected = detectedLanguageFrom(
                 await awaitWithAbort(detector.detect(text), signal),
                 false,
@@ -440,6 +444,7 @@ async function acquireChromeTranslator(
             reporter,
             signal,
         );
+        throwIfAborted(signal);
         const translator = await acquireAbortableResource(
             modernTranslator.create({
                 ...options,
@@ -483,6 +488,7 @@ export async function performChromeTranslation(
         reporter,
     );
     try {
+        throwIfAborted(signal);
         if (typeof translator.translateStreaming === 'function') {
             let translated = '';
             const stream = modern && signal

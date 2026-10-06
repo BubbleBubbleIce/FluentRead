@@ -46,7 +46,7 @@
         <button v-else type="button" @click="openSelectionSettings">配置 AI 讲解</button>
       </div>
       <div v-if="readingSelection" v-show="readingMode" class="fr-tooltip-content fr-reading-content">
-        <ReadingPanel ref="reading-panel-ref" :external-navigation="true" @view-change="syncReadingView" :selection="readingSelection" :source-translation="{source: selectedText, text: translationResult, pending: isLoading, error}" :preferences="readingPreferences" :active="readingMode" :initial-action="readingInitialAction" :history-only="readingHistoryOnly" :source-language="selectionSettings.from" :target-language="selectionSettings.to" :playing-source-text="isPlaying && currentAudioKind === 'source' ? currentAudioText : ''" :model-revision="readingModelRevision" :vocabulary-enabled="config.vocabularyBookEnabled" :private-context="isPrivateContext" :animations="config.animations" @play-source="toggleAudio($event, 'source')" @source-change="stopAudio()" @resize="schedulePositionUpdate" />
+        <ReadingPanel ref="reading-panel-ref" :external-navigation="true" @view-change="syncReadingView" :selection="readingSelection" :source-translation="{source: selectedText, text: translationResult, pending: isLoading, error}" :preferences="readingPreferences" :active="readingMode" :initial-action="readingInitialAction" :history-only="readingHistoryOnly" :source-language="effectiveSourceLanguage" :target-language="effectiveTargetLanguage" :playing-source-text="isPlaying && currentAudioKind === 'source' ? currentAudioText : ''" :model-revision="readingModelRevision" :vocabulary-enabled="config.vocabularyBookEnabled" :private-context="isPrivateContext" :animations="config.animations" @play-source="toggleAudio($event, 'source')" @source-change="stopAudio()" @resize="schedulePositionUpdate" />
       </div>
       <div v-show="!readingMode" class="fr-tooltip-content" aria-live="polite">
         <div v-if="isLoading && !translationResult && !wordCard && !wordCardError && !isWordSelection" class="fr-loading-state"><span :class="['fr-loading-spinner', { 'fr-static': !config.animations }]" aria-hidden="true" /><span>正在查询…</span></div>
@@ -841,7 +841,7 @@ function openReadingHistory(): void {
 
 function openReadingCard(): void {
   if (!snapshot.value || !readingEnabled.value) return;
-  if (shouldSkipChineseSelection(snapshot.value.text, config.to)) { hideAll(); return; }
+  if (shouldSkipChineseSelection(snapshot.value.text, effectiveTargetLanguage.value)) { hideAll(); return; }
   cancelSelectionPresentation();
   cancelSelectionLoss();
   if (!activeContentRequest.value || error.value || (!translationResult.value && !isLoading.value)) {
@@ -1269,7 +1269,7 @@ async function playEdgeSpeech(text: string, language: string, kind: AudioKind, r
     audioUrl = nextAudioUrl;
     currentAudioKind.value = kind;
     currentAudioText.value = text;
-    currentAudioKey.value = text;
+    if (kind !== 'word') currentAudioKey.value = text;
     isPlaying.value = true;
     try {
       await nextAudio.play();
@@ -1303,7 +1303,7 @@ function playBrowserSpeech(text: string, language: string, kind: AudioKind): boo
     utterance = nextUtterance;
     currentAudioKind.value = kind;
     currentAudioText.value = text;
-    currentAudioKey.value = text;
+    if (kind !== 'word') currentAudioKey.value = text;
     isPlaying.value = true;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(nextUtterance);
@@ -1354,7 +1354,7 @@ async function playGoogleFallback(text: string, language: string, kind: AudioKin
   audio = nextAudio;
   currentAudioKind.value = kind;
   currentAudioText.value = text;
-  currentAudioKey.value = text;
+  if (kind !== 'word') currentAudioKey.value = text;
   isPlaying.value = true;
   try {
     await nextAudio.play();
@@ -1695,6 +1695,11 @@ function handleWindowBlur(): void {
 function handleSelectionSettingsMessage(message: unknown): undefined {
   if (!message || typeof message !== 'object') return undefined;
   const type = (message as { type?: unknown }).type;
+  // 后台已核对专用凭据对应的模型输入；content 只接收无值事件，不能获取密钥或摘要。
+  if (type === 'fluentReadReadingModelInputsChanged') {
+    readingModelRevision.value += 1;
+    return undefined;
+  }
   if (type !== 'updateSelectionTranslatorSettings' && type !== 'updateSelectionTranslatorMode') return undefined;
   selectionConfigVersion.value += 1;
   return undefined;

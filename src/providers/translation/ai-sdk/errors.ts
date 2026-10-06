@@ -91,13 +91,14 @@ function sanitizeProviderDetail(value: string, apiKey?: string | readonly string
 }
 
 function parseRetryAfter(headers?: Record<string, string>): number | undefined {
-  const millisecondValue = headers?.['retry-after-ms'];
+  const normalizedHeaders = Object.fromEntries(Object.entries(headers ?? {}).map(([name, value]) => [name.toLowerCase(), value]));
+  const millisecondValue = normalizedHeaders['retry-after-ms'];
   if (millisecondValue !== undefined) {
     const milliseconds = Number(millisecondValue);
     if (Number.isFinite(milliseconds) && milliseconds >= 0) return milliseconds;
   }
 
-  const value = headers?.['retry-after'];
+  const value = normalizedHeaders['retry-after'];
   if (!value) return undefined;
   const numeric = Number(value);
   if (Number.isFinite(numeric) && numeric >= 0) return numeric * 1000;
@@ -106,10 +107,11 @@ function parseRetryAfter(headers?: Record<string, string>): number | undefined {
 }
 
 function requestIdFrom(headers?: Record<string, string>): string | undefined {
-  return headers?.['x-request-id']
-    || headers?.['request-id']
-    || headers?.['x-ms-request-id']
-    || headers?.['x-amzn-requestid'];
+  const normalizedHeaders = Object.fromEntries(Object.entries(headers ?? {}).map(([name, value]) => [name.toLowerCase(), value]));
+  return normalizedHeaders['x-request-id']
+    || normalizedHeaders['request-id']
+    || normalizedHeaders['x-ms-request-id']
+    || normalizedHeaders['x-amzn-requestid'];
 }
 
 function sanitizeMetadata(value: string | undefined, apiKey?: string | readonly string[], maxLength = 160): string | undefined {
@@ -191,14 +193,14 @@ export function normalizeAiSdkError(
     );
   }
 
-  const message = error instanceof Error ? error.message : String(error);
+  const message = candidate instanceof Error ? candidate.message : String(candidate);
   const normalized = message.toLowerCase();
-  const errorName = error instanceof Error ? error.name : '';
+  const errorName = candidate instanceof Error ? candidate.name : '';
   const timedOut = /timeout|timed out|请求超时/u.test(normalized)
-    || (error instanceof Error && error.name === 'TimeoutError')
+    || errorName === 'TimeoutError'
     // AI SDK 也会把内部总超时控制器表现为 AbortError，例如等待 Retry-After 时。
-    || (error instanceof Error && error.name === 'AbortError' && !callerAborted);
-  const aborted = error instanceof Error && error.name === 'AbortError' && callerAborted;
+    || (errorName === 'AbortError' && !callerAborted);
+  const aborted = errorName === 'AbortError' && callerAborted;
   const network = /failed to fetch|fetch failed|networkerror|network error|load failed|网络连接失败/u.test(normalized);
   const invalidRequest = /invalidprompt|typevalidation|invalidargument/u.test(
     errorName.replace(/[^a-z]/giu, '').toLowerCase(),

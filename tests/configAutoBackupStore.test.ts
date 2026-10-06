@@ -90,7 +90,7 @@ describe('自动配置备份 store', () => {
         });
     });
 
-    it('首次没有备份时立即持久化一份脱敏基线', async () => {
+    it('无原子条件写的初始化保留脱敏内存基线，显式捕获再持久化', async () => {
         const store = await loadStore();
         const state = store.getConfigAutoBackupsSnapshot();
 
@@ -99,10 +99,18 @@ describe('自动配置备份 store', () => {
         expect(state.entries[0]?.config).not.toHaveProperty('token');
         expect(state.entries[0]?.config).not.toHaveProperty('count');
         expect(state.entries[0]?.config).not.toHaveProperty('persistCredentials');
+        expect(storageHarness.setItem).not.toHaveBeenCalled();
+        expect(storageHarness.values.has(store.CONFIG_AUTO_BACKUP_STORAGE_KEY)).toBe(false);
+
+        await store.captureConfigAutoBackup({savedAt: 'explicit-capture'});
+        expect(storageHarness.setItem).toHaveBeenCalledOnce();
         expect(storageHarness.setItem).toHaveBeenCalledWith(
             store.CONFIG_AUTO_BACKUP_STORAGE_KEY,
             expect.objectContaining({entries: expect.any(Array)}),
         );
+        const persisted = JSON.stringify(storageHarness.values.get(store.CONFIG_AUTO_BACKUP_STORAGE_KEY));
+        expect(persisted).not.toContain('current-secret');
+        expect(store.getConfigAutoBackupsSnapshot().entries).toHaveLength(2);
     });
 
     it('串行捕获重复时间检查点并只保留最近十份', async () => {
@@ -122,7 +130,7 @@ describe('自动配置备份 store', () => {
         expect(new Set(state.entries.map((entry) => entry.version)).size).toBe(10);
     });
 
-    it('读取旧备份时立即清理凭据和非恢复字段，并通知外部订阅更新', async () => {
+    it('无原子条件写时立即脱敏内存，保留外部订阅并在显式捕获清理旧存储', async () => {
         storageHarness.values.set('local:configAutoBackups', {
             schemaVersion: 1,
             entries: [{
@@ -142,8 +150,12 @@ describe('自动配置备份 store', () => {
             nextVersion: 8,
         });
         const store = await loadStore();
+        expect(JSON.stringify(store.getConfigAutoBackupsSnapshot())).not.toContain('legacy-secret');
+        expect(store.getConfigAutoBackupsSnapshot().entries[0]?.config).not.toHaveProperty('count');
+        expect(store.getConfigAutoBackupsSnapshot().entries[0]?.config).not.toHaveProperty('persistCredentials');
+        expect(storageHarness.setItem).not.toHaveBeenCalled();
         expect(JSON.stringify(storageHarness.values.get(store.CONFIG_AUTO_BACKUP_STORAGE_KEY)))
-            .not.toContain('legacy-secret');
+            .toContain('legacy-secret');
 
         const listener = vi.fn();
         const unsubscribe = store.subscribeConfigAutoBackups(listener);
@@ -162,6 +174,12 @@ describe('自动配置备份 store', () => {
             entries: [expect.objectContaining({version: 8, config: expect.objectContaining({to: 'ko'})})],
         }));
         unsubscribe();
+        await store.captureConfigAutoBackup({savedAt: 'explicit-after-external'});
+        expect(storageHarness.setItem).toHaveBeenCalledOnce();
+        expect(JSON.stringify(storageHarness.values.get(store.CONFIG_AUTO_BACKUP_STORAGE_KEY)))
+            .not.toContain('legacy-secret');
+        expect(store.getConfigAutoBackupsSnapshot().entries[0]).toMatchObject({version: 8, config: {to: 'ko'}});
+        expect(store.getConfigAutoBackupsSnapshot().entries.at(-1)).toMatchObject({version: 9, savedAt: 'explicit-after-external'});
     });
 
     it('恢复备份时保留当前凭据、统计和迁移标记，并忽略旧策略字段', async () => {

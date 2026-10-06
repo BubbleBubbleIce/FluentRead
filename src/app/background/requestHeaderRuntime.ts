@@ -13,7 +13,8 @@ export function installRequestHeaderRuntime(): void {
     const refresh = () => sync.sync(config.requestHeaderRules);
     void configReady.then(() => {
         subscribeConfig(() => { void refresh().catch(() => console.warn('[FluentRead] 请求头规则更新失败；下次请求将重试。')); });
-    });
+        return refresh();
+    }).catch(() => console.warn('[FluentRead] 请求头规则更新失败；下次请求将重试。'));
     setRuntimeFetch(async (input, init) => {
         await configReady;
         await refresh();

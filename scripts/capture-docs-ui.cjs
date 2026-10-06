@@ -9,11 +9,18 @@ const fs = require('node:fs'),
 const { createRequire } = require('node:module')
 const { execFileSync } = require('node:child_process')
 const { createHash } = require('node:crypto')
-const arg = (name) => process.argv[process.argv.indexOf('--' + name) + 1]
-const runtime = createRequire(path.join(arg('runtime'), 'docs-ui.cjs'))
+const arg = (name) => {
+  const index = process.argv.indexOf('--' + name, 2)
+  const value = index < 0 ? undefined : process.argv[index + 1]
+  if (!value || value.startsWith('--')) throw Error(`Missing value for --${name}`)
+  return value
+}
+const runtimePath = arg('runtime'),
+  helperPath = arg('helper')
+const runtime = createRequire(path.join(runtimePath, 'docs-ui.cjs'))
 const { chromium } = runtime('playwright'),
   sharp = runtime('sharp')
-const helper = require(arg('helper'))
+const helper = require(helperPath)
 const root = path.resolve(__dirname, '..')
 const report = {
   extension: '.output/chrome-mv3',
@@ -45,16 +52,22 @@ const report = {
   screenshots: [],
   errors: [],
 }
-const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-docs-ui-'))
-let launched
-const server = http.createServer((_, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  res.end(
-    '<!doctype html><html lang="en"><meta charset="utf-8"><title>Reading example</title><main><h1>A world worth exploring.</h1><p>Every language offers a new way to see the world.</p></main></html>'
-  )
-})
+let profile, server, launched
 ;(async () => {
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+  profile = fs.mkdtempSync(path.join(os.tmpdir(), 'fluentread-docs-ui-'))
+  server = http.createServer((_, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.end(
+      '<!doctype html><html lang="en"><meta charset="utf-8"><title>Reading example</title><main><h1>A world worth exploring.</h1><p>Every language offers a new way to see the world.</p></main></html>'
+    )
+  })
+  await new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', reject)
+      resolve()
+    })
+  })
   launched = await helper.launchFocusSafePersistentContext({
     chromium,
     profileDir: profile,
@@ -123,74 +136,89 @@ const server = http.createServer((_, res) => {
     fs.mkdirSync(webDir, { recursive: true })
     async function capture(page, name, selector, targets = []) {
       const w = name.startsWith('popup') ? 360 : 1280,
-        h = name === 'popup' ? 800 : 800
+        h = 800
       await page.setViewportSize({ width: w, height: h })
       await page.evaluate(() => document.fonts.ready)
       const cdp = await ctx.newCDPSession(page)
-      await cdp.send('Emulation.setDeviceMetricsOverride', {
-        width: w,
-        height: h,
-        deviceScaleFactor: 2,
-        mobile: false,
-      })
-      const rect = selector
-        ? await page.locator(selector).boundingBox()
-        : { x: 0, y: 0, width: w, height: h }
-      assert(rect, selector)
-      const clip = {
-        x: Math.floor(rect.x),
-        y: Math.floor(rect.y),
-        width: Math.ceil(rect.width),
-        height: Math.ceil(rect.height),
-        scale: 1,
-      }
-      const data = await cdp.send('Page.captureScreenshot', {
-        format: 'png',
-        fromSurface: true,
-        captureBeyondViewport: true,
-        clip,
-      })
-      const buffer = Buffer.from(data.data, 'base64'),
-        source = path.join(sourceDir, name + '.png'),
-        web = path.join(webDir, name + '.webp')
-      fs.writeFileSync(source, buffer)
-      await sharp(buffer).webp({ lossless: true, effort: 6 }).toFile(web)
-      const meta = await sharp(web).metadata()
-      assert.equal(meta.width, clip.width * 2)
-      assert.equal(meta.height, clip.height * 2)
-      assert(
-        (await sharp(buffer).ensureAlpha().raw().toBuffer()).equals(
-          await sharp(web).ensureAlpha().raw().toBuffer()
-        )
-      )
-      const points = []
-      for (const target of targets) {
-        const box = await page
-          .locator(target + ':visible')
-          .first()
-          .boundingBox()
-        assert(box, 'Missing visible target: ' + target)
-        assert(
-          box.x + box.width / 2 >= 0 && box.y + box.height / 2 >= 0 && box.y + box.height / 2 <= h,
-          'Target outside screenshot: ' + target
-        )
-        points.push({
-          x: ((box.x + box.width / 2 - rect.x) / rect.width) * 100,
-          y: ((box.y + box.height / 2 - rect.y) / rect.height) * 100,
+      let captureFailed = false
+      try {
+        await cdp.send('Emulation.setDeviceMetricsOverride', {
+          width: w,
+          height: h,
+          deviceScaleFactor: 2,
+          mobile: false,
         })
+        const rect = selector
+          ? await page.locator(selector).boundingBox()
+          : { x: 0, y: 0, width: w, height: h }
+        assert(rect, selector)
+        const clip = {
+          x: Math.floor(rect.x),
+          y: Math.floor(rect.y),
+          width: Math.ceil(rect.width),
+          height: Math.ceil(rect.height),
+          scale: 1,
+        }
+        const data = await cdp.send('Page.captureScreenshot', {
+          format: 'png',
+          fromSurface: true,
+          captureBeyondViewport: true,
+          clip,
+        })
+        const buffer = Buffer.from(data.data, 'base64'),
+          source = path.join(sourceDir, name + '.png'),
+          web = path.join(webDir, name + '.webp')
+        fs.writeFileSync(source, buffer)
+        await sharp(buffer).webp({ lossless: true, effort: 6 }).toFile(web)
+        const meta = await sharp(web).metadata()
+        assert.equal(meta.width, clip.width * 2)
+        assert.equal(meta.height, clip.height * 2)
+        assert(
+          (await sharp(buffer).ensureAlpha().raw().toBuffer()).equals(
+            await sharp(web).ensureAlpha().raw().toBuffer()
+          )
+        )
+        const points = []
+        for (const target of targets) {
+          const box = await page
+            .locator(target + ':visible')
+            .first()
+            .boundingBox()
+          assert(box, 'Missing visible target: ' + target)
+          const centerX = box.x + box.width / 2,
+            centerY = box.y + box.height / 2
+          assert(
+            centerX >= rect.x && centerX <= rect.x + rect.width &&
+              centerY >= rect.y && centerY <= rect.y + rect.height,
+            'Target outside screenshot: ' + target
+          )
+          points.push({
+            x: ((centerX - rect.x) / rect.width) * 100,
+            y: ((centerY - rect.y) / rect.height) * 100,
+          })
+        }
+        report.screenshots.push({
+          points,
+          locale,
+          name,
+          source: path.relative(root, source),
+          web: path.relative(root, web),
+          width: meta.width,
+          height: meta.height,
+          bytes: fs.statSync(web).size,
+          losslessPixels: true,
+        })
+      } catch (error) {
+        captureFailed = true
+        throw error
+      } finally {
+        try {
+          await cdp.detach()
+        } catch (error) {
+          if (!captureFailed) throw error
+          console.error('Failed to detach screenshot session:', error)
+        }
       }
-      report.screenshots.push({
-        points,
-        locale,
-        name,
-        source: path.relative(root, source),
-        web: path.relative(root, web),
-        width: meta.width,
-        height: meta.height,
-        bytes: fs.statSync(web).size,
-        losslessPixels: true,
-      })
-      await cdp.detach()
     }
     await popup.locator('[data-testid="onboarding-welcome"]').waitFor()
     await capture(popup, 'popup-welcome', '.popup-shell')
@@ -299,8 +327,27 @@ const server = http.createServer((_, res) => {
     process.exitCode = 1
   })
   .finally(async () => {
-    if (launched) await launched.close()
-    server.closeAllConnections()
-    await new Promise((resolve) => server.close(resolve))
-    fs.rmSync(profile, { recursive: true, force: true })
+    // Every owned resource gets a cleanup attempt, even when an earlier close fails.
+    // Keep the primary error above and report each cleanup failure separately.
+    for (const [resource, cleanup] of [
+      ['browser', () => launched?.close()],
+      ['server connections', () => server?.closeAllConnections()],
+      ['server', async () => {
+        if (!server) return
+        await new Promise((resolve, reject) => server.close((error) => {
+          if (error && error.code !== 'ERR_SERVER_NOT_RUNNING') reject(error)
+          else resolve()
+        }))
+      }],
+      ['profile', () => {
+        if (profile) fs.rmSync(profile, { recursive: true, force: true })
+      }],
+    ]) {
+      try {
+        await cleanup()
+      } catch (error) {
+        console.error(`Failed to clean up ${resource}:`, error)
+        process.exitCode = 1
+      }
+    }
   })

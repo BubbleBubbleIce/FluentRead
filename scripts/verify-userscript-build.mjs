@@ -55,6 +55,9 @@ const assertions = [
   [!source.includes('fluent-read-sentence-actions'), 'sentence actions runtime must be excluded from userscript'],
   [!source.includes('fluent:prefill'), 'page-driven New API config bridge must be excluded from userscript'],
   [!source.includes('CHROME_TRANSLATE_OFFSCREEN'), 'Chrome offscreen translator must be excluded from userscript'],
+  [!source.includes('FLUENT_READ_OFFSCREEN_READY'), 'extension Offscreen client must be excluded from userscript'],
+  [!source.includes('fluent-read-background-dom-runtime'), 'Firefox background DOM host must be excluded from userscript'],
+  [!source.includes('LOCAL_TRANSLATION_TRANSLATE'), 'local translation Offscreen transport must be excluded from userscript'],
 ];
 
 const failure = assertions.find(([passed]) => !passed);

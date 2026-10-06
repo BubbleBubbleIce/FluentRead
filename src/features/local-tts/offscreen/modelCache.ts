@@ -1,11 +1,11 @@
 /**
  * @file src/features/local-tts/offscreen/modelCache.ts
  * 文件职责：下载、检查和清除 Kokoro 本地 TTS 模型及少量默认音色文件。
- * 主要内容：固定模型版本与文件清单，流式写入一份版本缓存，自动回退国内镜像和官方来源，兼容旧 main 缓存，并把模型下载和音色下载分开管理；下载时把全部文件合并为一条真实字节进度。
+ * 主要内容：固定版本与文件清单，验证固定缓存及旧 main 别名来源，流式下载并回退镜像；仅在显式准备时迁移已验证旧别名，避免重复权重，状态查询不删除文件；合并真实字节进度，让下载去重并与清除互斥。
  * 模块边界：只负责缓存文件，不初始化推理 Worker，不决定朗读策略，也不访问网页。
  */
 
-import {withModelDownload} from '@/src/platform/http/modelDownloads';
+import {modelDownloadSources, withModelDownload} from '@/src/platform/http/modelDownloads';
 import {
     createDownloadProgressTracker,
     type DownloadFileProgress,
@@ -48,6 +48,13 @@ export const LOCAL_TTS_VOICES: readonly LocalTtsVoiceId[] = [
 
 const MODEL_FILE_DOWNLOAD_TIMEOUT_MS = 300_000;
 const pendingDownloads = new Map<string, Promise<void>>();
+let removingFiles = false;
+
+function usableCachedResponse(response: Response | undefined, sourceUrl: string, allowUnmarked: boolean): boolean {
+    if (!response?.ok) return false;
+    const source = response.headers.get('X-FluentRead-Model-Source');
+    return (source !== null && modelDownloadSources(sourceUrl).includes(source)) || (allowUnmarked && source === null);
+}
 
 export function getLocalTtsModelFileUrl(file: string): string {
     return `${LOCAL_TTS_MODEL_REMOTE_HOST}${LOCAL_TTS_MODEL_REPOSITORY}/resolve/${LOCAL_TTS_MODEL_REVISION}/${file}`;
@@ -75,18 +82,31 @@ async function fetchIntoCache(
     const existing = await (async (): Promise<Response | undefined> => {
         for (const cacheUrl of cacheUrls) {
             const response = await cache.match(cacheUrl);
-            if (response) return response;
+            if (usableCachedResponse(response, sourceUrl, cacheUrl === sourceUrl)) return response;
         }
         return undefined;
     })();
     if (existing) {
         progress.cached(Number(existing.headers.get('Content-Length')));
+        // 显式准备才迁移已验证旧 main 副本；状态查询不改变文件缓存。
+        if (!usableCachedResponse(await cache.match(sourceUrl), sourceUrl, true)) {
+            await cache.put(sourceUrl, existing.clone());
+        }
+        for (const cacheUrl of cacheUrls) {
+            if (cacheUrl !== sourceUrl && usableCachedResponse(await cache.match(cacheUrl), sourceUrl, false)) {
+                await cache.delete(cacheUrl);
+            }
+        }
         return;
     }
     await withModelDownload(sourceUrl, async (response, source) => {
         const headers = new Headers(response.headers);
         headers.set('X-FluentRead-Model-Source', source);
-        await cache.put(sourceUrl, new Response(response.body, {headers}));
+        await cache.put(sourceUrl, new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers,
+        }));
     }, {timeoutMs: MODEL_FILE_DOWNLOAD_TIMEOUT_MS, onProgress: progress.advance});
     progress.complete();
 }
@@ -113,6 +133,7 @@ async function cacheLocalTtsModelNow(onProgress?: (progress: DownloadProgress) =
 
 /** 对同一版本的并发下载只保留一个网络任务；进度由首个发起者的回调统一发布。 */
 export function cacheLocalTtsModelFiles(onProgress?: (progress: DownloadProgress) => void): Promise<void> {
+    if (removingFiles) return Promise.reject(new Error('正在清除本地 TTS 模型，请稍后重试'));
     const existing = pendingDownloads.get(LOCAL_TTS_MODEL_ID);
     if (existing) return existing;
     const pending = cacheLocalTtsModelNow(onProgress).finally(() => {
@@ -123,7 +144,7 @@ export function cacheLocalTtsModelFiles(onProgress?: (progress: DownloadProgress
 }
 
 export async function isLocalTtsModelCached(): Promise<boolean> {
-    if (typeof caches === 'undefined') return false;
+    if (typeof caches === 'undefined' || removingFiles) return false;
     const modelCache = await caches.open(LOCAL_TTS_MODEL_CACHE_NAME);
     const voiceCache = await caches.open(LOCAL_TTS_VOICE_CACHE_NAME);
     const modelFiles = await Promise.all(LOCAL_TTS_MODEL_FILES.map(async (file) => {
@@ -131,28 +152,36 @@ export async function isLocalTtsModelCached(): Promise<boolean> {
         const loaderUrl = getLocalTtsModelLoaderUrl(file);
         const pinned = await modelCache.match(pinnedUrl);
         const loader = await modelCache.match(loaderUrl);
-        // 旧版本曾把同一固定文件写入两次；仅清理能证明属于当前固定版本的 main 副本。
-        if (pinned && loader && loader.headers.get('X-FluentRead-Model-Source') === pinnedUrl) {
-            await modelCache.delete(loaderUrl);
-        }
-        return pinned || loader;
+        return usableCachedResponse(pinned, pinnedUrl, true) || usableCachedResponse(loader, pinnedUrl, false);
     }));
-    const voiceFiles = await Promise.all(LOCAL_TTS_VOICES.map((voice) => voiceCache.match(getLocalTtsVoiceCacheUrl(voice))));
+    const voiceFiles = await Promise.all(LOCAL_TTS_VOICES.map(async (voice) => {
+        const url = getLocalTtsVoiceCacheUrl(voice);
+        return usableCachedResponse(await voiceCache.match(url), url, true);
+    }));
     return modelFiles.every(Boolean) && voiceFiles.every(Boolean);
 }
 
 export async function removeLocalTtsModelFiles(): Promise<void> {
     if (typeof caches === 'undefined') throw new Error('当前浏览器不支持本地 TTS 模型缓存');
-    const modelCache = await caches.open(LOCAL_TTS_MODEL_CACHE_NAME);
-    const voiceCache = await caches.open(LOCAL_TTS_VOICE_CACHE_NAME);
-    const removableModelFiles = [...LOCAL_TTS_MODEL_FILES, ...LOCAL_TTS_LEGACY_MODEL_FILES];
-    await Promise.all([
-        ...removableModelFiles.flatMap((file) => [
-            modelCache.delete(getLocalTtsModelFileUrl(file)),
-            modelCache.delete(getLocalTtsModelLoaderUrl(file)),
-        ]),
-        ...LOCAL_TTS_VOICES.map((voice) => voiceCache.delete(getLocalTtsVoiceCacheUrl(voice))),
-    ]);
+    if (pendingDownloads.size) throw new Error('本地 TTS 模型正在下载，请完成后再清除模型');
+    if (removingFiles) throw new Error('正在清除本地 TTS 模型，请稍后重试');
+    removingFiles = true;
+    try {
+        const modelCache = await caches.open(LOCAL_TTS_MODEL_CACHE_NAME);
+        const voiceCache = await caches.open(LOCAL_TTS_VOICE_CACHE_NAME);
+        const removableModelFiles = [...LOCAL_TTS_MODEL_FILES, ...LOCAL_TTS_LEGACY_MODEL_FILES];
+        const deletions = await Promise.allSettled([
+            ...removableModelFiles.flatMap((file) => [
+                modelCache.delete(getLocalTtsModelFileUrl(file)),
+                modelCache.delete(getLocalTtsModelLoaderUrl(file)),
+            ]),
+            ...LOCAL_TTS_VOICES.map((voice) => voiceCache.delete(getLocalTtsVoiceCacheUrl(voice))),
+        ]);
+        const failed = deletions.find((result) => result.status === 'rejected');
+        if (failed?.status === 'rejected') throw failed.reason;
+    } finally {
+        removingFiles = false;
+    }
 }
 
 export {LOCAL_TTS_MODEL_STATE_KEY};

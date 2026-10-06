@@ -13,7 +13,7 @@ const maxWorkers = Number.isInteger(configuredMaxWorkers) && configuredMaxWorker
  * Step 3: 架构审计保证未纳入的文件都有其他验证归属，不能靠排除隐藏业务逻辑。
  */
 export default defineConfig({
-    plugins: [vue({include: /\/src\/(?:features\/image-translation\/ui\/MangaEntry|app\/document-translation\/(?:DocumentApp|DocumentSegmentEditor)|ui\/components\/(?:CustomHotkeyInput|UiSelect|GlossaryLibrarySelect|ServiceIcon|TranslationLoadingPreview|UiIcon|InterfaceBackdrop|FeatureEnableCard)|features\/settings\/ui\/components\/(?:FieldHelp|InterfaceSkinPreview|PopupLayoutPreview|PopupLayoutPreviewItem|SettingsGroup|SettingsItem|TranslationColorField|TranslationStylePreview|WritingStylePreview|SegmentedControl))\.vue$/})],
+    plugins: [vue({include: /\/src\/(?:features\/share-card\/ui\/ShareCardStudio|features\/selection-translation\/ui\/SelectionTranslator|features\/settings\/ui\/services\/RequestLimit(?:Settings|Fields)|features\/reading-assistant\/ui\/[^/]+|ui\/components\/(?:MarkdownContent|MarkdownTable|[^/]*Reading[^/]*)|features\/image-translation\/ui\/MangaEntry|app\/document-translation\/(?:DocumentApp|DocumentSegmentEditor)|ui\/components\/(?:CustomHotkeyInput|UiSelect|GlossaryLibrarySelect|ServiceIcon|TranslationLoadingPreview|UiIcon|InterfaceBackdrop|FeatureEnableCard)|features\/settings\/ui\/components\/(?:FieldHelp|InterfaceSkinPreview|PopupLayoutPreview|PopupLayoutPreviewItem|SettingsGroup|SettingsItem|TranslationColorField|TranslationStylePreview|WritingStylePreview|SegmentedControl))\.vue$/})],
     resolve: {
         alias: {
             '@': resolve(__dirname, '.'),
@@ -21,7 +21,7 @@ export default defineConfig({
     },
     test: {
         environment: 'node',
-        testTransformMode: {web: ['**/tests/customHotkeyInputLifecycle.test.ts', '**/tests/sharedUiComponentsLifecycle.test.ts', '**/tests/documentAppLifecycle.test.ts', '**/tests/documentUserActions.test.ts']},
+        testTransformMode: {web: ['**/tests/implementationAudit48J.test.ts', '**/tests/implementationAudit48I.test.ts', '**/tests/implementationAudit48C.test.ts', '**/tests/implementationAudit48E.test.ts', '**/tests/customHotkeyInputLifecycle.test.ts', '**/tests/sharedUiComponentsLifecycle.test.ts', '**/tests/documentAppLifecycle.test.ts', '**/tests/documentUserActions.test.ts']},
         globalSetup: ['./scripts/testing/vitest-resource-lock.mjs'],
         maxWorkers,
         minWorkers: 1,
@@ -29,6 +29,20 @@ export default defineConfig({
         // 按真实规则内容验证共享词书样式，与普通测试配置一致。
         css: {include: [/vocabulary-reencounter\.css/]},
         include: [
+            'tests/implementationAudit48H.test.ts',
+            'tests/implementationAudit48I.test.ts',
+            'tests/implementationAudit48J.test.ts',
+            'tests/implementationAudit48K.test.ts',
+            'tests/implementationAudit48L.test.ts',
+            'tests/implementationAudit48M.test.ts',
+            'tests/implementationAudit48N.test.ts',
+            'tests/documentationToolContracts.test.ts',
+            'tests/implementationAudit48A.test.ts',
+            'tests/implementationAudit48B.test.ts',
+            'tests/implementationAudit48C.test.ts',
+            'tests/implementationAudit48D.test.ts',
+            'tests/implementationAudit48E.test.ts',
+            'tests/implementationAudit48F.test.ts',
             'tests/configModelAuditBoundaries.test.ts',
             'tests/documentIndentedCode.test.ts',
             'tests/languageAuditBoundaries.test.ts',
@@ -462,6 +476,19 @@ export default defineConfig({
             reportsDirectory: 'coverage/core',
             reporter: ['text', 'json-summary', 'html'],
             include: [
+                'src/core/config/shareCard.ts',
+                'src/features/share-card/core.ts',
+                'src/features/share-card/themes.ts',
+                'src/features/share-card/render.ts',
+                'src/features/share-card/export.ts',
+                'src/features/share-card/content/runtime.ts',
+                'src/features/share-card/ui/ShareCardStudio.vue',
+                'src/app/content/learningFeatures.ts',
+                'src/core/i18n/messages/onboarding.ts',
+                'src/core/i18n/messages/siteRules.ts',
+                'src/features/image-translation/services/mangaTypography.ts',
+                'src/services/model-usage/types.ts',
+                'src/services/translation-stats/types.ts',
                 'src/app/document-translation/DocumentSegmentEditor.vue',
                 'src/ui/components/UiSelect.vue',
                 'src/ui/components/GlossaryLibrarySelect.vue',
@@ -609,7 +636,6 @@ export default defineConfig({
                 'src/services/harness/memoryRecall.ts',
                 'src/core/harness/memorySearch.ts',
                 'src/services/harness/conversation.ts',
-                'src/services/harness/sessionTypes.ts',
                 'src/services/harness/sessions.ts',
                 'src/platform/storage/harnessSessionRepository.ts',
                 'src/features/reading-assistant/client.ts',

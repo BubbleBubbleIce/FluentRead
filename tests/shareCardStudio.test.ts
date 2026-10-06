@@ -45,8 +45,9 @@ describe('制作卡片操作反馈与生命周期', () => {
     it('保存反馈、重复保存重新通知、异常提示并释放下载节点', async () => {
         const f = fixture(); await f.open(); f.state.saveImage();
         expect(f.state.status).toBe('shareCard.saved'); expect(f.state.statusError).toBe(false);
-        const sequence = f.state.feedbackSequence; f.state.saveImage(); expect(f.state.feedbackSequence).toBe(sequence + 1);
-        f.click.mockImplementationOnce(() => {throw Error('blocked');}); f.state.saveImage();
+        const sequence = f.state.feedbackSequence; f.state.saveImage(); expect(f.state.feedbackSequence).toBe(sequence);
+        await vi.advanceTimersByTimeAsync(401); f.state.saveImage(); expect(f.state.feedbackSequence).toBe(sequence + 1);
+        await vi.advanceTimersByTimeAsync(401); f.click.mockImplementationOnce(() => {throw Error('blocked');}); f.state.saveImage();
         expect(f.state.status).toBe('shareCard.saveFailed'); expect(f.state.statusError).toBe(true); expect(f.remove).toHaveBeenCalledTimes(3);
     });
     it('复制忙碌防重入，切换设置不吞掉已复制图片的反馈', async () => {

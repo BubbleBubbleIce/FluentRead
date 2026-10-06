@@ -6,7 +6,7 @@
  */
 import {normalizeChineseLanguageCode} from '@/src/core/language/chinese';
 import {createHttpStatusError, readJsonResponse} from '@/src/platform/http/errors';
-import type {RuntimeFetch} from '@/src/platform/http/runtime';
+import {abortErrorFromSignal, type RuntimeFetch} from '@/src/platform/http/runtime';
 
 const MICROSOFT_TRANSLATE_URL = 'https://edge.microsoft.com/translate/translatetext';
 
@@ -38,6 +38,7 @@ export async function translateMicrosoftTextsWithTransport(
     abortSignal?: AbortSignal,
 ): Promise<string[]> {
     if (texts.length === 0) return [];
+    if (abortSignal?.aborted) throw abortErrorFromSignal(abortSignal);
 
     fromLang = normalizeChineseLanguageCode(fromLang);
     toLang = normalizeChineseLanguageCode(toLang);
@@ -56,6 +57,7 @@ export async function translateMicrosoftTextsWithTransport(
 
     if (!response.ok) throw createHttpStatusError(response, '翻译失败');
     const result = await readJsonResponse<MicrosoftTranslation[]>(response, '微软翻译返回的不是有效 JSON');
+    if (abortSignal?.aborted) throw abortErrorFromSignal(abortSignal);
     if (!Array.isArray(result) || result.length !== texts.length) {
         throw new Error(`微软翻译返回数量异常: 期望 ${texts.length} 条，实际 ${Array.isArray(result) ? result.length : 0} 条`);
     }

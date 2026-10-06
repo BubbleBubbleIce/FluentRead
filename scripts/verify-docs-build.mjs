@@ -10,25 +10,53 @@ const dist = path.join(root, 'docs/.vitepress/dist')
 const brandTaglines = JSON.parse(
   fs.readFileSync(path.join(root, 'src/core/i18n/messages/brand-taglines.json'), 'utf8')
 )
+const distReal = fs.realpathSync(dist)
+const isArtifactFile = (file) => {
+  const inside = (base, target) => {
+    const relative = path.relative(base, target)
+    return relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative)
+  }
+  if (!inside(dist, file)) return false
+  try {
+    return fs.statSync(file).isFile() && inside(distReal, fs.realpathSync(file))
+  } catch (error) {
+    if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return false
+    throw error
+  }
+}
 const files = (dir) =>
   fs
     .readdirSync(dir, { withFileTypes: true })
     .flatMap((e) => (e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]))
+const resolvedPaths = new Map()
 const resolve = (href) => {
-  const url = new URL(href, 'https://read.thinkstu.com')
-  let name = decodeURIComponent(url.pathname)
+  let name
+  try {
+    const url = new URL(href, 'https://read.thinkstu.com')
+    if (url.origin !== 'https://read.thinkstu.com') return null
+    name = decodeURIComponent(url.pathname)
+  } catch {
+    return null
+  }
+  if (name.includes('\0')) return null
   if (name.endsWith('/')) name += 'index.html'
+  if (resolvedPaths.has(name)) return resolvedPaths.get(name)
   const exact = path.join(dist, name)
-  return fs.existsSync(exact) && fs.statSync(exact).isFile()
+  const target = isArtifactFile(exact)
     ? exact
-    : fs.existsSync(exact + '.html')
+    : isArtifactFile(exact + '.html')
     ? exact + '.html'
     : null
+  resolvedPaths.set(name, target)
+  return target
 }
 const docs = new Map(
   files(dist)
     .filter((f) => f.endsWith('.html'))
-    .map((f) => [f, parseHTML(fs.readFileSync(f, 'utf8')).document])
+    .map((f) => {
+      assert(isArtifactFile(f), `HTML must belong to the shipped artifact: ${f}`)
+      return [f, parseHTML(fs.readFileSync(f, 'utf8')).document]
+    })
 )
 const report = { pages: docs.size, links: 0, anchors: 0, images: 0 }
 for (const [file, doc] of docs) {
@@ -73,15 +101,25 @@ for (const [file, doc] of docs) {
   }
   for (const a of doc.querySelectorAll('a[href]')) {
     const href = a.getAttribute('href')
-    if (!href.startsWith('/') && !href.startsWith('#')) continue
-    if (href.startsWith('//')) continue
-    const url = new URL(href, 'https://read.thinkstu.com/' + path.relative(dist, file))
+    let url
+    try {
+      url = new URL(href, 'https://read.thinkstu.com/' + path.relative(dist, file))
+    } catch {
+      assert.fail(`Invalid link ${href} in ${path.relative(dist, file)}`)
+    }
+    if (url.origin !== 'https://read.thinkstu.com') continue
     const target = resolve(url.href)
     assert(target, `Missing link ${href} in ${path.relative(dist, file)}`)
     report.links++
     if (url.hash && target.endsWith('.html')) {
+      let anchor
+      try {
+        anchor = decodeURIComponent(url.hash.slice(1))
+      } catch {
+        assert.fail(`Invalid anchor ${href} in ${path.relative(dist, file)}`)
+      }
       assert(
-        docs.get(target)?.getElementById(decodeURIComponent(url.hash.slice(1))),
+        docs.get(target)?.getElementById(anchor),
         `Missing anchor ${href} in ${path.relative(dist, file)}`
       )
       report.anchors++
@@ -89,7 +127,7 @@ for (const [file, doc] of docs) {
   }
   for (const img of doc.querySelectorAll('img[src]')) {
     const src = img.getAttribute('src')
-    if (!src.startsWith('/')) continue
+    if (!src.startsWith('/') || src.startsWith('//')) continue
     assert(resolve(src), `Missing image ${src}`)
     if (img.closest('.vp-doc,.bv-site'))
       assert(

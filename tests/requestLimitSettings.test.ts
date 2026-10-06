@@ -3,7 +3,8 @@ import {createRequire} from 'node:module';
 import {resolve} from 'node:path';
 import vue from '@vitejs/plugin-vue';
 import {createServer, type ViteDevServer} from 'vite';
-import {afterAll, afterEach, beforeAll, describe, expect, it} from 'vitest';
+import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
+import {ShadowRoot} from 'linkedom';
 import {compileScript, compileTemplate, parse} from 'vue/compiler-sfc';
 import ts from 'typescript';
 import {Config} from '@/src/core/config/model';
@@ -15,6 +16,7 @@ let server: ViteDevServer;
 let app: import('vue').App;
 
 beforeAll(async () => {
+  vi.stubGlobal('ShadowRoot', ShadowRoot);
   server = await createServer({appType: 'custom', configFile: false, logLevel: 'silent', root: process.cwd(),
     resolve: {alias: {'@': resolve(process.cwd(), '.')}}, server: {hmr: false, middlewareMode: true},
     plugins: [{name: 'limits-test-i18n', enforce: 'pre', resolveId(id) {
@@ -23,7 +25,7 @@ beforeAll(async () => {
   });
 });
 afterEach(() => app?.unmount());
-afterAll(async () => server?.close());
+afterAll(async () => {await server?.close(); vi.unstubAllGlobals();});
 
 async function mount(name: string, props: Record<string, unknown>) {
   const filename = resolve(`src/features/settings/ui/services/${name}.vue`);

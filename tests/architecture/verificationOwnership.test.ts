@@ -134,8 +134,8 @@ function verificationOwners(path: string, strictCoverage: Set<string>): Verifica
 
 function isTypeOnlyModule(path: string): boolean {
     if (path.endsWith('.d.ts')) return true;
-    if (!path.endsWith('/types.ts')) return false;
-    // 文件名不能替代运行时判定；types.ts 中的常量、枚举和副作用也必须有验证归属。
+    if (!path.endsWith('.ts')) return false;
+    // 以实际输出判断纯声明；任意文件中的常量、枚举和副作用仍须拥有行为验证。
     const source = readFileSync(projectPath(path), 'utf8');
     const emitted = ts.transpileModule(source, {
         compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ESNext},
@@ -309,6 +309,13 @@ const BUILD_ONLY_SRC_ALLOWLIST = new Set([
 ]);
 
 describe('repository verification ownership', () => {
+    it('按实际输出识别非 types 文件的纯声明，并保留运行时常量归属', () => {
+        expect(isTypeOnlyModule('src/features/vocabulary/content/reencounterState.ts')).toBe(true);
+        expect(isTypeOnlyModule('src/services/model-usage/types.ts')).toBe(false);
+        expect(isTypeOnlyModule('src/services/translation-stats/types.ts')).toBe(false);
+        expect(isTypeOnlyModule('src/app/content/learningFeatures.ts')).toBe(false);
+    });
+
     it.each(PRODUCT_TOOL_SCRIPTS)('产品工具 %s 保持可解析的 CommonJS 入口', path => {
         expect(() => new Script(readFileSync(projectPath(path), 'utf8'), {filename: path})).not.toThrow();
     });

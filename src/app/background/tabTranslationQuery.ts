@@ -1,7 +1,7 @@
 /**
  * @file src/app/background/tabTranslationQuery.ts
  * 文件职责：把「向 content script 回源查询某标签页全文翻译真值」下沉为后台共享函数，供右键菜单与工具栏角标复用同一份真值来源。
- * 主要内容：createTabTranslationStateReader 绑定 TabTranslationStateStore 返回读取器，命中完整缓存直接返回，否则发送 getFullPageTranslationState；只允许当前查询写回，旧读取等待共享仓库中最新的在途查询，导航或关闭后的回复不复活缓存。
+ * 主要内容：createTabTranslationStateReader 绑定 TabTranslationStateStore 返回读取器，命中完整缓存直接返回，否则只向顶层发送 getFullPageTranslationState；只允许当前查询写回，旧读取等待共享仓库中最新的在途查询，导航或关闭后的回复不复活缓存。
  * 模块边界：这里只封装状态查询与缓存写回，不渲染菜单文案、不设置图标角标、不发起正文翻译；展示决策与生命周期监听仍归各自 runtime 模块。
  */
 import {normalizeTranslationToolbarStatus} from '@/src/features/full-page-translation/toolbarStatus';
@@ -42,7 +42,7 @@ export function createTabTranslationStateReader(
             try {
                 const response = await browser.tabs.sendMessage(tabId, {
                     type: 'getFullPageTranslationState',
-                }) as FullPageStateResponse | undefined;
+                }, {frameId: 0}) as FullPageStateResponse | undefined;
                 if (current() && response?.status === 'success') {
                     return tabTranslationStates.set(tabId, {
                         toolbarStatus: normalizeTranslationToolbarStatus(response.toolbarStatus),

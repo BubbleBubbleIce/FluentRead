@@ -491,7 +491,7 @@ export function normalizeSpeechLanguage(language: string | undefined, fallback =
         'ru': 'ru-RU',
     };
 
-    if (aliases[lower]) return aliases[lower];
+    if (Object.hasOwn(aliases, lower)) return aliases[lower];
     return /^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(normalized) ? normalized : fallback;
 }
 

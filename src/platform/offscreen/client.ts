@@ -2,7 +2,7 @@
  * @file src/platform/offscreen/client.ts
  *
  * 文件职责：统一管理扩展自有 DOM 的创建、复用与消息发送，为 OCR、内置翻译和音频等后台能力提供基础设施客户端。
- * 主要内容：定义 runtime/document 依赖端口和 OffscreenClient，createOffscreenClient 串行创建文档、等待接收端 ready 握手，并在接收端丢失时受控重建一次，默认 chromeOffscreenClient 连接浏览器 API。 可核对的公开符号包括 OffscreenMessage、OffscreenMessageEnvelope、OffscreenRuntimeApi、OffscreenDocumentApi、OffscreenClientDependencies、OffscreenClient、createOffscreenClient、chromeOffscreenClient。
+ * 主要内容：定义 runtime/document 依赖端口和 OffscreenClient，串行创建文档、等待接收端 ready 握手，并在接收端丢失时受控重建一次；准备超时后继续持有未结束的原生创建或关闭操作，避免迟到文档与后续重建重叠。默认 chromeOffscreenClient 连接浏览器 API。
  * 模块边界：只封装文档生命周期与消息可靠性；默认连接 Chrome Offscreen，Firefox 注入文档容器与查询端口，不复制任务调度或业务逻辑。
  */
 
@@ -115,6 +115,7 @@ export function createOffscreenClient(dependencies: OffscreenClientDependencies)
         forceRecreate: boolean;
         promise: Promise<DocumentPreparationResult>;
     } | null = null;
+    let documentMutation: Promise<void> | null = null;
     const readyRetryAttempts = Math.max(1, Math.floor(dependencies.readyRetryAttempts ?? 40));
     const readyRetryDelay = dependencies.readyRetryDelay
         ?? (() => new Promise<void>((resolve) => setTimeout(resolve, 25)));
@@ -249,6 +250,14 @@ export function createOffscreenClient(dependencies: OffscreenClientDependencies)
         throw lastError;
     };
 
+    const mutateDocument = (operation: () => Promise<void>): Promise<void> => {
+        const pending = operation().finally(() => {
+            if (documentMutation === pending) documentMutation = null;
+        });
+        documentMutation = pending;
+        return pending;
+    };
+
     const prepareDocument = async (
         forceRecreate: boolean,
         signal: AbortSignal,
@@ -259,22 +268,31 @@ export function createOffscreenClient(dependencies: OffscreenClientDependencies)
             throw new Error('当前浏览器不支持扩展 Offscreen 文档');
         }
 
+        if (documentMutation) {
+            try {
+                await documentMutation;
+            } catch {
+                // 上一轮已按自身预算报告失败；重新查询实际文档，再决定是否重试。
+            }
+            throwIfAborted(signal);
+        }
+
         const contexts = await getExistingContexts();
         throwIfAborted(signal);
         if (forceRecreate && contexts.length > 0) {
             if (typeof offscreen.closeDocument !== 'function') {
                 throw new Error('当前浏览器无法重建失去接收端的 Offscreen 文档');
             }
-            await offscreen.closeDocument();
+            await mutateDocument(() => offscreen.closeDocument!());
             throwIfAborted(signal);
         }
         const createdDocument = forceRecreate || contexts.length === 0;
         if (createdDocument) {
-            await offscreen.createDocument({
+            await mutateDocument(() => offscreen.createDocument({
                 url: dependencies.documentUrl || 'offscreen.html',
                 reasons: ['DOM_SCRAPING', 'AUDIO_PLAYBACK', 'WORKERS'],
                 justification: 'FluentRead needs an extension-owned DOM for Translation API, OCR, local video transcription workers, and CSP-independent TTS playback',
-            });
+            }));
             throwIfAborted(signal);
         }
         await waitForReceiver(signal, deadlineAt);
@@ -421,7 +439,7 @@ export function createOffscreenClient(dependencies: OffscreenClientDependencies)
     };
 }
 
-export const chromeOffscreenClient = createOffscreenClient({
+export const chromeOffscreenClient = /* @__PURE__ */ createOffscreenClient({
     getRuntime: () => chrome.runtime as OffscreenRuntimeApi,
     getOffscreen: () => chrome.offscreen as unknown as OffscreenDocumentApi | undefined,
 });

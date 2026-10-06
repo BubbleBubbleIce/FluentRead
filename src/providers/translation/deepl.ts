@@ -12,7 +12,7 @@ import {getDeepLEndpoint} from '@/src/core/config/deepl';
 import {config} from "@/src/services/config/store";
 import {getTranslationLanguages} from '@/src/services/translation/languages';
 import {createHttpStatusError, readJsonResponse} from '@/src/platform/http/errors';
-import {runtimeFetch} from '@/src/platform/http/runtime';
+import {abortErrorFromSignal, runtimeFetch} from '@/src/platform/http/runtime';
 import {
     getTranslationProviderConfig,
     type TranslationProviderRequest,
@@ -21,6 +21,7 @@ import {
 async function deepl(message: TranslationProviderRequest<string>) {
     const current = getTranslationProviderConfig(message, config);
     const service = message.serviceOverride || current.service;
+    if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
     // DeepL 的目标语言区分书写系统，源语言参数仅接受基础 ZH。
     const {sourceLanguage, targetLanguage} = getTranslationLanguages(message);
     // 2026-09-08 官方语言表：Filipino 使用 TL；KN / SI 尚未提供文本翻译。
@@ -58,7 +59,12 @@ async function deepl(message: TranslationProviderRequest<string>) {
 
     if (resp.ok) {
         const result = await readJsonResponse<any>(resp, 'DeepL 返回的不是有效 JSON');
-        return result.translations[0].text
+        if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
+        const text = result?.translations?.[0]?.text;
+        if (typeof text !== 'string' || !text.trim()) {
+            throw new Error('DeepL 返回数据格式异常：缺少译文');
+        }
+        return text;
     } else {
         throw createHttpStatusError(resp, '翻译失败');
     }

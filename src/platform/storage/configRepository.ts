@@ -2,7 +2,7 @@
  * @file src/platform/storage/configRepository.ts
  *
  * 文件职责：在扩展后台的专属 IndexedDB 中持久化加密配置记录，并保留旧版会话凭据的安全读取与迁移能力。
- * 主要内容：定义 FluentReadConfiguration Dexie 数据库、加密记录表、单键读写删除、配置与凭据的多键原子提交、主记录缺失条件下的完整旧快照导入，以及会话材料变化后的过期清理。
+ * 主要内容：定义 FluentReadConfiguration Dexie 数据库、加密记录表、单键读写删除与密文条件提交、配置与凭据的多键原子提交、主记录缺失条件下的完整旧快照导入，以及只清理原密文的会话失效处理。
  * 模块边界：本文件只拥有扩展 IndexedDB 与加密记录不变量，不读取旧 browser.storage、不发送 runtime 消息、不归一化 Config；旧数据迁移和跨上下文代理由 configStorage 负责编排。
  */
 
@@ -107,7 +107,14 @@ export class EncryptedConfigRepository {
             // session 随机材料在浏览器会话结束后消失；旧 session 密文应安全失效，
             // 而持久配置的认证或格式错误必须上抛，防止被默认值静默覆盖。
             if (!isSessionKey(key)) throw error;
-            await this.database.records.delete(key);
+            // 加解密在事务外等待；期间另一调用可能已提交当前会话的新凭据。
+            // 清理必须在写事务中核对原密文，不能删除同键的后续替换记录。
+            await this.database.transaction('rw', this.database.records, async () => {
+                const current = await this.database.records.get(key);
+                if (JSON.stringify(current) === JSON.stringify(record)) {
+                    await this.database.records.delete(key);
+                }
+            });
             return null;
         }
     }
@@ -119,6 +126,23 @@ export class EncryptedConfigRepository {
             this.additionalData(key),
         );
         await this.database.records.put({key, payload, updatedAt: this.now()});
+    }
+
+    /** 仅在调用者读取的明文仍为当前值时提交，事务内再核对整条原密文记录。 */
+    async setIfUnchanged<T>(key: string, expectedValue: unknown, value: T): Promise<boolean> {
+        const record = await this.database.records.get(key);
+        const keyMaterial = await this.keyMaterial(key);
+        const actual = record
+            ? await this.decrypt(record.payload, keyMaterial, this.additionalData(key))
+            : null;
+        if (JSON.stringify(actual) !== JSON.stringify(expectedValue)) return false;
+        const payload = await this.encrypt(value, keyMaterial, this.additionalData(key));
+        return this.database.transaction('rw', this.database.records, async () => {
+            const current = await this.database.records.get(key);
+            if (JSON.stringify(current) !== JSON.stringify(record)) return false;
+            await this.database.records.put({key, payload, updatedAt: this.now()});
+            return true;
+        });
     }
 
     /**

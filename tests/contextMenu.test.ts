@@ -324,11 +324,11 @@ describe('右键菜单动作执行', () => {
         vi.stubGlobal('browser', {tabs: {sendMessage}});
         expect(await runContextMenuAction('translatePage', 4, {frameId: 2}, {id: 4}, false))
             .toEqual({handled: true, isTranslated: true});
-        expect(sendMessage).toHaveBeenLastCalledWith(4, {type: 'contextMenuTranslate', action: 'fullPage'});
+        expect(sendMessage).toHaveBeenLastCalledWith(4, {type: 'contextMenuTranslate', action: 'fullPage'}, {frameId: 0});
         sendMessage.mockResolvedValue({status: 'success'});
         expect(await runContextMenuAction('translatePage', 4, {}, {id: 4}, true))
             .toEqual({handled: true, isTranslated: false});
-        expect(sendMessage).toHaveBeenLastCalledWith(4, {type: 'contextMenuTranslate', action: 'restore'});
+        expect(sendMessage).toHaveBeenLastCalledWith(4, {type: 'contextMenuTranslate', action: 'restore'}, {frameId: 0});
         sendMessage.mockResolvedValue({status: 'disabled'});
         expect(await runContextMenuAction('translatePage', 4, {}, {id: 4}, false)).toEqual({handled: false});
     });
@@ -426,7 +426,7 @@ describe('后台右键菜单生命周期', () => {
         const [handler] = api.contextMenus.onClicked.addListener.mock.calls[0];
         handler({menuItemId: contextMenuItemId('page', 'translatePage')}, {id: 9});
         await settle();
-        expect(api.tabs.sendMessage).toHaveBeenCalledWith(9, {type: 'contextMenuTranslate', action: 'fullPage'});
+        expect(api.tabs.sendMessage).toHaveBeenCalledWith(9, {type: 'contextMenuTranslate', action: 'fullPage'}, {frameId: 0});
         expect(api.contextMenus.update).toHaveBeenCalledWith(
             contextMenuItemId('page', 'translatePage'),
             {title: expect.stringMatching(/^显示页面原文$/u), visible: true},

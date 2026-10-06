@@ -22,7 +22,7 @@ export function createExtensionDomClient(
     });
 }
 
-export const extensionDomClient = createExtensionDomClient(
+export const extensionDomClient = /* @__PURE__ */ createExtensionDomClient(
     browserCapabilities,
     () => chrome.runtime as unknown as OffscreenRuntimeApi & {getURL(path: string): string},
     () => globalThis.document,

@@ -1,7 +1,7 @@
 /**
  * @file src/core/config/harness.ts
  * 文件职责：定义 Harness 学习辅助功能的动作注册表、配置类型、默认值与纯规范化规则。
- * 主要内容：提供 HarnessActionId/HarnessPreferences、动作注册表、支持服务判断和规范化函数，限制触发方式、快捷键、悬停延迟、服务/模型覆盖和动作白名单、上下文长度和学习难度，并定义可编辑提示词、默认模板、占位符替换规则和阅读模型缓存的配置标识。
+ * 主要内容：提供 HarnessActionId/HarnessPreferences、动作注册表、支持服务判断和规范化函数，限制触发方式、快捷键、悬停延迟、服务/模型覆盖和动作白名单、上下文长度和学习难度，并定义可编辑提示词、默认模板、占位符替换规则和包含当前服务请求头及多 Key 凭据的阅读模型缓存标识。
  * 模块边界：本文件只处理领域数据，不读取浏览器存储、不发起 AI 请求，也不决定选区或网页生命周期。
  */
 import {DEFAULT_HARNESS_ACTION_PROMPTS, DEFAULT_HARNESS_SYSTEM_PROMPT, HARNESS_PROMPT_MAX_LENGTH} from '../harness/prompts';
@@ -113,6 +113,9 @@ export function getHarnessModelCacheKey(config: {
     model: Record<string, string>;
     customModel: Record<string, string>;
     token: Record<string, string>;
+    apiKeys?: Record<string, string[]>;
+    apiKeyRotationEnabled?: Record<string, boolean>;
+    customHeaders?: Record<string, string>;
     proxy: Record<string, string>;
     on: boolean;
     uiLanguage: string;
@@ -134,5 +137,6 @@ export function getHarnessModelCacheKey(config: {
         config.modelThinking, config.customOpenAIProviders, config.custom, config.newApiUrl,
         config.azureOpenaiEndpoint, config.deepseekApiType, config.minimaxBillingPlan,
         config.minimaxRegion, config.mimoBillingPlan, config.mimoRegion,
+        config.apiKeys?.[service], config.apiKeyRotationEnabled?.[service], config.customHeaders?.[service],
     ]);
 }

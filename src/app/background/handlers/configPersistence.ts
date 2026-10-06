@@ -272,6 +272,10 @@ export function createConfigPersistenceHandler<TConfig>(
                         return dependencies.getCurrentRevision?.() ?? 0;
                     }
                     await dependencies.ready;
+                    // 水合的 await 期间同一客户端可能提交更新的序号，旧请求不能写入历史或触发 CAS 冲突。
+                    if (request.sequence && latestSequenceByClient.get(request.clientId) !== request.sequence) {
+                        return dependencies.getCurrentRevision?.() ?? 0;
+                    }
 
                     const currentRevision = dependencies.getCurrentRevision?.();
                     if (request.mode === 'replace'

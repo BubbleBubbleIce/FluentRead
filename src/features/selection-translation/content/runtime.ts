@@ -60,7 +60,7 @@ export function mountSelectionTranslator(ctx?: ContentScriptContext) {
     selectionTranslatorInstance = ui.mounted?.instance ?? null;
     return selectionTranslatorInstance;
   }).finally(() => {
-    mountingPromise = null;
+    if (requestId === mountRequestId) mountingPromise = null;
   });
 
   return mountingPromise;
@@ -72,6 +72,7 @@ export function mountSelectionTranslator(ctx?: ContentScriptContext) {
 export function unmountSelectionTranslator() {
   // 先使未完成的挂载失效，再清空 UI 与实例引用。
   mountRequestId++;
+  mountingPromise = null;
   modalDialogHost?.dispose();
   modalDialogHost = null;
   selectionTranslatorUi?.remove();

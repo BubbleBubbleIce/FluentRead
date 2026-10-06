@@ -111,7 +111,7 @@ describe('工具栏原生三态角标', () => {
     });
     it('激活时回源，包括完整但陈旧的缓存；查询失败保留安全默认', async () => {
         const {store,tabs,action}=setup();store.set(5,{isTranslated:false,isSiteDisabled:false});tabs.onActivated.emit({tabId:5});await settle();
-        expect(tabs.sendMessage).toHaveBeenCalledWith(5,{type:'getFullPageTranslationState'});expect(action.setBadgeText).toHaveBeenLastCalledWith({tabId:5,text:'✓'});
+        expect(tabs.sendMessage).toHaveBeenCalledWith(5,{type:'getFullPageTranslationState'},{frameId:0});expect(action.setBadgeText).toHaveBeenLastCalledWith({tabId:5,text:'✓'});
         tabs.sendMessage.mockRejectedValueOnce(new Error('no receiver'));tabs.onActivated.emit({tabId:6});await settle();expect(action.setIcon.mock.lastCall?.[0].path[16]).toBe('icon/16.png');
     });
     it('导航恢复原图，普通更新不清空，关闭取消还未写出的任务', async () => {

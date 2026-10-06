@@ -14,7 +14,7 @@ import base64 from 'crypto-js/enc-base64';
 import {config} from "@/src/services/config/store";
 import {isApiKeyRequired} from "@/src/core/config/validation";
 import {createHttpStatusError, createImageInputHttpError, readJsonResponse} from '@/src/platform/http/errors';
-import {runtimeFetch} from '@/src/platform/http/runtime';
+import {abortErrorFromSignal, runtimeFetch} from '@/src/platform/http/runtime';
 import {
     getTranslationProviderConfig,
     reportTranslationModelUsage,
@@ -32,6 +32,7 @@ const jwtCache = new Map<string, {apiKey: string; secret: string; expiration: nu
 async function zhipu(message: TranslationProviderRequest<string>) {
     const current = getTranslationProviderConfig(message, config);
     const service = message.serviceOverride || services.zhipu;
+    if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
     const configuredModel = resolveConfiguredModel(
         message.modelOverride || current.model[service],
         current.customModel[service],
@@ -74,10 +75,14 @@ async function zhipu(message: TranslationProviderRequest<string>) {
             throw getTranslationImageInput(message) ? await createImageInputHttpError(resp, '翻译失败') : createHttpStatusError(resp, '翻译失败');
         }
         const result = await readJsonResponse<any>(resp, '智谱返回的不是有效 JSON');
+        if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
         const actualModel = typeof result?.model === 'string' && result.model.trim()
             ? result.model
             : configuredModel;
-        const translatedText = result.choices[0].message.content;
+        const translatedText = result?.choices?.[0]?.message?.content;
+        if (typeof translatedText !== 'string' || !translatedText.trim()) {
+            throw new Error('智谱返回数据格式异常：缺少文本内容');
+        }
         reportTranslationModelUsage(message, {
             ...normalizeOpenAICompatibleUsage(result?.usage, actualModel),
             startedAt,

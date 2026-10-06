@@ -117,28 +117,24 @@ export function parseConfigHistory(value: unknown): ConfigHistoryState | null {
     if (!isConfigRecord(value) || !Array.isArray(value.entries)) return null;
     if (value.schemaVersion !== undefined && value.schemaVersion !== CONFIG_HISTORY_SCHEMA_VERSION) return null;
 
-    const validEntries = value.entries
-        .map((entry, rawIndex) => {
-            if (!isConfigRecord(entry)
-                || typeof entry.version !== 'number'
-                || !Number.isSafeInteger(entry.version)
-                || entry.version < 1
-                || typeof entry.savedAt !== 'string') return null;
-            const parsedConfig = parseStoredConfig(entry.config);
-            if (!parsedConfig) return null;
-            return {
-                rawIndex,
-                entry: {
-                    version: entry.version,
-                    savedAt: entry.savedAt,
-                    config: toRestorableConfig(parsedConfig),
-                } satisfies ConfigHistoryEntry,
-            };
-        })
-        .filter((item): item is {rawIndex: number; entry: ConfigHistoryEntry} => item !== null);
-
-    if (validEntries.length === 0) return null;
-    const retained = validEntries.slice(-CONFIG_HISTORY_LIMIT);
+    const retained: Array<{rawIndex: number; entry: ConfigHistoryEntry}> = [];
+    // 从尾部寻找最终保留的有效记录，避免投影将被十份上限丢弃的旧配置。
+    // rawIndex 仍对应原始数组，保留损坏记录与裁剪前 cursor 的映射语义。
+    for (let rawIndex = value.entries.length - 1; rawIndex >= 0 && retained.length < CONFIG_HISTORY_LIMIT; rawIndex -= 1) {
+        const entry = value.entries[rawIndex];
+        if (!isConfigRecord(entry)
+            || typeof entry.version !== 'number'
+            || !Number.isSafeInteger(entry.version)
+            || entry.version < 1
+            || typeof entry.savedAt !== 'string') continue;
+        const parsedConfig = parseStoredConfig(entry.config);
+        if (!parsedConfig) continue;
+        retained.push({rawIndex, entry: {
+            version: entry.version, savedAt: entry.savedAt, config: toRestorableConfig(parsedConfig),
+        }});
+    }
+    if (retained.length === 0) return null;
+    retained.reverse();
     const entries = retained.map((item) => item.entry);
     const rawCursor = typeof value.cursor === 'number' && Number.isSafeInteger(value.cursor)
         ? value.cursor

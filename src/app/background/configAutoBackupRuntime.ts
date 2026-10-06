@@ -45,8 +45,8 @@ export function isConfigAutoBackupDue(state: ConfigAutoBackupState, now: number)
 }
 
 function getConfigAutoBackupInitialDelayMinutes(state: ConfigAutoBackupState, now: number): number {
-    // 仅在刚完成“未到期”检查后调用，因此此处一定有合法且不晚于 now 的时间。
-    // 仍用上下限兜底，避免检查与创建 alarm 之间的时钟跳变产生非法延迟。
+    // alarm 查询期间存储订阅可能更新快照；捕获失败或时间失效时尽快重试。
+    if (isConfigAutoBackupDue(state, now)) return 1;
     const lastSavedTime = new Date(state.entries.at(-1)!.savedAt).getTime();
     const remainingMinutes = (
         lastSavedTime + CONFIG_AUTO_BACKUP_INTERVAL_MS - now
@@ -87,7 +87,11 @@ export function installConfigAutoBackupRuntime(
 
     const ready = (async () => {
         await dependencies.ready;
-        const captured = await captureIfDue();
+        // 一次存储失败不能让缺失的持久 alarm 永久无法建立。
+        const captured = await captureIfDue().catch((error) => {
+            dependencies.warn('[FluentRead] 自动配置备份执行失败', error);
+            return false;
+        });
         const alarm = await dependencies.alarms.get(CONFIG_AUTO_BACKUP_ALARM);
         if (!alarm) {
             await dependencies.alarms.create(CONFIG_AUTO_BACKUP_ALARM, {

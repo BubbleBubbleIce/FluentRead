@@ -85,6 +85,8 @@ const SENSITIVE_SUMMARY_PREFIX = '敏感内容已隐藏';
 const MAX_INLINE_ITEMS = 4;
 const MAX_INLINE_TEXT_LENGTH = 120;
 const MAX_PREVIEW_DEPTH = 32;
+const DEPTH_LIMITED_PREVIEW = Symbol('depth-limited-preview');
+const DEPTH_LIMITED_SUMMARY = '已配置（内容已摘要）';
 
 function isRecord(value: unknown): value is ConfigRecord {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -107,15 +109,18 @@ function sensitiveSummary(value: string): string {
     return `${SENSITIVE_SUMMARY_PREFIX}（${value.length} 字符）`;
 }
 
-function sanitizeSensitiveValue(value: unknown, seen = new WeakSet<object>(), depth = 0): unknown {
-    if (depth >= MAX_PREVIEW_DEPTH) return '[深层内容已摘要]';
+function sanitizeSensitiveContent(value: unknown, seen: WeakSet<object>, depth: number, preview: {depthLimited: boolean}): unknown {
+    if (depth >= MAX_PREVIEW_DEPTH) {
+        preview.depthLimited = true;
+        return DEPTH_LIMITED_PREVIEW;
+    }
     if (typeof value === 'string') {
         const trimmed = value.trim();
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
             try {
                 const parsed = JSON.parse(trimmed) as unknown;
                 if (isRecord(parsed) || Array.isArray(parsed)) {
-                    return sanitizeSensitiveValue(parsed, seen, depth + 1);
+                    return sanitizeSensitiveContent(parsed, seen, depth + 1, preview);
                 }
             } catch {
                 // 非 JSON 的 prompt 或模板会在下方按普通文本处理。
@@ -126,7 +131,7 @@ function sanitizeSensitiveValue(value: unknown, seen = new WeakSet<object>(), de
     if (Array.isArray(value)) {
         if (seen.has(value)) return '[循环引用]';
         seen.add(value);
-        const result = value.map((item) => sanitizeSensitiveValue(item, seen, depth + 1));
+        const result = value.map((item) => sanitizeSensitiveContent(item, seen, depth + 1, preview));
         seen.delete(value);
         return result;
     }
@@ -138,12 +143,19 @@ function sanitizeSensitiveValue(value: unknown, seen = new WeakSet<object>(), de
     for (const [key, item] of Object.entries(value)) {
         if (isSensitiveConfigKey(key)) continue;
         Object.defineProperty(result, key, {
-            value: sanitizeSensitiveValue(item, seen, depth + 1),
+            value: sanitizeSensitiveContent(item, seen, depth + 1, preview),
             enumerable: true, configurable: true, writable: true,
         });
     }
     seen.delete(value);
     return result;
+}
+
+function sanitizeSensitiveValue(value: unknown): unknown {
+    const preview = {depthLimited: false};
+    const sanitized = sanitizeSensitiveContent(value, new WeakSet<object>(), 0, preview);
+    // 整个字段使用已翻译的摘要，避免嵌套键和值拼接后无法命中旧文案翻译。
+    return preview.depthLimited ? DEPTH_LIMITED_PREVIEW : sanitized;
 }
 
 function jsonComparableValue(value: unknown): unknown {
@@ -708,7 +720,8 @@ function diffMapping(
         .filter((key) => !isSensitiveConfigKey(key))
         .sort((left, right) => left.localeCompare(right));
     const mapping = definition.mapping;
-    const format = (value: unknown, key: string) => mapping.formatItem ? mapping.formatItem(value, key) : mapping.format(value);
+    const format = (value: unknown, key: string) => value === DEPTH_LIMITED_PREVIEW ? DEPTH_LIMITED_SUMMARY
+        : mapping.formatItem ? mapping.formatItem(value, key) : mapping.format(value);
 
     return keys.flatMap((key) => {
         const beforeValue = Object.hasOwn(beforeRecord, key) ? beforeRecord[key] : undefined;
@@ -740,15 +753,16 @@ function diffField(field: string, before: unknown, after: unknown): {group: Conf
     }
 
     const format = definition?.format ?? formatValue;
-    const formattedBefore = format(safeBefore);
-    const formattedAfter = format(safeAfter);
+    const formattedBefore = safeBefore === DEPTH_LIMITED_PREVIEW ? DEPTH_LIMITED_SUMMARY : format(safeBefore);
+    const formattedAfter = safeAfter === DEPTH_LIMITED_PREVIEW ? DEPTH_LIMITED_SUMMARY : format(safeAfter);
     return {
         group: definition?.group ?? 'other',
         changes: [{
             key: field,
             label: definition?.label ?? humanizeUnknownKey(field),
             before: formattedBefore,
-            after: ['glossaryLibraries', 'bilingualSentenceHighlightProfiles', 'activeSentenceHighlightProfileId'].includes(field) && formattedBefore === formattedAfter
+            after: safeBefore !== DEPTH_LIMITED_PREVIEW && safeAfter !== DEPTH_LIMITED_PREVIEW
+                && ['glossaryLibraries', 'bilingualSentenceHighlightProfiles', 'activeSentenceHighlightProfileId'].includes(field) && formattedBefore === formattedAfter
                 ? `${formattedAfter}（内容已更新）` : formattedAfter,
         }],
     };

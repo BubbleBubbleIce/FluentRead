@@ -4,7 +4,7 @@
   "method": "Read the complete source and trace cancellation, ownership, scheduling and data flow. Review is evidence of inspection, not a bug-free guarantee. Function bodies include callbacks. Validation scope is recorded separately.",
   "inventory": {
     "files": 830,
-    "functions": 15317,
+    "functions": 15341,
     "groups": {
       "entrypoints/background.ts": {
         "files": 1,
@@ -84,12 +84,12 @@
       "src/app": {
         "files": 103,
         "functions": 1321,
-        "lines": 11848
+        "lines": 11902
       },
       "src/core/config": {
         "files": 52,
         "functions": 717,
-        "lines": 9308
+        "lines": 9279
       },
       "src/core/context-menu": {
         "files": 2,
@@ -168,8 +168,8 @@
       },
       "src/features/image-translation": {
         "files": 48,
-        "functions": 871,
-        "lines": 7202
+        "functions": 872,
+        "lines": 7208
       },
       "src/features/input-translation": {
         "files": 6,
@@ -183,8 +183,8 @@
       },
       "src/features/local-tts": {
         "files": 7,
-        "functions": 102,
-        "lines": 1071
+        "functions": 106,
+        "lines": 1177
       },
       "src/features/model-usage": {
         "files": 4,
@@ -219,7 +219,7 @@
       "src/features/selection-translation": {
         "files": 22,
         "functions": 453,
-        "lines": 5248
+        "lines": 5280
       },
       "src/features/settings": {
         "files": 84,
@@ -228,8 +228,8 @@
       },
       "src/features/share-card": {
         "files": 7,
-        "functions": 45,
-        "lines": 591
+        "functions": 52,
+        "lines": 644
       },
       "src/features/site-rules": {
         "files": 1,
@@ -254,7 +254,7 @@
       "src/features/vocabulary": {
         "files": 21,
         "functions": 390,
-        "lines": 4134
+        "lines": 4146
       },
       "src/features/writing-assistant": {
         "files": 17,
@@ -263,18 +263,18 @@
       },
       "src/platform": {
         "files": 37,
-        "functions": 485,
-        "lines": 4496
+        "functions": 493,
+        "lines": 4556
       },
       "src/providers": {
         "files": 40,
-        "functions": 315,
-        "lines": 5629
+        "functions": 321,
+        "lines": 5696
       },
       "src/services": {
         "files": 54,
-        "functions": 966,
-        "lines": 11839
+        "functions": 964,
+        "lines": 11933
       },
       "src/shared": {
         "files": 8,
@@ -507,6 +507,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/areaRuntime.ts",
+      "sha256": "ce47dc44964cf98821257cc51ec5b4b3af3fd05048fa093e7c00ac6b3ce52d82",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/badgeRuntime.ts",
       "sha256": "7795aae2a324408e4a637cd7010fea663e25898135afef2207da0458e5b12e03",
       "functionBodies": 13,
@@ -516,6 +522,42 @@
       "file": "src/app/background/cacheCleanup.ts",
       "sha256": "7b3a9e88921a8775610f732d647d84a62cd0402cb22e666de04defd3714fcd91",
       "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/capabilityRegistry.ts",
+      "sha256": "8aab27915f8bef96e7ebc96a52425cb142f97a985502b5f0ecb7f7d7e278320d",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/configAutoBackupRuntime.ts",
+      "sha256": "7693e7dde3a73558375a55dad9602453bfed3d9f7eafa00ab907e727c7a633de",
+      "functionBodies": 11,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/configMessageHandlers.ts",
+      "sha256": "c7a9f696b14bc2f8166233da2a10cf37a9b018ef35dfc7bc07adcea5208b4286",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/configStorageBroadcast.ts",
+      "sha256": "ee965a494be27cf7794917f346f416fc52e0dfe34a1e83bf850e110e652e10ba",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/configStorageRuntime.ts",
+      "sha256": "32fc23938081f5e4c644c150bb6c50d16b37197d1f7fc7c97fdfb721143ae8be",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/contextMenuActions.ts",
+      "sha256": "f93ee0f20835c9980bda937c80939dae62279f3ee1e9e4b007826b69d33c1f25",
+      "functionBodies": 5,
       "status": "source-read-and-traced"
     },
     {
@@ -537,14 +579,116 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/googleDriveSyncRuntime.ts",
+      "sha256": "d74fc0e16bd4fa9a2787ba46774d90c6fd359ce5740909dcd55d4516759cfcda",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/areaTranslation.ts",
+      "sha256": "06e048a621a70560b05420d567e40e88d9b3de8ee9d81aa2212ac2d67c8145ec",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/configAutoBackup.ts",
+      "sha256": "7e066c1a084800795106177e81451897a555f6a5c28fccbc913b99270d65967d",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/configCount.ts",
+      "sha256": "d31217aff7106ed729943181286e605ca5dd7f643e997b831f6c15c79744e21e",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/configHistory.ts",
+      "sha256": "ba042de985abea068f711c6b78c370b0eb51782cf6baa6ee2016b61f3b9a92fe",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/configPersistence.ts",
+      "sha256": "6264504f3c5c5a96a3cfbca9b6587cfd60eadd2384f1558ef0bad4c1609015d7",
+      "functionBodies": 27,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/configStorage.ts",
+      "sha256": "a1b2ef5ab0ec09c2bb991390c13fe6d07edbf63659aac5bcdb8a8e470ca15d7b",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/connectionTest.ts",
+      "sha256": "065568d9890035b9dcd1084a7825a32be3c888de604b3cf117fb0ab7544ccd9f",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/freeTranslationWeights.ts",
+      "sha256": "f896c8e1a2c9ebc7ae7fd011d1113e8adef75694663c3f83149dab1b6d7995c8",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/handlers/fullPageTranslationState.ts",
       "sha256": "8dd4e8cd772b6fad08f808ca3bf565349d3ef722443f5e6c028597d49b3bc245",
       "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/handlers/googleDriveSync.ts",
+      "sha256": "b045788dea31ccfaad96e6ab4d479db8bf06c1158f8035017a1952f94cdfcdb4",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/imageTranslation.ts",
+      "sha256": "b4d39a5d508db8e9e9273b5206937a22f67ea05ce46f6cd8ed64112c992a14af",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/inputTranslation.ts",
+      "sha256": "cecbbcade72288a3e6e177d1aa7b945be76a6b1e2b872902301468659090b7d7",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/handlers/modelUsage.ts",
       "sha256": "05398fa426b4aba120bef35892e39e0d35f240be9e2d861ff830ddf45abeee09",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/openOptions.ts",
+      "sha256": "92d142aba254697bd8d5b7eda640fb7bd34b2971904885de65a13e6391763560",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/selectionTts.ts",
+      "sha256": "319f98098046638880d3a74e35f3d9f591253908884ef1d83ec287fcdface011",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/selectionWordLookup.ts",
+      "sha256": "368f26efb6804f482e697352bdfc70c26a096aaf76ef71d31191b6a3ecfc9a68",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/translation.ts",
+      "sha256": "6a4711639102a7654be74d0af27fd33f9612fe5634cc9a7ee9c6076587d62412",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/translationCache.ts",
+      "sha256": "e91a790d33a8c9ef3d126861da70e334088c090fb565c683297832d7e9aebac2",
       "functionBodies": 9,
       "status": "source-read-and-traced"
     },
@@ -561,8 +705,38 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/handlers/vocabulary.ts",
+      "sha256": "fce03e4dc2d60e006afeb3e5d5da85687c9471aa7e9569b0c7dbdaf95ddce678",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/handlers/webDavBackup.ts",
+      "sha256": "cb20ef816b953674e801ab2125a55da9f1a183590c18c2245012e95ff88cf2ce",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/harnessRuntime.ts",
+      "sha256": "d6d0dccb42bbed5c7b7a800dc8a1af3e46566c62fcb4a05ed72d3de7f2ccbb87",
+      "functionBodies": 22,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/imageContextMenu.ts",
       "sha256": "0f8eb1f10c1c9eb99abeb39717e6b9b5f7f5203b0422ecce75503a5ba69ba4ee",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/imageGlossaryContext.ts",
+      "sha256": "a382a471058c457c87541dc36e3e7fbb3110d86e3cb02559c1abfd24650c4525",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/localInsightsHandlers.ts",
+      "sha256": "313948458f573daad1a7c96c4ef8097334c35f7b45d5079e64d8054eb0d8a8a8",
       "functionBodies": 1,
       "status": "source-read-and-traced"
     },
@@ -579,6 +753,30 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/background/messageRuntime.ts",
+      "sha256": "5e6a59390cb33190dd99dd8e6c40bf40ae87e629d1863986238e8d543cad74fe",
+      "functionBodies": 37,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/providerRuntime.ts",
+      "sha256": "20f80274af532debf0bf51d198223e74882a8c8bade7faaab241c6b6242be128",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/requestHeaderRuntime.ts",
+      "sha256": "7e87ac8f6281f9fb0b2f22a84dd1acc31dd085991bb694f9dfd332ccb4caedde",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/retiredContentScripts.ts",
+      "sha256": "ef7d1b9e073bea60a1400186becb73c5965a7c4a057dba40b8be052111cc423e",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/background/runtime.ts",
       "sha256": "1af2f074dd5141534ebff837c8e77bfe866563704210b69239c0c0bda67f08eb",
       "functionBodies": 2,
@@ -586,7 +784,7 @@
     },
     {
       "file": "src/app/background/tabTranslationQuery.ts",
-      "sha256": "37f93cbbc351fbbd3b1c9e4d1d46fd43b24ee92477a85c1bf47ead8b414b55b2",
+      "sha256": "cddec0474fc860b02ef2b7f6512034dc3b27479f3869025aff989bb5c8330a44",
       "functionBodies": 4,
       "status": "source-read-and-traced"
     },
@@ -594,6 +792,24 @@
       "file": "src/app/background/tabTranslationState.ts",
       "sha256": "74146d3b4cd7e43145ded150888dfb1e045f0e09dc3502d00eb2b1fc63008716",
       "functionBodies": 11,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/thunderbirdMessageRuntime.ts",
+      "sha256": "4b51762ce07a13b052868d6edd803b49466797a0208b0ce9aee1323f2d27569a",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/webDavBackupRuntime.ts",
+      "sha256": "fa37c9527d0f89e526b6e4b32238dabb44383bbcb50fba43d2fd3b07a7af2c17",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/background/writingRuntime.ts",
+      "sha256": "341acaeddb8da9845ad41055cea907a401f42ba68cb9e2597b13484bebb95d5a",
+      "functionBodies": 12,
       "status": "source-read-and-traced"
     },
     {
@@ -616,7 +832,7 @@
     },
     {
       "file": "src/app/content/featureRegistry.ts",
-      "sha256": "f7e6c6ce57bdc03d51ebe92f3f19b4b7ebd60e35d53cf914894648ed3fa017c8",
+      "sha256": "4d5134676e4b5b0832d8e0d3b597eaa68b9c221339496618e9d648834f43c89f",
       "functionBodies": 15,
       "status": "source-read-and-traced"
     },
@@ -705,6 +921,18 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/app/offscreen/localTranslationWorker.ts",
+      "sha256": "04139d407a5fec98ed209d282139814358a94d86888ce446b963a27f714391ba",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/offscreen/localTtsWorker.ts",
+      "sha256": "89e9593abb58fe0205696182990d0c4e50acd1a85b4e402d83c20112a413dc38",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/app/offscreen/messageRouter.ts",
       "sha256": "c0ae34bf0f49441bcf981da699f2e3a4d8f8b18811ac8d402f3bf2453c4517aa",
       "functionBodies": 86,
@@ -714,6 +942,24 @@
       "file": "src/app/offscreen/runtime.ts",
       "sha256": "148e45eb6ff5b79606ce72d44016cb0ff7b88af7e659d9c999b1f5eb694f92f8",
       "functionBodies": 22,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/offscreen/translation.ts",
+      "sha256": "39f8b59061877bcea0bfe6a306eb9fe0dc8fdf1d30d934f4e3bd299d54c04f2d",
+      "functionBodies": 42,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/offscreen/ttsPlayback.ts",
+      "sha256": "db9367b32b944f43936c36f1ee301e902276df7016fc7e4d1119c2892923e983",
+      "functionBodies": 11,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/app/offscreen/videoTranscriptionWorker.ts",
+      "sha256": "2d8afc3e0cd3294a486b5d13659d3f4e8fa6b75fa15592f5d63c42602f08e007",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -819,6 +1065,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/areaTranslation.ts",
+      "sha256": "54431738576848b9d4b869e108b23ec54faee4360066d816281d5397761adbe7",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/azure.ts",
       "sha256": "33f233f95f15e44f9f0d46d0f22c7a5a4cd1c55dc6941fa426c90f8dcdafcd7d",
       "functionBodies": 2,
@@ -828,6 +1080,12 @@
       "file": "src/core/config/catalog.ts",
       "sha256": "465f2b9585fa6c080642caf68c5a07d44899c7fd1f0e95ea538bb25d70819f54",
       "functionBodies": 32,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/cloudSync.ts",
+      "sha256": "f02e253296bd7fccb48370837fd0b8c32bd888caacc56b4bd23949c7ffd206f2",
+      "functionBodies": 1,
       "status": "source-read-and-traced"
     },
     {
@@ -880,14 +1138,20 @@
     },
     {
       "file": "src/core/config/diff.ts",
-      "sha256": "90dd4457eeb4e2e3157bdb5bc54d383387c739c27adbc3c5708c4e02e41e370e",
-      "functionBodies": 146,
+      "sha256": "1b7bd58469d3091e755fe88f25d08489b4e34d7fc7f468bacafacc6b6aa1b81d",
+      "functionBodies": 147,
       "status": "source-read-and-traced"
     },
     {
       "file": "src/core/config/doubaoSeedTranslation.ts",
       "sha256": "08f82cac4fd8682659928e806e83f1fa2d89bd540505913db094422dc68dffc5",
       "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/driveSync.ts",
+      "sha256": "75e86a3bab8247b0c72e37716b7bc702c83c21438fa28fb630b0cea7d9cab379",
+      "functionBodies": 38,
       "status": "source-read-and-traced"
     },
     {
@@ -900,6 +1164,12 @@
       "file": "src/core/config/freeTranslation.ts",
       "sha256": "b4c858b66e1afb479b835748e35d31c25626dc110b56141a0b89aaa456c39015",
       "functionBodies": 12,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/harness.ts",
+      "sha256": "3c9f646d441459339346633ecd068d5ed1d3ebbf187de46af948c1c1c8e5b227",
+      "functionBodies": 8,
       "status": "source-read-and-traced"
     },
     {
@@ -918,6 +1188,18 @@
       "file": "src/core/config/interfaceFontAssets.ts",
       "sha256": "4065308565a2c01735d8768f09a65c49625671c21b4428f4b03b6e205f9fc314",
       "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/localTranslation.ts",
+      "sha256": "7ce2464f86e5a8c9aa1c286aa4ce147aba3faf6137826641bd1d6daab85c2d45",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/localTts.ts",
+      "sha256": "9b14d348865ef7e3294aa6ec6955f40a420eadb9fe6729cc431349f57f9aef9c",
+      "functionBodies": 9,
       "status": "source-read-and-traced"
     },
     {
@@ -945,6 +1227,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/pageTranslation.ts",
+      "sha256": "380a459a10097dbbe7a1a84664408f836abccc75f48feec969ab2b906f5dbc0c",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/paragraphCopy.ts",
       "sha256": "a00b1d7d4e7abbf6cfc450d9d0ed7cfb81480cc04d5b85acdcdebae33c09470c",
       "functionBodies": 8,
@@ -957,15 +1245,93 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/requestHeaders.ts",
+      "sha256": "af53258c809519bea58e72182dbb8f727f7678ef269f392b34d02cd7403820a2",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/requestLimits.ts",
+      "sha256": "87455e3aa972dd8e4c7599071c924166cbc8d630971a7833a41f06176f0c3241",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/scheduling.ts",
+      "sha256": "5e626322d4d4cc2a9da9466e1351a6666e1803d23a079bfdf48c930600a79c48",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/sectionTranslation.ts",
+      "sha256": "a2427513b289b52a260ce19738bc5399df318592a90435fed79f65630797fee3",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/selectionPreview.ts",
+      "sha256": "12e95144485ff07e3c1d8b0ea819f7b5d49172c2b227c2a4f9e3135315d250a6",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/selectionTts.ts",
+      "sha256": "1f662971f58e83a1f8d99adbc2554afaf621fe8997fdae69a6925e8aca46518f",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/sensitiveKeys.ts",
+      "sha256": "04e83851de5d94706c48fac73c3eea5d0eb7e1a9aae999f52f8ec1e0d6eaed8f",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/sentenceHighlight.ts",
+      "sha256": "e0eab0315a89fd026b22ad8befdf222f276d9066ece21e605661587a4964f758",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/shareCard.ts",
+      "sha256": "90feac17614621334b9f15b5f86d472545a572f268d5aca9599c0c1097e044ff",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/transfer.ts",
       "sha256": "96594b942329d39dfc3e8f58f652da4f5e4fb4d88be40c56aa02a4bfa6eeda8c",
       "functionBodies": 22,
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/core/config/translationAppearance.ts",
+      "sha256": "a61df8785804d0cec962721f6d080ccea4e68ea96597010dc087e9fbccb036e7",
+      "functionBodies": 34,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/translationCache.ts",
+      "sha256": "7bc36a0c0b51dfd00ad5e5c8d2deac100cebd9db633928920402aad4eb2d53d0",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/translationLoadingStyle.ts",
+      "sha256": "eb674a1385fb5a42f6d6d249493a0bdf9cd09bdcdd45d65ae48daa613a674858",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/core/config/validation.ts",
       "sha256": "9c386df30573942509281bea6a6c5adf7ce41b7c335d5dffcd7642d833085292",
       "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/videoSubtitleAppearance.ts",
+      "sha256": "b8c546741ec6e783d0be1e49fa30fafdac9edc0aa14ec9bcd2f573329a4ab103",
+      "functionBodies": 7,
       "status": "source-read-and-traced"
     },
     {
@@ -978,6 +1344,24 @@
       "file": "src/core/config/visionProbe.ts",
       "sha256": "9a9032f1a989463bd7131f47eadda27a7b26530384277dc49c1920217008e157",
       "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/writing.ts",
+      "sha256": "117a475891dae890d551d3570b278f034ee25a9bad66f22558fef5c794cdedd5",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/writingPreview.ts",
+      "sha256": "3bb1c96d0be8463a2ee834b865ef7f9024d47edc70660fdc1cd9df82fe008813",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/config/writingReadiness.ts",
+      "sha256": "da55db8715be828ecf253d871c7573386a1c76d477e572e3a2eab6b2d2a8d0bc",
+      "functionBodies": 1,
       "status": "source-read-and-traced"
     },
     {
@@ -1026,6 +1410,18 @@
       "file": "src/core/glossary/transfer.ts",
       "sha256": "26020eb1667ae30d3b10418fdd1a77529a34dd54126a9d58ee1a60f625c5d571",
       "functionBodies": 23,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/i18n/messages/onboarding.ts",
+      "sha256": "5bb3a1bea1ebe10cb5edabd23b44a2e550d5e721dad9226024aaf6da9a05617f",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/core/i18n/messages/siteRules.ts",
+      "sha256": "7db8977d265f0fdcf3b688ff215ce9fe59b5b5991fd5f96de5bd3b8a98c5ee20",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -1725,6 +2121,12 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/image-translation/services/mangaTypography.ts",
+      "sha256": "8885ec945b22f7a13d61acfe798e2984c19f4cb1afa7f7a233543a39df725308",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/image-translation/services/ocrModelCache.ts",
       "sha256": "b6ee111f5cb1dbf3e438bb0e17434e4fb7f19f7dddecb825586177c32dc31cce",
       "functionBodies": 7,
@@ -1770,6 +2172,48 @@
       "file": "src/features/image-translation/ui/MangaEntry.vue",
       "sha256": "fdb69c4d33cd6c16cba174c10a019032957cda12c0d6d96214c573be29b91741",
       "functionBodies": 19,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/local-tts/background/handlers.ts",
+      "sha256": "437789e95e7ef06ac577233f458b0594f73812db3c5829521f3868616c298023",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/local-tts/background/offscreenAdapter.ts",
+      "sha256": "2b3e75d9ef77d2440144e9f0eb07310b2316d1044fabccdb2c8916bbac8a045a",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/local-tts/background/runtime.ts",
+      "sha256": "a62772368f3d0b900f157b4c105d1d42993b9c287ce6742ac764828c56a9abd3",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/local-tts/offscreen/modelCache.ts",
+      "sha256": "d4a385be783db5b2d668ffe6401f50f2f5ff975df37f4c118102ad3f59921488",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/local-tts/offscreen/tts.ts",
+      "sha256": "3da71550b4440a7f09a13a61d8352ebdbbed7bfd3857e7f9194725bafc9485db",
+      "functionBodies": 26,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/local-tts/offscreen/tts.worker.ts",
+      "sha256": "308f3e83cca28cc14e74960ad7fb82675da4c024830bd393c61ce4a62e1a91cd",
+      "functionBodies": 38,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/local-tts/protocol.ts",
+      "sha256": "97ea3f53f3a75f3820a584e4334ef1ce5a431213f9c3f6f0610a6c755378d9e1",
+      "functionBodies": 3,
       "status": "source-read-and-traced"
     },
     {
@@ -1854,6 +2298,138 @@
       "file": "src/features/section-translation/public.ts",
       "sha256": "dee0cd51d9756ebfaee90df9424681ed2b81d523d2fe5cb6eab62a6c793f3d3f",
       "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/background/offscreenAdapter.ts",
+      "sha256": "d8e969814f3bc80b6524d1e1a2ad76caac34417845bf022b0ba1331a0c69096f",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/background/pageZoomHandler.ts",
+      "sha256": "b4ec39dfd5d2aff52da8c1f2582d7a49c50b1dc269c2ecbafbecb61389463b2e",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/background/selectionTtsSynthesis.ts",
+      "sha256": "47ca3298cc39c7b20f58d13a6c7db545ee525bd51800fc69589c0ab29750cfc9",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/background/ttsHandler.ts",
+      "sha256": "d301229aa6a7716dcda3a1d96f7a8a850ec35e45ae3034cff9a36912245f5c4a",
+      "functionBodies": 19,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/background/wordLookupHandler.ts",
+      "sha256": "acbc2907f985ecd122171b1824d39f55f41bb22b7e7d9f34cc5dc782e792d60c",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/content/contextMenuBridge.ts",
+      "sha256": "45a4f5612d4c38242fa43a00cac9b2e86005bd4b74bb65f86acc79005e5e3abd",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/content/index.ts",
+      "sha256": "6481663b1e3060f8d8130c69eb30e1e9d846c2f6d13a61fd175927902e8b2004",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/content/modalDialogHost.ts",
+      "sha256": "3e91a7381c322a5903a6a67b533a3d47ed4633b34f6423b32df0a01e59ae9576",
+      "functionBodies": 24,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/content/runtime.ts",
+      "sha256": "633afa40961f7b2c3266befdc4cc675d33fc9bead6931e28d3ccb1aa902a0a70",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/content/selectionTtsContentController.ts",
+      "sha256": "b20246771cf0ee54e3561a5976b1155826c4552366a695e20dca5c975236e77b",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/core.ts",
+      "sha256": "cc1e48f45f13fd210af7ee05521b729445ec42cb23db520c7dc8fa6f7e636f76",
+      "functionBodies": 54,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/core/public.ts",
+      "sha256": "06e97ced3f3095c7b8874d629c746c67956de9e48fe5ed236c4265da052fac5c",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/pageZoom.ts",
+      "sha256": "670fdd2caf050e305503bb0cd68b6423e3f96fdfac82e03a83d67d11654d4a86",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/protocol.ts",
+      "sha256": "8a4dfe718728c7fcf106afadbf4baed8ea8ea5e82b03733f6e25772b7145ad8d",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/public.ts",
+      "sha256": "ed00222e57d0d144d6f52e7fb21f8884f0642ac46e4c27b6f205e9b9c80209d8",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/services/ecdictAsset.ts",
+      "sha256": "f563e92002fa8e000a89d904bcdaa31aa202c6e1f6330251d1315df101f932c0",
+      "functionBodies": 11,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/services/edgeTts.ts",
+      "sha256": "099d21481d267fe641a6cdc1916979bf63de10d4c775e6492380fc6d68c73b87",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/services/edgeTtsPolicy.ts",
+      "sha256": "9481a0fc07d849b53f3242a43afc08ad2856a301d5530fca76828fb2b0be5fbb",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/services/wordDictionary.ts",
+      "sha256": "2fe44781d90bbf2d8e4bcf22561d39b98b98ac66e38c84220759f9438102e303",
+      "functionBodies": 92,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/services/wordNormalization.ts",
+      "sha256": "65c6144cc88624fd5d6443d3957649c70a1831697a5748c105c47a13e8165156",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/speech/public.ts",
+      "sha256": "8d60808dd4160ab9b19232b54fcf743a0541ca6134b43ae45ba3818a068c52bf",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/selection-translation/ui/SelectionTranslator.vue",
+      "sha256": "49074add0bcb3bda96b215e4b2f43193be518fa0ac9ffc4861a12b1ed274f4bd",
+      "functionBodies": 170,
       "status": "source-read-and-traced"
     },
     {
@@ -2145,6 +2721,48 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/features/share-card/content/runtime.ts",
+      "sha256": "ebccd0c0ae19ad2108be430fa2c5819128f79984cf93a5aeeff2c1c94cc657c1",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/share-card/core.ts",
+      "sha256": "28638a29d22dea9c4abdd1517c37c0dce710be84c263d12f24b8a455cc4cff9b",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/share-card/export.ts",
+      "sha256": "959df1f1544a25df6c7675bfcd168746aabdce5dba21e55292632e311637af31",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/share-card/public.ts",
+      "sha256": "792f2a7230a1dc599c60f3100acb10c08dae0175ff3d08489d6c6f132aa31328",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/share-card/render.ts",
+      "sha256": "cafffb20b576147b9d2ff49eef3518a4a5a102bca60fc0f6d839dd22ee3def6f",
+      "functionBodies": 11,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/share-card/themes.ts",
+      "sha256": "182d2187194325c765e33c3539afa8ff9a44f896447dccfb5c0db071ea83e937",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/features/share-card/ui/ShareCardStudio.vue",
+      "sha256": "7d8436175c7923b00f301b63e140ad152ffa9eb61376017413244880fb87dbef",
+      "functionBodies": 20,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/features/translation-stats/model/presentation.ts",
       "sha256": "783d11e753920b2a2b0b5495960a724324e17cc3b1abf59a855be6a283c618eb",
       "functionBodies": 27,
@@ -2176,7 +2794,7 @@
     },
     {
       "file": "src/features/vocabulary/content.ts",
-      "sha256": "04bf60b998cf2e208f9fe10e7d31a557672bf7ae51984da01f295b1a80d04862",
+      "sha256": "cc10ea3302eab01e83a14d16ba90264c31a6942960679ba065fa763a9c305565",
       "functionBodies": 3,
       "status": "source-read-and-traced"
     },
@@ -2331,6 +2949,30 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/platform/offscreen/client.ts",
+      "sha256": "d2260d571efac22c7506b027e6098d4353f086fa2031485aab6f58bd9101d310",
+      "functionBodies": 51,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/offscreen/extensionClient.ts",
+      "sha256": "794057d22241640f58ba7656438d5fe5d89534c9d087ef6bd7a6448d38825d11",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/offscreen/firefoxDocument.ts",
+      "sha256": "b17538535c1104cedf5882c97d74f2fe2b883dff1e4e4d0a7758b30fd869d48f",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/offscreen/localTranslation.ts",
+      "sha256": "4e819eccce535d52b9d524752817cba1ce8e1827725d6519d7727d6439c7fbe4",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/platform/shadow-ui/index.ts",
       "sha256": "9cfca5114e6d2d4d93fa4b9cc82ab96fb8f4efb0a45c51f18da8d800b254d7a3",
       "functionBodies": 0,
@@ -2343,9 +2985,63 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/platform/storage/configEncryption.ts",
+      "sha256": "5f048f92556baac3929f0dab4724dbefbdce7f13442651e12b49c0310128f3c6",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/configRepository.ts",
+      "sha256": "5969e7fcb95bafb1d353dc7c6a2ee286cd9fd84a44ebac97df9d7e8e72142349",
+      "functionBodies": 28,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/configStorage.ts",
+      "sha256": "805bb3fd33aae9c05b6b4866972063edac823776e6fb9292954a53e32436def8",
+      "functionBodies": 51,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/configStorageRuntime.ts",
+      "sha256": "3fe93dc55b80be35cd08864d0ecf71664888f5b74383e7ec6a24bc76989f63c6",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/credentialContext.ts",
+      "sha256": "4ee3d2577d536f923e61c0037b10841a6d3d207d2270636e4e864be6b5d828b2",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/freeTranslationHealthStorage.ts",
+      "sha256": "bd3b51cfdf3966a6562355b56615ec2c8f0c7fe137686d31c0429fb184cbecfc",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/harnessSessionRepository.ts",
+      "sha256": "df2534d332f5e99f88143977b249c4b06cdb6cded7699525f037894d08a4a7e8",
+      "functionBodies": 32,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/learningMemoryRepository.ts",
+      "sha256": "9d10978f81103eb68804469d3d1b7044e86111be3a03a764c46c045806aa598d",
+      "functionBodies": 13,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/platform/storage/modelUsageRepository.ts",
       "sha256": "584e35e1b4bbce264aa1c7d9fd502cc5479e27fa569d0be7d9914a50d4dbaed7",
       "functionBodies": 45,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/platform/storage/remoteConfigStorageRuntime.ts",
+      "sha256": "f7ccdcdf9a186defe7f54f28e7f7fa77c4d71402b4d411a6d7575f74aeb09a69",
+      "functionBodies": 0,
       "status": "source-read-and-traced"
     },
     {
@@ -2355,15 +3051,51 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/platform/storage/visionProbeStorage.ts",
+      "sha256": "68338211ee4d3bde2459bb79f3a087d547ebbd68e0dfb10ac651ff7cc55ec693",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/platform/webdav/properties.ts",
       "sha256": "426b1d2c217364fcd4f6f91f108252a72d62cc43fb8346238cb284908f9f3a2e",
       "functionBodies": 10,
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/providers/translation/ai-sdk/endpoints.ts",
+      "sha256": "56e6f5eb47101d3e40ec7d5852823b165524ffa55af9c529ab8061c7eb52e682",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/ai-sdk/errors.ts",
+      "sha256": "5ca67c4b11007107cfa61e15a7e53a0dc931eb5915cccf12409259ca5b77907e",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/ai-sdk/openai-compatible.ts",
+      "sha256": "5a6a0822f107f47f77eb56a1ff8c248c0746639b1480665e8dc313adbcacf63c",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/providers/translation/aliyun-translation.ts",
       "sha256": "a074ab53b2930fdd8a9f57c3b0bca600ee273d01109f3829ccbfd11c56a1879c",
       "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/auth.ts",
+      "sha256": "7457285e899a429d7c313e70d2aae0a3bcb71aa1bd3370c1fd9de531b83d4c55",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/azure-openai.ts",
+      "sha256": "9eacb0c5e40671cd7c3424856225652021f96cddd66d2c03ced0011d9dd3fe11",
+      "functionBodies": 1,
       "status": "source-read-and-traced"
     },
     {
@@ -2379,6 +3111,24 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/providers/translation/chrome-translator.ts",
+      "sha256": "e74c9e2e3685673e5a7d882f00a24dc4d7bfcd6f1dabb04c4f116983210c472d",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/chromeTranslatorRequest.ts",
+      "sha256": "7988ee0a896ee6463d4c68f5f9aa28004c341af2712bb5004888034a5a343326",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/claude.ts",
+      "sha256": "fb9f8c8f53bd3a23d9b1cdc71f14472062b7d0a90bb7c88d009790ebe8767cba",
+      "functionBodies": 3,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/providers/translation/cloud/languages.ts",
       "sha256": "32f37baff2b6844c9448b81ee90b5c8c462b65a991cb3c5c7c0ada8516d69a4d",
       "functionBodies": 2,
@@ -2388,6 +3138,72 @@
       "file": "src/providers/translation/cloud/signature.ts",
       "sha256": "706053507f38a77070ce3eafbdd097e090d8f080cfa6b805fb976419e2bdbcce",
       "functionBodies": 16,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/connectionTest.ts",
+      "sha256": "c08881b7b8898580c39f58d6113ef5e0daa1ba6e73aa8b8518d84b5cc6298a45",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/deepl.ts",
+      "sha256": "4c7c0ea91b19c613c946a26121e864ae38c81e0d8fec34207525eb3eee0bfd6c",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/deeplx.ts",
+      "sha256": "a4332682a993f5af911141a3e875d90a1983d9f909bd60da87cfbc6dfc940776",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/deepseek.ts",
+      "sha256": "512223682413d9bb23f773b7aaa3aa900414c9623529b656438bb04864efec7d",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/doubao-seed-translation.ts",
+      "sha256": "12fcd9df0ec026839f71aa02d920cf72b78c22e9db063f26860b270572abcb40",
+      "functionBodies": 5,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/doubao.ts",
+      "sha256": "1f0d5995e50abbcce3fb5540c079e8b07911e477a15937bccf8eb414d7514ecb",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/free-chinese-web.ts",
+      "sha256": "7adc242fe015a2d00d30fff534dc36ef371eaf523db611b43631c1eb233545e2",
+      "functionBodies": 10,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/free-extra-web.ts",
+      "sha256": "c2303e9382de9a97726dd77d1bb7cd930e3db01c02517af1e417042d9b8d077a",
+      "functionBodies": 19,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/free-translation.ts",
+      "sha256": "4e1ec53fd608a0e11b903e2e0c6b69d43afb61b3872a2c6d42e9d0de8ee8e89a",
+      "functionBodies": 30,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/free-web.ts",
+      "sha256": "85f02935b5e07eb84a569850046510823c28e65dc17400af0caee36874712152",
+      "functionBodies": 8,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/gemini.ts",
+      "sha256": "3c1ff945fa9357a67a158aa77633cbff73c16b313f738f43926a6e86aeadc699",
+      "functionBodies": 3,
       "status": "source-read-and-traced"
     },
     {
@@ -2409,9 +3225,57 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/providers/translation/local-translation.ts",
+      "sha256": "87778356cb0c404bc4a4c63104bf73b302ba33e52ffa293fb50cfdcd43ae06ce",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/microsoft.ts",
+      "sha256": "e83b666dedd606bbbfe26b4362be8bb5a72f7e0f3cb7c7d06c9c4218c5edaab0",
+      "functionBodies": 2,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/microsoftTransport.ts",
+      "sha256": "501f5ada7d47d27d160b8833c7745b923fc0ad8a50c95200688ae084f12a3ee3",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/mymemory.ts",
+      "sha256": "ffc9c5dbd79cd88ba3b08cfe978b5bfba9c71d29d93d6b247ac5b0d6cd26c157",
+      "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/registry.ts",
+      "sha256": "1a7c3505e019c7fac633f5fb26c1f167c315e255c9534ba15f817cbe1602a856",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/responses-api.ts",
+      "sha256": "5397fcd2fa0bc275561318f1491bfd4aa15f0c6d04cbdd3ee482ee839255f9d4",
+      "functionBodies": 6,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/providers/translation/tencent.ts",
       "sha256": "e6683527a5d06d024354a612298225777f895556273abd24907fd731190703eb",
       "functionBodies": 7,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/tongyi.ts",
+      "sha256": "e0801e8026a6d7e9635f4f080b3480c16a952ba6789d5d8a91321273b9d0fd98",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/providers/translation/usage.ts",
+      "sha256": "9fbcb48933c2052262ea2a9c1995382fec27b95db4e25dd32c72cc9268fa4219",
+      "functionBodies": 20,
       "status": "source-read-and-traced"
     },
     {
@@ -2433,6 +3297,66 @@
       "status": "source-read-and-traced"
     },
     {
+      "file": "src/providers/translation/zhipu.ts",
+      "sha256": "fd227a278970aa54f772d8273f3196345f52d015bdfd4ece1f1746c451c84992",
+      "functionBodies": 4,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/autoBackup.ts",
+      "sha256": "3979e666f24ca7c700c4ab0f3eb61181f24cbd45e0ae6d5fd0a73c237ae4921c",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/autoBackupStore.ts",
+      "sha256": "daf45c1f019ea4175dc1cedeee23df1fd734061cedbe7b6e5a95a7e1be9f08e9",
+      "functionBodies": 18,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/cloudBackupClient.ts",
+      "sha256": "e36423da04d226c6f172a3a68326b2ba3d5b461a681aba0dcc12b211dc4d0955",
+      "functionBodies": 9,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/count.ts",
+      "sha256": "1ce5d7463c5a19fec3996afcf6de1299b1b3d9f5bbb7474d2f24889021977ae5",
+      "functionBodies": 15,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/googleDriveSync.ts",
+      "sha256": "97189240f757857688cafa242b1fb6126a373e0a1d12f885d53bd02dc24d25ad",
+      "functionBodies": 1,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/googleDriveSyncClient.ts",
+      "sha256": "3b9bf721c7463fba3f24eb2fcff6664ff35fa0b2c195aae2398f0973f5bf2f7e",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/history.ts",
+      "sha256": "08e8a987f47ed6a8d2e0b0c753ff5520cfbda66b26cd8bbaef423075f94e4329",
+      "functionBodies": 14,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/index.ts",
+      "sha256": "5a852ee24c74f733a8eee34445fbddc2e022479ba121fd557c74daf5edad4704",
+      "functionBodies": 0,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/remoteConfigSync.ts",
+      "sha256": "bd454ea45dcfcfaab7218ca43e40c61bb741792fbf2e837afb1b123d06a17c43",
+      "functionBodies": 33,
+      "status": "source-read-and-traced"
+    },
+    {
       "file": "src/services/config/schema.ts",
       "sha256": "5155391ff06cc00c1044bbffb63cc86fd2ba0dc520a29b0d0cfcb62637d199fc",
       "functionBodies": 5,
@@ -2440,8 +3364,20 @@
     },
     {
       "file": "src/services/config/store.ts",
-      "sha256": "9b28991c4fdf424d3bc5bf529ced769bcd28ebb29042d994a4748b6f85ea225e",
-      "functionBodies": 105,
+      "sha256": "3a87abcb389b3346ac227c7f9946603901090def9813289d51796035d2ab98a4",
+      "functionBodies": 107,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/webDavBackup.ts",
+      "sha256": "f0d8a825fa688c3d07368d47c59f94d85354e2b139e7ae211e7f6c29acf6032c",
+      "functionBodies": 30,
+      "status": "source-read-and-traced"
+    },
+    {
+      "file": "src/services/config/webDavBackupClient.ts",
+      "sha256": "b179b34e526b0daf6bafdc321b0344ae52b03bc83174a53c3f82117e53cddd02",
+      "functionBodies": 4,
       "status": "source-read-and-traced"
     },
     {
@@ -2572,7 +3508,7 @@
     },
     {
       "file": "src/services/translation/languages.ts",
-      "sha256": "da9ff526d2ead9c9ea0242f8a038c60e0fb4e4ea93b3653712aeefab95c735b6",
+      "sha256": "8931b0586036bbdd3fc26ddad506555eeae0e8a6e26a5098562d3877ca1be771",
       "functionBodies": 1,
       "status": "source-read-and-traced"
     },
@@ -2778,42 +3714,6 @@
     "entrypoints/videoTranscriptionWorker.ts",
     "entrypoints/xVideoBridge.content.ts",
     "entrypoints/youtubeBridge.content.ts",
-    "src/app/background/areaRuntime.ts",
-    "src/app/background/capabilityRegistry.ts",
-    "src/app/background/configAutoBackupRuntime.ts",
-    "src/app/background/configMessageHandlers.ts",
-    "src/app/background/configStorageBroadcast.ts",
-    "src/app/background/configStorageRuntime.ts",
-    "src/app/background/contextMenuActions.ts",
-    "src/app/background/googleDriveSyncRuntime.ts",
-    "src/app/background/handlers/areaTranslation.ts",
-    "src/app/background/handlers/configAutoBackup.ts",
-    "src/app/background/handlers/configCount.ts",
-    "src/app/background/handlers/configHistory.ts",
-    "src/app/background/handlers/configPersistence.ts",
-    "src/app/background/handlers/configStorage.ts",
-    "src/app/background/handlers/connectionTest.ts",
-    "src/app/background/handlers/freeTranslationWeights.ts",
-    "src/app/background/handlers/googleDriveSync.ts",
-    "src/app/background/handlers/imageTranslation.ts",
-    "src/app/background/handlers/inputTranslation.ts",
-    "src/app/background/handlers/openOptions.ts",
-    "src/app/background/handlers/selectionTts.ts",
-    "src/app/background/handlers/selectionWordLookup.ts",
-    "src/app/background/handlers/translation.ts",
-    "src/app/background/handlers/translationCache.ts",
-    "src/app/background/handlers/vocabulary.ts",
-    "src/app/background/handlers/webDavBackup.ts",
-    "src/app/background/harnessRuntime.ts",
-    "src/app/background/imageGlossaryContext.ts",
-    "src/app/background/localInsightsHandlers.ts",
-    "src/app/background/messageRuntime.ts",
-    "src/app/background/providerRuntime.ts",
-    "src/app/background/requestHeaderRuntime.ts",
-    "src/app/background/retiredContentScripts.ts",
-    "src/app/background/thunderbirdMessageRuntime.ts",
-    "src/app/background/webDavBackupRuntime.ts",
-    "src/app/background/writingRuntime.ts",
     "src/app/content/areaContextMenuResponse.ts",
     "src/app/content/cacheMessage.ts",
     "src/app/content/features.ts",
@@ -2825,35 +3725,7 @@
     "src/app/content/translationAppearance.ts",
     "src/app/content/xVideoBridge.ts",
     "src/app/content/youtubeTimedTextBridge.ts",
-    "src/app/offscreen/localTranslationWorker.ts",
-    "src/app/offscreen/localTtsWorker.ts",
-    "src/app/offscreen/translation.ts",
-    "src/app/offscreen/ttsPlayback.ts",
-    "src/app/offscreen/videoTranscriptionWorker.ts",
     "src/app/options/index.ts",
-    "src/core/config/areaTranslation.ts",
-    "src/core/config/cloudSync.ts",
-    "src/core/config/driveSync.ts",
-    "src/core/config/harness.ts",
-    "src/core/config/localTranslation.ts",
-    "src/core/config/localTts.ts",
-    "src/core/config/pageTranslation.ts",
-    "src/core/config/requestHeaders.ts",
-    "src/core/config/requestLimits.ts",
-    "src/core/config/scheduling.ts",
-    "src/core/config/sectionTranslation.ts",
-    "src/core/config/selectionPreview.ts",
-    "src/core/config/selectionTts.ts",
-    "src/core/config/sensitiveKeys.ts",
-    "src/core/config/sentenceHighlight.ts",
-    "src/core/config/shareCard.ts",
-    "src/core/config/translationAppearance.ts",
-    "src/core/config/translationCache.ts",
-    "src/core/config/translationLoadingStyle.ts",
-    "src/core/config/videoSubtitleAppearance.ts",
-    "src/core/config/writing.ts",
-    "src/core/config/writingPreview.ts",
-    "src/core/config/writingReadiness.ts",
     "src/core/harness/loop.ts",
     "src/core/harness/memorySearch.ts",
     "src/core/harness/promptLocales.ts",
@@ -2874,11 +3746,9 @@
     "src/core/i18n/messages/localTranslation.ts",
     "src/core/i18n/messages/localTts.ts",
     "src/core/i18n/messages/manga.ts",
-    "src/core/i18n/messages/onboarding.ts",
     "src/core/i18n/messages/ru-RU.ts",
     "src/core/i18n/messages/runtime-feedback-patterns.ts",
     "src/core/i18n/messages/runtime-feedback.ts",
-    "src/core/i18n/messages/siteRules.ts",
     "src/core/i18n/messages/translationStats.ts",
     "src/core/i18n/messages/zh-CN.ts",
     "src/core/i18n/types.ts",
@@ -2927,7 +3797,6 @@
     "src/features/image-translation/services/mangaRegions.ts",
     "src/features/image-translation/services/mangaRendering.ts",
     "src/features/image-translation/services/mangaSessionFallback.ts",
-    "src/features/image-translation/services/mangaTypography.ts",
     "src/features/image-translation/ui/ImageOcrSettings.vue",
     "src/features/image-translation/ui/MangaModelSettings.vue",
     "src/features/image-translation/ui/MangaSettings.vue",
@@ -2944,13 +3813,6 @@
     "src/features/local-translation/offscreen/modelCache.ts",
     "src/features/local-translation/offscreen/translation.ts",
     "src/features/local-translation/offscreen/translation.worker.ts",
-    "src/features/local-tts/background/handlers.ts",
-    "src/features/local-tts/background/offscreenAdapter.ts",
-    "src/features/local-tts/background/runtime.ts",
-    "src/features/local-tts/offscreen/modelCache.ts",
-    "src/features/local-tts/offscreen/tts.ts",
-    "src/features/local-tts/offscreen/tts.worker.ts",
-    "src/features/local-tts/protocol.ts",
     "src/features/quick-translation/core.ts",
     "src/features/quick-translation/public.ts",
     "src/features/reading-assistant/answerFormat.ts",
@@ -2967,28 +3829,6 @@
     "src/features/reading-assistant/ui/ReadingAnswer.vue",
     "src/features/reading-assistant/ui/ReadingPanel.vue",
     "src/features/reading-assistant/ui/SentenceAnalysis.vue",
-    "src/features/selection-translation/background/offscreenAdapter.ts",
-    "src/features/selection-translation/background/pageZoomHandler.ts",
-    "src/features/selection-translation/background/selectionTtsSynthesis.ts",
-    "src/features/selection-translation/background/ttsHandler.ts",
-    "src/features/selection-translation/background/wordLookupHandler.ts",
-    "src/features/selection-translation/content/contextMenuBridge.ts",
-    "src/features/selection-translation/content/index.ts",
-    "src/features/selection-translation/content/modalDialogHost.ts",
-    "src/features/selection-translation/content/runtime.ts",
-    "src/features/selection-translation/content/selectionTtsContentController.ts",
-    "src/features/selection-translation/core.ts",
-    "src/features/selection-translation/core/public.ts",
-    "src/features/selection-translation/pageZoom.ts",
-    "src/features/selection-translation/protocol.ts",
-    "src/features/selection-translation/public.ts",
-    "src/features/selection-translation/services/ecdictAsset.ts",
-    "src/features/selection-translation/services/edgeTts.ts",
-    "src/features/selection-translation/services/edgeTtsPolicy.ts",
-    "src/features/selection-translation/services/wordDictionary.ts",
-    "src/features/selection-translation/services/wordNormalization.ts",
-    "src/features/selection-translation/speech/public.ts",
-    "src/features/selection-translation/ui/SelectionTranslator.vue",
     "src/features/settings/background/index.ts",
     "src/features/settings/model/configHistory.ts",
     "src/features/settings/model/credentialPreview.ts",
@@ -3025,13 +3865,6 @@
     "src/features/settings/ui/WebDavBackup.vue",
     "src/features/settings/ui/WritingSettings.vue",
     "src/features/settings/ui/usePopupLayoutReorder.ts",
-    "src/features/share-card/content/runtime.ts",
-    "src/features/share-card/core.ts",
-    "src/features/share-card/export.ts",
-    "src/features/share-card/public.ts",
-    "src/features/share-card/render.ts",
-    "src/features/share-card/themes.ts",
-    "src/features/share-card/ui/ShareCardStudio.vue",
     "src/features/site-rules/domain.ts",
     "src/features/translation-center/model/comparison.ts",
     "src/features/translation-center/public.ts",
@@ -3106,63 +3939,10 @@
     "src/platform/google-drive/constants.ts",
     "src/platform/google-drive/encryption.ts",
     "src/platform/i18n/uiLanguageBundles.ts",
-    "src/platform/offscreen/client.ts",
-    "src/platform/offscreen/extensionClient.ts",
-    "src/platform/offscreen/firefoxDocument.ts",
-    "src/platform/offscreen/localTranslation.ts",
     "src/platform/shadow-ui/pageBridge.ts",
     "src/platform/shadow-ui/pageBridgeCore.ts",
-    "src/platform/storage/configEncryption.ts",
-    "src/platform/storage/configRepository.ts",
-    "src/platform/storage/configStorage.ts",
-    "src/platform/storage/configStorageRuntime.ts",
-    "src/platform/storage/credentialContext.ts",
-    "src/platform/storage/freeTranslationHealthStorage.ts",
-    "src/platform/storage/harnessSessionRepository.ts",
-    "src/platform/storage/learningMemoryRepository.ts",
-    "src/platform/storage/remoteConfigStorageRuntime.ts",
-    "src/platform/storage/visionProbeStorage.ts",
     "src/platform/webdav/api.ts",
     "src/platform/webdav/connection.ts",
-    "src/providers/translation/ai-sdk/endpoints.ts",
-    "src/providers/translation/ai-sdk/errors.ts",
-    "src/providers/translation/ai-sdk/openai-compatible.ts",
-    "src/providers/translation/auth.ts",
-    "src/providers/translation/azure-openai.ts",
-    "src/providers/translation/chrome-translator.ts",
-    "src/providers/translation/chromeTranslatorRequest.ts",
-    "src/providers/translation/claude.ts",
-    "src/providers/translation/connectionTest.ts",
-    "src/providers/translation/deepl.ts",
-    "src/providers/translation/deeplx.ts",
-    "src/providers/translation/deepseek.ts",
-    "src/providers/translation/doubao-seed-translation.ts",
-    "src/providers/translation/doubao.ts",
-    "src/providers/translation/free-chinese-web.ts",
-    "src/providers/translation/free-extra-web.ts",
-    "src/providers/translation/free-translation.ts",
-    "src/providers/translation/free-web.ts",
-    "src/providers/translation/gemini.ts",
-    "src/providers/translation/local-translation.ts",
-    "src/providers/translation/microsoft.ts",
-    "src/providers/translation/microsoftTransport.ts",
-    "src/providers/translation/mymemory.ts",
-    "src/providers/translation/registry.ts",
-    "src/providers/translation/responses-api.ts",
-    "src/providers/translation/tongyi.ts",
-    "src/providers/translation/usage.ts",
-    "src/providers/translation/zhipu.ts",
-    "src/services/config/autoBackup.ts",
-    "src/services/config/autoBackupStore.ts",
-    "src/services/config/cloudBackupClient.ts",
-    "src/services/config/count.ts",
-    "src/services/config/googleDriveSync.ts",
-    "src/services/config/googleDriveSyncClient.ts",
-    "src/services/config/history.ts",
-    "src/services/config/index.ts",
-    "src/services/config/remoteConfigSync.ts",
-    "src/services/config/webDavBackup.ts",
-    "src/services/config/webDavBackupClient.ts",
     "src/services/harness/conversation.ts",
     "src/services/harness/learningMemory.ts",
     "src/services/harness/memoryRecall.ts",
@@ -3213,7 +3993,7 @@
     "userscript/writingAssistant.ts"
   ],
   "priorities": [
-    "Continue447pending production files/functions/chains, latest main changed/new sources and confirmed candidates. Final fresh latest-main safe rebase, whole code review/fixes/verification and authorized merge remain pending.",
+    "Continue291pending production files/functions/chains, latest-main changed/new sources and confirmed candidates. Final fresh latest-main safe rebase, whole review/fixes/verification and authorized merge remain pending.",
     "Full-page state/render/request pipeline including mass framework remounts",
     "Bound synchronous mass-remount work and pressure-test shared layout leases; standard slot parsing now uses one forward scan.",
     "Scaled narrow-scroll reading anchors have native 0.75/1/1.25 checks; continue rotated/perspective/zoom surfaces and within-element text-line anchors.",
@@ -3248,12 +4028,13 @@
     "Forty-second:9new reviewed sources,281reviewed/5128bodies,547pending. New60executed cases/44static definitions;17affectedfiles343pass. Old9sources same final58scenario harness46fail12pass,2old unhandled rejections. Current strict10testfiles171cases11modules four100 and zero unhandled. Production11flows3screens/errors0, temporary profile/browser/process cleanup verified. Architecture829pass2existing debt failures,13unowned executable and3documentation tools remain. Runtime/query build-only exemptions removed;142line ceiling retained. Quick profiles and whole latest-main delivery remain pending.",
     "Forty-fifth:11new complete files256bodies;295reviewed5571bodies535pending. Parallel agentsA/B reviewed and closed. Root25baseline23fail2pass; child26baseline21fail5pass; picker new real-helper regression fails before/pass after native Enter.21related files378pass;strict94cases4modules four100;production15flows4screens/errors0/clean. Shared Markdown quoted fences/inline dash and Obsidian renamed job reproduced, shared onboarding candidates await reproduction; no native Obsidian/live-provider proof. Cached main295files reconciliation and final whole delivery pending.",
     "Forty-sixth:27new complete files/372bodies;322reviewed/5943bodies/508pending.6agents closed after parent review.25private mapped modules four100;SFC numerical coverage not claimed. Actual startup/foreign-language save/reopen and3format preview/edit/export/ZIP,9screenshots/errors0/clean; no live-provider/native-Obsidian/GPU proof. Remaining12executable and3doc-tool ownership debt; cachedmain329files reconciliation and final whole delivery pending.",
-    "Forty-seventh:61new complete files;383reviewed/6937bodies/447pending.8chronologicalroles,max6concurrent,allclosed. PDF mapped whitespace gate remains99.37; SFC mapped populations distinct from AST.12executable/3doc-tool ownership debt, cached-main reconciliation and final delivery still pending."
+    "Forty-seventh:61new complete files;383reviewed/6937bodies/447pending.8chronologicalroles,max6concurrent,allclosed. PDF mapped whitespace gate remains99.37; SFC mapped populations distinct from AST.12executable/3doc-tool ownership debt, cached-main reconciliation and final delivery still pending.",
+    "Forty-eighth:156new full production files;539reviewed/8645bodies/291pending;10old unique boundaries and4outside830tools.14chronological roles,max6concurrent,allclosed. Partial functional-source mapped gaps and CLI zero-path counters retained; no synthetic runtime credit. Cached-main reconciliation and final delivery pending."
   ],
   "progress": {
-    "sourceReadFiles": 383,
-    "sourceReadFunctionBodies": 6937,
-    "pendingFiles": 447,
+    "sourceReadFiles": 539,
+    "sourceReadFunctionBodies": 8645,
+    "pendingFiles": 291,
     "goalComplete": false
   },
   "observations": [
@@ -4029,6 +4810,12 @@
       "status": "fixed-reviewed-and-verified-forty-seventh",
       "issue": "配置保存和历史写入的同值请求等待实际持久化结果；revision 在写入与迁移前拒绝溢出。分别保留 token/secret 的显式导入意图和普通 draft 目的地解绑，导入广播合并不误覆盖其他服务。现代 apiKeys 为规范化主数据，原始旧 token 清空在保存边界兼容；既有测试完整断言保留并显式清空现代列表。 配置深层克隆与比较使用迭代算法，共享引用只展开一次；差异预览限制展示深度，只格式化可见四项。任意自有键不会改写对象原型，继承目录属性不会变成服务、模型、语言或区域。自定义模型保护与 Thinking 目录索引减少重复全表扫描。 文档 UI 拥有加载/预览取消和 PDF 文件资源，卸载及换文件清理迟到回调、下载 URL、设置写入和确认动作；PDF 任务、页面、Canvas 和编码取消可释放并重试。Markdown 原生四空格代码在正文、引用、列表中保持 literal 保护。PDF 排版优化保留块选择评分、平局顺序与全部原始文本，最坏输入和差分证据单独记录。 语言标签拒绝非法完整尾部；超多汉字分段不使用参数 spread。七类技术标记按候选边界执行 sticky 匹配，避免长无效前缀加有效后缀的重复扫描；大输入超时归因与兼容差分保留，未宣称所有输入线性。 共享 Vue 控件只保留最新焦点帧，停用、卸载和缓存去激活释放；迟到帧重新校验值、选项与焦点归属。Shadow UI 菜单留在原根内，disabled/stale 事件不修改当前设置，移除无消费者样式与重复渲染判断。 固定云端路由忽略未消费 proxy，鉴权/pool/region 隔离在途请求；成功缓存继续允许跨凭据命中。快照复制并冻结轮换映射，检查和健康状态按实际签名凭据判断，Hunyuan 自定义 Model 对齐请求和统计；Youdao 保留 HTTP429/Retry-After 和取消异常。自定义 body 只解析一次。",
       "validation": "4197distinct affected cases; source/client mapped coverage and native four-format boundaries recorded separately;447source files and final delivery remain pending."
+    },
+    {
+      "file": "src/app/content/featureRegistry.ts",
+      "status": "fixed-reviewed-and-verified-forty-eighth",
+      "issue": "Bounded owner-aware host recovery, private credential event and config initialization, true store CAS, protocol cancellation, offscreen/tts generation ownership, card preferences/PNG lifecycle, manga layout and documentation tools; actual source/consumer evidence retained.",
+      "validation": "4559 distinct affected assertions, fresh selected strict source metrics, native fixture and types/builds; no full-objective completion."
     }
   ],
   "finalDelivery": {

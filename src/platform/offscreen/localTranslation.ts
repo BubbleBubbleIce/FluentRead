@@ -84,4 +84,4 @@ export function createLocalTranslationOffscreenAdapter(client: OffscreenClient =
     };
 }
 
-export const localTranslationOffscreenAdapter = createLocalTranslationOffscreenAdapter();
+export const localTranslationOffscreenAdapter = /* @__PURE__ */ createLocalTranslationOffscreenAdapter();

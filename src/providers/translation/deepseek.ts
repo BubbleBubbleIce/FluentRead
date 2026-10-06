@@ -16,7 +16,7 @@ import { config } from "@/src/services/config/store";
 import {stripTranslationReasoning as contentPostHandler} from '@/src/core/translation/prompts';
 import { appendOptionalBearer } from './auth';
 import {createHttpStatusError, createImageInputHttpError, readJsonResponse} from '@/src/platform/http/errors';
-import {runtimeFetch} from '@/src/platform/http/runtime';
+import {abortErrorFromSignal, runtimeFetch} from '@/src/platform/http/runtime';
 import {
     getTranslationProviderConfig,
     getTranslationImageInput,
@@ -38,6 +38,7 @@ function useResponsesApi(current: TranslationProviderConfigSnapshot) {
 async function deepseek(message: TranslationProviderRequest<string>) {
     const current = getTranslationProviderConfig(message, config);
     const service = message.serviceOverride || current.service;
+    if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
     const headers = new Headers({'Content-Type': 'application/json'});
     appendOptionalBearer(headers, current.token[service]);
 
@@ -66,6 +67,7 @@ async function deepseek(message: TranslationProviderRequest<string>) {
         }
 
         const result = await readJsonResponse<any>(resp, 'DeepSeek 返回的不是有效 JSON');
+        if (message.abortSignal?.aborted) throw abortErrorFromSignal(message.abortSignal);
         const actualModel = typeof result?.model === 'string' && result.model.trim()
             ? result.model
             : configuredModel;
@@ -100,17 +102,20 @@ function extractChatContent(result: any): string {
 
     // 页面只渲染最终的 message.content；reasoning_content 等 DeepSeek 思考字段会被
     // 主动忽略，绝不能进入页面。
-    return contentPostHandler(content);
+    const text = contentPostHandler(content);
+    if (!text) throw new Error('DeepSeek 返回数据格式异常：缺少有效文本内容');
+    return text;
 }
 
 function extractResponsesContent(result: any): string {
     const text = readResponsesApiText(result);
 
-    if (!text) {
+    const translated = contentPostHandler(text);
+    if (!translated) {
         throw new Error('DeepSeek 返回数据格式异常：缺少 Responses API 输出文本');
     }
 
-    return contentPostHandler(text);
+    return translated;
 }
 
 export function buildDeepSeekEndpoint(endpoint: string, isResponses: boolean): string {

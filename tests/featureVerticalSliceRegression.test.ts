@@ -83,10 +83,10 @@ describe('划词、圈选和图片翻译纵向切片回归', () => {
             .toBeLessThan(messageRuntime.indexOf('createTranslationCancelHandler(translationRequestRegistry)'));
     });
 
-    it('OCR 下载把接收端初始化故障与真实资源下载失败分开提示', () => {
+    it('OCR 状态读取失败提供独立重试，包下载失败保留单包重试入口', () => {
         const settings = source('src/features/image-translation/ui/ImageOcrSettings.vue');
-        expect(settings).toContain('OCR 服务初始化失败，请重新打开设置页后重试。');
-        expect(settings).toContain("message.includes('Receiving end does not exist')");
-        expect(settings).toContain('请检查网络后重试');
+        expect(settings).toContain("t('ocr.packs.statusError')");
+        expect(settings).toContain('@click="refreshStatus"');
+        expect(settings).toContain("translateLegacy(states[pack.code]?.phase === 'error' ? '重试' : '下载')");
     });
 });

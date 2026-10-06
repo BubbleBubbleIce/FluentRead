@@ -75,6 +75,8 @@ type ConfigHistoryListener = (nextHistory: ConfigHistoryState) => void;
 const listeners = new Set<ConfigListener>();
 const historyListeners = new Set<ConfigHistoryListener>();
 let storageRevision = 0;
+// 首次水合的在途读只能采用已验收的最新 watch 公开快照；不保存额外凭据副本。
+let initializationStoredConfig: Record<string, unknown> | null = null;
 let initialized = false;
 let lastPersistedSerialized = '';
 let writeRevision = 0;
@@ -485,6 +487,7 @@ function handleStoredConfigChange(value: unknown, options: StoredConfigChangeOpt
 
     const storedRevision = getStoredConfigRevision(parsed);
     if (storedRevision && storedRevision < persistedConfigRevision) return;
+    if (!initialized) initializationStoredConfig = sanitizeConfigCredentials(parsed);
     const revisionAdvanced = storedRevision > persistedConfigRevision;
     const isConfirmedRequestEcho = options.confirmedRequestRevision === storedRevision
         && Boolean(options.confirmedRequestSerialized)
@@ -582,14 +585,48 @@ function registerCredentialWatch(): void {
     }
 }
 
-async function initializeConfig(): Promise<void> {
+function settleConcurrentConfigInitialization(
+    safePublicConfig: Config | null,
+    credentials?: ConfigCredentials,
+    failed = false,
+): void {
+    const latestStored = initializationStoredConfig
+        && getStoredConfigRevision(initializationStoredConfig) >= persistedConfigRevision
+        ? initializationStoredConfig : null;
+    const latestPublic = latestStored
+        ? normalizeConfig(latestStored)
+        : safePublicConfig ?? normalizeConfig(sanitizeConfigCredentials(config));
+    const latestCredentials = trustedCredentialStorageContext
+        ? lastKnownCommittedCredentials ?? credentials
+        : undefined;
+    const latest = latestCredentials
+        ? normalizeConfig(mergeConfigCredentials(latestPublic, latestCredentials))
+        : latestPublic;
+    if (latestStored) {
+        persistedConfigRevision = getStoredConfigRevision(latestStored);
+        const operations = parsePersistedCountOperations(latestStored);
+        if (operations) replaceCompletedCountOperations(operations, latest.count);
+    }
+    // 连续变更时结束首屏等待。后台没有稳定迁移快照，或凭据 I/O 失败时，
+    // 只保留运行时状态，禁止旧读取继续清理或回写新存储；远程页的有效 watch 仍可使用。
+    configStorageWritesBlocked = failed || configStorageWriteOwner
+        || (trustedCredentialStorageContext && !latestCredentials);
+    initialized = true;
+    if (latestCredentials) lastKnownCommittedCredentials = latestCredentials;
+    lastPersistedSerialized = serializeConfig(latest);
+    rememberCommittedConfig(latest);
+    applyConfig(latest);
+    registerCredentialWatch();
+}
+
+async function initializeConfig(attempt = 0): Promise<void> {
     let safePublicConfig: Config | null = null;
     let storedValueRevision = storageRevision;
     let storedCredentialsRevision = credentialWatchSequence;
     try {
-        // 远程页没有迁移写入副作用，须在首次回读之前订阅凭据，否则在途旧
-        // 响应与较早到达的变更广播之间存在永久丢失新 Key 的窗口。
-        if (!configStorageWriteOwner) registerCredentialWatch();
+        // 在首次回读之前订阅凭据，否则在途旧响应与较早到达的变更之间
+        // 存在丢失新 Key 的窗口；水合完成前只记录基线，不发布半套配置。
+        registerCredentialWatch();
         let storedValue: unknown = null;
 
         // 读取过程中若收到 storage.onChanged，重新读取一次，避免旧读结果覆盖新配置。
@@ -598,6 +635,11 @@ async function initializeConfig(): Promise<void> {
             storedValue = await storage.getItem<unknown>(CONFIG_STORAGE_KEY);
             storedValueRevision = revisionAtRead;
             if (revisionAtRead === storageRevision) break;
+        }
+        // 重读本身也可能返回旧值；有效 watch 的更高 revision 不能被它回退。
+        if (initializationStoredConfig
+            && getStoredConfigRevision(initializationStoredConfig) >= getStoredConfigRevision(storedValue)) {
+            storedValue = initializationStoredConfig;
         }
 
         const parsed = parseStoredConfig(storedValue);
@@ -615,7 +657,11 @@ async function initializeConfig(): Promise<void> {
         }
 
         if (!trustedCredentialStorageContext) {
-            if (storedValueRevision !== storageRevision) return initializeConfig();
+            if (storedValueRevision !== storageRevision) {
+                if (attempt === 0) return initializeConfig(1);
+                settleConcurrentConfigInitialization(safePublicConfig);
+                return;
+            }
             // content script 的 location 属于网页 origin，且默认无权访问 storage.session。
             // 只加载公开配置，不在此上下文迁移、回写或监听凭据。
             initialized = true;
@@ -655,9 +701,6 @@ async function initializeConfig(): Promise<void> {
         // config 读完后还要等待 local/history/session 凭据。若这段水合窗口内其他
         // 页面提交了更高 revision，当前 parsed 与凭据不再属于同一个原子快照；
         // 整轮重读，禁止旧配置在新 watch 已应用后回滚 UI 并覆盖新设置。
-        if (storedValueRevision !== storageRevision
-            || storedCredentialsRevision !== credentialWatchSequence) return initializeConfig();
-
         const legacyCredentialPolicyPresent = Boolean(parsed
             && Object.prototype.hasOwnProperty.call(parsed, 'persistCredentials'));
         // 上一版可能在非原子 userscript 写入中留下“session 新、local 旧”的
@@ -669,6 +712,12 @@ async function initializeConfig(): Promise<void> {
             || sessionCredentials
             || legacyCredentials
             || extractConfigCredentials({});
+        if (storedValueRevision !== storageRevision
+            || storedCredentialsRevision !== credentialWatchSequence) {
+            if (attempt === 0) return initializeConfig(1);
+            settleConcurrentConfigInitialization(safePublicConfig, activeCredentials, Boolean(sessionReadError));
+            return;
+        }
         const normalized = parsed
             ? normalizeConfig(mergeConfigCredentials(parsed, activeCredentials))
             : normalizeConfig(mergeConfigCredentials(new Config(), activeCredentials));
@@ -731,7 +780,11 @@ async function initializeConfig(): Promise<void> {
         // safePublicConfig 已经过期；先用最新主记录整轮重试。若同一 I/O 继续失败，
         // 下一轮 fallback 也会基于最新公开配置，不能出现旧内容搭配新 revision。
         if (storedValueRevision !== storageRevision
-            || storedCredentialsRevision !== credentialWatchSequence) return initializeConfig();
+            || storedCredentialsRevision !== credentialWatchSequence) {
+            if (attempt === 0) return initializeConfig(1);
+            settleConcurrentConfigInitialization(safePublicConfig, undefined, true);
+            return;
+        }
         // 在任何读取或迁移边界不确定时禁止后续覆盖 local:config；重新加载后会重新尝试水合。
         configStorageWritesBlocked = true;
         if (initialized) {
@@ -751,7 +804,7 @@ async function initializeConfig(): Promise<void> {
     }
 }
 
-export const configReady = initializeConfig();
+export const configReady = initializeConfig().finally(() => { initializationStoredConfig = null; });
 let historyReadyPromise: Promise<void> | undefined;
 function ensureConfigHistoryReady(): Promise<void> {
     return historyReadyPromise ??= initializeConfigHistory();

@@ -67,6 +67,7 @@ export function createSelectionTtsSynthesizer(
         _preferredVoices: unknown,
         signal?: AbortSignal,
     ): Promise<SelectionTtsAudio> {
+        signal?.throwIfAborted();
         const mode = normalizeLocalTtsMode(dependencies.getMode());
         const online = () => dependencies.synthesizeOnline(text, language, dependencies.getOnlineVoices(), signal);
         const local = async () => localAudio(await dependencies.synthesizeLocal(
@@ -83,6 +84,7 @@ export function createSelectionTtsSynthesizer(
             try {
                 return await local();
             } catch (localError) {
+                signal?.throwIfAborted();
                 // 本地错误经 Offscreen 消息重建为普通 Error，只能按错误码识别“不可用”。
                 if (isLocalTtsUnavailable(localError)) return online();
                 try {
@@ -97,6 +99,7 @@ export function createSelectionTtsSynthesizer(
         try {
             return await online();
         } catch (onlineError) {
+            signal?.throwIfAborted();
             try {
                 return await local();
             } catch (localError) {

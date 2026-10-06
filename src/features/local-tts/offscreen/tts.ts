@@ -1,7 +1,7 @@
 /**
  * @file src/features/local-tts/offscreen/tts.ts
  * 文件职责：编排本地 Kokoro TTS 模型缓存、Worker 生命周期、下载状态和合成请求。
- * 主要内容：保证本地 TTS 不会因一次朗读自动下载，串行复用一个模型 Worker；GPU 生命周期失败按总预算重建一次 CPU Worker，并在取消或空闲时释放资源；模型下载的字节进度原样交给调用方发布。
+ * 主要内容：朗读不自动下载模型，串行复用一个 Worker；GPU 生命周期失败按总预算重建一次 CPU Worker，资源重建与显式取消分别校验代次；释放时取消在途及排队任务，模型操作互斥，真实下载字节进度原样发布。
  * 模块边界：只负责扩展自有 Offscreen 运行时，不决定在线/本地策略，也不直接操作网页 UI。
  */
 
@@ -69,6 +69,11 @@ let workerRequestId = 0;
 let pendingRequests = new Map<number, PendingWorkerRequest>();
 let idleDisposeTimer: number | undefined;
 let workerQueue: Promise<void> = Promise.resolve();
+// Worker 重建允许 CPU 回退；显式释放才作废整批在途/排队的调用。
+let cancellationGeneration = 0;
+let activeSyntheses = 0;
+let preparingModels = 0;
+let removingModel = false;
 
 function createWorkerLifecycleError(message: string): WorkerLifecycleError {
     const error = new Error(message) as WorkerLifecycleError;
@@ -101,7 +106,7 @@ function scheduleIdleDispose(): void {
     clearIdleDispose();
     idleDisposeTimer = window.setTimeout(() => {
         idleDisposeTimer = undefined;
-        if (pendingRequests.size === 0) terminateWorker();
+        if (pendingRequests.size === 0 && activeSyntheses === 0) terminateWorker();
     }, MODEL_IDLE_DISPOSE_MS);
 }
 
@@ -132,6 +137,7 @@ function getWorker(): Worker {
         || new URL('localTtsWorker.js', window.location.href).toString();
     const next = new Worker(workerUrl, {type: 'module'});
     next.onmessage = (event: MessageEvent<WorkerResponse>) => {
+        if (worker !== next) return;
         const response = event.data;
         const pending = response && pendingRequests.get(response.requestId);
         if (!pending) return;
@@ -170,6 +176,7 @@ function requestWorkerNow(
     timeoutMs: number,
     signal?: AbortSignal,
 ): Promise<WorkerResponse> {
+    if (signal?.aborted) return Promise.reject(createAbortError());
     clearIdleDispose();
     const currentWorker = getWorker();
     const requestId = ++workerRequestId;
@@ -203,10 +210,12 @@ async function requestWorkerWithCpuFallback(
     signal?: AbortSignal,
 ): Promise<WorkerResponse> {
     const deadlineAt = Date.now() + timeoutMs;
+    const generation = cancellationGeneration;
     const firstAttemptTimeout = Math.max(1, Math.floor(timeoutMs / 2));
     try {
         return await requestWorker(message, firstAttemptTimeout, signal);
     } catch (error) {
+        if (signal?.aborted || generation !== cancellationGeneration) throw createAbortError();
         const remainingMs = deadlineAt - Date.now();
         if (!isWorkerLifecycleError(error) || message.device === 'wasm' || remainingMs <= 0) throw error;
         return requestWorker({...message, device: 'wasm'}, remainingMs, signal);
@@ -229,15 +238,21 @@ export async function prepareLocalTtsModel(
     warm: boolean;
     backend?: LocalTtsWorkerBackend;
 }> {
-    await cacheLocalTtsModelFiles(onProgress);
-    if (!(await isLocalTtsModelCached())) throw new Error('本地 TTS 模型缓存不完整');
-    return {
-        model: LOCAL_TTS_MODEL_ID,
-        dtype: LOCAL_TTS_MODEL_DTYPE,
-        revision: LOCAL_TTS_MODEL_REVISION,
-        // 设置页的下载动作只确认文件完整性；首次真正朗读时再加载推理 Worker。
-        warm: false,
-    };
+    if (removingModel) throw new Error('正在清除本地 TTS 模型，请稍后重试');
+    preparingModels += 1;
+    try {
+        await cacheLocalTtsModelFiles(onProgress);
+        if (!(await isLocalTtsModelCached())) throw new Error('本地 TTS 模型缓存不完整');
+        return {
+            model: LOCAL_TTS_MODEL_ID,
+            dtype: LOCAL_TTS_MODEL_DTYPE,
+            revision: LOCAL_TTS_MODEL_REVISION,
+            // 设置页的下载动作只确认文件完整性；首次真正朗读时再加载推理 Worker。
+            warm: false,
+        };
+    } finally {
+        preparingModels -= 1;
+    }
 }
 
 export async function getLocalTtsModelStatus(): Promise<{
@@ -266,36 +281,56 @@ export async function synthesizeLocalTts(
     preferredVoice: unknown,
     signal?: AbortSignal,
 ): Promise<LocalTtsAudio> {
-    if (!supportsLocalTtsLanguage(language)) throw new LocalTtsLanguageUnsupportedError(language);
-    if (!(await isLocalTtsModelCached())) throw new LocalTtsModelNotDownloadedError();
     if (signal?.aborted) throw createAbortError();
+    if (removingModel) throw new Error('正在清除本地 TTS 模型，请稍后重试');
+    if (!supportsLocalTtsLanguage(language)) throw new LocalTtsLanguageUnsupportedError(language);
+    const generation = cancellationGeneration;
+    activeSyntheses += 1;
+    try {
+        if (!(await isLocalTtsModelCached())) throw new LocalTtsModelNotDownloadedError();
+        if (signal?.aborted || generation !== cancellationGeneration) throw createAbortError();
 
-    const voice = localTtsVoiceForLanguage(language, preferredVoice);
-    const response = await runSerial(() => requestWorkerWithCpuFallback({
-        type: 'synthesize',
-        text,
-        voice,
-        speed: 1,
-    }, SYNTHESIS_TIMEOUT_MS, signal));
-    if (!response.audio) throw new Error('本地 TTS 未返回音频');
-    scheduleIdleDispose();
-    return {
-        audio: response.audio,
-        ...(response.timings === undefined ? {} : {timings: parseSpeechCues(response.timings)}),
-        contentType: 'audio/wav',
-        voice,
-        backend: response.backend,
-    };
+        const voice = localTtsVoiceForLanguage(language, preferredVoice);
+        const response = await runSerial(() => {
+            if (signal?.aborted || generation !== cancellationGeneration) throw createAbortError();
+            return requestWorkerWithCpuFallback({
+                type: 'synthesize',
+                text,
+                voice,
+                speed: 1,
+            }, SYNTHESIS_TIMEOUT_MS, signal);
+        });
+        if (signal?.aborted || generation !== cancellationGeneration) throw createAbortError();
+        if (!response.audio) throw new Error('本地 TTS 未返回音频');
+        return {
+            audio: response.audio,
+            ...(response.timings === undefined ? {} : {timings: parseSpeechCues(response.timings)}),
+            contentType: 'audio/wav',
+            voice,
+            backend: response.backend,
+        };
+    } finally {
+        activeSyntheses -= 1;
+        if (worker && pendingRequests.size === 0 && activeSyntheses === 0) scheduleIdleDispose();
+    }
 }
 
 export async function removeLocalTtsModel(): Promise<void> {
-    if (pendingRequests.size > 0) throw new Error('本地 TTS 正在运行，请完成后再清除模型');
-    terminateWorker();
-    await removeLocalTtsModelFiles();
+    if (pendingRequests.size > 0 || activeSyntheses > 0) throw new Error('本地 TTS 正在运行，请完成后再清除模型');
+    if (preparingModels > 0) throw new Error('本地 TTS 模型正在下载，请完成后再清除模型');
+    if (removingModel) throw new Error('正在清除本地 TTS 模型，请稍后重试');
+    removingModel = true;
+    try {
+        terminateWorker();
+        await removeLocalTtsModelFiles();
+    } finally {
+        removingModel = false;
+    }
 }
 
 export function disposeLocalTtsWorker(): void {
-    terminateWorker();
+    cancellationGeneration += 1;
+    terminateWorker(createAbortError());
 }
 
 export {LOCAL_TTS_MODEL_STATE_KEY};

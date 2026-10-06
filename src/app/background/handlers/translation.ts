@@ -102,13 +102,11 @@ export function createTranslationRequestRegistry(): TranslationRequestRegistry {
     const active = new Map<string, AbortController>();
     const cancelledBeforeStart = new Set<string>();
     const completed = new Set<string>();
-    const cancellationOrder: string[] = [];
-    const completionOrder: string[] = [];
-    const remember = (set: Set<string>, order: string[], key: string) => {
+    const remember = (set: Set<string>, key: string) => {
         if (set.has(key)) return;
         set.add(key);
-        order.push(key);
-        if (order.length > REQUEST_HISTORY_LIMIT) set.delete(order.shift()!);
+        // Set 的插入顺序即当前记录的 FIFO；已消费取消不再占容量或淘汰同 ID 的新一代记录。
+        if (set.size > REQUEST_HISTORY_LIMIT) set.delete(set.values().next().value!);
     };
 
     return {
@@ -116,7 +114,7 @@ export function createTranslationRequestRegistry(): TranslationRequestRegistry {
             const owner = requestOwnerKey(context);
             const key = `${owner.length}:${owner}:${clientRequestId}`;
             if (cancelledBeforeStart.delete(key)) {
-                remember(completed, completionOrder, key);
+                remember(completed, key);
                 throw translationAbortError();
             }
             if (active.has(key) || completed.has(key)) {
@@ -128,7 +126,7 @@ export function createTranslationRequestRegistry(): TranslationRequestRegistry {
                 return await operation(controller.signal, key);
             } finally {
                 if (active.get(key) === controller) active.delete(key);
-                remember(completed, completionOrder, key);
+                remember(completed, key);
             }
         },
         cancel(clientRequestIdValue, context) {
@@ -137,7 +135,7 @@ export function createTranslationRequestRegistry(): TranslationRequestRegistry {
             const key = `${owner.length}:${owner}:${clientRequestId}`;
             const controller = active.get(key);
             if (controller) controller.abort();
-            else if (!completed.has(key)) remember(cancelledBeforeStart, cancellationOrder, key);
+            else if (!completed.has(key)) remember(cancelledBeforeStart, key);
             return {success: true, cancelled: Boolean(controller), clientRequestId};
         },
     };

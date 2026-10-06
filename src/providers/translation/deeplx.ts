@@ -63,9 +63,14 @@ async function fetchDeepLX(
             throw new Error('网络请求失败');
         }
 
+        if (callerSignal?.aborted) throw abortErrorFromSignal(callerSignal);
+        if (abortContext.didTimeout()) throw new Error(`请求超时（${timeoutMs / 1000} 秒）`);
         if (!response.ok) return {response, responseBody: ''};
         try {
-            return {response, responseBody: await response.text()};
+            const responseBody = await response.text();
+            if (callerSignal?.aborted) throw abortErrorFromSignal(callerSignal);
+            if (abortContext.didTimeout()) throw new Error(`请求超时（${timeoutMs / 1000} 秒）`);
+            return {response, responseBody};
         } catch {
             if (callerSignal?.aborted) throw abortErrorFromSignal(callerSignal);
             if (abortContext.didTimeout()) throw new Error(`请求超时（${timeoutMs / 1000} 秒）`);

@@ -1,8 +1,8 @@
 <!--
  * @file src/features/share-card/ui/ShareCardStudio.vue
  * 文件职责：提供划词翻译结果的双语卡片编辑预览与图片导出。
- * 主要内容：让多语言导出操作完整换行，原生模态对话框、品牌色分段选择与开关、八套图片风格、双语编辑及 PNG 复制、保存；固定底栏提供醒目的成功、错误和忙碌反馈，外观写回共享配置。
- * 模块边界：组件位于封闭 Shadow UI，不读取网页正文、不调用翻译服务；渲染与导出委托独立适配器，关闭时释放 Blob URL 并使迟到渲染失效。
+ * 主要内容：让多语言导出操作完整换行，原生模态对话框、品牌色分段选择与开关、八套图片风格、双语编辑及 PNG 复制、保存；固定底栏提供醒目的成功、错误和忙碌反馈，外观等待配置水合并跟随外部更新，排队写回共享配置。
+ * 模块边界：组件位于封闭 Shadow UI，不读取网页正文、不调用翻译服务；渲染与导出委托独立适配器，关闭时取消渲染、释放位图与 Blob URL，并使迟到回调失效。
  -->
 <template>
   <div class="fr-card-root" @pointerdown.stop @pointerup.stop @click.stop @wheel.stop.passive>
@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import browser from 'webextension-polyfill';
 import {computed, nextTick, onBeforeUnmount, reactive, ref, shallowRef, watch} from 'vue';
-import {config, requestConfigPatch} from '@/src/services/config/store';
+import {config, configReady, requestConfigPatch} from '@/src/services/config/store';
 import {normalizeShareCardPreferences, SHARE_CARD_THEMES, type ShareCardPreferences} from '@/src/core/config/shareCard';
 import {useUiI18n} from '@/src/ui/i18n';
 import {SHARE_CARD_MAX_CHARACTERS, type ShareCardExcerpt} from '../core';
@@ -104,41 +104,61 @@ const ready = computed(() => Boolean(result.value && !renderError.value && !rend
 let generation = 0;
 let openGeneration = 0;
 let renderTimer: ReturnType<typeof setTimeout> | undefined;
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
 let disposed = false;
 let saveQueue = Promise.resolve();
+let renderController: AbortController | undefined;
+const pendingPreferences = new Map<keyof ShareCardPreferences, {value: unknown}>();
 
 function releaseImage(): void {
     if (imageUrl.value) URL.revokeObjectURL(imageUrl.value);
+    if (result.value) { result.value.canvas.width = 0; result.value.canvas.height = 0; }
     imageUrl.value = ''; result.value = null; canvasSlot.value?.replaceChildren();
 }
 function cleanup(): void {
-    if (!opened.value) return;
+    const wasOpened = opened.value;
     opened.value = false; openGeneration++; generation++;
-    clearTimeout(renderTimer); releaseImage();
+    renderController?.abort(); renderController = undefined;
+    clearTimeout(renderTimer); clearTimeout(saveTimer); releaseImage(); rendering.value = false;
     Object.assign(excerpt, {original: '', translation: '', source: ''});
     status.value = ''; statusError.value = false; renderError.value = ''; busy.value = false; activeAction.value = '';
-    emit('closed');
+    if (wasOpened) emit('closed');
 }
 function close(): void { dialog.value?.close(); cleanup(); }
 async function open(value: ShareCardExcerpt): Promise<void> {
+    const current = ++openGeneration;
+    generation++; renderController?.abort(); clearTimeout(renderTimer); clearTimeout(saveTimer);
+    rendering.value = true;
+    await configReady;
+    if (disposed || current !== openGeneration) return;
     editorOpen.value = false;
     busy.value = false; activeAction.value = ''; status.value = ''; statusError.value = false;
-    preferences.value = normalizeShareCardPreferences(config.shareCard);
+    syncPreferences();
     Object.assign(excerpt, value);
     opened.value = true;
-    const current = ++openGeneration;
     await nextTick();
     if (disposed || !opened.value || current !== openGeneration) return;
     if (!dialog.value?.open) dialog.value?.showModal();
     scheduleRender();
 }
+function syncPreferences(): void {
+    preferences.value = normalizeShareCardPreferences({...config.shareCard,
+        ...Object.fromEntries(Array.from(pendingPreferences, ([key, entry]) => [key, entry.value]))});
+}
 function setPreference(key: keyof ShareCardPreferences, value: unknown): void {
+    const entry = {value}; pendingPreferences.set(key, entry);
     preferences.value = normalizeShareCardPreferences({...preferences.value, [key]: value});
     const current = openGeneration;
-    // 字段补丁在队列实际执行时与最新权威偏好合并，其他页面的无关偏好不会被旧快照覆盖。
-    saveQueue = saveQueue.then(() => requestConfigPatch({shareCard: normalizeShareCardPreferences({...config.shareCard, [key]: value})}, browser.runtime.sendMessage.bind(browser.runtime))).catch(() => {
+    // 执行时等待水合并合并最新配置；旧回执不能覆盖尚未保存的新选择。
+    saveQueue = saveQueue.then(async () => {
+        await configReady;
+        await requestConfigPatch({shareCard: normalizeShareCardPreferences({...config.shareCard, [key]: value})}, browser.runtime.sendMessage.bind(browser.runtime));
+    }).catch(() => {
         if (disposed || !opened.value || current !== openGeneration) return;
         showFeedback('shareCard.preferenceFailed', true);
+    }).finally(() => {
+        if (pendingPreferences.get(key) === entry) pendingPreferences.delete(key);
+        if (!disposed && opened.value) syncPreferences();
     });
 }
 function scheduleRender(): void {
@@ -146,11 +166,12 @@ function scheduleRender(): void {
     const current = ++generation;
     rendering.value = true; renderError.value = '';
     // 渲染期间保留上张画面避免布局闪动；ready 立即变为 false，不允许保存过期内容。
-    clearTimeout(renderTimer);
+    clearTimeout(renderTimer); renderController?.abort();
+    const controller = new AbortController(); renderController = controller;
     renderTimer = setTimeout(async () => {
         try {
-            const rendered = await renderShareCard({...excerpt}, {...preferences.value});
-            if (!opened.value || current !== generation || disposed) return;
+            const rendered = await renderShareCard({...excerpt}, {...preferences.value}, controller.signal);
+            if (!opened.value || current !== generation || disposed) { rendered.canvas.width = 0; rendered.canvas.height = 0; return; }
             releaseImage();
             rendered.canvas.setAttribute('role', 'img');
             rendered.canvas.setAttribute('aria-label', t('shareCard.previewAlt'));
@@ -168,12 +189,17 @@ function showFeedback(key: string, error = false): void {
 }
 function saveImage(): void {
     if (!ready.value || !dialog.value || busy.value) return;
+    busy.value = true;
     const link = document.createElement('a'); link.href = imageUrl.value; link.download = shareCardFilename();
     try {
         dialog.value.append(link); link.click();
         showFeedback('shareCard.saved');
     } catch { showFeedback('shareCard.saveFailed', true); }
-    finally { link.remove(); }
+    finally {
+        link.remove();
+        // 下载是同步交付，短暂锁定覆盖真实双击的第二个事件；关闭/重开会清除此计时器。
+        clearTimeout(saveTimer); saveTimer = setTimeout(() => { busy.value = false; }, 400);
+    }
 }
 async function copyImage(): Promise<void> {
     if (!ready.value || !result.value || busy.value) return;
@@ -189,6 +215,7 @@ async function copyImage(): Promise<void> {
         showFeedback('shareCard.copyFailed', true);
     } finally { if (!disposed && current === openGeneration) { busy.value = false; activeAction.value = ''; } }
 }
+watch(() => config.shareCard, () => { if (opened.value) syncPreferences(); }, {deep: true});
 watch([preferences, excerpt, language], scheduleRender, {deep: true, flush: 'sync'});
 onBeforeUnmount(() => { disposed = true; dialog.value?.close(); cleanup(); clearTimeout(renderTimer); releaseImage(); });
 defineExpose({open, close});

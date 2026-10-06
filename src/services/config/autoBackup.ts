@@ -57,23 +57,21 @@ export function parseConfigAutoBackups(value: unknown): ConfigAutoBackupState | 
     if (!isConfigRecord(value) || !Array.isArray(value.entries)) return null;
     if (value.schemaVersion !== undefined && value.schemaVersion !== CONFIG_AUTO_BACKUP_SCHEMA_VERSION) return null;
 
-    const entries = value.entries
-        .map((entry) => {
-            if (!isConfigRecord(entry)
-                || typeof entry.version !== 'number'
-                || !Number.isSafeInteger(entry.version)
-                || entry.version < 1
-                || typeof entry.savedAt !== 'string') return null;
-            const parsedConfig = parseStoredConfig(entry.config);
-            if (!parsedConfig) return null;
-            return {
-                version: entry.version,
-                savedAt: entry.savedAt,
-                config: toRestorableConfig(parsedConfig),
-            } satisfies ConfigAutoBackupEntry;
-        })
-        .filter((entry): entry is ConfigAutoBackupEntry => entry !== null)
-        .slice(-CONFIG_AUTO_BACKUP_LIMIT);
+    const entries: ConfigAutoBackupEntry[] = [];
+    // 只投影最终保留的十份有效快照；旧存储即使远超上限，也不必归一化
+    // 随即被丢弃的配置。损坏尾项仍逐项跳过，并保持原有有效记录顺序。
+    for (let index = value.entries.length - 1; index >= 0 && entries.length < CONFIG_AUTO_BACKUP_LIMIT; index -= 1) {
+        const entry = value.entries[index];
+        if (!isConfigRecord(entry)
+            || typeof entry.version !== 'number'
+            || !Number.isSafeInteger(entry.version)
+            || entry.version < 1
+            || typeof entry.savedAt !== 'string') continue;
+        const parsedConfig = parseStoredConfig(entry.config);
+        if (!parsedConfig) continue;
+        entries.push({version: entry.version, savedAt: entry.savedAt, config: toRestorableConfig(parsedConfig)});
+    }
+    entries.reverse();
 
     if (entries.length === 0) return null;
     const maxVersion = entries.reduce((max, entry) => Math.max(max, entry.version), 0);

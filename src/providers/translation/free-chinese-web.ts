@@ -119,13 +119,15 @@ async function fetchJson(provider: FreeChineseWebProvider, query: string, from: 
         throw Object.assign(statusError, {freeFailure: classifyStatus(response.status)});
     }
     if (provider === 'youdaoFree') {
-        const result = await readJsonResponse<{fanyi?: {tran?: unknown}}>(response, '有道返回的不是有效 JSON');
-        const translated = result.fanyi?.tran;
+        const result = await readJsonResponse<{fanyi?: {tran?: unknown}} | null>(response, '有道返回的不是有效 JSON');
+        if (signal?.aborted) throw abortErrorFromSignal(signal);
+        const translated = result?.fanyi?.tran;
         if (typeof translated !== 'string' || !translated.trim()) throw failure('有道返回内容无效', 'unavailable');
         return translated;
     }
-    const envelope = await readJsonResponse<{content?: unknown}>(response, '词霸返回的不是有效 JSON');
-    const result = decryptIciba(envelope.content);
+    const envelope = await readJsonResponse<{content?: unknown} | null>(response, '词霸返回的不是有效 JSON');
+    if (signal?.aborted) throw abortErrorFromSignal(signal);
+    const result = decryptIciba(envelope?.content);
     if (result.err_no !== 0) {
         const code = Number(result.err_no);
         const kind: FreeFailure = code === 429 ? 'rate-limit' : code === 403 ? 'blocked' : code === 402 ? 'quota' : 'request';

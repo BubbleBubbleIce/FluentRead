@@ -23,7 +23,6 @@ import {abortErrorFromSignal, runtimeFetch} from '@/src/platform/http/runtime';
 const MY_MEMORY_URL = 'https://api.mymemory.translated.net/get';
 export const MY_MEMORY_MAX_BYTES = 500;
 type MyMemoryRequest = TranslationLanguageOverride & TranslationProviderRequestContext;
-const encoder = new TextEncoder();
 /** MyMemory 以地区区分简繁中文；其他语言使用统一规范代码，无法规范化的取值原样交给服务报错。 */
 function toMyMemoryLanguage(language: string): string {
     const normalized = normalizeLanguageCode(language);
@@ -48,7 +47,9 @@ function splitByByteLimit(text: string): string[] {
         let end = 0;
         let boundary = 0;
         for (const character of rest) {
-            const length = encoder.encode(character).length;
+            // for...of 保持码点完整；孤立 surrogate 与 TextEncoder 一样计为替换字符的 3 字节。
+            const point = character.codePointAt(0)!;
+            const length = point <= 0x7f ? 1 : point <= 0x7ff ? 2 : point <= 0xffff ? 3 : 4;
             if (bytes + length > MY_MEMORY_MAX_BYTES) break;
             bytes += length;
             end += character.length;

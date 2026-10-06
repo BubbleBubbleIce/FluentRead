@@ -682,7 +682,7 @@ describe('configstoreAudit own-key and preview boundaries', () => {
         expect(buildConfigDiff({deepPublic: before}, {deepPublic: before}).changeCount).toBe(0);
         const diff = buildConfigDiff({deepPublic: before}, {deepPublic: after});
         expect(diff.changeCount).toBe(1);
-        expect(diff.groups[0].changes[0].after).toContain('深层内容已摘要');
+        expect(diff.groups[0].changes[0].after).toContain('已配置（内容已摘要）');
         expect(JSON.stringify(diff).length).toBeLessThan(5000);
     });
 

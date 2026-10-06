@@ -27,14 +27,14 @@ function reportOpenFailure(): void {
     showPageNotice(translate('shareCard.openFailed', normalizeUiLanguage(config.uiLanguage)), 'error');
 }
 async function ensureStudio(): Promise<Studio | null> {
-    if (!controller || !context) return null;
+    if (!controller || !context || context.isInvalid || config.on === false) return null;
     if (ui) return instance();
     if (!pending) {
         const current = generation;
         const task = createVueShadowUi(context, {
             name: 'fluent-read-share-card-ui', hostId: HOST_ID, component: ShareCardStudio, mode: 'closed',
         }).then(created => {
-            if (current !== generation || !controller) { created.remove(); return null; }
+            if (current !== generation || !controller || context?.isInvalid || config.on === false) { created.remove(); return null; }
             ui = created; return instance();
         }).finally(() => { if (pending === task) pending = null; });
         pending = task;
@@ -47,12 +47,12 @@ export async function openShareCard(excerpt: {original: string; translation: str
     const snapshot = {original: excerpt.original, translation: excerpt.translation, source: cardSourceDomain(location.href)};
     try {
         const studio = await ensureStudio();
-        if (!studio || current !== generation) return;
+        if (!studio || current !== generation || !config.on || context?.isInvalid) return;
         await studio.open(snapshot);
     } catch { if (current === generation) reportOpenFailure(); }
 }
 export function mountShareCard(ctx: ContentScriptContext): void {
-    if (controller) return;
+    if (controller || ctx.isInvalid) return;
     context = ctx; controller = new AbortController();
 }
 export function unmountShareCard(): void {

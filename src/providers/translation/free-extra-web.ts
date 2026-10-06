@@ -1,7 +1,7 @@
 /**
  * @file src/providers/translation/free-extra-web.ts
  * 文件职责：适配搜狗、Reverso、Lingva 和 Apertium 四个匿名网页翻译候选。
- * 主要内容：读取搜狗网页参数并识别内层业务错误，构造 Reverso 请求，明确 Lingva 公共实例的访问限制，调用 Apertium 动态语言对；保留文本槽/换行/边缘空白并响应取消。
+ * 主要内容：读取搜狗网页参数并识别内层业务错误，构造 Reverso 请求，明确 Lingva 公共实例的访问限制，调用 Apertium 动态语言对，初始化信息仅在一次请求内复用；保留文本槽/换行/边缘空白并响应取消。
  * 模块边界：不读取用户 Cookie、凭据或代理；免费链的超时、冷却和并发由上层编排负责。
  */
 import MD5 from 'crypto-js/md5';
@@ -62,8 +62,9 @@ type SogouResponse = {
     data?: {translate?: {dit?: unknown; errorCode?: unknown}};
 };
 
-async function translateSogouChunk(text: string, source: string, target: string, signal?: AbortSignal): Promise<string> {
-    const secret = await getSogouSecret(signal);
+async function translateSogouChunk(text: string, source: string, target: string, signal: AbortSignal | undefined, secretPromise: Promise<string>): Promise<string> {
+    const secret = await secretPromise;
+    checkAbort(signal);
     const requestUuid = uuid();
     const signature = MD5(source + target + text + secret).toString();
     const response = await runtimeFetch(SOGOU_ENDPOINT, {
@@ -149,21 +150,25 @@ async function translateLingvaChunk(text: string, source: string, target: string
     return result.translation.trim();
 }
 
-async function translateApertiumChunk(text: string, source: string, target: string, signal?: AbortSignal): Promise<string> {
+async function translateApertiumChunk(text: string, source: string, target: string, signal?: AbortSignal, pairValidated = false): Promise<string> {
     const pair = `${apertiumLanguage(source, false)}|${apertiumLanguage(target, true)}`;
-    const listResponse = await runtimeFetch(`${APERTIUM_ENDPOINT}/listPairs`, {method: 'GET', credentials: 'omit', signal, headers: {Accept: 'application/json'}});
+    if (!pairValidated) {
+        const listResponse = await runtimeFetch(`${APERTIUM_ENDPOINT}/listPairs`, {method: 'GET', credentials: 'omit', signal, headers: {Accept: 'application/json'}});
+        checkAbort(signal);
+        if (!listResponse.ok) throw createHttpStatusError(listResponse, 'Apertium 语言列表请求失败');
+        const pairs = await readJsonResponse<unknown>(listResponse, 'Apertium 语言列表不是有效 JSON');
+        checkAbort(signal);
+        const body = pairs && typeof pairs === 'object' && 'responseData' in pairs ? (pairs as {responseData?: unknown}).responseData : pairs;
+        const hasPair = Array.isArray(body) && body.some(item => {
+            if (typeof item === 'string') return item === pair || item.replace('-', '|') === pair;
+            if (!item || typeof item !== 'object') return false;
+            const value = item as {sourceLanguage?: unknown; targetLanguage?: unknown; langpair?: unknown};
+            return value.langpair === pair || (typeof value.langpair === 'string' && value.langpair.replace('-', '|') === pair)
+                || `${value.sourceLanguage}|${value.targetLanguage}` === pair;
+        }) || !!body && typeof body === 'object' && Object.keys(body).some(key => key === pair || key.replace('-', '|') === pair);
+        if (!hasPair) throw failure('Apertium 不支持当前语言方向', 400, 'request');
+    }
     checkAbort(signal);
-    if (!listResponse.ok) throw createHttpStatusError(listResponse, 'Apertium 语言列表请求失败');
-    const pairs = await readJsonResponse<unknown>(listResponse, 'Apertium 语言列表不是有效 JSON');
-    const body = pairs && typeof pairs === 'object' && 'responseData' in pairs ? (pairs as {responseData?: unknown}).responseData : pairs;
-    const hasPair = Array.isArray(body) && body.some(item => {
-        if (typeof item === 'string') return item === pair || item.replace('-', '|') === pair;
-        if (!item || typeof item !== 'object') return false;
-        const value = item as {sourceLanguage?: unknown; targetLanguage?: unknown; langpair?: unknown};
-        return value.langpair === pair || (typeof value.langpair === 'string' && value.langpair.replace('-', '|') === pair)
-            || `${value.sourceLanguage}|${value.targetLanguage}` === pair;
-    }) || !!body && typeof body === 'object' && Object.keys(body).some(key => key === pair || key.replace('-', '|') === pair);
-    if (!hasPair) throw failure('Apertium 不支持当前语言方向', 400, 'request');
     const query = new URLSearchParams({langpair: pair, q: text, format: 'txt'});
     const response = await runtimeFetch(`${APERTIUM_ENDPOINT}/translate?${query}`, {method: 'GET', credentials: 'omit', signal, headers: {Accept: 'application/json'}});
     checkAbort(signal);
@@ -207,7 +212,18 @@ export async function translateExtraFreeWebText(
     if (!text.trim()) return text;
     const from = language(source, false);
     const to = language(target, true);
-    const translator: ChunkTranslator = id === 'sogouFree' ? translateSogouChunk : id === 'reversoFree' ? translateReversoChunk : id === 'lingvaFree' ? translateLingvaChunk : translateApertiumChunk;
+    // 初始化数据只在本次文本/槽请求中复用；下一次调用重新读取，不留下跨请求缓存或取消所有权。
+    let sogouSecret: Promise<string> | undefined;
+    let apertiumPairValidated = false;
+    const translator: ChunkTranslator = id === 'sogouFree'
+        ? (chunk, from, to, signal) => translateSogouChunk(chunk, from, to, signal, sogouSecret ??= getSogouSecret(signal))
+        : id === 'reversoFree' ? translateReversoChunk
+            : id === 'lingvaFree' ? translateLingvaChunk
+                : async (chunk, from, to, signal) => {
+                    const output = await translateApertiumChunk(chunk, from, to, signal, apertiumPairValidated);
+                    apertiumPairValidated = true;
+                    return output;
+                };
     const slots = getTranslationGlossarySourceText(text);
     if (!Array.isArray(slots)) return translatePlain(text, from, to, signal, translator);
     const translated: string[] = [];

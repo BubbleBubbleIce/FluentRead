@@ -239,8 +239,12 @@ export function createSelectionTtsBackgroundHandlers(
                 const tabId = parseTabId(context);
 
                 // 步骤 1：新请求先取消旧请求；没有 tab 时保留旧行为，合成后回退到 page audio。
-                await stopActiveSelectionTts();
+                const stopping = stopActiveSelectionTts();
                 const active = tabId === null ? null : beginSelectionTts(tabId, clientRequestId);
+                // 停止旧播放可能等待 Offscreen；等待前登记新所有权，让新请求和 STOP
+                // 能立即使本次失效，避免旧等待恢复后覆盖已经开始的下一次朗读。
+                await stopping;
+                if (active && activeSelectionTts !== active) return {success: false, error: '语音合成已取消'};
                 let result: SelectionTtsAudio;
                 try {
                     result = await dependencies.synthesize(
@@ -306,13 +310,16 @@ export function createSelectionTtsBackgroundHandlers(
                 const tabId = parseTabId(context);
 
                 // 步骤 1：Google fallback 与 Edge 共用单例播放状态，新请求同样先取消旧播放。
-                await stopActiveSelectionTts();
-                if (tabId === null) return {success: false, error: '无法确定当前标签页'};
+                const stopping = stopActiveSelectionTts();
+                const active = tabId === null ? null : beginSelectionTts(tabId, clientRequestId);
+                await stopping;
+                if (active && activeSelectionTts !== active) return {success: false, error: '语音播放已取消'};
+                if (tabId === null || !active) return {success: false, error: '无法确定当前标签页'};
                 if (dependencies.offscreenPlaybackEnabled === false) {
+                    if (activeSelectionTts === active) activeSelectionTts = null;
                     return {success: false, error: '当前浏览器暂不支持 Google TTS 扩展播放'};
                 }
 
-                const active = beginSelectionTts(tabId, clientRequestId);
                 active.playbackStarted = true;
                 try {
                     await dependencies.playWithOffscreen({
