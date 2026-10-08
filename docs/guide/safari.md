@@ -22,6 +22,18 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
   -list -project .output/safari-app/FluentRead/FluentRead.xcodeproj
 ```
 
+本机开发签名编译命令（无需 Apple Developer Team，仅用于本机测试）：
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
+  -project .output/safari-app/FluentRead/FluentRead.xcodeproj \
+  -scheme FluentRead -configuration Debug -destination 'platform=macOS' \
+  -derivedDataPath .output/safari-derived-data \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= build
+```
+
+产物为 `.output/safari-derived-data/Build/Products/Debug/FluentRead.app`。2026 年 10 月 8 日在本机 Xcode 27 上编译成功，`codesign --verify --deep --strict` 通过，App 窗口实际启动并显示扩展尚未启用。网页翻译、Safari 运行时与重启持久化尚未验收。
+
 Apple 工具不会覆盖已有项目；重新打包前删除本次生成的 `.output/safari-app/FluentRead`，或用 Xcode 在同一项目内继续调试。
 
 ## 安装与验收
