@@ -3,9 +3,10 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {describe, expect, it} from 'vitest';
 import {createHash} from 'node:crypto';
+import {Script} from 'node:vm';
 import {GOOGLE_DRIVE_DEFAULT_CLIENT_ID, GOOGLE_DRIVE_EXTENSION_ID, GOOGLE_DRIVE_EXTENSION_PUBLIC_KEY, GOOGLE_DRIVE_SCOPES} from '@/src/platform/google-drive/constants';
 import type {Entrypoint, EntrypointGroup} from 'wxt';
-import {remoteConfigStorageBuildPlugin, createExtensionManifest, extendRemoteConfigBuildConfig, groupModuleWorkers} from '@/wxt.config';
+import wxtConfig, {remoteConfigStorageBuildPlugin, createExtensionManifest, extendRemoteConfigBuildConfig, groupModuleWorkers} from '@/wxt.config';
 
 const PROJECT_ROOT = resolve(__dirname, '..');
 
@@ -73,6 +74,27 @@ function permissionsFor(browser: string, manifestVersion: 2 | 3): string[] {
 }
 
 describe('extension manifest capability contract', () => {
+    it('Safari MV2 loads Chinese template literals through an explicitly UTF-8 background page', () => {
+        const manifest = {background: {scripts: ['background.js'], persistent: false}};
+        const hook = (wxtConfig.hooks as Record<string, unknown>)['build:manifestGenerated'] as (
+            wxt: {config: {browser: string; manifestVersion: number}}, currentManifest: typeof manifest,
+        ) => void;
+        hook({config: {browser: 'safari', manifestVersion: 2}}, manifest);
+        expect(manifest.background).toEqual({page: 'safari-background.html', persistent: false});
+        const html = readFileSync(resolve(PROJECT_ROOT, 'scripts/safari/background.html'), 'utf8');
+        expect(html).toMatch(/<meta charset="utf-8">/u);
+        expect(html).toContain('<script src="background.js"></script>');
+        expect(html.indexOf('<meta charset="utf-8">')).toBeLessThan(html.indexOf('<script'));
+        const source = Buffer.from('new Set(`中`);const label=`自定义接口 ${1}`;', 'utf8');
+        expect(() => new Script(new TextDecoder('gb18030').decode(source))).toThrow(SyntaxError);
+        expect(() => new Script(new TextDecoder('utf-8').decode(source))).not.toThrow();
+        for (const [browser, manifestVersion] of [['chrome', 3], ['firefox', 2], ['safari', 3]] as const) {
+            const other = {background: {scripts: ['background.js'], persistent: false}};
+            hook({config: {browser, manifestVersion}}, other);
+            expect(other.background).toEqual({scripts: ['background.js'], persistent: false});
+        }
+    });
+
     it('Chrome 原生 OAuth 绑定公开商店身份；其他构建不声明 Chrome 客户端', () => {
         const chrome = createExtensionManifest({browser: 'chrome', manifestVersion: 3});
         expect(chrome.oauth2).toEqual({client_id: GOOGLE_DRIVE_DEFAULT_CLIENT_ID, scopes: GOOGLE_DRIVE_SCOPES});

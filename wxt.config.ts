@@ -206,6 +206,13 @@ export default defineConfig({
         excludeSources: ['coverage/**'],
     },
     hooks: {
+        'build:manifestGenerated': (wxt, manifest) => {
+            // Safari 隐式后台页未声明编码；中文环境下 GB18030 会吞掉模板字符串的反引号。
+            // 使用声明 UTF-8 的自有页面承载同一个后台脚本，保持非持久生命周期。
+            if (wxt.config.browser === 'safari' && wxt.config.manifestVersion === 2) {
+                manifest.background = {page: 'safari-background.html', persistent: false};
+            }
+        },
         'build:done': async (wxt) => {
             const dev = wxt.config.command === 'serve';
             const budget = dev ? (process.env.FLUENTREAD_DEV_SOURCEMAPS === '1' ? 170_000_000 : 70_000_000) : 65_000_000;
@@ -222,6 +229,9 @@ export default defineConfig({
             }
         },
         'build:publicAssets': (_wxt, files) => {
+            if (_wxt.config.browser === 'safari' && _wxt.config.manifestVersion === 2) {
+                files.push({absoluteSrc: resolve(__dirname, 'scripts/safari/background.html'), relativeDest: 'safari-background.html'});
+            }
             // 非中文界面文案只生成一份 JSON，由各运行上下文按当前语言加载，不再内联进每个 bundle。
             files.push(...createUiLanguageBundleFiles());
             files.push({absoluteSrc: resolve(__dirname, 'node_modules/@wllama/wllama/LICENCE'), relativeDest: 'third-party-notices/wllama-MIT.txt'});

@@ -13,7 +13,7 @@ pnpm package:safari
 
 Apple Silicon 上如果安装在 `gifsicle` 等旧图片压缩工具的安装脚本失败，可以使用 `pnpm install --frozen-lockfile --ignore-scripts`，再单独执行 `pnpm exec wxt prepare`。本次 Safari/Chrome/Firefox 构建采用此路径并成功；没有升级锁文件或启用这些图片压缩工具。
 
-`build:safari` 明确使用 WXT 0.20.18 默认支持的 Safari MV2，生成 `.output/safari-mv2`。后台沿用项目已有的 `persistent: false` 配置。`package:safari` 使用 Apple 官方 packager（旧 Xcode 使用 converter）生成 `.output/safari-app/FluentRead/FluentRead.xcodeproj`，复制扩展资源，不打开应用或改变系统的 Xcode 选择。若 Xcode 安装位置不同，设置 `DEVELOPER_DIR`。
+`build:safari` 明确使用 WXT 0.20.18 默认支持的 Safari MV2，生成 `.output/safari-mv2`。后台使用明确声明 UTF-8 的 `safari-background.html` 加载同一个 `background.js`，保留 `persistent: false` 配置，避免中文环境的隐式后台页按 GB18030 解码模板字符串。`package:safari` 使用 Apple 官方 packager（旧 Xcode 使用 converter）生成 `.output/safari-app/FluentRead/FluentRead.xcodeproj`，复制扩展资源，不打开应用或改变系统的 Xcode 选择。若 Xcode 安装位置不同，设置 `DEVELOPER_DIR`。
 
 打开生成的 Xcode 项目，选择 macOS App scheme，使用本机开发签名编译运行。也可以按实际 scheme 名称使用 `xcodebuild`；查看 scheme：
 
@@ -41,6 +41,10 @@ Apple 工具不会覆盖已有项目；重新打包前删除本次生成的 `.ou
 运行生成的 FluentRead App，在 Safari 设置的「扩展」中启用 FluentRead，并允许访问测试网页。本机未签名开发版本需要在 Safari 的开发者设置中允许未签名扩展；系统菜单名称可能随 Safari 版本变化。
 
 先在普通网页选择免费翻译服务，依次确认全文翻译、恢复原文、再次翻译、划词翻译与设置保存；关闭后重新打开 Safari，再确认配置和翻译仍可使用。AI 服务使用已有配置入口，实际请求需要供应商密钥与额度。
+
+若旧包报 `background.js` 的 `Unexpected identifier '鑷'`，请加载含 UTF-8 后台页面的修复包。临时扩展在 Safari 设置中重新加载；App 安装方式在更新 App 后重新启动 Safari、再次允许未签名扩展并启用 FluentRead。构建目录、Xcode 复制的资源与 App 内资源是三个位置，只重建 `.output/safari-mv2` 不会自动更新 App 中的副本。
+
+编码修复的验证覆盖：原始后台脚本按 GB18030 解码时 JavaScriptCore 复现上述语法错误，按 UTF-8 解码时语法通过；最小中文模板字符串在隔离、非持久 WebKit 实例的 GB18030 页面中失败、UTF-8 页面中成功。该验证未连接日常 Safari profile，也不代替整套翻译功能的 Safari 实机验收。
 
 ## 功能范围
 
