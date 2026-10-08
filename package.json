@@ -19,6 +19,8 @@
     "generate:userscript-languages": "node scripts/generate-userscript-language-data.mjs",
     "verify:brand": "node scripts/verify-brand-copy.mjs",
     "build:firefox": "node scripts/testing/run-resource-safe.mjs -- wxt build -b firefox",
+    "build:safari": "node scripts/testing/run-resource-safe.mjs -- wxt build -b safari --mv2",
+    "package:safari": "pnpm build:safari && node scripts/safari/package.mjs",
     "build:thunderbird": "pnpm build:firefox && node scripts/thunderbird/package.mjs",
     "zip": "node scripts/testing/run-resource-safe.mjs -- wxt zip",
     "zip:firefox": "node scripts/testing/run-resource-safe.mjs -- wxt zip -b firefox",

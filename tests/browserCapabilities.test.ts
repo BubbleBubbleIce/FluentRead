@@ -76,6 +76,24 @@ describe('browser capability contract', () => {
         });
     });
 
+    it('Safari event backgrounds keep DOM-only services unavailable and retain page playback', () => {
+        for (const manifestVersion of [2, 3] as const) {
+            const safari = resolveBrowserCapabilities({browser: 'safari', manifestVersion});
+            expect(safari).toMatchObject({
+                offscreenDocument: false,
+                extensionDom: false,
+                chromeTranslation: false,
+                imageOcr: false,
+                areaTranslation: false,
+                selectionTtsExtensionPlayback: false,
+                selectionTtsPageFallback: true,
+            });
+            expect(isTranslationServiceAvailable(services.microsoft, safari)).toBe(true);
+            expect(isTranslationServiceAvailable(services.localTranslation, safari)).toBe(false);
+        }
+        expect(browserBuildTargetFromEnv({BROWSER: 'safari'})).toEqual({browser: 'safari', manifestVersion: 2});
+    });
+
     it('runtime-gates Chrome Translation when a Chrome build is loaded by Edge', () => {
         const chrome = resolveBrowserCapabilities({browser: 'chrome', manifestVersion: 3});
         const edge = applyRuntimeBrowserConstraints(

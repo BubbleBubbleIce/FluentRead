@@ -12,6 +12,8 @@ An open-source browser extension for bilingual translation.
 
 </div>
 
+This fork adds a **macOS Safari development build** on `feat/safari-macos`. Run `pnpm package:safari` to generate an Apple Xcode project. Native compilation and Safari runtime validation are still required; see [setup and known limitations](./docs/guide/safari.md). Upstream also provides a [Safari Userscripts route](./docs/guide/userscript.md).
+
 FluentRead displays translations alongside the original webpage and provides selection translation, AI reading assistance, image and document translation, and bilingual video subtitles. Its reading card integrates a **browser adaptation of the DeepSeek Harness session core** for contextual explanations and follow-up questions.
 
 <div align="center">
